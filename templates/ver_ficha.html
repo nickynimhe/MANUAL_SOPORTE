@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}{{ ficha.problema }} - Soporte Técnico{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Header de la ficha -->
+        <div class="d-flex justify-content-between align-items-start mb-4">
+            <div class="flex-grow-1">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm mb-2">
+                    <i class="fas fa-arrow-left me-1"></i> Volver al listado
+                </a>
+                <h2 class="h3 text-primary mb-1">{{ ficha.problema }}</h2>
+                <p class="text-muted fst-italic mb-3">Ficha técnica para diagnóstico y solución rápida</p>
+
+                <div class="flex-column flex-md-row flex-wrap gap-2">
+                    <span class="badge {% if ficha.categoria == 'TV' %}bg-warning{% else %}bg-info{% endif %}">
+                        <i class="fas {% if ficha.categoria == 'TV' %}fa-tv{% else %}fa-wifi{% endif %} me-1"></i> 
+                        {{ ficha.categoria }}
+                    </span>
+                    <div class="d-flex flex-column flex-md-row">
+                        <small class="text-muted">
+                            <i class="far fa-clock me-1"></i> 
+                            {{ ficha.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}
+                        </small>
+                        {% if ficha.fecha_actualizacion != ficha.fecha_creacion %}
+                        <small class="text-muted ms-md-2">
+                            <i class="fas fa-sync-alt me-1"></i> 
+                            {{ ficha.fecha_actualizacion.strftime('%d/%m/%Y %H:%M') }}
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            {% if current_user.rol == 'admin' %}
+            <div class="btn-group ms-3">
+                <a href="{{ url_for('editar_ficha', id=ficha.id) }}" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-edit me-1"></i> Editar
+                </a>
+                <a href="{{ url_for('eliminar_ficha', id=ficha.id) }}" class="btn btn-outline-danger btn-sm"
+                   onclick="return confirm('¿Estás seguro de eliminar esta ficha?')">
+                    <i class="fas fa-trash me-1"></i> Eliminar
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Contenido de la ficha -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 rounded-3">
+                <div class="row">
+                    <!-- Columna izquierda -->
+                    <div class="col-md-6">
+                        <!-- Descripción -->
+                        <div class="mb-4 section-border section-description">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-primary p-2 rounded-circle me-2 icon-circle">
+                                    <i class="fas fa-align-left text-white"></i>
+                                </div>
+                                <h5 class="mb-0 text-dark">Descripción</h5>
+                            </div>
+                            <div class="ps-4">
+                                <div class="bg-light p-3 rounded">
+                                    {{ ficha.descripcion or 'Sin descripción' }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Causas -->
+                        <div class="mb-4 section-border section-causas">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-warning p-2 rounded-circle me-2 icon-circle">
+                                    <i class="fas fa-search text-white"></i>
+                                </div>
+                                <h5 class="mb-0 text-dark">Causas Posibles</h5>
+                            </div>
+                            <div class="ps-4">
+                                {% if ficha.causas %}
+                                <div class="causas-container">
+                                    {% for causa in ficha.causas.split('|') %}
+                                    <div class="causa-item bg-light p-3 rounded mb-2">
+                                        <div class="d-flex">
+                                            <span class="text-primary me-2">•</span>
+                                            <span>{{ causa }}</span>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <div class="text-center py-3 text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    No se especificaron causas
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna derecha -->
+                    <div class="col-md-6">
+                        <!-- Solución -->
+                        <div class="mb-4 section-border section-solucion">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-success p-2 rounded-circle me-2 icon-circle">
+                                    <i class="fas fa-check-circle text-white"></i>
+                                </div>
+                                <h5 class="mb-0 text-dark">Solución</h5>
+                            </div>
+                            <div class="ps-4">
+                                {% if ficha.solucion %}
+                                <div class="solucion-container">
+                                    {% for paso in ficha.solucion.split('|') %}
+                                    <div class="paso-item bg-light p-3 rounded mb-2">
+                                        <div class="d-flex align-items-start">
+                                            <span class="badge bg-primary rounded-pill me-2">{{ loop.index }}</span>
+                                            <span>{{ paso.strip().lstrip('0123456789. ') }}</span>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <div class="text-center py-3 text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    No se especificó solución
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Palabras clave -->
+                        <div class="mb-4 section-border section-palabras">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-info p-2 rounded-circle me-2 icon-circle">
+                                    <i class="fas fa-tags text-white"></i>
+                                </div>
+                                <h5 class="mb-0 text-dark">Palabras Clave</h5>
+                            </div>
+                            <div class="ps-4">
+                                {% if ficha.palabras_clave %}
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for palabra in ficha.palabras_clave.split(',') %}
+                                    <span class="badge bg-secondary">{{ palabra.strip() }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <div class="text-center py-3 text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Sin palabras clave
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Barras laterales de color para secciones */
+    .section-border {
+        border-left: 5px solid transparent;
+        padding-left: 1rem;
+        transition: border-color 0.3s ease;
+    }
+    .section-description {
+        border-left-color: #0d6efd; /* azul */
+    }
+    .section-causas {
+        border-left-color: #ffc107; /* amarillo */
+    }
+    .section-solucion {
+        border-left-color: #198754; /* verde */
+    }
+    .section-palabras {
+        border-left-color: #0dcaf0; /* celeste */
+    }
+
+    /* Iconos circulares con tamaño fijo y hover */
+    .icon-circle {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.3s ease;
+    }
+    .icon-circle:hover {
+        transform: scale(1.15);
+        cursor: default;
+    }
+
+    /* Sombras suaves y bordes redondeados para el contenido */
+    .card-body {
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.1);
+        border-radius: 12px;
+    }
+
+    /* Efecto hover para badges */
+    .badge {
+        transition: background-color 0.3s ease;
+    }
+    .badge:hover {
+        background-color: #0a58ca !important;
+        cursor: pointer;
+    }
+
+    /* Hover en causa y paso */
+    .causa-item, .paso-item {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-left: 3px solid transparent;
+    }
+    .causa-item:hover, .paso-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .causa-item {
+        border-left-color: #ffc107;
+    }
+    .paso-item {
+        border-left-color: #198754;
+    }
+</style>
+
+<!-- Script para el procesamiento de causas -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Función para procesar el textarea de causas
+    const procesarCausas = () => {
+        const causasTextarea = document.getElementById('causas');
+        
+        if (causasTextarea) {
+            // Formatear causas existentes (para editar)
+            if (causasTextarea.value.includes('|')) {
+                causasTextarea.value = causasTextarea.value.split('|').join('\n');
+            }
+            
+            // Procesar al enviar el formulario
+            const form = causasTextarea.closest('form');
+            if (form) {
+                form.addEventListener('submit', function() {
+                    const lineas = causasTextarea.value.split('\n')
+                        .filter(linea => linea.trim())
+                        .map(linea => linea.trim());
+                    causasTextarea.value = lineas.join('|');
+                });
+            }
+        }
+    };
+    
+    // Ejecutar la función
+    procesarCausas();
+});
+</script>
+{% endblock %}

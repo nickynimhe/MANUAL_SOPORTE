@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Soporte Técnico{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <style>
+    :root {
+      --primary: #052398;
+      --secondary: #e0f2fe;
+      --accent: #ff0000;
+      --bg: #f9fafb;
+      --white: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --radius: 12px;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Navbar */
+    .custom-navbar {
+      background: var(--white);
+      padding: 15px 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      flex-shrink: 0;
+    }
+
+    .navbar-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .navbar-brand {
+      font-weight: 800;
+      font-size: 20px;
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .navbar-brand i {
+      margin-right: 8px;
+    }
+
+    .navbar-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s ease;
+      border: none;
+      cursor: pointer;
+    }
+
+    .nav-btn.primary {
+      background-color: var(--accent);
+      color: white;
+    }
+
+    .nav-btn.primary:hover {
+      background-color: #dc2626;
+    }
+
+    .nav-btn.secondary {
+      background-color: var(--secondary);
+      color: var(--text);
+    }
+
+    .nav-btn.secondary:hover {
+      background-color: #bae6fd;
+    }
+
+    .user-info {
+      font-size: 14px;
+      color: var(--muted);
+      margin-right: 10px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Main content */
+    main.main-container {
+      flex: 1 0 auto;
+      padding: 40px 0;
+    }
+
+    .alert {
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 14px;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Cards */
+    .card {
+      border: none;
+      border-radius: var(--radius);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-header {
+      background-color: var(--white);
+      border-bottom: 1px solid #e5e7eb;
+      border-radius: var(--radius) var(--radius) 0 0 !important;
+      font-weight: 600;
+    }
+
+    /* Buttons */
+    .btn {
+      border-radius: var(--radius);
+      font-weight: 600;
+      padding: 8px 16px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+      background-color: #031a7a;
+      border-color: #031a7a;
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background-color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn-danger:hover {
+      background-color: #dc2626;
+      border-color: #dc2626;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline-primary {
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .btn-outline-primary:hover {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    /* Badges */
+    .badge {
+      border-radius: 6px;
+      font-weight: 500;
+      padding: 6px 10px;
+    }
+
+    .badge.bg-primary {
+      background-color: var(--primary) !important;
+    }
+
+    /* Dropdown de coberturas */
+    .coberturas-dropdown {
+      min-width: 500px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .coberturas-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      padding: 8px;
+    }
+
+    .cobertura-dropdown-item {
+      padding: 8px 10px;
+      border-radius: 6px;
+      border-left: 3px solid var(--primary);
+      background-color: var(--white);
+      transition: background-color 0.2s ease;
+    }
+
+    .cobertura-dropdown-item:hover {
+      background-color: var(--secondary);
+    }
+
+    .cobertura-location {
+      font-weight: 600;
+      color: var(--primary);
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+
+    .cobertura-details {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .dropdown-header {
+      background-color: var(--secondary);
+      font-weight: 600;
+      color: var(--primary);
+      padding: 10px 15px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    /* User menu styles */
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-badge {
+      background-color: var(--secondary);
+      color: var(--primary);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .navbar-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .navbar-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        width: 100%;
+      }
+
+      .nav-btn {
+        width: 100%;
+      }
+
+      .user-menu {
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+      }
+
+      .coberturas-dropdown {
+        min-width: 300px;
+        max-height: 300px;
+      }
+
+      .coberturas-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .coberturas-dropdown {
+        min-width: 280px;
+        right: 0 !important;
+        left: auto !important;
+      }
+    }
+    </style>
+</head>
+<body>
+    <!-- Custom Navbar -->
+    <nav class="custom-navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <a class="navbar-brand" href="{{ url_for('index') }}">
+                    <i class="fas fa-tools"></i>
+                    Soporte Técnico
+                </a>
+                
+                <div class="navbar-actions">
+                    {% if current_user.is_authenticated %}
+                    <!-- Navigation Buttons -->
+                    <a class="nav-btn secondary {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
+                        <i class="fas fa-home"></i>Inicio
+                    </a>
+                    
+                    {% if tiene_permiso('agregar_fichas') %}
+                    <a class="nav-btn secondary {% if request.endpoint == 'agregar_ficha' %}active{% endif %}" href="{{ url_for('agregar_ficha') }}">
+                        <i class="fas fa-plus"></i>Agregar Ficha
+                    </a>
+                    {% endif %}
+                    
+                    <a class="nav-btn secondary {% if request.endpoint == 'buscar' %}active{% endif %}" href="{{ url_for('buscar') }}">
+                        <i class="fas fa-search"></i>Buscar
+                    </a>
+
+                    <!-- Dropdown de Coberturas -->
+                    <div class="dropdown">
+                        <button class="nav-btn secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-map-marker-alt"></i>VLANS
+                        </button>
+                        <div class="dropdown-menu coberturas-dropdown">
+                            <div class="dropdown-header">
+                                <i class="fas fa-satellite-dish me-2"></i>
+                                VLANS
+                            </div>
+                            <div class="coberturas-grid">
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">Faca 1</div>
+                                    <div class="cobertura-details">1100 y 1200 (Todos los nuevos 2025)</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">Faca 2</div>
+                                    <div class="cobertura-details">1100 y 1200</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">Rosal</div>
+                                    <div class="cobertura-details">158</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">Cachipay/Anolaima</div>
+                                    <div class="cobertura-details">200 y 201 en Anolaima2</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">Girardot</div>
+                                    <div class="cobertura-details">2000</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">La Mesa/Tocaima</div>
+                                    <div class="cobertura-details">300</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">Mesitas</div>
+                                    <div class="cobertura-details">400 y algunas con 401</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">Santandercito</div>
+                                    <div class="cobertura-details">402</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">Bojacá</div>
+                                    <div class="cobertura-details">600</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">Alban</div>
+                                    <div class="cobertura-details">1100</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">Villeta</div>
+                                    <div class="cobertura-details">1800</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">Viotá</div>
+                                    <div class="cobertura-details">1500</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">Madrid</div>
+                                    <div class="cobertura-details">700</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">Quipile</div>
+                                    <div class="cobertura-details">301</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">Sasaima</div>
+                                    <div class="cobertura-details">1300</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">Guamal</div>
+                                    <div class="cobertura-details">334</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">San Martin</div>
+                                    <div class="cobertura-details">330 - 333 (Todos los nuevos 330)</div>
+                                </div>
+                                <div class="cobertura-dropdown-item">
+                                    <div class="cobertura-location">Acacias</div>
+                                    <div class="cobertura-details">666</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if current_user.rol == 'admin' %}
+                    <a class="nav-btn secondary {% if request.endpoint == 'gestion_usuarios' %}active{% endif %}" href="{{ url_for('gestion_usuarios') }}">
+                        <i class="fas fa-users"></i>Usuarios
+                    </a>
+                    {% endif %}
+                    
+                    <!-- User Menu -->
+                    <div class="user-menu">
+                        <div class="user-info">
+                            <i class="fas fa-user-circle"></i>
+                            <span>{{ current_user.usuario }}</span>
+                            <span class="user-badge">{{ current_user.rol|title }}</span>
+                        </div>
+                        
+                        <div class="dropdown">
+                            <button class="nav-btn secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <span class="dropdown-item-text">
+                                        <small>Conectado como</small>
+                                        <br>
+                                        <strong>{{ current_user.usuario }}</strong>
+                                    </span>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('cambiar_password') }}">
+                                        <i class="fas fa-key me-2"></i>Cambiar Contraseña
+                                    </a>
+                                </li>
+                                {% if current_user.rol == 'admin' %}
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('gestion_usuarios') }}">
+                                        <i class="fas fa-users me-2"></i>Gestionar Usuarios
+                                    </a>
+                                </li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% else %}
+                    <a class="nav-btn primary" href="{{ url_for('login') }}">
+                        <i class="fas fa-sign-in-alt"></i>Iniciar Sesión
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <div class="container">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show mb-4" role="alert">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Page Content -->
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2024 Soporte Técnico. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom Scripts -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-dismiss alerts after 5 seconds
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+
+            // Confirmación para acciones destructivas
+            window.confirmAction = function(message) {
+                return confirm(message || '¿Estás seguro de realizar esta acción?');
+            };
+
+            // Efectos hover mejorados para tarjetas
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-4px)';
+                    this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)';
+                });
+            });
+
+            // Active state for nav buttons
+            const navButtons = document.querySelectorAll('.nav-btn');
+            navButtons.forEach(btn => {
+                if (btn.classList.contains('active')) {
+                    btn.style.backgroundColor = 'var(--primary)';
+                    btn.style.color = 'white';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

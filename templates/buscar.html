@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Buscar Fichas - Soporte Técnico{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- FILTROS DE BÚSQUEDA -->
+    <div class="col-md-3">
+        <div class="card shadow-sm rounded-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-search me-2"></i>Búsqueda</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('buscar') }}" aria-label="Formulario de búsqueda">
+                    <div class="mb-4">
+                        <label for="categoria" class="form-label fw-semibold">Categoría</label>
+                        <select class="form-select" id="categoria" name="categoria" aria-label="Seleccionar categoría">
+                            <option value="">Todas las categorías</option>
+                            <option value="TV" {% if categoria == 'TV' %}selected{% endif %}>TV</option>
+                            <option value="Internet" {% if categoria == 'Internet' %}selected{% endif %}>Internet</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="q" class="form-label fw-semibold">Palabras clave</label>
+                        <input type="search" class="form-control" id="q" name="q" value="{{ query }}" placeholder="Buscar..." aria-label="Palabras clave para búsqueda">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 mb-3" aria-label="Buscar fichas">
+                        <i class="fas fa-search me-1"></i> Buscar
+                    </button>
+                    <a href="{{ url_for('buscar') }}" class="btn btn-outline-secondary w-100" aria-label="Limpiar búsqueda">
+                        <i class="fas fa-eraser me-1"></i> Limpiar
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div class="col-md-9">
+        <div class="card shadow-sm rounded-3">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-list-alt me-2"></i>Resultados de búsqueda
+                    {% if query or categoria %}
+                    <small class="text-muted ms-2">
+                        ({{ fichas|length }} resultado{{ 's' if fichas|length != 1 else '' }})
+                    </small>
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body" style="max-height: 75vh; overflow-y: auto;">
+                {% if fichas %}
+                <div class="row g-4">
+                    {% for ficha in fichas %}
+                    <div class="col-md-6">
+                        <div class="card h-100 shadow-sm rounded-3 border-0">
+                            <div class="card-header d-flex justify-content-between align-items-center bg-white border-bottom py-2 px-3">
+                                <span class="badge rounded-pill text-white px-3 py-1 fw-semibold
+                                    {% if ficha.categoria == 'TV' %}bg-warning
+                                    {% elif ficha.categoria == 'Internet' %}bg-info
+                                    {% else %}bg-secondary{% endif %}"
+                                    aria-label="Categoría: {{ ficha.categoria }}">
+                                    {{ ficha.categoria }}
+                                </span>
+                                <small class="text-muted d-flex align-items-center gap-1" title="Última actualización">
+                                    <i class="fas fa-calendar-alt"></i>{{ ficha.fecha_actualizacion.strftime('%d/%m/%Y') }}
+                                </small>
+                            </div>
+                            <div class="card-body d-flex flex-column px-3 py-3">
+                                <h5 class="card-title fw-bold mb-2">{{ ficha.problema }}</h5>
+                                <p class="card-text text-muted flex-grow-1" style="min-height: 4.5em; overflow: hidden;">
+                                    {{ ficha.descripcion or 'Sin descripción' }}
+                                </p>
+                                {% if ficha.palabras_clave %}
+                                <div class="mt-3">
+                                    {% for palabra in ficha.palabras_clave.split(',') %}
+                                        <span class="badge bg-secondary me-1 mb-1">{{ palabra.strip() }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer bg-white border-top d-flex justify-content-between px-3 py-2">
+                                <a href="{{ url_for('ver_ficha', id=ficha.id) }}" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" data-bs-toggle="tooltip" title="Ver solución completa">
+                                    <i class="fas fa-eye"></i> Ver
+                                </a>
+                                {% if current_user.rol == 'admin' %}
+                                <a href="{{ url_for('editar_ficha', id=ficha.id) }}" class="btn btn-sm btn-outline-warning d-flex align-items-center gap-1" data-bs-toggle="tooltip" title="Editar ficha">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <h4 class="mb-3"><i class="fas fa-search-minus"></i> No se encontraron resultados</h4>
+                    <p class="text-muted fs-6">
+                        {% if query or categoria %}
+                            Intenta con otros términos o filtros de búsqueda.
+                        {% else %}
+                            Utiliza el formulario a la izquierda para buscar fichas.
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Inicializar tooltips Bootstrap 5
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+});
+</script>
+
+<style>
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+    .card-header.bg-primary {
+  background-color: #052398 !important;
+}
+
+.btn.btn-primary {
+  background-color: #052398 !important;
+  border-color: #052398 !important;
+}
+
+/* Etiqueta TV - color rojo suave */
+.badge.bg-warning {
+  background-color: #ff5656 !important; /* rojo bootstrap */
+  color: #fff !important;
+}
+
+/* Etiqueta Internet - color verde suave */
+.badge.bg-info {
+  background-color: #4167ff !important; /* azul claro */
+  color: #fff !important;
+}
+
+
+</style>
+
+{% endblock %}

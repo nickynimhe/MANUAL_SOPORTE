@@ -1,0 +1,474 @@
+{% extends "base.html" %}
+
+{% block title %}Agregar Ficha - Soporte Técnico{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-primary text-white d-flex align-items-center gap-2">
+                <i class="fas fa-plus-circle"></i>
+                <h4 class="mb-0">Agregar Nueva Ficha</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('agregar_ficha') }}" novalidate autocomplete="off" spellcheck="false">
+                    <div class="mb-3">
+                        <label for="categoria" class="form-label" data-bs-toggle="tooltip" title="Selecciona el tipo de servicio con problemas">
+                            Tipo de Servicio <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-tags"></i></span>
+                            <select class="form-select" id="categoria" name="categoria" required aria-describedby="categoriaHelp">
+                                <option value="" disabled selected>¿Qué servicio presenta el problema?</option>
+                                <option value="TV">TV</option>
+                                <option value="Internet">Internet</option>
+                                <option value="Equipo">Equipo/Dispositivo</option>
+                            </select>
+                        </div>
+                        <div id="categoriaHelp" class="form-text">Selecciona el servicio que necesita soporte.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="problema" class="form-label" data-bs-toggle="tooltip" title="Selecciona el problema de la lista">
+                            Problema <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-exclamation-triangle"></i></span>
+                            <select class="form-select" id="problema" name="problema" required aria-describedby="problemaHelp" disabled>
+                                <option value="" disabled selected>Primero selecciona un servicio</option>
+                                <!-- Opciones se cargarán dinámicamente según la categoría -->
+                            </select>
+                        </div>
+                        <div id="problemaHelp" class="form-text">Selecciona el problema de la lista o elige "Otro" para escribir uno personalizado.</div>
+                    </div>
+
+                    <div class="mb-3" id="otroProblemaContainer" style="display: none;">
+                        <label for="otro_problema" class="form-label">Especificar otro problema <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="otro_problema" name="otro_problema" 
+                               placeholder="Describe el problema personalizado" autocomplete="off">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label" data-bs-toggle="tooltip" title="Describe el problema con detalles">
+                            Descripción Detallada
+                        </label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" rows="4" placeholder="Describa el problema en detalle..." autocomplete="off"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="causas" class="form-label" data-bs-toggle="tooltip" title="Selecciona causas posibles o escribe personalizadas">
+                            Causas Posibles <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                            <select class="form-select" id="causas_select" name="causas_select" aria-describedby="causasHelp" disabled>
+                                <option value="" disabled selected>Primero selecciona un problema</option>
+                                <!-- Opciones se cargarán dinámicamente según el problema -->
+                            </select>
+                        </div>
+                        <div class="form-text mt-2">Selecciona causas de la lista o escribe personalizadas abajo.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="causas_personalizadas" class="form-label">Causas Personalizadas</label>
+                        <textarea class="form-control" id="causas_personalizadas" name="causas_personalizadas" rows="3" 
+                                  placeholder="Escribe causas personalizadas (una por línea) o usa las sugeridas arriba" autocomplete="off"></textarea>
+                        <div class="form-text">Presiona Enter para nueva causa. Se guardarán separadas por '|'.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="solucion" class="form-label" data-bs-toggle="tooltip" title="Cada paso numerado para mejor seguimiento">
+                            Solución <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="solucion" name="solucion" rows="5" placeholder="Pasos para resolver el problema, uno por línea" required autocomplete="off"></textarea>
+                        <div class="form-text">Cada paso se numera automáticamente al presionar Enter.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="palabras_clave" class="form-label" data-bs-toggle="tooltip" title="Separe palabras clave con comas para mejorar búsqueda">
+                            Palabras Clave
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-key"></i></span>
+                            <input type="text" class="form-control" id="palabras_clave" name="palabras_clave" 
+                                   placeholder="Ej: señal, internet lento, pixelación" aria-describedby="palabrasHelp" autocomplete="off">
+                        </div>
+                        <div id="palabrasHelp" class="form-text">Separe cada palabra clave con comas para facilitar búsquedas.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary" title="Cancelar">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary" title="Guardar ficha">
+                            <i class="fas fa-save"></i> Guardar Ficha
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Base de datos de problemas por categoría
+const problemasPorCategoria = {
+    'TV': [
+        'No hay señal en el televisor',
+        'Imagen pixelada o con interferencias',
+        'Sin sonido en algunos canales',
+        'Problemas con la guía de programación',
+        'Otro problema con TV'
+    ],
+    'Internet': [
+        'Internet lento o intermitente',
+        'Sin conexión a internet',
+        'Problemas con WiFi',
+        'No puedo conectarme a sitios específicos',
+        'Velocidad inferior a la contratada',
+        'Problemas con el módem/router',
+        'Otro problema con Internet'
+    ],
+    'Equipo': [
+        'Equipo no enciende',
+        'Problemas con puertos',
+        'Dispositivo no da MAC',
+        'Problemas niveles opticos',
+        'Otro problema con Equipo'
+    ]
+};
+
+// Base de datos de causas por problema
+const causasPorProblema = {
+    // Problemas de TV
+    'No hay señal en el televisor': [
+        'Micronodo/CATV alarmado, apagado',
+        'Problemas con el decodificador',
+        'Falla en la señal del proveedor',
+        'Televisor en modo incorrecto'
+    ],
+    'Imagen pixelada o con interferencias': [
+        'Cable de señal dañado',
+        'Problemas con la antena/servicio',
+        'Reprogramacion mal ejecutada'
+    ],
+
+    'Sin sonido en algunos canales': [
+        'Configuración de audio del canal',
+        'Falla temporal del canal'
+    ],
+    
+    // Problemas de Internet
+    'Internet lento o intermitente': [
+        'Congestión de la red',
+        'Interferencia WiFi',
+        'Potencias mayores a -27',
+        'Router/módem necesitan reinicio'
+    ],
+    'Sin conexión a internet': [
+        'Router/módem apagado',
+        'patchcord desconectado/Dañado',
+        'PON intermitente',
+        'ONU desconfigurada',
+        'IP 192.168.xxx'
+    ],
+    'Problemas con WiFi': [
+        'Señal WiFi débil',
+        'Interferencia en la red',
+        'Límite de dispositivos conectados',
+        'Router en ubicación demasiado lejos'
+    ],
+    
+    // Problemas de Equipo
+    'Equipo no enciende': [
+        'Cargador del modem desconectado',
+        'Boton OFF/ON Sin presionar',
+        'Equipo quemado',
+    ],
+    'Problemas con puertos': [
+        'Puerto físico dañado',
+        'Conexion de  puertos erronea',
+        'Cable defectuoso',
+        'Puerto bloqueado por software'
+    ],
+    'Dispositivo no da MAC': [
+        'VLAN incorrecta',
+        'Dispositivo desconfigurado',
+        'Fallo en el sistema operativo'
+    ]
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    const categoriaSelect = document.getElementById('categoria');
+    const problemaSelect = document.getElementById('problema');
+    const causasSelect = document.getElementById('causas_select');
+    const otroProblemaContainer = document.getElementById('otroProblemaContainer');
+    const otroProblemaInput = document.getElementById('otro_problema');
+    const causasPersonalizadasTextarea = document.getElementById('causas_personalizadas');
+
+    // Inicialmente deshabilitar selects dependientes
+    problemaSelect.disabled = true;
+    causasSelect.disabled = true;
+
+    // Cuando cambia la categoría (servicio)
+    categoriaSelect.addEventListener('change', function() {
+        const categoria = this.value;
+        
+        // Habilitar el select de problemas
+        problemaSelect.disabled = !categoria;
+        causasSelect.disabled = true;
+        
+        // Limpiar opciones anteriores
+        problemaSelect.innerHTML = '';
+        causasSelect.innerHTML = '';
+        
+        if (categoria && problemasPorCategoria[categoria]) {
+            // Agregar opción inicial
+            const optionDefault = document.createElement('option');
+            optionDefault.value = '';
+            optionDefault.disabled = true;
+            optionDefault.selected = true;
+            optionDefault.textContent = 'Selecciona un problema';
+            problemaSelect.appendChild(optionDefault);
+            
+            // Agregar todos los problemas de la categoría
+            problemasPorCategoria[categoria].forEach(problema => {
+                const option = document.createElement('option');
+                option.value = problema;
+                option.textContent = problema;
+                problemaSelect.appendChild(option);
+            });
+        } else {
+            // Si no hay categoría o no existe
+            const optionError = document.createElement('option');
+            optionError.value = '';
+            optionError.disabled = true;
+            optionError.selected = true;
+            optionError.textContent = 'Selecciona un servicio primero';
+            problemaSelect.appendChild(optionError);
+        }
+        
+        // Resetear campos dependientes
+        otroProblemaContainer.style.display = 'none';
+        otroProblemaInput.value = '';
+        otroProblemaInput.removeAttribute('required');
+        causasPersonalizadasTextarea.value = '';
+    });
+
+    // Cuando se selecciona un problema
+    problemaSelect.addEventListener('change', function() {
+        const problemaSeleccionado = this.value;
+        
+        // Mostrar u ocultar campo para "otro problema"
+        if (problemaSeleccionado && problemaSeleccionado.includes('Otro')) {
+            otroProblemaContainer.style.display = 'block';
+            otroProblemaInput.setAttribute('required', 'required');
+            causasSelect.disabled = true;
+            causasSelect.innerHTML = '<option value="" disabled selected>No hay causas sugeridas para problema personalizado</option>';
+        } else if (problemaSeleccionado) {
+            otroProblemaContainer.style.display = 'none';
+            otroProblemaInput.removeAttribute('required');
+            otroProblemaInput.value = '';
+            
+            // Cargar causas para el problema seleccionado
+            cargarCausas(problemaSeleccionado);
+        } else {
+            causasSelect.disabled = true;
+            causasSelect.innerHTML = '<option value="" disabled selected>Selecciona un problema primero</option>';
+        }
+    });
+
+    // Función para cargar causas según el problema
+    function cargarCausas(problema) {
+        causasSelect.disabled = false;
+        causasSelect.innerHTML = '';
+        
+        // Agregar opción inicial
+        const optionDefault = document.createElement('option');
+        optionDefault.value = '';
+        optionDefault.disabled = true;
+        optionDefault.selected = true;
+        optionDefault.textContent = 'Selecciona causas sugeridas';
+        causasSelect.appendChild(optionDefault);
+        
+        if (causasPorProblema[problema]) {
+            // Agregar todas las causas del problema
+            causasPorProblema[problema].forEach(causa => {
+                const option = document.createElement('option');
+                option.value = causa;
+                option.textContent = causa;
+                causasSelect.appendChild(option);
+            });
+            
+            // Agregar opción para agregar todas las causas
+            const optionAll = document.createElement('option');
+            optionAll.value = 'all';
+            optionAll.textContent = '--- Agregar todas las causas sugeridas ---';
+            causasSelect.appendChild(optionAll);
+        } else {
+            const optionNoCausas = document.createElement('option');
+            optionNoCausas.value = '';
+            optionNoCausas.disabled = true;
+            optionNoCausas.selected = true;
+            optionNoCausas.textContent = 'No hay causas sugeridas para este problema';
+            causasSelect.appendChild(optionNoCausas);
+        }
+    }
+
+    // Cuando se selecciona una causa
+    causasSelect.addEventListener('change', function() {
+        const causaSeleccionada = this.value;
+        
+        if (causaSeleccionada === 'all') {
+            // Agregar todas las causas sugeridas al textarea
+            const problema = problemaSelect.value;
+            if (causasPorProblema[problema]) {
+                const causasTexto = causasPorProblema[problema].map((causa, index) => 
+                    `${index + 1}. ${causa}`
+                ).join('\n');
+                causasPersonalizadasTextarea.value = causasTexto;
+            }
+            this.value = ''; // Resetear el select
+        } else if (causaSeleccionada) {
+            // Agregar la causa seleccionada al textarea
+            const lineasActuales = causasPersonalizadasTextarea.value.split('\n').filter(line => line.trim());
+            const numero = lineasActuales.length + 1;
+            const nuevaCausa = `${numero}. ${causaSeleccionada}`;
+            
+            if (causasPersonalizadasTextarea.value.trim() === '') {
+                causasPersonalizadasTextarea.value = nuevaCausa;
+            } else {
+                causasPersonalizadasTextarea.value += '\n' + nuevaCausa;
+            }
+            
+            this.value = ''; // Resetear el select después de agregar
+        }
+    });
+
+    // Autoenumerar en causas personalizadas
+    if (causasPersonalizadasTextarea) {
+        causasPersonalizadasTextarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+
+                const { selectionStart, selectionEnd, value } = this;
+                const beforeCursor = value.substring(0, selectionStart);
+                const afterCursor = value.substring(selectionEnd);
+
+                // Obtener número del último paso
+                const lines = beforeCursor.split('\n');
+                const currentLine = lines[lines.length - 1];
+                const match = currentLine.match(/^(\d+)\.\s/);
+                let nextNumber = 1;
+                if (match) {
+                    nextNumber = parseInt(match[1], 10) + 1;
+                }
+
+                const insertText = '\n' + nextNumber + '. ';
+                const newCursorPos = selectionStart + insertText.length;
+
+                this.value = beforeCursor + insertText + afterCursor;
+                this.selectionStart = this.selectionEnd = newCursorPos;
+            }
+        });
+    }
+
+    // Validación antes de enviar el formulario
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const problemaSeleccionado = problemaSelect.value;
+        const otroProblema = otroProblemaInput.value.trim();
+        const causasPersonalizadas = causasPersonalizadasTextarea.value.trim();
+        
+        // Validar problema
+        if (problemaSeleccionado && problemaSeleccionado.includes('Otro') && !otroProblema) {
+            e.preventDefault();
+            alert('Por favor, describe el problema personalizado');
+            otroProblemaInput.focus();
+            return;
+        }
+        
+        // Validar que haya al menos una causa
+        if (!causasPersonalizadas) {
+            e.preventDefault();
+            alert('Por favor, ingresa al menos una causa posible');
+            causasPersonalizadasTextarea.focus();
+            return;
+        }
+        
+        // Si seleccionó "Otro" y escribió algo, usar ese texto como problema
+        if (problemaSeleccionado && problemaSeleccionado.includes('Otro') && otroProblema) {
+            // Crear un campo oculto con el problema personalizado
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'problema_real';
+            hiddenInput.value = otroProblema;
+            this.appendChild(hiddenInput);
+            
+            // Deshabilitar el select original para que no se envíe
+            problemaSelect.disabled = true;
+        }
+        
+        // Formatear causas personalizadas y solución
+        if (causasPersonalizadasTextarea) {
+            const causasOcultas = document.createElement('input');
+            causasOcultas.type = 'hidden';
+            causasOcultas.name = 'causas';
+            causasOcultas.value = causasPersonalizadasTextarea.value.split('\n')
+                .map(line => line.replace(/^\d+\.\s*/, '').trim())
+                .filter(line => line.length > 0)
+                .join('|');
+            this.appendChild(causasOcultas);
+            
+            // Deshabilitar el textarea para que no se envíe duplicado
+            causasPersonalizadasTextarea.disabled = true;
+        }
+        
+        if (solucionTextarea) {
+            solucionTextarea.value = solucionTextarea.value.split('\n')
+                .map(line => line.replace(/^\d+\.\s*/, '').trim())
+                .filter(line => line.length > 0)
+                .join('|');
+        }
+    });
+
+    // Inicializar tooltips Bootstrap 5
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+
+    const solucionTextarea = document.getElementById('solucion');
+
+    // Inicializar textarea de solución con "1. " si está vacío
+    if (solucionTextarea && solucionTextarea.value.trim() === '') {
+        solucionTextarea.value = '1. ';
+    }
+
+    // Autoenumerar pasos en solución al presionar Enter
+    if (solucionTextarea) {
+        solucionTextarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+
+                const { selectionStart, selectionEnd, value } = this;
+                const beforeCursor = value.substring(0, selectionStart);
+                const afterCursor = value.substring(selectionEnd);
+
+                // Obtener número del último paso
+                const lines = beforeCursor.split('\n');
+                const currentLine = lines[lines.length - 1];
+                const match = currentLine.match(/^(\d+)\.\s/);
+                let nextNumber = 1;
+                if (match) {
+                    nextNumber = parseInt(match[1], 10) + 1;
+                }
+
+                const insertText = '\n' + nextNumber + '. ';
+                const newCursorPos = selectionStart + insertText.length;
+
+                this.value = beforeCursor + insertText + afterCursor;
+                this.selectionStart = this.selectionEnd = newCursorPos;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

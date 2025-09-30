@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Ficha - Soporte Técnico{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-header bg-primary text-white d-flex align-items-center gap-2">
+                <i class="fas fa-edit"></i>
+                <h4 class="mb-0">Editar Ficha</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('editar_ficha', id=ficha.id) }}" novalidate autocomplete="off" spellcheck="false">
+                    <div class="mb-3">
+                        <label for="categoria" class="form-label" data-bs-toggle="tooltip" title="Selecciona el tipo de servicio con problemas">
+                            Tipo de Servicio <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-tags"></i></span>
+                            <select class="form-select" id="categoria" name="categoria" required aria-describedby="categoriaHelp">
+                                <option value="" disabled>¿Qué servicio presenta el problema?</option>
+                                <option value="TV" {% if ficha.categoria == 'TV' %}selected{% endif %}>TV</option>
+                                <option value="Internet" {% if ficha.categoria == 'Internet' %}selected{% endif %}>Internet</option>
+                                <option value="Equipo" {% if ficha.categoria == 'Equipo' %}selected{% endif %}>Equipo/Dispositivo</option>
+                            </select>
+                        </div>
+                        <div id="categoriaHelp" class="form-text">Selecciona el servicio que necesita soporte.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="problema" class="form-label" data-bs-toggle="tooltip" title="Selecciona el problema de la lista">
+                            Problema <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-exclamation-triangle"></i></span>
+                            <select class="form-select" id="problema" name="problema" required aria-describedby="problemaHelp">
+                                <option value="" disabled selected>Selecciona un problema</option>
+                                <!-- Opciones se cargarán dinámicamente según la categoría -->
+                            </select>
+                        </div>
+                        <div id="problemaHelp" class="form-text">Selecciona el problema de la lista.</div>
+                    </div>
+
+                    <div class="mb-3" id="otroProblemaContainer" style="display: none;">
+                        <label for="otro_problema" class="form-label">Especificar otro problema</label>
+                        <input type="text" class="form-control" id="otro_problema" name="otro_problema" 
+                               placeholder="Describe el problema personalizado" autocomplete="off">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label" data-bs-toggle="tooltip" title="Describe el problema con detalles">
+                            Descripción Detallada
+                        </label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" rows="4" placeholder="Describa el problema en detalle..." autocomplete="off">{{ ficha.descripcion or '' }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="causas" class="form-label" data-bs-toggle="tooltip" title="Cada causa en una línea separada">
+                            Causas Posibles <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="causas" name="causas" rows="5" placeholder="Escribe cada causa en una línea separada" required autocomplete="off">{{ ficha.causas.replace('|', '\n') if ficha.causas else '' }}</textarea>
+                        <div class="form-text">Presiona Enter para nueva causa. Se guardarán separadas por '|'.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="solucion" class="form-label" data-bs-toggle="tooltip" title="Cada paso numerado para mejor seguimiento">
+                            Solución <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="solucion" name="solucion" rows="5" placeholder="Pasos para resolver el problema, uno por línea" required autocomplete="off">
+{% if ficha.solucion %}
+{% for paso in ficha.solucion.split('|') %}
+{{ loop.index }}. {{ paso.strip() }}
+{% if not loop.last %}
+
+{% endif %}
+{% endfor %}
+{% endif %}
+                        </textarea>
+                        <div class="form-text">Cada paso se numera automáticamente al presionar Enter.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="palabras_clave" class="form-label" data-bs-toggle="tooltip" title="Separe palabras clave con comas para mejorar búsqueda">
+                            Palabras Clave
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-key"></i></span>
+                            <input type="text" class="form-control" id="palabras_clave" name="palabras_clave" 
+                                   value="{{ ficha.palabras_clave or '' }}"
+                                   placeholder="Ej: señal, internet lento, pixelación" aria-describedby="palabrasHelp" autocomplete="off">
+                        </div>
+                        <div id="palabrasHelp" class="form-text">Separe cada palabra clave con comas para facilitar búsquedas.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary" title="Cancelar">
+                            <i class="fas fa-times"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary" title="Actualizar ficha">
+                            <i class="fas fa-save"></i> Actualizar Ficha
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Base de datos de problemas por categoría
+const problemasPorCategoria = {
+    'TV': [
+        'No hay señal en el televisor',
+        'Imagen pixelada o con interferencias',
+        'Sin sonido en algunos canales',
+        'Problemas con la guía de programación',
+        'Otro problema con TV'
+    ],
+    'Internet': [
+        'Internet lento o intermitente',
+        'Sin conexión a internet',
+        'Problemas con WiFi',
+        'No puedo conectarme a sitios específicos',
+        'Velocidad inferior a la contratada',
+        'Problemas con el módem/router',
+        'Otro problema con Internet'
+    ],
+    'Equipo': [
+        'Equipo no enciende',
+        'Problemas con puertos',
+        'Dispositivo no da MAC',
+        'Problemas niveles opticos',
+        'Otro problema con Equipo'
+    ]
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    const categoriaSelect = document.getElementById('categoria');
+    const problemaSelect = document.getElementById('problema');
+    const otroProblemaContainer = document.getElementById('otroProblemaContainer');
+    const otroProblemaInput = document.getElementById('otro_problema');
+
+    // Cargar problemas según la categoría actual
+    function cargarProblemas() {
+        const categoria = categoriaSelect.value;
+        problemaSelect.innerHTML = '<option value="" disabled selected>Selecciona un problema</option>';
+        
+        if (categoria && problemasPorCategoria[categoria]) {
+            problemasPorCategoria[categoria].forEach(problema => {
+                const option = document.createElement('option');
+                option.value = problema;
+                option.textContent = problema;
+                // Seleccionar el problema actual de la ficha
+                if (problema === '{{ ficha.problema }}') {
+                    option.selected = true;
+                }
+                problemaSelect.appendChild(option);
+            });
+        }
+        
+        toggleOtroProblema();
+    }
+
+    // Cargar problemas al iniciar
+    cargarProblemas();
+
+    // Cuando cambia la categoría
+    categoriaSelect.addEventListener('change', cargarProblemas);
+
+    // Mostrar campo para "otro problema"
+    function toggleOtroProblema() {
+        const problemaSeleccionado = problemaSelect.value;
+        const mostrarOtro = problemaSeleccionado && problemaSeleccionado.includes('Otro');
+        
+        otroProblemaContainer.style.display = mostrarOtro ? 'block' : 'none';
+        if (mostrarOtro) {
+            otroProblemaInput.setAttribute('required', 'required');
+            // Si el problema actual es personalizado, ponerlo en el campo
+            if (!problemasPorCategoria[categoriaSelect.value]?.includes('{{ ficha.problema }}')) {
+                otroProblemaInput.value = '{{ ficha.problema }}';
+            }
+        } else {
+            otroProblemaInput.removeAttribute('required');
+            otroProblemaInput.value = '';
+        }
+    }
+
+    problemaSelect.addEventListener('change', toggleOtroProblema);
+
+    // Inicializar tooltips Bootstrap 5
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+
+    const solucionTextarea = document.getElementById('solucion');
+    const causasTextarea = document.getElementById('causas');
+
+    // Autoenumerar pasos en solución al presionar Enter
+    if (solucionTextarea) {
+        solucionTextarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+
+                const { selectionStart, selectionEnd, value } = this;
+                const beforeCursor = value.substring(0, selectionStart);
+                const afterCursor = value.substring(selectionEnd);
+
+                // Obtener número del último paso
+                const lines = beforeCursor.split('\n');
+                const currentLine = lines[lines.length - 1];
+                const match = currentLine.match(/^(\d+)\.\s/);
+                let nextNumber = 1;
+                if (match) {
+                    nextNumber = parseInt(match[1], 10) + 1;
+                }
+
+                const insertText = '\n' + nextNumber + '. ';
+                const newCursorPos = selectionStart + insertText.length;
+
+                this.value = beforeCursor + insertText + afterCursor;
+                this.selectionStart = this.selectionEnd = newCursorPos;
+            }
+        });
+    }
+
+    // Al enviar el formulario
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const problemaSeleccionado = problemaSelect.value;
+        const otroProblema = otroProblemaInput.value.trim();
+        
+        // Si seleccionó "Otro" y escribió algo, usar ese texto como problema
+        if (problemaSeleccionado && problemaSeleccionado.includes('Otro') && otroProblema) {
+            // Crear un campo oculto con el problema personalizado
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'problema_real';
+            hiddenInput.value = otroProblema;
+            this.appendChild(hiddenInput);
+            
+            // Deshabilitar el select original para que no se envíe
+            problemaSelect.disabled = true;
+        }
+        
+        // Formatear causas y solución
+        if (causasTextarea) {
+            causasTextarea.value = causasTextarea.value.split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0)
+                .join('|');
+        }
+        if (solucionTextarea) {
+            solucionTextarea.value = solucionTextarea.value.split('\n')
+                .map(line => line.replace(/^\d+\.\s*/, '').trim())
+                .filter(line => line.length > 0)
+                .join('|');
+        }
+    });
+});
+</script>
+{% endblock %}

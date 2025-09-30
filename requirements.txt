@@ -1,0 +1,2 @@
+# En la terminal, dentro de tu carpeta del proyecto:
+pip freeze > requirements.txt

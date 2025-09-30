@@ -1,0 +1,565 @@
+{% extends "base.html" %}
+
+{% block title %}Información General - Soporte Técnico{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 fw-bold text-primary mb-0">
+        <i class="fas fa-info-circle me-2"></i>Información General
+    </h1>
+    <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i>Volver al Inicio
+    </a>
+</div>
+
+<!-- Barra de Búsqueda y Filtros -->
+<div class="card border-0 custom-card mb-4">
+    <div class="card-body p-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="input-group input-group-lg">
+                    <span class="input-group-text bg-white border-end-0 search-icon">
+                        <i class="fas fa-search text-primary"></i>
+                    </span>
+                    <input type="text" id="searchInput" class="form-control border-start-0 ps-0" 
+                           placeholder="Buscar en toda la información... (planes, precios, direcciones, etc.)">
+                    <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-4 mt-3 mt-md-0">
+                <select id="categoryFilter" class="form-select form-select-lg">
+                    <option value="all">Todas las categorías</option>
+                    <option value="planes">📡 Planes</option>
+                    <option value="afiliaciones">👥 Afiliaciones</option>
+                    <option value="win_sports">⚽ Win Sports</option>
+                    <option value="oficinas">🏢 Oficinas</option>
+                    <option value="procesos">📋 Procesos</option>
+                    <option value="contacto">📞 Contacto</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contador de resultados -->
+<div id="resultCount" class="alert alert-info d-none mb-4 custom-alert">
+    <div class="d-flex align-items-center">
+        <i class="fas fa-filter me-2"></i>
+        <span id="countText" class="flex-grow-1"></span>
+        <button id="clearFilters" class="btn btn-sm btn-outline-info">
+            <i class="fas fa-times me-1"></i>Limpiar filtros
+        </button>
+    </div>
+</div>
+
+<!-- Información Organizada -->
+<div id="informacionContainer">
+    {% for key, seccion in informacion.items() %}
+    <div class="seccion-card mb-4" data-category="{{ key }}">
+        <div class="card custom-card border-0">
+            <div class="card-header custom-card-header py-4">
+                <div class="d-flex align-items-center">
+                    <div class="section-icon me-3">
+                        <i class="fas {{ seccion.icono }}"></i>
+                    </div>
+                    <div>
+                        <h5 class="card-title mb-0 fw-bold text-dark">
+                            {{ seccion.titulo }}
+                        </h5>
+                        <small class="text-muted">{{ seccion.contenido|length }} subsecciones disponibles</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-4">
+                    {% for subseccion in seccion.contenido %}
+                    <div class="col-lg-{% if seccion.contenido|length > 1 %}6{% else %}12{% endif %}">
+                        <div class="subseccion-item h-100 p-4 position-relative">
+                            <div class="subseccion-decoration"></div>
+                            {% if subseccion.subtitulo %}
+                            <h6 class="fw-bold text-dark mb-3 subseccion-title">
+                                <i class="fas fa-chevron-right me-2 text-primary"></i>
+                                {{ subseccion.subtitulo }}
+                            </h6>
+                            {% endif %}
+                            <div class="informacion-content">
+                                {% for item in subseccion.contenido_items %}
+                                {% if item.strip() %}
+                                    {% if item == '' %}
+                                        <div class="separator my-3"></div>
+                                    {% else %}
+                                        <div class="info-item d-flex align-items-start mb-3 p-2 rounded">
+                                            <div class="bullet-point me-3">
+                                                <i class="fas fa-circle"></i>
+                                            </div>
+                                            <div class="content-text flex-grow-1">
+                                                {{ item.replace('**', '<strong class="text-primary">').replace('<strong class="text-primary">', '</strong>', 1)|safe }}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Estado vacío para búsquedas sin resultados -->
+<div id="noResults" class="text-center py-5 d-none">
+    <div class="empty-state">
+        <div class="empty-icon mb-4">
+            <i class="fas fa-search fa-4x text-muted"></i>
+        </div>
+        <h4 class="text-dark mb-3">No se encontraron resultados</h4>
+        <p class="text-muted mb-4">Intenta con otros términos de búsqueda o cambia el filtro</p>
+        <button id="resetSearch" class="btn btn-primary btn-lg">
+            <i class="fas fa-redo me-2"></i>Mostrar toda la información
+        </button>
+    </div>
+</div>
+
+<style>
+:root {
+    --primary-color: #2c5aa0;
+    --primary-light: #e8efff;
+    --secondary-color: #6c757d;
+    --accent-color: #ff6b35;
+    --text-dark: #2d3748;
+    --text-light: #718096;
+    --border-color: #e2e8f0;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Tarjetas personalizadas */
+.custom-card {
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.custom-card:hover {
+    box-shadow: var(--card-shadow-hover);
+    transform: translateY(-2px);
+}
+
+.custom-card-header {
+    background: linear-gradient(135deg, var(--primary-light) 0%, #ffffff 100%);
+    border-bottom: 2px solid var(--primary-color);
+    border-radius: 12px 12px 0 0 !important;
+}
+
+/* Iconos de sección */
+.section-icon {
+    width: 50px;
+    height: 50px;
+    background: var(--primary-color);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+/* Subsecciones */
+.subseccion-item {
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.subseccion-item:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.subseccion-decoration {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, var(--primary-color), var(--accent-color));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.subseccion-item:hover .subseccion-decoration {
+    opacity: 1;
+}
+
+.subseccion-title {
+    font-size: 1.1rem;
+    color: var(--text-dark);
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary-light);
+}
+
+/* Elementos de información */
+.info-item {
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.info-item:hover {
+    background-color: var(--primary-light);
+    border-left-color: var(--primary-color);
+    transform: translateX(5px);
+}
+
+.bullet-point {
+    color: var(--primary-color);
+    font-size: 0.5rem;
+    margin-top: 0.4rem;
+}
+
+.content-text {
+    color: var(--text-dark);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.content-text strong {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+/* Separador */
+.separator {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border-color), transparent);
+}
+
+/* Barra de búsqueda */
+.search-icon {
+    border-radius: 10px 0 0 10px !important;
+    border-right: none !important;
+}
+
+.input-group-lg .form-control {
+    border-radius: 0 10px 10px 0;
+    font-size: 1rem;
+}
+
+.form-select-lg {
+    border-radius: 10px;
+    font-size: 1rem;
+}
+
+/* Alertas personalizadas */
+.custom-alert {
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+    border-left: 4px solid var(--primary-color);
+}
+
+/* Estado vacío */
+.empty-state {
+    padding: 3rem 2rem;
+}
+
+.empty-icon {
+    opacity: 0.7;
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.seccion-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Efectos de búsqueda */
+.highlight {
+    background: linear-gradient(120deg, #fef3c7, #fef3c7);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: 600;
+    color: var(--text-dark) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .custom-card-header {
+        padding: 1.5rem !important;
+    }
+    
+    .card-body {
+        padding: 1.5rem !important;
+    }
+    
+    .subseccion-item {
+        padding: 1.5rem !important;
+    }
+    
+    .section-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+}
+
+/* Efectos de carga escalonada */
+.seccion-card:nth-child(1) { animation-delay: 0.1s; }
+.seccion-card:nth-child(2) { animation-delay: 0.2s; }
+.seccion-card:nth-child(3) { animation-delay: 0.3s; }
+.seccion-card:nth-child(4) { animation-delay: 0.4s; }
+.seccion-card:nth-child(5) { animation-delay: 0.5s; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const clearSearch = document.getElementById('clearSearch');
+    const clearFilters = document.getElementById('clearFilters');
+    const resetSearch = document.getElementById('resetSearch');
+    const resultCount = document.getElementById('resultCount');
+    const countText = document.getElementById('countText');
+    const noResults = document.getElementById('noResults');
+    const informacionContainer = document.getElementById('informacionContainer');
+    const secciones = document.querySelectorAll('.seccion-card');
+
+    // Función para procesar texto con negritas
+    function processTextWithBold(text) {
+        return text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-primary">$1</strong>');
+    }
+
+    // Aplicar procesamiento de negritas a todo el contenido existente
+    function applyBoldProcessing() {
+        const textElements = document.querySelectorAll('.content-text');
+        textElements.forEach(element => {
+            const originalHtml = element.innerHTML;
+            const processedHtml = processTextWithBold(originalHtml);
+            element.innerHTML = processedHtml;
+        });
+    }
+
+    // Función para realizar la búsqueda
+    function performSearch() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const selectedCategory = categoryFilter.value;
+        let visibleSections = 0;
+        let totalMatches = 0;
+
+        secciones.forEach(seccion => {
+            const category = seccion.getAttribute('data-category');
+            const sectionContent = seccion.textContent.toLowerCase();
+            let sectionMatches = 0;
+
+            // Aplicar filtros de categoría
+            if (selectedCategory !== 'all' && category !== selectedCategory) {
+                seccion.style.display = 'none';
+                return;
+            }
+
+            // Aplicar filtro de búsqueda
+            if (searchTerm && !sectionContent.includes(searchTerm)) {
+                seccion.style.display = 'none';
+                return;
+            }
+
+            // Resaltar términos de búsqueda
+            if (searchTerm) {
+                highlightMatches(seccion, searchTerm);
+                sectionMatches = countMatches(seccion, searchTerm);
+                totalMatches += sectionMatches;
+            } else {
+                removeHighlights(seccion);
+                // Re-aplicar negritas después de quitar resaltados
+                applyBoldProcessing();
+            }
+
+            // Mostrar sección
+            seccion.style.display = 'block';
+            visibleSections++;
+        });
+
+        // Mostrar resultados
+        updateResultsCount(visibleSections, totalMatches, searchTerm, selectedCategory);
+    }
+
+    // Resaltar coincidencias (versión mejorada que preserva HTML)
+    function highlightMatches(element, searchTerm) {
+        const textNodes = getTextNodes(element);
+        
+        textNodes.forEach(node => {
+            const parent = node.parentNode;
+            if (parent.nodeName === 'SPAN' && parent.classList.contains('highlight')) {
+                return; // Ya está resaltado
+            }
+
+            const text = node.textContent;
+            const lowerText = text.toLowerCase();
+            
+            if (lowerText.includes(searchTerm)) {
+                const fragment = document.createDocumentFragment();
+                let lastIndex = 0;
+                let index;
+                
+                while ((index = lowerText.indexOf(searchTerm, lastIndex)) !== -1) {
+                    // Texto antes del match
+                    if (index > lastIndex) {
+                        fragment.appendChild(document.createTextNode(text.slice(lastIndex, index)));
+                    }
+                    
+                    // Texto del match (resaltado)
+                    const highlight = document.createElement('span');
+                    highlight.className = 'highlight';
+                    highlight.textContent = text.slice(index, index + searchTerm.length);
+                    fragment.appendChild(highlight);
+                    
+                    lastIndex = index + searchTerm.length;
+                }
+                
+                // Texto después del último match
+                if (lastIndex < text.length) {
+                    fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+                }
+                
+                parent.replaceChild(fragment, node);
+            }
+        });
+    }
+
+    // Obtener todos los nodos de texto
+    function getTextNodes(element) {
+        const walker = document.createTreeWalker(
+            element,
+            NodeFilter.SHOW_TEXT,
+            null,
+            false
+        );
+        
+        const nodes = [];
+        let node;
+        while (node = walker.nextNode()) {
+            nodes.push(node);
+        }
+        return nodes;
+    }
+
+    // Remover resaltados
+    function removeHighlights(element) {
+        const highlights = element.querySelectorAll('.highlight');
+        highlights.forEach(highlight => {
+            const text = document.createTextNode(highlight.textContent);
+            highlight.parentNode.replaceChild(text, highlight);
+        });
+    }
+
+    // Contar coincidencias
+    function countMatches(element, searchTerm) {
+        const text = element.textContent.toLowerCase();
+        const matches = text.match(new RegExp(searchTerm, 'g'));
+        return matches ? matches.length : 0;
+    }
+
+    // Actualizar contador de resultados
+    function updateResultsCount(sections, matches, searchTerm, category) {
+        if (searchTerm || category !== 'all') {
+            let message = '';
+            
+            if (searchTerm && category !== 'all') {
+                message = `Se encontraron ${sections} secciones con ${matches} coincidencias para "${searchTerm}" en ${categoryFilter.options[categoryFilter.selectedIndex].text}`;
+            } else if (searchTerm) {
+                message = `Se encontraron ${sections} secciones con ${matches} coincidencias para "${searchTerm}"`;
+            } else {
+                message = `Mostrando ${sections} secciones de ${categoryFilter.options[categoryFilter.selectedIndex].text}`;
+            }
+            
+            countText.textContent = message;
+            resultCount.classList.remove('d-none');
+            
+            if (sections === 0) {
+                informacionContainer.classList.add('d-none');
+                noResults.classList.remove('d-none');
+            } else {
+                informacionContainer.classList.remove('d-none');
+                noResults.classList.add('d-none');
+            }
+        } else {
+            resultCount.classList.add('d-none');
+            informacionContainer.classList.remove('d-none');
+            noResults.classList.add('d-none');
+        }
+    }
+
+    // Event Listeners
+    searchInput.addEventListener('input', performSearch);
+    categoryFilter.addEventListener('change', performSearch);
+    
+    clearSearch.addEventListener('click', function() {
+        searchInput.value = '';
+        performSearch();
+        searchInput.focus();
+    });
+    
+    clearFilters.addEventListener('click', function() {
+        searchInput.value = '';
+        categoryFilter.value = 'all';
+        performSearch();
+    });
+    
+    resetSearch.addEventListener('click', function() {
+        searchInput.value = '';
+        categoryFilter.value = 'all';
+        performSearch();
+    });
+
+    // Buscar con Enter
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            performSearch();
+        }
+    });
+
+    // Aplicar procesamiento de negritas al cargar la página
+    applyBoldProcessing();
+
+    // Añadir efectos de hover dinámicos
+    document.querySelectorAll('.info-item').forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateX(5px)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateX(0)';
+        });
+    });
+
+    // Efecto de carga inicial
+    setTimeout(() => {
+        document.querySelectorAll('.seccion-card').forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+        });
+    }, 100);
+});
+</script>
+{% endblock %}
