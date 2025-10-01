@@ -9,10 +9,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     
     <style>
+    /* ===== VARIABLES CSS ===== */
     :root {
       --primary: #052398;
       --secondary: #e0f2fe;
@@ -24,6 +23,7 @@
       --radius: 12px;
     }
 
+    /* ===== ESTILOS BASE ===== */
     html, body {
       height: 100%;
       margin: 0;
@@ -39,10 +39,10 @@
       min-height: 100vh;
     }
 
-    /* Navbar */
+    /* ===== NAVBAR OPTIMIZADA ===== */
     .custom-navbar {
       background: var(--white);
-      padding: 15px 0;
+      padding: 10px 0;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       flex-shrink: 0;
     }
@@ -51,38 +51,46 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
     .navbar-brand {
-      font-weight: 800;
-      font-size: 20px;
+      font-weight: 700;
+      font-size: 18px;
       color: var(--primary);
       text-decoration: none;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .navbar-brand i {
-      margin-right: 8px;
+      margin-right: 6px;
     }
 
     .navbar-actions {
       display: flex;
-      gap: 12px;
       align-items: center;
       flex-wrap: wrap;
+      gap: 6px;
+      flex: 1;
+      justify-content: flex-end;
     }
 
     .nav-btn {
       text-decoration: none;
-      padding: 8px 14px;
+      padding: 6px 10px;
       border-radius: var(--radius);
-      font-weight: 600;
-      font-size: 14px;
+      font-weight: 500;
+      font-size: 13px;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      transition: background 0.2s ease;
+      gap: 4px;
+      transition: all 0.2s ease;
       border: none;
       cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .nav-btn.primary {
@@ -103,19 +111,22 @@
       background-color: #bae6fd;
     }
 
-    .user-info {
-      font-size: 14px;
-      color: var(--muted);
-      margin-right: 10px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
+    /* Estado activo para botones de navegación */
+    .nav-btn.active {
+      background-color: var(--primary);
+      color: white;
     }
 
-    /* Main content */
+    /* Menú compacto para elementos secundarios */
+    .compact-menu .nav-btn {
+      padding: 5px 8px;
+      font-size: 12px;
+    }
+
+    /* ===== CONTENIDO PRINCIPAL ===== */
     main.main-container {
       flex: 1 0 auto;
-      padding: 40px 0;
+      padding: 30px 0;
     }
 
     .alert {
@@ -126,184 +137,194 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
-    /* Cards */
-    .card {
-      border: none;
-      border-radius: var(--radius);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    }
-
-    .card-header {
-      background-color: var(--white);
-      border-bottom: 1px solid #e5e7eb;
-      border-radius: var(--radius) var(--radius) 0 0 !important;
-      font-weight: 600;
-    }
-
-    /* Buttons */
-    .btn {
-      border-radius: var(--radius);
-      font-weight: 600;
-      padding: 8px 16px;
-      transition: all 0.2s ease;
-    }
-
-    .btn-primary {
-      background-color: var(--primary);
-      border-color: var(--primary);
-    }
-
-    .btn-primary:hover {
-      background-color: #031a7a;
-      border-color: #031a7a;
-      transform: translateY(-1px);
-    }
-
-    .btn-danger {
-      background-color: var(--accent);
-      border-color: var(--accent);
-    }
-
-    .btn-danger:hover {
-      background-color: #dc2626;
-      border-color: #dc2626;
-      transform: translateY(-1px);
-    }
-
-    .btn-outline-primary {
-      color: var(--primary);
-      border-color: var(--primary);
-    }
-
-    .btn-outline-primary:hover {
-      background-color: var(--primary);
-      border-color: var(--primary);
-    }
-
-    /* Badges */
-    .badge {
-      border-radius: 6px;
-      font-weight: 500;
-      padding: 6px 10px;
-    }
-
-    .badge.bg-primary {
-      background-color: var(--primary) !important;
-    }
-
-    /* Dropdown de coberturas */
+    /* ===== DROPDOWN DE COBERTURAS COMPACTO ===== */
     .coberturas-dropdown {
-      min-width: 500px;
-      max-height: 400px;
+      min-width: 350px;
+      max-height: 350px;
       overflow-y: auto;
+      font-size: 13px;
     }
 
     .coberturas-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-      padding: 8px;
+      gap: 6px;
+      padding: 6px;
     }
 
     .cobertura-dropdown-item {
-      padding: 8px 10px;
+      padding: 6px 8px;
       border-radius: 6px;
       border-left: 3px solid var(--primary);
       background-color: var(--white);
       transition: background-color 0.2s ease;
-    }
-
-    .cobertura-dropdown-item:hover {
-      background-color: var(--secondary);
+      font-size: 12px;
     }
 
     .cobertura-location {
       font-weight: 600;
       color: var(--primary);
-      font-size: 13px;
-      margin-bottom: 2px;
+      font-size: 12px;
+      margin-bottom: 1px;
     }
 
     .cobertura-details {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--muted);
+      line-height: 1.2;
     }
 
     .dropdown-header {
       background-color: var(--secondary);
       font-weight: 600;
       color: var(--primary);
-      padding: 10px 15px;
+      padding: 8px 12px;
       border-bottom: 1px solid #e5e7eb;
+      font-size: 13px;
     }
 
-    /* User menu styles */
+    /* ===== MENÚ DE USUARIO COMPACTO ===== */
     .user-menu {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .user-info {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
     }
 
     .user-badge {
       background-color: var(--secondary);
       color: var(--primary);
-      padding: 4px 8px;
+      padding: 3px 6px;
       border-radius: 6px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
+    }
+
+    /* ===== GRUPOS DE NAVEGACIÓN ===== */
+    .nav-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* ===== MENÚ DESPLEGABLE PARA ELEMENTOS SECUNDARIOS ===== */
+    .more-menu .dropdown-toggle::after {
+      margin-left: 2px;
+    }
+
+    /* ===== RESPONSIVIDAD MEJORADA ===== */
+    @media (max-width: 1200px) {
+      .navbar-brand {
+        font-size: 16px;
+      }
+      
+      .nav-btn {
+        padding: 5px 8px;
+        font-size: 12px;
+      }
+      
+      .coberturas-dropdown {
+        min-width: 300px;
+      }
+    }
+
+    @media (max-width: 992px) {
+      .navbar-content {
+        gap: 8px;
+      }
+      
+      .nav-group {
+        gap: 4px;
+      }
+      
+      .nav-btn {
+        padding: 4px 6px;
+        font-size: 11px;
+      }
+      
+      /* Ocultar elementos menos importantes en tablets */
+      .nav-btn .btn-text {
+        display: none;
+      }
+      
+      .nav-btn i {
+        margin-right: 0;
+      }
+      
+      .user-info .username {
+        display: none;
+      }
     }
 
     @media (max-width: 768px) {
       .navbar-content {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
+        align-items: stretch;
+        gap: 8px;
       }
 
       .navbar-actions {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-        width: 100%;
+        gap: 6px;
+      }
+
+      .nav-group {
+        justify-content: center;
+        gap: 4px;
       }
 
       .nav-btn {
-        width: 100%;
+        flex: 1;
+        justify-content: center;
+        min-width: 60px;
       }
 
       .user-menu {
-        flex-direction: column;
-        align-items: flex-start;
+        justify-content: center;
         width: 100%;
       }
 
-      .coberturas-dropdown {
-        min-width: 300px;
-        max-height: 300px;
-      }
-
-      .coberturas-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 480px) {
       .coberturas-dropdown {
         min-width: 280px;
         right: 0 !important;
         left: auto !important;
       }
+      
+      /* Mostrar texto en móviles */
+      .nav-btn .btn-text {
+        display: inline;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .coberturas-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .nav-btn {
+        padding: 6px 8px;
+        font-size: 12px;
+      }
+    }
+
+    /* ===== ESTILOS PARA ICONOS SOLOS ===== */
+    .icon-only .btn-text {
+      display: none;
     }
     </style>
 </head>
 <body>
-    <!-- Custom Navbar -->
+    <!-- ===== NAVBAR OPTIMIZADA ===== -->
     <nav class="custom-navbar">
         <div class="container">
             <div class="navbar-content">
@@ -314,125 +335,155 @@
                 
                 <div class="navbar-actions">
                     {% if current_user.is_authenticated %}
-                    <!-- Navigation Buttons -->
-                    <a class="nav-btn secondary {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
-                        <i class="fas fa-home"></i>Inicio
-                    </a>
-                    
-                    {% if tiene_permiso('agregar_fichas') %}
-                    <a class="nav-btn secondary {% if request.endpoint == 'agregar_ficha' %}active{% endif %}" href="{{ url_for('agregar_ficha') }}">
-                        <i class="fas fa-plus"></i>Agregar Ficha
-                    </a>
-                    {% endif %}
-                    
-                    <a class="nav-btn secondary {% if request.endpoint == 'buscar' %}active{% endif %}" href="{{ url_for('buscar') }}">
-                        <i class="fas fa-search"></i>Buscar
-                    </a>
+                    <!-- Grupo de navegación principal - Más compacto -->
+                    <div class="nav-group">
+                        <!-- Navegación esencial -->
+                        <a class="nav-btn secondary {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
+                            <i class="fas fa-home"></i>
+                            <span class="btn-text">Inicio</span>
+                        </a>
 
-                    <!-- Dropdown de Coberturas -->
-                    <div class="dropdown">
-                        <button class="nav-btn secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-map-marker-alt"></i>VLANS
-                        </button>
-                        <div class="dropdown-menu coberturas-dropdown">
-                            <div class="dropdown-header">
-                                <i class="fas fa-satellite-dish me-2"></i>
-                                VLANS
-                            </div>
-                            <div class="coberturas-grid">
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">Faca 1</div>
-                                    <div class="cobertura-details">1100 y 1200 (Todos los nuevos 2025)</div>
+                        <a class="nav-btn secondary" href="{{ url_for('soluciones_visuales') }}">
+                            <i class="fas fa-images"></i>
+                            <span class="btn-text">Soluciones</span>
+                        </a>
+
+                        <!-- Información General - Agregado aquí -->
+                        <a class="nav-btn secondary {% if request.endpoint == 'informacion_general' %}active{% endif %}" href="{{ url_for('informacion_general') }}">
+                            <i class="fas fa-info-circle"></i>
+                            <span class="btn-text">Información</span>
+                        </a>
+
+                        <!-- Menú desplegable para elementos adicionales -->
+                        <div class="dropdown more-menu">
+                            <button class="nav-btn secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-th"></i>
+                                <span class="btn-text">Más</span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('atencion_telefonica') }}">
+                                        <i class="fas fa-headset me-2"></i>Atención Telefónica
+                                    </a>
+                                </li>
+                                {% if tiene_permiso('agregar_fichas') %}
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('agregar_ficha') }}">
+                                        <i class="fas fa-plus me-2"></i>Agregar Ficha
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% if current_user.rol == 'admin' %}
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('gestion_usuarios') }}">
+                                        <i class="fas fa-users me-2"></i>Gestionar Usuarios
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+
+                        <!-- Dropdown de VLANS - Siempre visible -->
+                        <div class="dropdown">
+                            <button class="nav-btn secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span class="btn-text">VLANS</span>
+                            </button>
+                            <div class="dropdown-menu coberturas-dropdown">
+                                <div class="dropdown-header">
+                                    <i class="fas fa-satellite-dish me-2"></i>
+                                    VLANS por Ubicación
                                 </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">Faca 2</div>
-                                    <div class="cobertura-details">1100 y 1200</div>
-                                </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">Rosal</div>
-                                    <div class="cobertura-details">158</div>
-                                </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">Cachipay/Anolaima</div>
-                                    <div class="cobertura-details">200 y 201 en Anolaima2</div>
-                                </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">Girardot</div>
-                                    <div class="cobertura-details">2000</div>
-                                </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">La Mesa/Tocaima</div>
-                                    <div class="cobertura-details">300</div>
-                                </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">Mesitas</div>
-                                    <div class="cobertura-details">400 y algunas con 401</div>
-                                </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">Santandercito</div>
-                                    <div class="cobertura-details">402</div>
-                                </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">Bojacá</div>
-                                    <div class="cobertura-details">600</div>
-                                </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">Alban</div>
-                                    <div class="cobertura-details">1100</div>
-                                </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">Villeta</div>
-                                    <div class="cobertura-details">1800</div>
-                                </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">Viotá</div>
-                                    <div class="cobertura-details">1500</div>
-                                </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">Madrid</div>
-                                    <div class="cobertura-details">700</div>
-                                </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">Quipile</div>
-                                    <div class="cobertura-details">301</div>
-                                </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">Sasaima</div>
-                                    <div class="cobertura-details">1300</div>
-                                </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">Guamal</div>
-                                    <div class="cobertura-details">334</div>
-                                </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">San Martin</div>
-                                    <div class="cobertura-details">330 - 333 (Todos los nuevos 330)</div>
-                                </div>
-                                <div class="cobertura-dropdown-item">
-                                    <div class="cobertura-location">Acacias</div>
-                                    <div class="cobertura-details">666</div>
+                                <div class="coberturas-grid">
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">Faca 1</div>
+                                        <div class="cobertura-details">1100 y 1200</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">Faca 2</div>
+                                        <div class="cobertura-details">1100 y 1200</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">Rosal</div>
+                                        <div class="cobertura-details">158</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">Cachipay/Anolaima</div>
+                                        <div class="cobertura-details">200 y 201</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">Girardot</div>
+                                        <div class="cobertura-details">2000</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">La Mesa/Tocaima</div>
+                                        <div class="cobertura-details">300</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">Mesitas</div>
+                                        <div class="cobertura-details">400 y 401</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">Santandercito</div>
+                                        <div class="cobertura-details">402</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">Bojacá</div>
+                                        <div class="cobertura-details">600</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">Alban</div>
+                                        <div class="cobertura-details">1100</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">Villeta</div>
+                                        <div class="cobertura-details">1800</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">Viotá</div>
+                                        <div class="cobertura-details">1500</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">Madrid</div>
+                                        <div class="cobertura-details">700</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">Quipile</div>
+                                        <div class="cobertura-details">301</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">Sasaima</div>
+                                        <div class="cobertura-details">1300</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">Guamal</div>
+                                        <div class="cobertura-details">334</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">San Martin</div>
+                                        <div class="cobertura-details">330 - 333</div>
+                                    </div>
+                                    <div class="cobertura-dropdown-item">
+                                        <div class="cobertura-location">Acacias</div>
+                                        <div class="cobertura-details">666</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    {% if current_user.rol == 'admin' %}
-                    <a class="nav-btn secondary {% if request.endpoint == 'gestion_usuarios' %}active{% endif %}" href="{{ url_for('gestion_usuarios') }}">
-                        <i class="fas fa-users"></i>Usuarios
-                    </a>
-                    {% endif %}
-                    
-                    <!-- User Menu -->
+                    <!-- Menú de usuario compacto -->
                     <div class="user-menu">
                         <div class="user-info">
                             <i class="fas fa-user-circle"></i>
-                            <span>{{ current_user.usuario }}</span>
+                            <span class="username">{{ current_user.usuario }}</span>
                             <span class="user-badge">{{ current_user.rol|title }}</span>
                         </div>
                         
                         <div class="dropdown">
-                            <button class="nav-btn secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <button class="nav-btn secondary dropdown-toggle icon-only" type="button" data-bs-toggle="dropdown">
                                 <i class="fas fa-cog"></i>
+                                <span class="btn-text">Config</span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
@@ -448,13 +499,6 @@
                                         <i class="fas fa-key me-2"></i>Cambiar Contraseña
                                     </a>
                                 </li>
-                                {% if current_user.rol == 'admin' %}
-                                <li>
-                                    <a class="dropdown-item" href="{{ url_for('gestion_usuarios') }}">
-                                        <i class="fas fa-users me-2"></i>Gestionar Usuarios
-                                    </a>
-                                </li>
-                                {% endif %}
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
@@ -466,7 +510,8 @@
                     </div>
                     {% else %}
                     <a class="nav-btn primary" href="{{ url_for('login') }}">
-                        <i class="fas fa-sign-in-alt"></i>Iniciar Sesión
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span class="btn-text">Iniciar Sesión</span>
                     </a>
                     {% endif %}
                 </div>
@@ -474,10 +519,10 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
     <main class="main-container">
         <div class="container">
-            <!-- Flash Messages -->
+            <!-- Mensajes flash -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -492,25 +537,24 @@
                 {% endif %}
             {% endwith %}
 
-            <!-- Page Content -->
+            <!-- Contenido de la página -->
             {% block content %}{% endblock %}
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer>
+    <!-- ===== PIE DE PÁGINA ===== -->
+    <footer class="mt-auto py-3">
         <div class="container text-center">
-            <p class="mb-0">&copy; 2024 Soporte Técnico. Todos los derechos reservados.</p>
+            <p class="mb-0 text-muted" style="font-size: 12px;">&copy; 2024 Soporte Técnico. Todos los derechos reservados.</p>
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
+    <!-- ===== SCRIPTS ===== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Custom Scripts -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Auto-dismiss alerts after 5 seconds
+            // Auto-cierre de alertas después de 5 segundos
             setTimeout(function() {
                 const alerts = document.querySelectorAll('.alert');
                 alerts.forEach(function(alert) {
@@ -518,34 +562,6 @@
                     bsAlert.close();
                 });
             }, 5000);
-
-            // Confirmación para acciones destructivas
-            window.confirmAction = function(message) {
-                return confirm(message || '¿Estás seguro de realizar esta acción?');
-            };
-
-            // Efectos hover mejorados para tarjetas
-            const cards = document.querySelectorAll('.card');
-            cards.forEach(card => {
-                card.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-4px)';
-                    this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-                });
-                
-                card.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(-2px)';
-                    this.style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)';
-                });
-            });
-
-            // Active state for nav buttons
-            const navButtons = document.querySelectorAll('.nav-btn');
-            navButtons.forEach(btn => {
-                if (btn.classList.contains('active')) {
-                    btn.style.backgroundColor = 'var(--primary)';
-                    btn.style.color = 'white';
-                }
-            });
         });
     </script>
 </body>

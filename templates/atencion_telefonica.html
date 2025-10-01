@@ -1,0 +1,1221 @@
+{% extends "base.html" %}
+
+{% block title %}Atención Telefónica al Usuario - M@STV{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Corporativo -->
+    <div class="corporate-header mb-5">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center">
+                    <div class="header-icon-wrapper me-4">
+                        <div class="corporate-icon">
+                            <i class="fas fa-headset"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h1 class="corporate-title mb-2">
+                            Atención Telefónica al Usuario
+                        </h1>
+                        <p class="corporate-subtitle mb-0">
+                            <i class="fas fa-phone me-2"></i>
+                            Guión estandarizado para atención al cliente telefónica
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="corporate-stats">
+                    <div class="stat-item vortex-stat">
+                        <div class="stat-number">7</div>
+                        <div class="stat-label">Pasos Clave</div>
+                    </div>
+                    <div class="stat-item softv-stat">
+                        <div class="stat-number">15+</div>
+                        <div class="stat-label">Frases Estandarizadas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline Navigation -->
+    <div class="timeline-nav mb-5">
+        <div class="timeline-progress">
+            <div class="timeline-bar"></div>
+        </div>
+        <div class="timeline-steps">
+            {% for step in range(1, 8) %}
+            <div class="timeline-step" data-step="{{ step }}">
+                <div class="step-dot"></div>
+                <span class="step-label">Paso {{ step }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Proceso de Atención Telefónica -->
+    <div class="row">
+        <div class="col-12">
+            <!-- Paso 1: Saludo -->
+            <div class="process-card mb-5" data-step="1">
+                <div class="card-header-custom">
+                    <div class="d-flex align-items-center">
+                        <div class="step-indicator">
+                            <span class="step-number">1</span>
+                            <div class="step-line"></div>
+                        </div>
+                        <div class="step-content">
+                            <h3 class="step-title">Saludo Adecuado</h3>
+                            <p class="step-description">Primera impresión y establecimiento del contacto</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body-custom">
+                    <div class="guideline-grid">
+                        <div class="guideline-category">
+                            <div class="category-header">
+                                <i class="fas fa-phone-alt category-icon"></i>
+                                <h6>Frases de Inicio</h6>
+                            </div>
+                            <div class="phrases-list">
+                                <div class="phrase-item success">
+                                    <div class="phrase-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="phrase-content">
+                                        <strong>"Buenos días/tardes, gracias por llamar a M@STV. Le habla... (su nombre). ¿Con quién tengo el gusto de hablar?"</strong>
+                                    </div>
+                                </div>
+                                <div class="phrase-item success">
+                                    <div class="phrase-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="phrase-content">
+                                        <strong>"¿Sra/Sr... en qué le puedo colaborar?"</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="guideline-category">
+                            <div class="category-header">
+                                <i class="fas fa-ear-listen category-icon"></i>
+                                <h6>Escucha Activa</h6>
+                            </div>
+                            <div class="phrases-list">
+                                <div class="phrase-item success">
+                                    <div class="phrase-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="phrase-content">
+                                        "Entiendo su preocupación"
+                                    </div>
+                                </div>
+                                <div class="phrase-item success">
+                                    <div class="phrase-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="phrase-content">
+                                        "Comprendo su molestia"
+                                    </div>
+                                </div>
+                                <div class="phrase-item success">
+                                    <div class="phrase-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="phrase-content">
+                                        "Con mucho gusto le voy a colaborar"
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Importante:</strong> Siempre se usa el <strong>Señor o Señora</strong>. 
+                        <strong class="text-danger">NUNCA</strong> señorita, abuelita, ni palabras cariñosas.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paso 2: Validación -->
+            <div class="process-card mb-5" data-step="2">
+                <div class="card-header-custom">
+                    <div class="d-flex align-items-center">
+                        <div class="step-indicator">
+                            <span class="step-number">2</span>
+                            <div class="step-line"></div>
+                        </div>
+                        <div class="step-content">
+                            <h3 class="step-title">Confidencialidad de Datos</h3>
+                            <p class="step-description">Validación de identidad y protección de información</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body-custom">
+                    <div class="security-section">
+                        <div class="security-header">
+                            <i class="fas fa-shield-alt security-icon"></i>
+                            <h6>Filtro de Seguridad</h6>
+                        </div>
+                        <div class="security-phrase">
+                            <strong>"Sra./Sr.... Con el objetivo de continuar con la llamada realizaremos una validación de información, me confirma por favor:"</strong>
+                        </div>
+                        
+                        <div class="data-validation-grid">
+                            <div class="data-item">
+                                <div class="data-icon">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="data-content">
+                                    <div class="data-title">¿Es usted la titular de la cuenta?</div>
+                                </div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-icon">
+                                    <i class="fas fa-id-card"></i>
+                                </div>
+                                <div class="data-content">
+                                    <div class="data-title">Nombre completo</div>
+                                </div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-icon">
+                                    <i class="fas fa-address-card"></i>
+                                </div>
+                                <div class="data-content">
+                                    <div class="data-title">Número de documento</div>
+                                    <div class="data-subtitle">Cédula de ciudadanía</div>
+                                </div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-icon">
+                                    <i class="fas fa-phone"></i>
+                                </div>
+                                <div class="data-content">
+                                    <div class="data-title">Teléfono</div>
+                                </div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-icon">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </div>
+                                <div class="data-content">
+                                    <div class="data-title">Dirección</div>
+                                </div>
+                            </div>
+                            <div class="data-item">
+                                <div class="data-icon">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="data-content">
+                                    <div class="data-title">Correo Electrónico</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alerts-container">
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Nota 1:</strong> Se confirman los 5 datos. El filtro de seguridad se pasa si responde correctamente (Nombre, número de cédula y dirección del servicio).
+                        </div>
+                        
+                        <div class="alert alert-info mt-2">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Nota 2:</strong> Si los datos de número telefónico y correo suministrados por el usuario son diferentes a los registrados en el sistema deberá validar el por qué, y realizar la respectiva actualización.
+                        </div>
+                        
+                        <div class="alert alert-danger mt-2">
+                            <i class="fas fa-ban me-2"></i>
+                            <strong>¡NUNCA se dan datos personales a la persona que llama, solo se solicitan!</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paso 3: Ticket y Continuación -->
+            <div class="process-card mb-5" data-step="3">
+                <div class="card-header-custom">
+                    <div class="d-flex align-items-center">
+                        <div class="step-indicator">
+                            <span class="step-number">3</span>
+                            <div class="step-line"></div>
+                        </div>
+                        <div class="step-content">
+                            <h3 class="step-title">Ticket y Continuación</h3>
+                            <p class="step-description">Registro y seguimiento de la llamada</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body-custom">
+                    <div class="guideline-category">
+                        <div class="category-header">
+                            <i class="fas fa-ticket-alt category-icon"></i>
+                            <h6>Asignación de Ticket</h6>
+                        </div>
+                        <div class="phrases-list">
+                            <div class="phrase-item success">
+                                <div class="phrase-icon">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="phrase-content">
+                                    <strong>"Sra.-Sr.... Le indico que el ticket de esta llamada es el número XXXX. Es importante tenerlo presente por si esta se corta o desea realizar seguimiento a su caso."</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Procedimiento:</strong> Una vez confirmada la titularidad se procede a indicar el número del ticket de la llamada.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paso 4: Manejo de Llamadas en Espera -->
+            <div class="process-card mb-5" data-step="4">
+                <div class="card-header-custom">
+                    <div class="d-flex align-items-center">
+                        <div class="step-indicator">
+                            <span class="step-number">4</span>
+                            <div class="step-line"></div>
+                        </div>
+                        <div class="step-content">
+                            <h3 class="step-title">Manejo de Llamadas en Espera</h3>
+                            <p class="step-description">Gestión profesional del tiempo de espera</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body-custom">
+                    <div class="guideline-grid">
+                        <div class="guideline-category">
+                            <div class="category-header">
+                                <i class="fas fa-pause-circle category-icon"></i>
+                                <h6>Colocar en Espera</h6>
+                            </div>
+                            <div class="phrases-list">
+                                <div class="phrase-item success">
+                                    <div class="phrase-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="phrase-content">
+                                        "Permítame un momento, por favor, mientras verifico la información. No tardaré mucho. Por favor no vaya a colgar"
+                                    </div>
+                                </div>
+                                <div class="phrase-item success">
+                                    <div class="phrase-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="phrase-content">
+                                        "Un momento, por favor. Voy a consultar con un colega. No me tomará mucho tiempo."
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="guideline-category">
+                            <div class="category-header">
+                                <i class="fas fa-sync-alt category-icon"></i>
+                                <h6>Retomar Llamada</h6>
+                                <span class="badge-time">cada minuto máximo</span>
+                            </div>
+                            <div class="phrases-list">
+                                <div class="phrase-item success">
+                                    <div class="phrase-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="phrase-content">
+                                        "Sr/Sra.....Gracias por la espera en línea,...continuamos en el proceso en un momento le doy respuesta."
+                                    </div>
+                                </div>
+                                <div class="phrase-item success">
+                                    <div class="phrase-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="phrase-content">
+                                        "Sr/Sra....Gracias por la espera en línea,...estamos validando la información, ¡en un momento estoy con usted!"
+                                    </div>
+                                </div>
+                                <div class="phrase-item success">
+                                    <div class="phrase-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="phrase-content">
+                                        "Gracias por esperar, [nombre del cliente]. Aún estoy trabajando en su solicitud, ¿le importaría seguir en línea un poco más?"
+                                    </div>
+                                </div>
+                                <div class="phrase-item success">
+                                    <div class="phrase-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="phrase-content">
+                                        "Lamento la espera, [nombre del cliente]. Estoy verificando la información y quiero asegurarme de darle una respuesta precisa."
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="guideline-category mt-4">
+                        <div class="category-header">
+                            <i class="fas fa-phone-volume category-icon"></i>
+                            <h6>Opción de Devolver Llamada</h6>
+                        </div>
+                        <div class="phrases-list">
+                            <div class="phrase-item success">
+                                <div class="phrase-icon">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="phrase-content">
+                                    "Gracias por su paciencia, [nombre del cliente]. Voy a necesitar unos momentos más para confirmar la información. ¿Le gustaría continuar en espera o prefiere que le devuelva la llamada?"
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-clock me-2"></i>
+                        <strong>Recordatorio:</strong> Si necesita poner a alguien en espera, informe antes de hacerlo y trate de no dejarlos en espera por demasiado tiempo. (Retomar cada minuto máximo)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paso 5: Retomar Llamada -->
+            <div class="process-card mb-5" data-step="5">
+                <div class="card-header-custom">
+                    <div class="d-flex align-items-center">
+                        <div class="step-indicator">
+                            <span class="step-number">5</span>
+                            <div class="step-line"></div>
+                        </div>
+                        <div class="step-content">
+                            <h3 class="step-title">Retomar la Llamada</h3>
+                            <p class="step-description">Reconexión efectiva después de la espera</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body-custom">
+                    <div class="guideline-category">
+                        <div class="category-header">
+                            <i class="fas fa-play-circle category-icon"></i>
+                            <h6>Frases para Retomar</h6>
+                        </div>
+                        <div class="phrases-list">
+                            <div class="phrase-item success">
+                                <div class="phrase-icon">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="phrase-content">
+                                    "Gracias por permanecer en la línea, [nombre del cliente]."
+                                </div>
+                            </div>
+                            <div class="phrase-item success">
+                                <div class="phrase-icon">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="phrase-content">
+                                    "Le agradezco mucho su espera, [nombre del cliente]."
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paso 6: Manejo de Clientes Molestos -->
+            <div class="process-card mb-5" data-step="6">
+                <div class="card-header-custom">
+                    <div class="d-flex align-items-center">
+                        <div class="step-indicator">
+                            <span class="step-number">6</span>
+                            <div class="step-line"></div>
+                        </div>
+                        <div class="step-content">
+                            <h3 class="step-title">Manejo de Clientes Molestos</h3>
+                            <p class="step-description">Técnicas para desescalar situaciones difíciles</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body-custom">
+                    <div class="guideline-grid">
+                        <div class="guideline-category">
+                            <div class="category-header">
+                                <i class="fas fa-heart category-icon"></i>
+                                <h6>Validar Frustración</h6>
+                            </div>
+                            <div class="phrases-list">
+                                <div class="phrase-item success">
+                                    <div class="phrase-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="phrase-content">
+                                        "Lamento mucho que esté pasando por esto. Entiendo que esto debe ser muy frustrante para usted."
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="guideline-category">
+                            <div class="category-header">
+                                <i class="fas fa-hands-helping category-icon"></i>
+                                <h6>Disculpa Genuina</h6>
+                            </div>
+                            <div class="phrases-list">
+                                <div class="phrase-item success">
+                                    <div class="phrase-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="phrase-content">
+                                        "Le ofrezco disculpas por las molestias que esto le ha causado."
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="guideline-category">
+                            <div class="category-header">
+                                <i class="fas fa-bolt category-icon"></i>
+                                <h6>Solución Inmediata</h6>
+                            </div>
+                            <div class="phrases-list">
+                                <div class="phrase-item success">
+                                    <div class="phrase-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="phrase-content">
+                                        "Voy a hacer todo lo posible para resolver esto rápidamente."
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="guideline-category">
+                            <div class="category-header">
+                                <i class="fas fa-forward category-icon"></i>
+                                <h6>Próximos Pasos</h6>
+                            </div>
+                            <div class="phrases-list">
+                                <div class="phrase-item success">
+                                    <div class="phrase-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="phrase-content">
+                                        "Déjeme verificar esto y ver cómo podemos solucionarlo. ¿Podría esperar un momento, por favor?"
+                                    </div>
+                                </div>
+                                <div class="phrase-item success">
+                                    <div class="phrase-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="phrase-content">
+                                        "Gracias por su comprensión. Valoramos mucho su paciencia mientras resolvemos esto."
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paso 7: Final y Despedida -->
+            <div class="process-card mb-5" data-step="7">
+                <div class="card-header-custom">
+                    <div class="d-flex align-items-center">
+                        <div class="step-indicator">
+                            <span class="step-number">7</span>
+                            <div class="step-line"></div>
+                        </div>
+                        <div class="step-content">
+                            <h3 class="step-title">Final y Despedida</h3>
+                            <p class="step-description">Cierre profesional de la llamada</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body-custom">
+                    <div class="guideline-category">
+                        <div class="category-header">
+                            <i class="fas fa-flag-checkered category-icon"></i>
+                            <h6>Frases de Despedida</h6>
+                        </div>
+                        <div class="phrases-list">
+                            <div class="phrase-item success">
+                                <div class="phrase-icon">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="phrase-content">
+                                    <strong>"Sr/Sra... Gracias por llamar a M@STV que tenga un excelente día."</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ===== VARIABLES CORPORATIVAS ORIGINALES ===== */
+:root {
+    --corporate-blue: #052398;
+    --corporate-blue-light: #e0f2fe;
+    --corporate-blue-dark: #031a7a;
+    --corporate-red: #ff0000;
+    --corporate-red-light: #ffe6e6;
+    --corporate-white: #ffffff;
+    --corporate-gray: #6b7280;
+    --corporate-gray-light: #f9fafb;
+    --corporate-shadow: 0 4px 6px -1px rgba(5, 35, 152, 0.1), 0 2px 4px -1px rgba(5, 35, 152, 0.06);
+    --corporate-shadow-lg: 0 10px 15px -3px rgba(5, 35, 152, 0.1), 0 4px 6px -2px rgba(5, 35, 152, 0.05);
+    --corporate-radius: 12px;
+    --corporate-radius-lg: 16px;
+}
+
+/* ===== HEADER CORPORATIVO ===== */
+.corporate-header {
+    background: linear-gradient(135deg, var(--corporate-blue), var(--corporate-blue-dark));
+    border-radius: var(--corporate-radius-lg);
+    padding: 2.5rem;
+    color: var(--corporate-white);
+    position: relative;
+    overflow: hidden;
+}
+
+.corporate-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 200px;
+    height: 200px;
+    background: var(--corporate-red);
+    border-radius: 50%;
+    opacity: 0.1;
+    transform: translate(100px, -100px);
+}
+
+.corporate-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--corporate-white);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--corporate-blue);
+    font-size: 2rem;
+    box-shadow: var(--corporate-shadow-lg);
+}
+
+.corporate-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--corporate-white);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.corporate-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.corporate-stats {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: flex-end;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem 1.5rem;
+    border-radius: var(--corporate-radius);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.vortex-stat {
+    border-left: 4px solid var(--corporate-white);
+}
+
+.softv-stat {
+    border-left: 4px solid var(--corporate-red);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--corporate-white);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-top: 0.5rem;
+}
+
+/* ===== TIMELINE NAVIGATION ===== */
+.timeline-nav {
+    position: relative;
+    padding: 2rem 0;
+}
+
+.timeline-progress {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--corporate-gray-light);
+    transform: translateY(-50%);
+}
+
+.timeline-bar {
+    height: 100%;
+    background: var(--corporate-blue);
+    width: 14.28%;
+    transition: width 0.3s ease;
+}
+
+.timeline-steps {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+}
+
+.timeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.timeline-step:hover .step-dot {
+    transform: scale(1.2);
+    background: var(--corporate-blue);
+}
+
+.timeline-step.active .step-dot {
+    background: var(--corporate-blue);
+    transform: scale(1.1);
+}
+
+.timeline-step.active .step-label {
+    color: var(--corporate-blue);
+    font-weight: 600;
+}
+
+.step-dot {
+    width: 16px;
+    height: 16px;
+    background: var(--corporate-gray-light);
+    border-radius: 50%;
+    border: 3px solid var(--corporate-white);
+    transition: all 0.3s ease;
+}
+
+.step-label {
+    font-size: 0.8rem;
+    color: var(--corporate-gray);
+    margin-top: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+/* ===== PROCESS CARDS ===== */
+.process-card {
+    background: var(--corporate-white);
+    border-radius: var(--corporate-radius);
+    box-shadow: var(--corporate-shadow);
+    border: 1px solid var(--corporate-blue-light);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    opacity: 0.7;
+    transform: translateY(10px);
+}
+
+.process-card.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.process-card:hover {
+    box-shadow: var(--corporate-shadow-lg);
+    transform: translateY(-2px);
+}
+
+.card-header-custom {
+    background: linear-gradient(135deg, var(--corporate-blue-light), var(--corporate-white));
+    padding: 2rem 2rem 1rem;
+    border-bottom: 1px solid var(--corporate-blue-light);
+}
+
+.step-indicator {
+    display: flex;
+    align-items: center;
+    margin-right: 1.5rem;
+    position: relative;
+}
+
+.step-number {
+    width: 50px;
+    height: 50px;
+    background: var(--corporate-blue);
+    color: var(--corporate-white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.2rem;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.process-card.active .step-number {
+    background: var(--corporate-blue-dark);
+    transform: scale(1.05);
+}
+
+.step-line {
+    position: absolute;
+    left: 25px;
+    top: 50px;
+    width: 2px;
+    height: calc(100% + 2rem);
+    background: var(--corporate-blue-light);
+}
+
+.step-title {
+    color: var(--corporate-blue);
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    transition: all 0.3s ease;
+}
+
+.process-card.active .step-title {
+    color: var(--corporate-blue-dark);
+}
+
+.step-description {
+    color: var(--corporate-gray);
+    margin: 0;
+}
+
+.card-body-custom {
+    padding: 2rem;
+}
+
+/* ===== GUIDELINE GRID ===== */
+.guideline-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.guideline-category {
+    background: var(--corporate-gray-light);
+    border-radius: var(--corporate-radius);
+    padding: 1.5rem;
+    border: 1px solid var(--corporate-blue-light);
+    transition: all 0.3s ease;
+}
+
+.guideline-category:hover {
+    border-color: var(--corporate-blue);
+    transform: translateY(-2px);
+}
+
+.category-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--corporate-blue-light);
+    position: relative;
+}
+
+.category-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--corporate-blue);
+    color: var(--corporate-white);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.badge-time {
+    background: #f59e0b;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-left: auto;
+}
+
+.category-header h6 {
+    color: var(--corporate-blue);
+    font-weight: 700;
+    margin: 0;
+    font-size: 1rem;
+}
+
+.phrases-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.phrase-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 1rem;
+    background: var(--corporate-white);
+    border-radius: 10px;
+    border-left: 4px solid #10b981;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.phrase-item:hover {
+    transform: translateX(5px);
+    box-shadow: var(--corporate-shadow);
+    background: var(--corporate-blue-light);
+}
+
+.phrase-icon {
+    width: 24px;
+    height: 24px;
+    background: #10b981;
+    color: var(--corporate-white);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    margin-right: 1rem;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+.phrase-content {
+    flex: 1;
+}
+
+/* ===== SECURITY SECTION ===== */
+.security-section {
+    background: var(--corporate-gray-light);
+    border-radius: var(--corporate-radius);
+    padding: 2rem;
+    border: 1px solid var(--corporate-blue-light);
+    margin-bottom: 2rem;
+}
+
+.security-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.security-icon {
+    width: 50px;
+    height: 50px;
+    background: var(--corporate-blue);
+    color: var(--corporate-white);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    margin-right: 1rem;
+}
+
+.security-header h6 {
+    color: var(--corporate-blue);
+    font-weight: 700;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.security-phrase {
+    background: var(--corporate-white);
+    padding: 1.5rem;
+    border-radius: 10px;
+    border-left: 4px solid var(--corporate-blue);
+    margin-bottom: 2rem;
+    font-weight: 600;
+}
+
+/* ===== DATA VALIDATION GRID ===== */
+.data-validation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.data-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: var(--corporate-white);
+    border-radius: 10px;
+    border: 1px solid var(--corporate-blue-light);
+    transition: all 0.3s ease;
+}
+
+.data-item:hover {
+    border-color: var(--corporate-blue);
+    transform: translateY(-2px);
+}
+
+.data-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--corporate-blue-light);
+    color: var(--corporate-blue);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.data-title {
+    font-weight: 600;
+    color: var(--corporate-gray);
+    margin-bottom: 0.125rem;
+}
+
+.data-subtitle {
+    font-size: 0.8rem;
+    color: var(--corporate-gray);
+}
+
+/* ===== ALERTS CONTAINER ===== */
+.alerts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .corporate-header {
+        padding: 1.5rem;
+    }
+    
+    .corporate-title {
+        font-size: 2rem;
+    }
+    
+    .corporate-stats {
+        justify-content: flex-start;
+        margin-top: 1.5rem;
+    }
+    
+    .stat-item {
+        padding: 0.75rem 1rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .timeline-steps {
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: center;
+    }
+    
+    .timeline-step {
+        flex: 0 0 calc(33.333% - 1rem);
+    }
+    
+    .guideline-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .data-validation-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .card-header-custom {
+        padding: 1.5rem 1.5rem 1rem;
+    }
+    
+    .card-body-custom {
+        padding: 1.5rem;
+    }
+    
+    .step-indicator {
+        margin-right: 1rem;
+    }
+    
+    .step-number {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.process-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Retrasos escalonados */
+.process-card:nth-child(1) { animation-delay: 0.1s; }
+.process-card:nth-child(2) { animation-delay: 0.2s; }
+.process-card:nth-child(3) { animation-delay: 0.3s; }
+.process-card:nth-child(4) { animation-delay: 0.4s; }
+.process-card:nth-child(5) { animation-delay: 0.5s; }
+.process-card:nth-child(6) { animation-delay: 0.6s; }
+.process-card:nth-child(7) { animation-delay: 0.7s; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Timeline navigation
+    const timelineSteps = document.querySelectorAll('.timeline-step');
+    const processCards = document.querySelectorAll('.process-card');
+    const timelineBar = document.querySelector('.timeline-bar');
+
+    // Set first step as active initially
+    timelineSteps[0].classList.add('active');
+    processCards[0].classList.add('active');
+
+    timelineSteps.forEach((step, index) => {
+        step.addEventListener('click', function() {
+            const targetStep = this.getAttribute('data-step');
+            
+            // Update timeline progress
+            const progressWidth = (targetStep / 7) * 100;
+            timelineBar.style.width = `${progressWidth}%`;
+            
+            // Scroll to target card
+            const targetCard = document.querySelector(`[data-step="${targetStep}"]`);
+            if (targetCard) {
+                targetCard.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start',
+                    inline: 'nearest'
+                });
+            }
+            
+            // Update active state
+            timelineSteps.forEach(s => s.classList.remove('active'));
+            processCards.forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            if (targetCard) {
+                targetCard.classList.add('active');
+            }
+        });
+    });
+
+    // Copy to clipboard functionality
+    const phraseItems = document.querySelectorAll('.phrase-item');
+    
+    phraseItems.forEach(item => {
+        item.addEventListener('click', function() {
+            const text = this.querySelector('.phrase-content').textContent.trim();
+            
+            navigator.clipboard.writeText(text).then(() => {
+                // Visual feedback
+                const originalBorder = this.style.borderLeftColor;
+                const originalBackground = this.style.background;
+                this.style.borderLeftColor = 'var(--corporate-blue)';
+                this.style.background = 'var(--corporate-blue-light)';
+                
+                // Add temporary checkmark
+                const checkmark = document.createElement('div');
+                checkmark.innerHTML = '<i class="fas fa-check" style="color: #10b981; margin-left: 10px;"></i>';
+                checkmark.style.fontSize = '0.9rem';
+                this.appendChild(checkmark);
+                
+                setTimeout(() => {
+                    this.style.borderLeftColor = originalBorder;
+                    this.style.background = originalBackground;
+                    checkmark.remove();
+                }, 1500);
+            }).catch(err => {
+                console.error('Error al copiar texto: ', err);
+            });
+        });
+    });
+
+    // Intersection Observer for timeline
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const currentStep = entry.target.getAttribute('data-step');
+                const progressWidth = (currentStep / 7) * 100;
+                timelineBar.style.width = `${progressWidth}%`;
+                
+                timelineSteps.forEach(step => {
+                    step.classList.remove('active');
+                    if (step.getAttribute('data-step') === currentStep) {
+                        step.classList.add('active');
+                    }
+                });
+
+                processCards.forEach(card => {
+                    card.classList.remove('active');
+                    if (card.getAttribute('data-step') === currentStep) {
+                        card.classList.add('active');
+                    }
+                });
+            }
+        });
+    }, { 
+        threshold: 0.5,
+        rootMargin: '-20% 0px -20% 0px'
+    });
+
+    processCards.forEach(card => {
+        observer.observe(card);
+    });
+
+    // Add keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            const activeStep = document.querySelector('.timeline-step.active');
+            let currentIndex = Array.from(timelineSteps).indexOf(activeStep);
+            
+            if (e.key === 'ArrowDown' && currentIndex < timelineSteps.length - 1) {
+                timelineSteps[currentIndex + 1].click();
+            } else if (e.key === 'ArrowUp' && currentIndex > 0) {
+                timelineSteps[currentIndex - 1].click();
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

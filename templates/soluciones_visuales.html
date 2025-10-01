@@ -1,0 +1,1287 @@
+{% extends "base.html" %}
+
+{% block title %}Soluciones Visuales - Vortex & Softv{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Corporativo -->
+    <div class="corporate-header mb-5">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center">
+                    <div class="header-icon-wrapper me-4">
+                        <div class="corporate-icon">
+                            <i class="fas fa-images"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h1 class="corporate-title mb-2">
+                            Soluciones Visuales
+                        </h1>
+                        <p class="corporate-subtitle mb-0">
+                            <i class="fas fa-camera me-2"></i>
+                            Guías paso a paso con imágenes para servicios Vortex y Softv
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="corporate-stats">
+                    <div class="stat-item vortex-stat">
+                        <div class="stat-number">{{ soluciones|selectattr("categoria", "equalto", "Vortex")|list|length }}</div>
+                        <div class="stat-label">Soluciones Vortex</div>
+                    </div>
+                    <div class="stat-item softv-stat">
+                        <div class="stat-number">{{ soluciones|selectattr("categoria", "equalto", "Softv")|list|length }}</div>
+                        <div class="stat-label">Soluciones Softv</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros Corporativos -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="corporate-filters">
+                <div class="filter-header">
+                    <i class="fas fa-filter me-2"></i>
+                    Filtrar por servicio
+                </div>
+                <div class="filter-buttons">
+                    <button class="btn filter-btn corporate-filter active" data-service="all">
+                        <i class="fas fa-layer-group me-2"></i>Todas las Soluciones
+                    </button>
+                    <button class="btn filter-btn corporate-filter vortex-filter" data-service="Vortex">
+                        <i class="fas fa-satellite-dish me-2"></i>Servicios Vortex
+                    </button>
+                    <button class="btn filter-btn corporate-filter softv-filter" data-service="Softv">
+                        <i class="fas fa-tv me-2"></i>Servicios Softv
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de Soluciones Mejorado -->
+    <div class="row g-4" id="solucionesGrid">
+        {% for solucion in soluciones %}
+        <div class="col-xl-4 col-lg-6 col-md-6 solution-item" data-service="{{ solucion.categoria }}">
+            <div class="corporate-card solution-card h-100">
+                <div class="card-image-container">
+                    <img src="{{ url_for('static', filename='img/soluciones/' + solucion.imagenes[0]) }}" 
+                         class="card-image" 
+                         alt="{{ solucion.titulo }}"
+                         loading="lazy">
+                    <div class="card-badge {% if solucion.categoria == 'Vortex' %}vortex-badge{% else %}softv-badge{% endif %}">
+                        <i class="fas {% if solucion.categoria == 'Vortex' %}fa-satellite-dish{% else %}fa-tv{% endif %} me-1"></i>
+                        {{ solucion.categoria }}
+                    </div>
+                    <div class="card-overlay">
+                        <div class="overlay-content">
+                            <span class="steps-indicator">
+                                <i class="fas fa-images me-1"></i>
+                                {{ solucion.imagenes|length }} pasos visuales
+                            </span>
+                            <button class="btn view-btn view-solution" data-solution-id="{{ solucion.id }}">
+                                <i class="fas fa-play me-1"></i>Ver Guía
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <h5 class="card-title">{{ solucion.titulo }}</h5>
+                    <p class="card-description">{{ solucion.descripcion }}</p>
+                    <div class="card-footer">
+                        <div class="service-tag {% if solucion.categoria == 'Vortex' %}vortex-tag{% else %}softv-tag{% endif %}">
+                            <i class="fas {% if solucion.categoria == 'Vortex' %}fa-bolt{% else %}fa-play-circle{% endif %} me-1"></i>
+                            {{ solucion.categoria }}
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn action-btn view-solution" data-solution-id="{{ solucion.id }}">
+                                <i class="fas fa-eye me-1"></i>Ver
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Estado Vacío Corporativo -->
+    <div id="noSolutions" class="text-center py-5 d-none">
+        <div class="empty-state-corporate">
+            <div class="empty-icon-corporate mb-4">
+                <i class="fas fa-search"></i>
+            </div>
+            <h4 class="empty-title mb-3">No se encontraron soluciones</h4>
+            <p class="empty-description mb-4">Prueba seleccionando otro servicio o ajustando los filtros</p>
+            <button class="btn corporate-btn reset-filters">
+                <i class="fas fa-redo me-2"></i>Mostrar Todas
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Corporativo para Solución Completa -->
+<div class="modal fade" id="solutionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content corporate-modal">
+            <div class="modal-header corporate-modal-header" id="modalHeader">
+                <div class="modal-title-content">
+                    <h5 class="modal-title" id="solutionModalTitle">Guía Paso a Paso</h5>
+                    <div class="modal-subtitle" id="solutionModalSubtitle"></div>
+                </div>
+                <button type="button" class="btn-close btn-close-corporate" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="solutionCarousel" class="carousel slide corporate-carousel" data-bs-ride="false">
+                    <div class="carousel-indicators corporate-indicators" id="carouselIndicators">
+                        <!-- Los indicadores se generan dinámicamente -->
+                    </div>
+                    <div class="carousel-inner corporate-carousel-inner" id="carouselInner">
+                        <!-- Las imágenes se cargan dinámicamente -->
+                    </div>
+                    <button class="carousel-control-prev corporate-control" type="button" data-bs-target="#solutionCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon corporate-control-icon"></span>
+                        <span class="visually-hidden">Anterior</span>
+                    </button>
+                    <button class="carousel-control-next corporate-control" type="button" data-bs-target="#solutionCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon corporate-control-icon"></span>
+                        <span class="visually-hidden">Siguiente</span>
+                    </button>
+                </div>
+                <div class="step-info-corporate">
+                    <div class="step-header">
+                        <h6 id="stepTitle" class="step-title"></h6>
+                        <div class="step-counter" id="stepCounter">Paso 1 de 3</div>
+                    </div>
+                    <p id="stepDescription" class="step-description"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ===== VARIABLES CORPORATIVAS ===== */
+:root {
+    --corporate-blue: #052398;      /* Azul corporativo principal */
+    --corporate-blue-light: #e0f2fe; /* Azul claro para fondos */
+    --corporate-blue-dark: #031a7a;  /* Azul oscuro para hover */
+    --corporate-red: #ff0000;        /* Rojo corporativo */
+    --corporate-red-light: #ffe6e6;  /* Rojo claro para fondos */
+    --corporate-white: #ffffff;      /* Blanco puro */
+    --corporate-gray: #6b7280;       /* Gris corporativo */
+    --corporate-gray-light: #f9fafb; /* Gris claro */
+    --corporate-shadow: 0 4px 6px -1px rgba(5, 35, 152, 0.1), 0 2px 4px -1px rgba(5, 35, 152, 0.06);
+    --corporate-shadow-lg: 0 10px 15px -3px rgba(5, 35, 152, 0.1), 0 4px 6px -2px rgba(5, 35, 152, 0.05);
+    --corporate-radius: 12px;
+    --corporate-radius-lg: 16px;
+}
+
+/* ===== HEADER CORPORATIVO ===== */
+.corporate-header {
+    background: linear-gradient(135deg, var(--corporate-blue), var(--corporate-blue-dark));
+    border-radius: var(--corporate-radius-lg);
+    padding: 2.5rem;
+    color: var(--corporate-white);
+    position: relative;
+    overflow: hidden;
+}
+
+.corporate-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 200px;
+    height: 200px;
+    background: var(--corporate-red);
+    border-radius: 50%;
+    opacity: 0.1;
+    transform: translate(100px, -100px);
+}
+
+.corporate-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--corporate-white);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--corporate-blue);
+    font-size: 2rem;
+    box-shadow: var(--corporate-shadow-lg);
+}
+
+.corporate-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--corporate-white);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.corporate-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+.corporate-stats {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: flex-end;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem 1.5rem;
+    border-radius: var(--corporate-radius);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.vortex-stat {
+    border-left: 4px solid var(--corporate-white);
+}
+
+.softv-stat {
+    border-left: 4px solid var(--corporate-red);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--corporate-white);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-top: 0.5rem;
+}
+
+/* ===== FILTROS CORPORATIVOS ===== */
+.corporate-filters {
+    background: var(--corporate-white);
+    border-radius: var(--corporate-radius);
+    padding: 1.5rem;
+    box-shadow: var(--corporate-shadow);
+    border: 1px solid var(--corporate-blue-light);
+}
+
+.filter-header {
+    font-weight: 600;
+    color: var(--corporate-blue);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--corporate-radius);
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    background: var(--corporate-gray-light);
+    color: var(--corporate-gray);
+}
+
+.filter-btn.active {
+    background: var(--corporate-blue);
+    color: var(--corporate-white);
+    border-color: var(--corporate-blue);
+    transform: translateY(-2px);
+    box-shadow: var(--corporate-shadow);
+}
+
+.filter-btn:not(.active):hover {
+    border-color: var(--corporate-blue);
+    color: var(--corporate-blue);
+    transform: translateY(-1px);
+}
+
+/* ===== TARJETAS CORPORATIVAS ===== */
+.corporate-card {
+    background: var(--corporate-white);
+    border-radius: var(--corporate-radius);
+    box-shadow: var(--corporate-shadow);
+    border: 1px solid var(--corporate-blue-light);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    position: relative;
+}
+
+.corporate-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--corporate-shadow-lg);
+    border-color: var(--corporate-blue);
+}
+
+.card-image-container {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+    background: var(--corporate-gray-light);
+}
+
+.card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.corporate-card:hover .card-image {
+    transform: scale(1.05);
+}
+
+.card-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    color: var(--corporate-white);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
+.vortex-badge {
+    background: var(--corporate-blue);
+}
+
+.softv-badge {
+    background: var(--corporate-red);
+}
+
+.card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(5, 35, 152, 0.9), rgba(255, 0, 0, 0.8));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.corporate-card:hover .card-overlay {
+    opacity: 1;
+}
+
+.overlay-content {
+    text-align: center;
+    color: var(--corporate-white);
+}
+
+.steps-indicator {
+    display: block;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.view-btn {
+    background: var(--corporate-white);
+    color: var(--corporate-blue);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--corporate-radius);
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.view-btn:hover {
+    background: var(--corporate-blue-dark);
+    color: var(--corporate-white);
+    transform: translateY(-2px);
+}
+
+.card-content {
+    padding: 1.5rem;
+}
+
+.card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--corporate-blue);
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.card-description {
+    color: var(--corporate-gray);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.service-tag {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.vortex-tag {
+    background: var(--corporate-blue-light);
+    color: var(--corporate-blue);
+}
+
+.softv-tag {
+    background: var(--corporate-red-light);
+    color: var(--corporate-red);
+}
+
+.action-btn {
+    background: var(--corporate-blue);
+    color: var(--corporate-white);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--corporate-radius);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    background: var(--corporate-blue-dark);
+    transform: translateY(-1px);
+}
+
+/* ===== MODAL CORPORATIVO ===== */
+.corporate-modal {
+    border-radius: var(--corporate-radius-lg);
+    overflow: hidden;
+    border: none;
+    box-shadow: 0 25px 50px -12px rgba(5, 35, 152, 0.25);
+}
+
+.corporate-modal-header {
+    background: linear-gradient(135deg, var(--corporate-blue), var(--corporate-blue-dark));
+    color: var(--corporate-white);
+    border: none;
+    padding: 1.5rem 2rem;
+}
+
+.modal-title-content {
+    flex-grow: 1;
+}
+
+.corporate-modal-header .modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--corporate-white);
+}
+
+.modal-subtitle {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-top: 0.25rem;
+}
+
+.btn-close-corporate {
+    filter: invert(1);
+    opacity: 0.8;
+}
+
+.btn-close-corporate:hover {
+    opacity: 1;
+}
+
+/* ===== CAROUSEL CORPORATIVO ===== */
+.corporate-carousel {
+    border-radius: var(--corporate-radius);
+    overflow: hidden;
+}
+
+.corporate-carousel-inner {
+    border-radius: var(--corporate-radius);
+}
+
+.carousel-image-container {
+    position: relative;
+    height: 450px;
+    background: var(--corporate-gray-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.carousel-image {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.image-fallback {
+    text-align: center;
+    color: var(--corporate-gray);
+    padding: 2rem;
+}
+
+.image-fallback i {
+    margin-bottom: 1rem;
+    color: var(--corporate-blue);
+}
+
+.corporate-indicators {
+    bottom: -50px;
+}
+
+.corporate-indicators button {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--corporate-blue);
+    opacity: 0.3;
+    margin: 0 4px;
+}
+
+.corporate-indicators button.active {
+    opacity: 1;
+    background-color: var(--corporate-blue);
+}
+
+.corporate-control {
+    width: 50px;
+    height: 50px;
+    background: var(--corporate-blue);
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0 1rem;
+    opacity: 0.8;
+}
+
+.corporate-control:hover {
+    opacity: 1;
+    background: var(--corporate-blue-dark);
+}
+
+.corporate-control-icon {
+    filter: invert(1);
+}
+
+/* ===== INFORMACIÓN DE PASOS ===== */
+.step-info-corporate {
+    background: var(--corporate-blue-light);
+    border-radius: var(--corporate-radius);
+    padding: 1.5rem;
+    margin-top: 3rem;
+    border-left: 4px solid var(--corporate-blue);
+}
+
+.step-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.step-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--corporate-blue);
+    margin: 0;
+    flex-grow: 1;
+}
+
+.step-counter {
+    background: var(--corporate-blue);
+    color: var(--corporate-white);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-left: 1rem;
+    white-space: nowrap;
+}
+
+.step-description {
+    color: var(--corporate-gray);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ===== ESTADO VACÍO CORPORATIVO ===== */
+.empty-state-corporate {
+    padding: 3rem 2rem;
+}
+
+.empty-icon-corporate {
+    width: 80px;
+    height: 80px;
+    background: var(--corporate-blue-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--corporate-blue);
+    font-size: 2rem;
+    margin: 0 auto 1.5rem;
+}
+
+.empty-title {
+    color: var(--corporate-blue);
+    font-weight: 700;
+}
+
+.empty-description {
+    color: var(--corporate-gray);
+}
+
+.corporate-btn {
+    background: var(--corporate-blue);
+    color: var(--corporate-white);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--corporate-radius);
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.corporate-btn:hover {
+    background: var(--corporate-blue-dark);
+    transform: translateY(-2px);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .corporate-header {
+        padding: 1.5rem;
+    }
+    
+    .corporate-title {
+        font-size: 2rem;
+    }
+    
+    .corporate-stats {
+        justify-content: flex-start;
+        margin-top: 1.5rem;
+    }
+    
+    .stat-item {
+        padding: 0.75rem 1rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    
+    .filter-buttons {
+        flex-direction: column;
+    }
+    
+    .filter-btn {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .card-image-container {
+        height: 180px;
+    }
+    
+    .carousel-image-container {
+        height: 300px;
+    }
+    
+    .corporate-control {
+        width: 40px;
+        height: 40px;
+        margin: 0 0.5rem;
+    }
+    
+    .step-header {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .step-counter {
+        margin-left: 0;
+    }
+}
+
+/* ===== ANIMACIONES ===== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.solution-item {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Retrasos escalonados para las tarjetas */
+.solution-item:nth-child(1) { animation-delay: 0.1s; }
+.solution-item:nth-child(2) { animation-delay: 0.2s; }
+.solution-item:nth-child(3) { animation-delay: 0.3s; }
+.solution-item:nth-child(4) { animation-delay: 0.4s; }
+.solution-item:nth-child(5) { animation-delay: 0.5s; }
+.solution-item:nth-child(6) { animation-delay: 0.6s; }
+
+/* Loading states */
+.carousel-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    color: var(--corporate-gray);
+}
+</style>
+
+<script>
+// DATOS PRE-CARGADOS (más eficiente)
+const SOLUTIONS_DATA = {
+    1: {
+        titulo: 'Consultar cliente en Softv',
+        servicio: 'Softv',
+        pasos: [
+            {
+                imagen: 'softv/softv1.png',
+                titulo: 'Paso 1: Ingresar a Softv y acceder al menú lateral',
+                descripcion: 'Dentro de la plataforma Softv, ubique el menú desplegable lateral y seleccione la opción **Facturación** para continuar con el proceso.'
+            },
+            {
+                imagen: 'softv/softv2.png',
+                titulo: 'Paso 2: Ingresar al apartado de Cajas',
+                descripcion: 'Haga clic en la opción **Cajas**. Se abrirá una ventana con las herramientas disponibles para realizar la búsqueda del cliente.'
+            },
+            {
+                imagen: 'softv/softv3.png',
+                titulo: 'Paso 3: Buscar al cliente',
+                descripcion: 'Digite el número de documento del titular en el campo correspondiente. Una vez aparezca el registro del usuario, haga clic en el botón **Seleccionar**.'
+            },
+            {
+                imagen: 'softv/softv4.png',
+                titulo: 'Paso 4: Visualizar la información del cliente',
+                descripcion: 'Después de seleccionar al usuario, se mostrarán sus datos generales junto con los servicios activos y otra información relevante.'
+            }
+        ]
+    },
+    2: {
+        titulo: '¿Como consultamos las facturas de los usuarios?',
+        servicio: 'Softv',
+        pasos: [
+            {
+                imagen: 'softv/softv5.png',
+                titulo: 'Paso 1: Acceder al botón Historial',
+                descripcion: 'En la parte inferior de la pantalla de información del usuario, ubique el botón **Historial** y haga clic en él.'
+            },
+            {
+                imagen: 'softv/softv6.png',
+                titulo: 'Paso 2: Ingresar al apartado de Pagos',
+                descripcion: 'Al abrir el historial, se mostrarán tres opciones. Seleccione la primera opción: **Pagos**.'
+            },
+            {
+                imagen: 'softv/softv7.png',
+                titulo: 'Paso 3: Visualizar los pagos del usuario',
+                descripcion: 'Dentro del apartado de pagos se presenta la información general de los abonos realizados. También se habilita la opción de consultar el comprobante del pago mediante el botón **Ver**.'
+            },
+            {
+                imagen: 'softv/softv8.png',
+                titulo: 'Paso 4: Consultar el ticket del pago',
+                descripcion: 'Al hacer clic en **Ver**, se desplegará el ticket con el detalle completo del pago seleccionado.'
+            }
+        ]
+    },
+    3: {
+        titulo: '¿Como consultamos las ordenes de servicio de los usuarios?',
+        servicio: 'Softv',
+        pasos: [
+            {
+                imagen: 'softv/softv9.png',
+                titulo: 'Paso 1: Acceder al apartado de Órdenes de Servicio',
+                descripcion: 'Desde la información del usuario, ubique y haga clic en la pestaña **Órdenes de Servicio** para visualizar los registros asociados.'
+            },
+            {
+                imagen: 'softv/softv10.png',
+                titulo: 'Paso 2: Consultar las órdenes disponibles',
+                descripcion: 'En esta sección se muestran todas las órdenes creadas para el cliente, incluyendo el número de orden, estado y descripción del servicio solicitado.'
+            },
+            {
+                imagen: 'softv/softv12.png',
+                titulo: 'Paso 3: Revisar el detalle de una orden',
+                descripcion: 'Seleccione una orden específica y haga clic en el botón **Ver** para consultar información detallada como fechas, técnico asignado y observaciones.'
+            },
+            {
+                imagen: 'softv/softv11.png',
+                titulo: 'Paso 4: Visualizar el estado de la orden',
+                descripcion: 'En el detalle de la orden podrá confirmar el estado actual (pendientes, ejecutadas o en visita), así como el historial de seguimiento asociado.'
+            }
+        ]
+    },
+    4: {
+        titulo: '¿Como consultamos reportes de fallas de los usuarios?',
+        servicio: 'Softv',
+        pasos: [
+            {
+                imagen: 'softv/softv13.png',
+                titulo: 'Paso 1: Acceder al apartado de Reportes de Fallas',
+                descripcion: 'Desde la información del usuario, diríjase a la pestaña **Reportes de Fallas** para consultar los incidentes registrados.'
+            },
+            {
+                imagen: 'softv/softv10.png',
+                titulo: 'Paso 2: Visualizar los reportes existentes',
+                descripcion: 'En esta sección se listan los reportes generados para el cliente, incluyendo número de reporte, fecha, estado y descripción de la falla reportada.'
+            },
+            {
+                imagen: 'softv/softv12.png',
+                titulo: 'Paso 3: Revisar el detalle de un reporte',
+                descripcion: 'Seleccione un reporte y haga clic en el botón **Ver** para acceder a información detallada como tipo de falla, observaciones y técnico asignado.'
+            },
+            {
+                imagen: 'softv/softv14.png',
+                titulo: 'Paso 4: Consultar el estado del reporte',
+                descripcion: 'Dentro del detalle podrá verificar el estado del reporte (pendientes, ejecutadas o en visita), así como el historial de atención relacionado.'
+            }
+        ]
+    },
+    5: {
+        titulo: '¿Como creamos un reporte de falla?',
+        servicio: 'Softv',
+        pasos: [
+            {
+                imagen: 'softv/softv15.png',
+                titulo: 'Paso 1: Acceder al menú lateral',
+                descripcion: 'Dentro de la plataforma Softv, ubique el menú desplegable lateral y seleccione la opción **Procesos** para continuar con el procedimiento.'
+            },
+            {
+                imagen: 'softv/softv16.png',
+                titulo: 'Paso 2: Ingresar al apartado de Atención Telefónica',
+                descripcion: 'Haga clic en la opción **Atención Telefónica**. Se abrirá una ventana con la información correspondiente a esta sección.'
+            },
+            {
+                imagen: 'softv/softv17.png',
+                titulo: 'Paso 3: Crear una nueva atención',
+                descripcion: 'Dentro de la sección, haga clic en el botón **Nueva Atención**, ubicado en la parte superior derecha de la pantalla.'
+            },
+            {
+                imagen: 'softv/softv19.png',
+                titulo: 'Paso 4: Seleccionar el servicio afectado e ingresar el contrato',
+                descripcion: 'Al crear el reporte de falla, seleccione la categoría correspondiente (**TV** o **Internet**) según lo informado por el usuario. Luego ingrese el número de contrato y presione **Enter** para cargar automáticamente los datos del cliente.'
+            },
+            {
+                imagen: 'softv/softv21.png',
+                titulo: 'Paso 5: Completar los campos obligatorios',
+                descripcion: 'En los recuadros amarillos, diligencie los campos solicitados. En el apartado **Reporte cliente** es obligatorio registrar al menos dos números telefónicos del usuario. Posteriormente, haga clic en el botón rojo **Generar reporte de falla** y luego en el botón verde **Guardar**.'
+            },
+            {
+                imagen: 'softv/softv22.png',
+                titulo: 'Paso 6: Registrar los datos de agendamiento',
+                descripcion: 'Si el proceso fue realizado correctamente, aparecerá un recuadro de agendamiento. Complete los campos con la fecha en que se generó el reporte, seleccione el horario (**Mañana** o **Tarde**) y escriba un comentario, donde usualmente se repiten los números telefónicos del usuario. Finalmente, haga clic en **Aceptar** para que la orden se genere automáticamente.'
+            }
+        ]
+    },
+    6: {
+        titulo: '¿Como creamos una orden de servicio? ',
+        servicio: 'Softv',
+        pasos: [
+            {
+                imagen: 'softv/softv23.png',
+                titulo: 'Paso 1: Ingresar al apartado de Órdenes de Servicio',
+                descripcion: 'Desde el menú lateral de Softv, diríjase a la sección **Procesos** y seleccione la opción **Órdenes de Servicio**. Allí podrá visualizar el listado de órdenes pendientes, junto con los datos del cliente, contrato y acciones disponibles.'
+            },
+            {
+                imagen: 'softv/softv24.png',
+                titulo: 'Paso 2: Crear una nueva orden de servicio',
+                descripcion: 'En la parte superior derecha de la pantalla, haga clic en el botón **Crear Nueva Orden**. Se abrirá un formulario donde podrá diligenciar la información correspondiente al cliente y al servicio solicitado.'
+            },
+            {
+                imagen: 'softv/softv26.png',
+                titulo: 'Paso 3: Seleccionar el servicio del cliente',
+                descripcion: 'Dentro del formulario, haga clic en **Agregar Servicio**. Se abrirá una ventana emergente donde deberá elegir el **Tipo de servicio** (TV por Cable o Internet), el trabajo a realizar y las observaciones necesarias.'
+            },
+            {
+                imagen: 'softv/softv27.png',
+                titulo: 'Paso 4: Definir el trabajo específico',
+                descripcion: 'Según el tipo de servicio seleccionado, despliegue la lista de trabajos disponibles (por ejemplo: Instalación, Traslado de domicilio, Cambio de aparato, Desconexión temporal, entre otros). Seleccione la opción correspondiente y confirme con **Aceptar**.'
+            },
+            {
+                imagen: 'softv/softv28.png',
+                titulo: 'Paso 5: Guardar y finalizar la orden',
+                descripcion: 'Una vez completada toda la información, haga clic en el botón **Guardar**. La orden quedará registrada en el sistema y podrá ser consultada o ejecutada posteriormente desde el listado de órdenes.'
+            }
+        ]
+    },
+    7: {
+        titulo: '¿Como borramos un reporte de falla en caso necesario?',
+        servicio: 'Softv',
+        pasos: [
+            {
+                imagen: 'softv/softv29.png',
+                titulo: 'Paso 1: Acceder a la sección de Reportes de Fallas',
+                descripcion: 'En el menú lateral de Softv, seleccione la opción **Procesos** y luego haga clic en **Reportes de Fallas**. Se mostrará un listado con todos los reportes pendientes de gestión.'
+            },
+            {
+                imagen: 'softv/softv29.png',
+                titulo: 'Paso 2: Consultar un reporte de falla',
+                descripcion: 'Ubique el reporte correspondiente al usuario y haga clic en el botón **Consultar** (color azul). Se abrirá una ventana con la información detallada del reporte registrado.'
+            },
+            {
+                imagen: 'softv/softv29.png',
+                titulo: 'Paso 3: Eliminar un reporte de falla',
+                descripcion: 'Si desea borrar un reporte, haga clic en el botón **Eliminar** (color rojo). El sistema solicitará confirmación antes de proceder con la eliminación definitiva del registro.'
+            }
+        ]
+    },
+    8: {
+        titulo: '¿Como ingresamos un nuevo cliente?',
+        servicio: 'Softv',
+        pasos: [
+            {
+                imagen: 'softv/softv30.png',
+                titulo: 'Paso 1: Acceder al módulo de clientes',
+                descripcion: 'En el menú lateral, ubique la sección **Catálogos > Generales** y seleccione la opción **Clientes**. Esto lo llevará al listado de clientes registrados en el sistema.'
+            },
+            {
+                imagen: 'softv/softv31.png',
+                titulo: 'Paso 2: Ingresar a la opción "Nuevo Cliente"',
+                descripcion: 'En la parte superior derecha de la pantalla, haga clic en el botón **+ NUEVO CLIENTE** para iniciar el registro de un cliente en la plataforma.'
+            },
+            {
+                imagen: 'softv/softv33.png',
+                titulo: 'Paso 3: Diligenciar los datos personales',
+                descripcion: 'Complete el formulario con la información personal del cliente: nombre, apellidos, tipo y número de identificación, fecha de nacimiento, teléfonos y correo electrónico. Estos campos son indispensables para la creación del cliente.'
+            },
+            {
+                imagen: 'softv/softv33.png',
+                titulo: 'Paso 4: Registrar la información de ubicación',
+                descripcion: 'Seleccione la región, departamento, ciudad, localidad y barrio correspondientes. Además, diligencie la dirección completa (calle, número exterior, número interior, entre calles, código postal y estrato).'
+            },
+            {
+                imagen: 'softv/softv33.png',
+                titulo: 'Paso 5: Guardar el registro',
+                descripcion: 'Una vez completados todos los campos obligatorios, haga clic en el botón **Guardar**. El sistema confirmará que el nuevo cliente ha sido creado correctamente y quedará registrado en el catálogo.'
+            }
+        ]
+    },
+    9: {
+        titulo: '¿Como buscar un usuario?',
+        servicio: 'Vortex',
+        pasos: [
+            {
+                imagen: 'vortex/vortex1.png',
+                titulo: 'Paso 1: Acceder al menú Configure',
+                descripcion: 'En la parte superior del sistema, ubique la barra de menús y haga clic en la opción **Configured**.'
+            },
+            {
+                imagen: 'vortex/vortex2.png',
+                titulo: 'Paso 2: Ingresar el contrato en el área de búsqueda',
+                descripcion: 'Dentro de la sección **Configured**, en la parte superior encontrará el campo **Search**. Ingrese el número de contrato del usuario en este espacio.'
+            },
+            {
+                imagen: 'vortex/vortex3.png',
+                titulo: 'Paso 3: Consultar las ONU asociadas al contrato',
+                descripcion: 'Después de ingresar el contrato **View**, el sistema mostrará automáticamente las ONU vinculadas al cliente. Desde aquí podrá visualizarlas y gestionarlas según sea necesario.'
+            }
+        ]
+    },
+    10: {
+        titulo: '¿Como validar puertos en uso y la MAC del equipo?',
+        servicio: 'Vortex',
+        pasos: [
+            {
+                imagen: 'vortex/vortex4.png',
+                titulo: 'Paso 1: Obtener el estado del dispositivo',
+                descripcion: 'Haga clic en el botón **Get Status** para que el sistema consulte la información actual del dispositivo.'
+            },
+            {
+                imagen: 'vortex/vortex5.png',
+                titulo: 'Paso 2: Validar puertos LAN y MAC',
+                descripcion: 'En la información desplegada podrá ver los puertos LAN en uso y, validar que el dispositivo este mostrando **MAC** asociadas a la VLAN.'
+            }
+        ]
+    },
+    11: {
+        titulo: '¿Como validar si el usuario esta teniendo consumo del servicio?',
+        servicio: 'Vortex',
+        pasos: [
+            {
+                imagen: 'vortex/vortex7.png',
+                titulo: 'Paso 1: Validar navegación en Internet',
+                descripcion: 'Para verificar si el usuario cuenta con navegación activa, haga clic en el botón verde **LIVE**. El sistema mostrará en tiempo real el estado de la conexión a Internet.'
+            }
+        ]
+    },
+    12: {
+        titulo: '¿Como cambiar la VLAN?',
+        servicio: 'Vortex',
+        pasos: [
+            {
+                imagen: 'vortex/vortex8.png',
+                titulo: 'Paso 1: Acceder a la configuración de VLAN',
+                descripcion: 'Desplácese hacia el apartado **Speed Profiles**, ubique la casilla **Action** y haga clic en la opción **Configure**. Esto abrirá un formulario de configuración donde aparece el campo **User VLAN-ID**.'
+            },
+            {
+                imagen: 'vortex/vortex9.png',
+                titulo: 'Paso 2: Seleccionar y guardar la VLAN correspondiente',
+                descripcion: 'En el campo **User VLAN-ID**, despliegue la lista y seleccione la VLAN según la zona del módem. Luego haga clic en **Save** para guardar los cambios. Finalmente, realice un **Reboot** y un **Resync Config** para aplicar la nueva configuración.'
+            }
+        ]
+    },
+    13: {
+        titulo: '¿Como realizar un resync config?',
+        servicio: 'Vortex',
+        pasos: [
+            {
+                imagen: 'vortex/vortex10.png',
+                titulo: 'Paso 1: Ubicar el botón Resync Config',
+                descripcion: 'Desplácese hasta el final de la página y ubique el botón **Resync Config**. Al hacer clic en él, se abrirá una ventana de confirmación.'
+            },
+            {
+                imagen: 'vortex/vortex11.png',
+                titulo: 'Paso 2: Confirmar y aplicar el Resync',
+                descripcion: 'En la ventana emergente, vuelva a presionar el botón **Resync Config** para confirmar la acción. Espere aproximadamente un minuto a que el módem recupere sus potencias y quede nuevamente operativo.'
+            }
+        ]
+    },
+    14: {
+        titulo: '¿Como realizar un reboot?',
+        servicio: 'Vortex',
+        pasos: [
+            {
+                imagen: 'vortex/vortex12.png',
+                titulo: 'Paso 1: Ubicar el botón Reboot',
+                descripcion: 'Desplácese hasta el final de la página y localice el botón **Reboot**. Al hacer clic en él, se abrirá una ventana de confirmación.'
+            },
+            {
+                imagen: 'vortex/vortex13.png',
+                titulo: 'Paso 2: Confirmar y aplicar el Reboot',
+                descripcion: 'En la ventana emergente, vuelva a presionar el botón **Reboot** para confirmar la acción. Espere aproximadamente un minuto a que el módem reinicie y recupere sus potencias.'
+            }
+        ]
+    },
+    15: {
+        titulo: '¿Como identificar si el servicio de internet y TV estan activados?',
+        servicio: 'Vortex',
+        pasos: [
+            {
+                imagen: 'vortex/vortex14.png',
+                titulo: 'Paso 1: Verificar estado de CATV y disponibilidad para deshabilitar ONU',
+                descripcion: 'En la sección correspondiente observe que la casilla **CATV** debe aparecer marcada (chulito). Los botones inferiores muestran la opción **Disable ONU**, lo que indica que es posible deshabilitar la ONU desde aquí. Sin embargo, la práctica recomendada es mantener la ONU **habilitada** y conservar la casilla **CATV** activada salvo que exista una instrucción explícita para desactivarla. Si por algún motivo es necesario deshabilitarla, confirme previamente con el equipo responsable y registre la acción en la orden de servicio.'
+            }
+        ]
+    }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Variables globales
+    let currentCarouselHandler = null;
+    const solutionModal = new bootstrap.Modal(document.getElementById('solutionModal'));
+    
+    // Filtrado por servicio
+    const serviceFilters = document.querySelectorAll('.corporate-filter');
+    const solutionItems = document.querySelectorAll('.solution-item');
+    const noSolutions = document.getElementById('noSolutions');
+    const resetFiltersBtn = document.querySelector('.reset-filters');
+    
+    serviceFilters.forEach(filter => {
+        filter.addEventListener('click', function() {
+            const service = this.getAttribute('data-service');
+            
+            // Actualizar filtros activos
+            serviceFilters.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Filtrar soluciones
+            let visibleCount = 0;
+            solutionItems.forEach(item => {
+                const itemService = item.getAttribute('data-service');
+                
+                if (service === 'all' || itemService === service) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            noSolutions.classList.toggle('d-none', visibleCount > 0);
+        });
+    });
+    
+    // Botón reset filters
+    if (resetFiltersBtn) {
+        resetFiltersBtn.addEventListener('click', function() {
+            serviceFilters.forEach(btn => {
+                if (btn.getAttribute('data-service') === 'all') {
+                    btn.click();
+                }
+            });
+        });
+    }
+    
+    // Modal de solución
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('view-solution') || e.target.closest('.view-solution')) {
+            const button = e.target.classList.contains('view-solution') ? e.target : e.target.closest('.view-solution');
+            const solutionId = button.getAttribute('data-solution-id');
+            loadSolutionModal(solutionId);
+        }
+    });
+    
+    // Función para cargar el modal
+    function loadSolutionModal(solutionId) {
+        const solutionData = SOLUTIONS_DATA[solutionId];
+        if (!solutionData) {
+            alert('Esta solución está en desarrollo. Próximamente disponible.');
+            return;
+        }
+        
+        // Configuración inicial
+        const modalHeader = document.getElementById('modalHeader');
+        modalHeader.style.background = solutionData.servicio === 'Vortex' 
+            ? 'linear-gradient(135deg, var(--corporate-blue), var(--corporate-blue-dark))' 
+            : 'linear-gradient(135deg, var(--corporate-red), #dc2626)';
+        
+        document.getElementById('solutionModalTitle').textContent = solutionData.titulo;
+        document.getElementById('solutionModalSubtitle').textContent = `${solutionData.servicio} - ${solutionData.pasos.length} pasos`;
+        
+        // Mostrar loading state
+        const carouselInner = document.getElementById('carouselInner');
+        const carouselIndicators = document.getElementById('carouselIndicators');
+        
+        carouselInner.innerHTML = '<div class="carousel-loading"><div class="spinner-border"></div><p class="mt-2">Cargando imágenes...</p></div>';
+        carouselIndicators.innerHTML = '';
+        
+        // Construir carousel
+        buildCarousel(solutionData);
+        
+        // Mostrar modal
+        solutionModal.show();
+    }
+    
+    // Función para construir el carousel
+    function buildCarousel(solutionData) {
+        const carouselInner = document.getElementById('carouselInner');
+        const carouselIndicators = document.getElementById('carouselIndicators');
+        
+        // Limpiar contenido anterior
+        carouselInner.innerHTML = '';
+        carouselIndicators.innerHTML = '';
+        
+        // Construir indicadores e imágenes
+        solutionData.pasos.forEach((paso, index) => {
+            // Crear indicador
+            const indicator = document.createElement('button');
+            indicator.type = 'button';
+            indicator.setAttribute('data-bs-target', '#solutionCarousel');
+            indicator.setAttribute('data-bs-slide-to', index.toString());
+            indicator.setAttribute('aria-label', `Paso ${index + 1}`);
+            if (index === 0) {
+                indicator.classList.add('active');
+                indicator.setAttribute('aria-current', 'true');
+            }
+            carouselIndicators.appendChild(indicator);
+            
+            // Crear item del carousel
+            const carouselItem = document.createElement('div');
+            carouselItem.className = `carousel-item ${index === 0 ? 'active' : ''}`;
+            
+            // CORRECCIÓN: Usar la ruta correcta para las imágenes
+            const imagePath = `/static/img/soluciones/${paso.imagen}`;
+            
+            carouselItem.innerHTML = `
+                <div class="carousel-image-container">
+                    <img src="${imagePath}" 
+                         class="carousel-image" 
+                         alt="${paso.titulo}"
+                         loading="lazy"
+                         onerror="handleImageError(this)">
+                    <div class="image-fallback d-none">
+                        <i class="fas fa-image fa-3x mb-3"></i>
+                        <p>Imagen no disponible</p>
+                        <small class="text-muted">${paso.imagen}</small>
+                    </div>
+                </div>
+            `;
+            carouselInner.appendChild(carouselItem);
+        });
+        
+        // Actualizar información del primer paso
+        if (solutionData.pasos.length > 0) {
+            updateStepInfo(0, solutionData.pasos[0], solutionData.pasos.length);
+        }
+        
+        // Configurar event listener del carousel
+        if (currentCarouselHandler) {
+            document.getElementById('solutionCarousel').removeEventListener('slid.bs.carousel', currentCarouselHandler);
+        }
+        
+        currentCarouselHandler = function(event) {
+            const activeIndex = event.to;
+            updateStepInfo(activeIndex, solutionData.pasos[activeIndex], solutionData.pasos.length);
+        };
+        
+        document.getElementById('solutionCarousel').addEventListener('slid.bs.carousel', currentCarouselHandler);
+    }
+    
+    // Función para manejar errores de imágenes
+    function handleImageError(img) {
+        console.log('Error cargando imagen:', img.src);
+        img.style.display = 'none';
+        const fallback = img.nextElementSibling;
+        if (fallback && fallback.classList.contains('image-fallback')) {
+            fallback.classList.remove('d-none');
+            fallback.style.display = 'flex';
+            fallback.style.flexDirection = 'column';
+            fallback.style.alignItems = 'center';
+            fallback.style.justifyContent = 'center';
+        }
+    }
+    
+    // Función para actualizar información del paso
+    function updateStepInfo(index, paso, totalSteps) {
+        document.getElementById('stepTitle').textContent = paso.titulo;
+        document.getElementById('stepDescription').textContent = paso.descripcion;
+        document.getElementById('stepCounter').textContent = `Paso ${index + 1} de ${totalSteps}`;
+    }
+    
+    // Pre-cargar imágenes para mejor performance
+    function preloadImages() {
+        Object.values(SOLUTIONS_DATA).forEach(solution => {
+            solution.pasos.forEach(paso => {
+                const img = new Image();
+                img.src = `/static/img/soluciones/${paso.imagen}`;
+            });
+        });
+    }
+    
+    // Iniciar pre-carga
+    setTimeout(preloadImages, 1000);
+});
+</script>
+{% endblock %}

@@ -12,93 +12,102 @@
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('editar_ficha', id=ficha.id) }}" novalidate autocomplete="off" spellcheck="false">
-                    <div class="mb-3">
-                        <label for="categoria" class="form-label" data-bs-toggle="tooltip" title="Selecciona el tipo de servicio con problemas">
-                            Tipo de Servicio <span class="text-danger">*</span>
+                    
+                    <!-- Tipo de Servicio -->
+                    <div class="mb-4">
+                        <label for="categoria" class="form-label fw-semibold">
+                            <i class="fas fa-tags me-1"></i>Tipo de Servicio <span class="text-danger">*</span>
                         </label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="fas fa-tags"></i></span>
-                            <select class="form-select" id="categoria" name="categoria" required aria-describedby="categoriaHelp">
-                                <option value="" disabled>¿Qué servicio presenta el problema?</option>
-                                <option value="TV" {% if ficha.categoria == 'TV' %}selected{% endif %}>TV</option>
-                                <option value="Internet" {% if ficha.categoria == 'Internet' %}selected{% endif %}>Internet</option>
-                                <option value="Equipo" {% if ficha.categoria == 'Equipo' %}selected{% endif %}>Equipo/Dispositivo</option>
-                            </select>
-                        </div>
-                        <div id="categoriaHelp" class="form-text">Selecciona el servicio que necesita soporte.</div>
+                        <select class="form-select" id="categoria" name="categoria" required>
+                            <option value="" disabled>¿Qué servicio presenta el problema?</option>
+                            <option value="TV" {% if ficha.categoria == 'TV' %}selected{% endif %}>TV</option>
+                            <option value="Internet" {% if ficha.categoria == 'Internet' %}selected{% endif %}>Internet</option>
+                            <option value="Equipo" {% if ficha.categoria == 'Equipo' %}selected{% endif %}>Equipo/Dispositivo</option>
+                        </select>
+                        <div class="form-text">Selecciona el servicio que necesita soporte.</div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="problema" class="form-label" data-bs-toggle="tooltip" title="Selecciona el problema de la lista">
-                            Problema <span class="text-danger">*</span>
+                    <!-- Problema -->
+                    <div class="mb-4">
+                        <label for="problema" class="form-label fw-semibold">
+                            <i class="fas fa-exclamation-triangle me-1"></i>Problema <span class="text-danger">*</span>
                         </label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="fas fa-exclamation-triangle"></i></span>
-                            <select class="form-select" id="problema" name="problema" required aria-describedby="problemaHelp">
-                                <option value="" disabled selected>Selecciona un problema</option>
-                                <!-- Opciones se cargarán dinámicamente según la categoría -->
-                            </select>
-                        </div>
-                        <div id="problemaHelp" class="form-text">Selecciona el problema de la lista.</div>
+                        <select class="form-select" id="problema" name="problema" required>
+                            <option value="" disabled selected>Selecciona un problema</option>
+                        </select>
+                        <div class="form-text">Selecciona el problema de la lista o elige "Otro" para escribir uno personalizado.</div>
                     </div>
 
-                    <div class="mb-3" id="otroProblemaContainer" style="display: none;">
-                        <label for="otro_problema" class="form-label">Especificar otro problema</label>
+                    <!-- Otro Problema (condicional) -->
+                    <div class="mb-4" id="otroProblemaContainer" style="display: none;">
+                        <label for="otro_problema" class="form-label fw-semibold">
+                            Especificar otro problema <span class="text-danger">*</span>
+                        </label>
                         <input type="text" class="form-control" id="otro_problema" name="otro_problema" 
                                placeholder="Describe el problema personalizado" autocomplete="off">
                     </div>
 
-                    <div class="mb-3">
-                        <label for="descripcion" class="form-label" data-bs-toggle="tooltip" title="Describe el problema con detalles">
-                            Descripción Detallada
+                    <!-- Descripción -->
+                    <div class="mb-4">
+                        <label for="descripcion" class="form-label fw-semibold">
+                            <i class="fas fa-align-left me-1"></i>Descripción Detallada
                         </label>
-                        <textarea class="form-control" id="descripcion" name="descripcion" rows="4" placeholder="Describa el problema en detalle..." autocomplete="off">{{ ficha.descripcion or '' }}</textarea>
+                        <textarea class="form-control" id="descripcion" name="descripcion" rows="3" 
+                                  placeholder="Describa el problema en detalle..." autocomplete="off">{{ ficha.descripcion or '' }}</textarea>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="causas" class="form-label" data-bs-toggle="tooltip" title="Cada causa en una línea separada">
-                            Causas Posibles <span class="text-danger">*</span>
+                    <!-- Causas Sugeridas -->
+                    <div class="mb-4">
+                        <label for="causas_select" class="form-label fw-semibold">
+                            <i class="fas fa-search me-1"></i>Causas Sugeridas
                         </label>
-                        <textarea class="form-control" id="causas" name="causas" rows="5" placeholder="Escribe cada causa en una línea separada" required autocomplete="off">{{ ficha.causas.replace('|', '\n') if ficha.causas else '' }}</textarea>
-                        <div class="form-text">Presiona Enter para nueva causa. Se guardarán separadas por '|'.</div>
+                        <select class="form-select" id="causas_select" name="causas_select">
+                            <option value="" disabled selected>Selecciona causas sugeridas</option>
+                        </select>
+                        <div class="form-text mt-1">Selecciona causas de la lista para agregarlas automáticamente.</div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="solucion" class="form-label" data-bs-toggle="tooltip" title="Cada paso numerado para mejor seguimiento">
-                            Solución <span class="text-danger">*</span>
+                    <!-- Causas Personalizadas -->
+                    <div class="mb-4">
+                        <label for="causas_personalizadas" class="form-label fw-semibold">
+                            <i class="fas fa-list-ol me-1"></i>Causas Posibles <span class="text-danger">*</span>
                         </label>
-                        <textarea class="form-control" id="solucion" name="solucion" rows="5" placeholder="Pasos para resolver el problema, uno por línea" required autocomplete="off">
-{% if ficha.solucion %}
-{% for paso in ficha.solucion.split('|') %}
-{{ loop.index }}. {{ paso.strip() }}
-{% if not loop.last %}
+                        <textarea class="form-control" id="causas_personalizadas" name="causas_personalizadas" rows="4" 
+                                  placeholder="Escribe causas personalizadas (una por línea) o usa las sugeridas arriba" 
+                                  autocomplete="off" required>{% if ficha.causas %}{% for causa in ficha.causas.split('|') %}{{ loop.index }}. {{ causa.strip() }}
+{% if not loop.last %}{% endif %}{% endfor %}{% endif %}</textarea>
+                        <div class="form-text">Presiona Enter para nueva causa. Se numeran automáticamente.</div>
+                    </div>
 
-{% endif %}
-{% endfor %}
-{% endif %}
-                        </textarea>
+                    <!-- Solución -->
+                    <div class="mb-4">
+                        <label for="solucion" class="form-label fw-semibold">
+                            <i class="fas fa-wrench me-1"></i>Solución <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="solucion" name="solucion" rows="5" 
+                                  placeholder="Pasos para resolver el problema, uno por línea" required autocomplete="off">{% if ficha.solucion %}{% for paso in ficha.solucion.split('|') %}{{ loop.index }}. {{ paso.strip() }}
+{% if not loop.last %}{% endif %}{% endfor %}{% else %}1. {% endif %}</textarea>
                         <div class="form-text">Cada paso se numera automáticamente al presionar Enter.</div>
                     </div>
 
-                    <div class="mb-3">
-                        <label for="palabras_clave" class="form-label" data-bs-toggle="tooltip" title="Separe palabras clave con comas para mejorar búsqueda">
-                            Palabras Clave
+                    <!-- Palabras Clave -->
+                    <div class="mb-4">
+                        <label for="palabras_clave" class="form-label fw-semibold">
+                            <i class="fas fa-key me-1"></i>Palabras Clave
                         </label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="fas fa-key"></i></span>
-                            <input type="text" class="form-control" id="palabras_clave" name="palabras_clave" 
-                                   value="{{ ficha.palabras_clave or '' }}"
-                                   placeholder="Ej: señal, internet lento, pixelación" aria-describedby="palabrasHelp" autocomplete="off">
-                        </div>
-                        <div id="palabrasHelp" class="form-text">Separe cada palabra clave con comas para facilitar búsquedas.</div>
+                        <input type="text" class="form-control" id="palabras_clave" name="palabras_clave" 
+                               value="{{ ficha.palabras_clave or '' }}"
+                               placeholder="Ej: señal, internet lento, pixelación" autocomplete="off">
+                        <div class="form-text">Separe cada palabra clave con comas para facilitar búsquedas.</div>
                     </div>
 
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary" title="Cancelar">
-                            <i class="fas fa-times"></i> Cancelar
+                    <!-- Botones de acción -->
+                    <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary px-4">
+                            <i class="fas fa-times me-2"></i>Cancelar
                         </a>
-                        <button type="submit" class="btn btn-primary" title="Actualizar ficha">
-                            <i class="fas fa-save"></i> Actualizar Ficha
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="fas fa-save me-2"></i>Actualizar Ficha
                         </button>
                     </div>
                 </form>
@@ -135,11 +144,73 @@ const problemasPorCategoria = {
     ]
 };
 
+// Base de datos de causas por problema
+const causasPorProblema = {
+    // Problemas de TV
+    'No hay señal en el televisor': [
+        'Micronodo/CATV alarmado, apagado',
+        'Problemas con el decodificador',
+        'Falla en la señal del proveedor',
+        'Televisor en modo incorrecto'
+    ],
+    'Imagen pixelada o con interferencias': [
+        'Cable de señal dañado',
+        'Problemas con la antena/servicio',
+        'Reprogramacion mal ejecutada'
+    ],
+    'Sin sonido en algunos canales': [
+        'Configuración de audio del canal',
+        'Falla temporal del canal'
+    ],
+    
+    // Problemas de Internet
+    'Internet lento o intermitente': [
+        'Congestión de la red',
+        'Interferencia WiFi',
+        'Potencias mayores a -27',
+        'Router/módem necesitan reinicio'
+    ],
+    'Sin conexión a internet': [
+        'Router/módem apagado',
+        'patchcord desconectado/Dañado',
+        'PON intermitente',
+        'ONU desconfigurada',
+        'IP 192.168.xxx'
+    ],
+    'Problemas con WiFi': [
+        'Señal WiFi débil',
+        'Interferencia en la red',
+        'Límite de dispositivos conectados',
+        'Router en ubicación demasiado lejos'
+    ],
+    
+    // Problemas de Equipo
+    'Equipo no enciende': [
+        'Cargador del modem desconectado',
+        'Boton OFF/ON Sin presionar',
+        'Equipo quemado',
+    ],
+    'Problemas con puertos': [
+        'Puerto físico dañado',
+        'Conexion de puertos erronea',
+        'Cable defectuoso',
+        'Puerto bloqueado por software'
+    ],
+    'Dispositivo no da MAC': [
+        'VLAN incorrecta',
+        'Dispositivo desconfigurado',
+        'Fallo en el sistema operativo'
+    ]
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     const categoriaSelect = document.getElementById('categoria');
     const problemaSelect = document.getElementById('problema');
+    const causasSelect = document.getElementById('causas_select');
     const otroProblemaContainer = document.getElementById('otroProblemaContainer');
     const otroProblemaInput = document.getElementById('otro_problema');
+    const causasPersonalizadasTextarea = document.getElementById('causas_personalizadas');
+    const solucionTextarea = document.getElementById('solucion');
 
     // Cargar problemas según la categoría actual
     function cargarProblemas() {
@@ -159,7 +230,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        toggleOtroProblema();
+        // Cargar causas después de cargar problemas
+        setTimeout(() => {
+            cargarCausas();
+            toggleOtroProblema();
+        }, 100);
     }
 
     // Cargar problemas al iniciar
@@ -167,6 +242,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Cuando cambia la categoría
     categoriaSelect.addEventListener('change', cargarProblemas);
+
+    // Cuando se selecciona un problema
+    problemaSelect.addEventListener('change', function() {
+        cargarCausas();
+        toggleOtroProblema();
+    });
 
     // Mostrar campo para "otro problema"
     function toggleOtroProblema() {
@@ -186,75 +267,216 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    problemaSelect.addEventListener('change', toggleOtroProblema);
+    // Función para cargar causas según el problema
+    function cargarCausas() {
+        const problema = problemaSelect.value;
+        causasSelect.innerHTML = '';
+        
+        // Agregar opción inicial
+        const optionDefault = document.createElement('option');
+        optionDefault.value = '';
+        optionDefault.disabled = true;
+        optionDefault.selected = true;
+        optionDefault.textContent = 'Selecciona causas sugeridas';
+        causasSelect.appendChild(optionDefault);
+        
+        if (problema && causasPorProblema[problema]) {
+            // Agregar todas las causas del problema
+            causasPorProblema[problema].forEach(causa => {
+                const option = document.createElement('option');
+                option.value = causa;
+                option.textContent = causa;
+                causasSelect.appendChild(option);
+            });
+            
+            // Agregar opción para agregar todas las causas
+            const optionAll = document.createElement('option');
+            optionAll.value = 'all';
+            optionAll.textContent = '--- Agregar todas las causas sugeridas ---';
+            causasSelect.appendChild(optionAll);
+        } else {
+            const optionNoCausas = document.createElement('option');
+            optionNoCausas.value = '';
+            optionNoCausas.disabled = true;
+            optionNoCausas.selected = true;
+            optionNoCausas.textContent = 'No hay causas sugeridas para este problema';
+            causasSelect.appendChild(optionNoCausas);
+        }
+    }
 
-    // Inicializar tooltips Bootstrap 5
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
-
-    const solucionTextarea = document.getElementById('solucion');
-    const causasTextarea = document.getElementById('causas');
-
-    // Autoenumerar pasos en solución al presionar Enter
-    if (solucionTextarea) {
-        solucionTextarea.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-
-                const { selectionStart, selectionEnd, value } = this;
-                const beforeCursor = value.substring(0, selectionStart);
-                const afterCursor = value.substring(selectionEnd);
-
-                // Obtener número del último paso
-                const lines = beforeCursor.split('\n');
-                const currentLine = lines[lines.length - 1];
-                const match = currentLine.match(/^(\d+)\.\s/);
-                let nextNumber = 1;
-                if (match) {
-                    nextNumber = parseInt(match[1], 10) + 1;
-                }
-
-                const insertText = '\n' + nextNumber + '. ';
-                const newCursorPos = selectionStart + insertText.length;
-
-                this.value = beforeCursor + insertText + afterCursor;
-                this.selectionStart = this.selectionEnd = newCursorPos;
+    // Cuando se selecciona una causa
+    causasSelect.addEventListener('change', function() {
+        const causaSeleccionada = this.value;
+        
+        if (causaSeleccionada === 'all') {
+            // Agregar todas las causas sugeridas al textarea
+            const problema = problemaSelect.value;
+            if (causasPorProblema[problema]) {
+                const causasTexto = causasPorProblema[problema].map((causa, index) => 
+                    `${index + 1}. ${causa}`
+                ).join('\n');
+                causasPersonalizadasTextarea.value = causasTexto;
             }
-        });
+            this.value = '';
+        } else if (causaSeleccionada) {
+            // Agregar la causa seleccionada al textarea
+            const lineasActuales = causasPersonalizadasTextarea.value.split('\n').filter(line => line.trim());
+            const numero = lineasActuales.length + 1;
+            const nuevaCausa = `${numero}. ${causaSeleccionada}`;
+            
+            if (causasPersonalizadasTextarea.value.trim() === '') {
+                causasPersonalizadasTextarea.value = nuevaCausa;
+            } else {
+                causasPersonalizadasTextarea.value += '\n' + nuevaCausa;
+            }
+            
+            this.value = '';
+        }
+    });
+
+    // Autoenumerar en causas personalizadas
+    causasPersonalizadasTextarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+
+            const { selectionStart, selectionEnd, value } = this;
+            const beforeCursor = value.substring(0, selectionStart);
+            const afterCursor = value.substring(selectionEnd);
+
+            // Obtener número del último paso
+            const lines = beforeCursor.split('\n');
+            const currentLine = lines[lines.length - 1];
+            const match = currentLine.match(/^(\d+)\.\s/);
+            let nextNumber = 1;
+            if (match) {
+                nextNumber = parseInt(match[1], 10) + 1;
+            }
+
+            const insertText = '\n' + nextNumber + '. ';
+            const newCursorPos = selectionStart + insertText.length;
+
+            this.value = beforeCursor + insertText + afterCursor;
+            this.selectionStart = this.selectionEnd = newCursorPos;
+        }
+    });
+
+    // Autoenumerar pasos en solución
+    solucionTextarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+
+            const { selectionStart, selectionEnd, value } = this;
+            const beforeCursor = value.substring(0, selectionStart);
+            const afterCursor = value.substring(selectionEnd);
+
+            // Obtener número del último paso
+            const lines = beforeCursor.split('\n');
+            const currentLine = lines[lines.length - 1];
+            const match = currentLine.match(/^(\d+)\.\s/);
+            let nextNumber = 1;
+            if (match) {
+                nextNumber = parseInt(match[1], 10) + 1;
+            }
+
+            const insertText = '\n' + nextNumber + '. ';
+            const newCursorPos = selectionStart + insertText.length;
+
+            this.value = beforeCursor + insertText + afterCursor;
+            this.selectionStart = this.selectionEnd = newCursorPos;
+        }
+    });
+
+    // Función para formatear correctamente el textarea al cargar
+    function formatearTextareaAlCargar() {
+        // Formatear causas
+        if (causasPersonalizadasTextarea.value.trim()) {
+            const lineasCausas = causasPersonalizadasTextarea.value.split('\n')
+                .map(linea => linea.trim())
+                .filter(linea => linea.length > 0)
+                .map((linea, index) => {
+                    // Si la línea ya tiene número, mantenerlo limpio
+                    if (/^\d+\./.test(linea)) {
+                        return linea.replace(/^\d+\.\s*/, `${index + 1}. `);
+                    } else {
+                        return `${index + 1}. ${linea}`;
+                    }
+                });
+            causasPersonalizadasTextarea.value = lineasCausas.join('\n');
+        }
+
+        // Formatear solución
+        if (solucionTextarea.value.trim()) {
+            const lineasSolucion = solucionTextarea.value.split('\n')
+                .map(linea => linea.trim())
+                .filter(linea => linea.length > 0)
+                .map((linea, index) => {
+                    // Si la línea ya tiene número, mantenerlo limpio
+                    if (/^\d+\./.test(linea)) {
+                        return linea.replace(/^\d+\.\s*/, `${index + 1}. `);
+                    } else {
+                        return `${index + 1}. ${linea}`;
+                    }
+                });
+            solucionTextarea.value = lineasSolucion.join('\n');
+        } else {
+            solucionTextarea.value = '1. ';
+        }
     }
 
     // Al enviar el formulario
     document.querySelector('form').addEventListener('submit', function(e) {
         const problemaSeleccionado = problemaSelect.value;
         const otroProblema = otroProblemaInput.value.trim();
+        const causasPersonalizadas = causasPersonalizadasTextarea.value.trim();
+        
+        // Validar problema personalizado
+        if (problemaSeleccionado && problemaSeleccionado.includes('Otro') && !otroProblema) {
+            e.preventDefault();
+            alert('Por favor, describe el problema personalizado');
+            otroProblemaInput.focus();
+            return;
+        }
+        
+        // Validar causas
+        if (!causasPersonalizadas) {
+            e.preventDefault();
+            alert('Por favor, ingresa al menos una causa posible');
+            causasPersonalizadasTextarea.focus();
+            return;
+        }
         
         // Si seleccionó "Otro" y escribió algo, usar ese texto como problema
         if (problemaSeleccionado && problemaSeleccionado.includes('Otro') && otroProblema) {
-            // Crear un campo oculto con el problema personalizado
             const hiddenInput = document.createElement('input');
             hiddenInput.type = 'hidden';
             hiddenInput.name = 'problema_real';
             hiddenInput.value = otroProblema;
             this.appendChild(hiddenInput);
-            
-            // Deshabilitar el select original para que no se envíe
             problemaSelect.disabled = true;
         }
         
-        // Formatear causas y solución
-        if (causasTextarea) {
-            causasTextarea.value = causasTextarea.value.split('\n')
-                .map(line => line.trim())
-                .filter(line => line.length > 0)
-                .join('|');
-        }
-        if (solucionTextarea) {
-            solucionTextarea.value = solucionTextarea.value.split('\n')
-                .map(line => line.replace(/^\d+\.\s*/, '').trim())
-                .filter(line => line.length > 0)
-                .join('|');
-        }
+        // Formatear causas personalizadas para guardar
+        const lineasCausas = causasPersonalizadasTextarea.value.split('\n')
+            .map(linea => linea.replace(/^\d+\.\s*/, '').trim())
+            .filter(linea => linea.length > 0);
+        
+        const causasOcultas = document.createElement('input');
+        causasOcultas.type = 'hidden';
+        causasOcultas.name = 'causas';
+        causasOcultas.value = lineasCausas.join('|');
+        this.appendChild(causasOcultas);
+        causasPersonalizadasTextarea.disabled = true;
+        
+        // Formatear solución para guardar
+        const lineasSolucion = solucionTextarea.value.split('\n')
+            .map(linea => linea.replace(/^\d+\.\s*/, '').trim())
+            .filter(linea => linea.length > 0);
+        
+        solucionTextarea.value = lineasSolucion.join('|');
     });
+
+    // Formatear los textareas cuando se carga la página
+    formatearTextareaAlCargar();
 });
 </script>
 {% endblock %}

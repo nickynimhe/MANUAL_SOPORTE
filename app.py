@@ -142,6 +142,123 @@ def login():
     return render_template('login.html')
 
 
+@app.route('/soluciones_visuales')
+@login_required
+def soluciones_visuales():
+    soluciones = [
+        {
+            'id': 1,
+            'titulo': '¿Como consultamos clientes?',
+            'categoria': 'Softv',
+            'imagenes': ['softv/softv1.png', 'softv/softv2.png', 'softv/softv3.png', 'softv/softv4.png'],
+            'descripcion': 'Busqueda del cliente paso a paso'
+        },
+        {
+            'id': 2,
+            'titulo': '¿Como vemos las facturas del usuario?',
+            'categoria': 'Softv',
+            'imagenes': ['softv/softv5.png', 'softv/softv6.png', 'softv/softv7.png', 'softv/softv8.png'],
+            'descripcion': 'Consultar historial de pagos del usuario'
+        },
+        {
+            'id': 3,
+            'titulo': '¿Como consultamos las ordenes de servicio de los usuarios?',
+            'categoria': 'Softv',
+            'imagenes': ['softv/softv9.png', 'softv/softv10.png', 'softv/softv11.png', 'softv/softv12.png'],
+            'descripcion': 'Consultar historial de ordenes de servicio del usuario'
+        },
+        {
+            'id': 4,
+            'titulo': '¿Como consultamos reportes de fallas de los usuarios?',
+            'categoria': 'Softv',
+            'imagenes': ['softv/softv13.png', 'softv/softv14.png', 'softv/softv15.png', 'softv/softv16.png'],
+            'descripcion': 'Consultar historial de reportes de falla del usuario'
+        },
+        {
+            'id': 5,
+            'titulo': '¿Como creamos un reporte de falla?',
+            'categoria': 'Softv', 
+            'imagenes': ['softv/softv15.png', 'softv/softv16.png', 'softv/softv17.png', 'softv/softv19.png', 'softv/softv21.png', 'softv/softv22.png'],
+            'descripcion': 'Crear un reporte de falla'
+        },
+        {
+            'id': 6,
+            'titulo': '¿Como creamos una orden de servicio?',
+            'categoria': 'Softv',
+            'imagenes': ['softv/softv23.png', 'softv/softv24.png', 'softv/softv26.png', 'softv/softv27.png', 'softv/softv28.png'],
+            'descripcion': 'Crear una orden de servicio'
+        },
+        {
+            'id': 7,
+            'titulo': '¿Como borramos un reporte de falla en caso necesario?',
+            'categoria': 'Softv',
+            'imagenes': ['softv/softv29.png', 'softv/softv29.png', 'softv/softv29.png'],
+            'descripcion': 'Como eliminar un reporte de falla'
+        },
+        {
+            'id': 8,
+            'titulo': '¿Como ingresamos un nuevo cliente?',
+            'categoria': 'Softv',
+            'imagenes': ['softv/softv30.png', 'softv/softv31.png', 'softv/softv32.png', 'softv/softv33.png', 'softv/softv32.png'],
+            'descripcion': 'Crear un nuevo cliente'
+        },
+        {
+            'id': 9,
+            'titulo': '¿Como buscar un usuario?',
+            'categoria': 'Vortex',
+            'imagenes': ['vortex/vortex1.png', 'vortex/vortex2.png', 'vortex/vortex3.png'],
+            'descripcion': 'Buscar a un usuario'
+        },
+        {
+            'id': 10,
+            'titulo': '¿Como validar puertos en uso y la MAC del equipo?',
+            'categoria': 'Vortex',
+            'imagenes': ['vortex/vortex4.png', 'vortex/vortex5.png'],
+            'descripcion': 'Como validar si el usuario esta haciendo uso de los puertos o el dispositivo no da MAC'
+        },
+        {
+            'id': 11,
+            'titulo': '¿Como validar si el usuario esta teniendo consumo del servicio?',
+            'categoria': 'Vortex',
+            'imagenes': ['vortex/vortex7.png'],
+            'descripcion': 'Como validar el consumo del usuario'
+        },
+        {
+            'id': 12,
+            'titulo': '¿Como cambiar la VLAN?',
+            'categoria': 'Vortex',
+            'imagenes': ['vortex/vortex8.png', 'vortex/vortex9.png'],
+            'descripcion': 'Como cambiar la VLAN acorde a la zona'
+        },
+        {
+            'id': 13,
+            'titulo': '¿Como realizar un resync config?',
+            'categoria': 'Vortex',
+            'imagenes': ['vortex/vortex10.png', 'vortex/vortex11.png'],
+            'descripcion': 'Como realizar un resync config'
+        },
+        {
+            'id': 14,
+            'titulo': '¿Como realizar un reboot?',
+            'categoria': 'Vortex',
+            'imagenes': ['vortex/vortex12.png', 'vortex/vortex13.png'],
+            'descripcion': 'Como realizar un reebot'
+        },
+        {
+            'id': 15,
+            'titulo': '¿Como identificar si el servicio de internet y TV estan activados?',
+            'categoria': 'Vortex',
+            'imagenes': ['vortex/vortex14.png'],
+            'descripcion': 'Validar si el servicio esta activo'
+        }
+    ]
+    return render_template('soluciones_visuales.html', soluciones=soluciones)
+
+@app.route('/atencion_telefonica')
+@login_required
+def atencion_telefonica():
+    return render_template('atencion_telefonica.html')
+
 # Agregar esta ruta en app.py
 @app.route('/informacion-general')
 @login_required
