@@ -6,11 +6,6 @@
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
   <div>
     <h1 class="h3 fw-bold text-primary mb-1">📋 Manual</h1>
-    <li class="nav-item">
-    <a class="nav-link" href="{{ url_for('informacion_general') }}">
-        <i class="fas fa-info-circle me-1"></i>Información General
-    </a>
-</li>
   </div>
 
   <div>
@@ -52,7 +47,7 @@
           <i class="fas fa-wifi text-info fa-2x"></i>
         </div>
 
-        <div class="d-flex justify-content-between align-items-center p-3 rounded" style="background-color: rgba(40, 167, 69, 0.1);">
+        <div class="d-flex justify-content-between align-items-center p-3 rounded" style="background-color: hsla(189, 100%, 50%, 0.1);">
           <div>
             <span class="small text-muted">Dispositivos/Modem</span>
             <div class="fw-bold text-dark fs-5">{{ fichas|selectattr('categoria', 'equalto', 'Equipo')|list|length }}</div>
@@ -73,8 +68,8 @@
           <header class="card-header d-flex justify-content-between align-items-center py-2 
             {% if ficha.categoria == 'TV' %}bg-warning
             {% elif ficha.categoria == 'Internet' %}bg-info
-            {% elif ficha.categoria == 'Equipo' %}bg-success
-            {% else %}bg-success{% endif %}">
+            {% elif ficha.categoria == 'Equipo' %}bg-secondary
+            {% else %}bg-secondary{% endif %}">
             <span class="badge bg-dark text-uppercase fs-6 d-flex align-items-center gap-1">
               <i class="fas 
                 {% if ficha.categoria == 'TV' %}fa-tv
@@ -265,8 +260,8 @@
   color: #0a3d62 !important;
 }
 
-.card-header.bg-success {
-  background-color: #28a745 !important;
+.card-header.bg-secondary {
+  background-color: #83b7ff !important;
   color: #ffffff !important;
 }
 
