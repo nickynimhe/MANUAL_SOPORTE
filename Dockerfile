@@ -9,7 +9,4 @@ COPY . .
 
 EXPOSE 5000
 
-# Instalar Gunicorn si no está en requirements.txt
-RUN pip install gunicorn
-
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]

@@ -11,4 +11,4 @@ class Config:
     MYSQL_DB = os.environ.get('MYSQL_DB') or 'soporte_tecnico'
     
     # Configuración adicional
-    DEBUG = True
+    DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() in ('true', '1', 't')

@@ -2,6 +2,7 @@ import mysql.connector
 from mysql.connector import Error
 from werkzeug.security import generate_password_hash
 from config import Config
+import json
 
 def crear_conexion():
     """
@@ -42,6 +43,7 @@ def crear_tablas():
                     usuario VARCHAR(50) UNIQUE NOT NULL,
                     password VARCHAR(255) NOT NULL,
                     rol ENUM('admin', 'asesor') NOT NULL,
+                    permisos TEXT,
                     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                 )
@@ -52,7 +54,7 @@ def crear_tablas():
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS fichas (
                     id INT PRIMARY KEY AUTO_INCREMENT,
-                    categoria ENUM('TV', 'Internet') NOT NULL,
+                    categoria ENUM('TV', 'Internet', 'Equipo') NOT NULL,
                     problema VARCHAR(255) NOT NULL,
                     descripcion TEXT,
                     causas TEXT,
@@ -67,24 +69,34 @@ def crear_tablas():
             # Crear usuarios con contraseñas hasheadas CORRECTAMENTE
             admin_pass = generate_password_hash('admin123')
             asesor_pass = generate_password_hash('asesor123')
+            
+            default_perms = json.dumps({
+                'ver_fichas': True,
+                'agregar_fichas': False,
+                'editar_fichas': False,
+                'eliminar_fichas': False,
+                'cambiar_password': True
+            })
 
             # Insertar o actualizar usuario admin
             cursor.execute('''
-                INSERT INTO usuarios (usuario, password, rol)
-                VALUES (%s, %s, %s)
+                INSERT INTO usuarios (usuario, password, rol, permisos)
+                VALUES (%s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE 
                     password = VALUES(password), 
-                    rol = VALUES(rol)
-            ''', ('admin', admin_pass, 'admin'))
+                    rol = VALUES(rol),
+                    permisos = VALUES(permisos)
+            ''', ('admin', admin_pass, 'admin', default_perms))
 
             # Insertar o actualizar usuario asesor
             cursor.execute('''
-                INSERT INTO usuarios (usuario, password, rol)
-                VALUES (%s, %s, %s)
+                INSERT INTO usuarios (usuario, password, rol, permisos)
+                VALUES (%s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE 
                     password = VALUES(password), 
-                    rol = VALUES(rol)
-            ''', ('asesor', asesor_pass, 'asesor'))
+                    rol = VALUES(rol),
+                    permisos = VALUES(permisos)
+            ''', ('asesor', asesor_pass, 'asesor', default_perms))
 
             # Insertar algunas fichas de ejemplo
             cursor.execute("SELECT COUNT(*) FROM fichas")
