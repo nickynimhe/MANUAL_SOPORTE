@@ -275,7 +275,7 @@ def verificar_conexion():
         if conexion:
             conexion.close()
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     print("🚀 Inicializando base de datos...")
     
     # Primero verificar conexión
