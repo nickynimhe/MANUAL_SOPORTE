@@ -7,7 +7,7 @@ import psycopg2
 import json
 from datetime import datetime
 
-app = Flask(_name_)
+app = Flask(__name__)
 app.config.from_object(Config)
 
 # Configurar Flask-Login
@@ -33,7 +33,7 @@ def inject_permissions():
     return dict(tiene_permiso=tiene_permiso)
 
 class User(UserMixin):
-    def _init_(self, id, usuario, rol, permisos=None):
+    def __init__(self, id, usuario, rol, permisos=None):
         self.id = id
         self.usuario = usuario
         self.rol = rol
@@ -104,7 +104,7 @@ def permiso_requerido(permiso):
                 flash('No tienes permisos para acceder a esta página', 'error')
                 return redirect(url_for('index'))
             return f(*args, **kwargs)
-        decorated_function._name_ = f._name_
+        decorated_function.__name__ = f.__name__
         return decorated_function
     return decorator
 
@@ -1236,7 +1236,7 @@ def obtener_problemas(categoria):
     problemas = problemas_por_categoria.get(categoria, [])
     return jsonify(problemas)
 
-if _name_ == '_main_':
+if __name__ == '__main__':
     with app.app_context():
         print("🚀 Iniciando aplicación Flask...")
         crear_tablas()
