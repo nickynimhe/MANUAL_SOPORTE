@@ -1,1 +1,231 @@
+{% extends "base.html" %}
 
+{% block title %}SST - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-1">
+                        <i class="fas fa-shield-alt text-danger me-2"></i>
+                        Seguridad y Salud en el Trabajo
+                    </h1>
+                    <p class="text-muted mb-0">Gestión de contenido de capacitación y seguridad</p>
+                </div>
+                {% if current_user.rol == 'admin' %}
+                <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-danger">
+                    <i class="fas fa-plus me-2"></i>Agregar Contenido
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-video text-primary fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h4 class="mb-0">12</h4>
+                            <p class="text-muted mb-0">Videos</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-file-pdf text-success fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h4 class="mb-0">8</h4>
+                            <p class="text-muted mb-0">Documentos</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle text-warning fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h4 class="mb-0">15</h4>
+                            <p class="text-muted mb-0">Completados</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-clock text-info fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h4 class="mb-0">5</h4>
+                            <p class="text-muted mb-0">Pendientes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido destacado -->
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Contenido obligatorio -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Contenido Obligatorio
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Procedimiento de Evacuación</h6>
+                                <p class="text-muted mb-0 small">Video de capacitación para emergencias</p>
+                            </div>
+                            <div>
+                                <span class="badge bg-danger me-2">Obligatorio</span>
+                                <a href="#" class="btn btn-sm btn-outline-primary">Ver</a>
+                            </div>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Uso de EPP</h6>
+                                <p class="text-muted mb-0 small">Guía de equipos de protección personal</p>
+                            </div>
+                            <div>
+                                <span class="badge bg-danger me-2">Obligatorio</span>
+                                <a href="#" class="btn btn-sm btn-outline-primary">Ver</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contenido reciente -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Contenido Reciente
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">Primeros Auxilios Básicos</h6>
+                                    <p class="text-muted mb-2 small">Procedimientos básicos de primeros auxilios en el lugar de trabajo</p>
+                                    <div class="d-flex gap-2">
+                                        <span class="badge bg-success">Video</span>
+                                        <span class="badge bg-secondary">Primeros Auxilios</span>
+                                        <small class="text-muted">Hace 2 días</small>
+                                    </div>
+                                </div>
+                                <a href="#" class="btn btn-sm btn-outline-primary">Ver</a>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">Normativa SST Actualizada</h6>
+                                    <p class="text-muted mb-2 small">Actualización de leyes y decretos de seguridad</p>
+                                    <div class="d-flex gap-2">
+                                        <span class="badge bg-info">Documento</span>
+                                        <span class="badge bg-secondary">Normativa</span>
+                                        <small class="text-muted">Hace 1 semana</small>
+                                    </div>
+                                </div>
+                                <a href="#" class="btn btn-sm btn-outline-primary">Ver</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar - Categorías -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-tags me-2"></i>
+                        Categorías
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-column gap-2">
+                        <a href="{{ url_for('sst_contenido') }}?categoria=1" class="btn btn-outline-danger text-start">
+                            <i class="fas fa-video me-2"></i>Videos de Capacitación
+                        </a>
+                        <a href="{{ url_for('sst_contenido') }}?categoria=2" class="btn btn-outline-success text-start">
+                            <i class="fas fa-clipboard-list me-2"></i>Procedimientos de Seguridad
+                        </a>
+                        <a href="{{ url_for('sst_contenido') }}?categoria=3" class="btn btn-outline-primary text-start">
+                            <i class="fas fa-first-aid me-2"></i>Primeros Auxilios
+                        </a>
+                        <a href="{{ url_for('sst_contenido') }}?categoria=4" class="btn btn-outline-warning text-start">
+                            <i class="fas fa-hard-hat me-2"></i>Equipos de Protección
+                        </a>
+                        <a href="{{ url_for('sst_contenido') }}?categoria=5" class="btn btn-outline-info text-start">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Emergencias
+                        </a>
+                        <a href="{{ url_for('sst_contenido') }}?categoria=6" class="btn btn-outline-secondary text-start">
+                            <i class="fas fa-gavel me-2"></i>Normativa Legal
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acciones rápidas -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Acciones Rápidas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-dark">
+                            <i class="fas fa-list me-2"></i>Ver Todo el Contenido
+                        </a>
+                        {% if current_user.rol == 'admin' %}
+                        <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-outline-dark">
+                            <i class="fas fa-plus me-2"></i>Agregar Contenido
+                        </a>
+                        <a href="{{ url_for('sst_estadisticas') }}" class="btn btn-outline-dark">
+                            <i class="fas fa-chart-bar me-2"></i>Estadísticas
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
