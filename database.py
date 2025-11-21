@@ -1,159 +1,106 @@
-import os
 import psycopg2
-from werkzeug.security import generate_password_hash
-import json
-import time
+import os
+from datetime import datetime
 
 def crear_conexion():
-    """Conexión mejorada y simplificada para Render"""
-    max_intentos = 3
-    for intento in range(max_intentos):
-        try:
-            print(f"🔗 Intento {intento + 1} de conexión a PostgreSQL...")
-            
-            # Obtener DATABASE_URL desde config o variables de entorno
-            try:
-                from config import Config
-                database_url = Config.DATABASE_URL
-            except:
-                database_url = os.getenv('DATABASE_URL')
-            
-            if not database_url:
-                print("❌ DATABASE_URL no encontrada en configuración")
-                return None
-            
-            # Asegurar formato correcto
-            if database_url.startswith("postgres://"):
-                database_url = database_url.replace("postgres://", "postgresql://", 1)
-            
-            # Agregar sslmode para Render si es necesario
-            if 'render.com' in database_url and 'sslmode=' not in database_url:
-                database_url += '?sslmode=require'
-            
-            # Ocultar credenciales en logs
-            url_para_logs = database_url
-            if '@' in database_url:
-                partes = database_url.split('@')
-                url_para_logs = f"postgresql://*@{partes[1]}"
-            print(f"🔗 Conectando a: {url_para_logs}")
-            
-            # Crear conexión
-            conexion = psycopg2.connect(database_url)
-            
-            # Verificar que la conexión funciona
-            cursor = conexion.cursor()
-            cursor.execute("SELECT version()")
-            version_info = cursor.fetchone()
-            cursor.close()
-            
-            print(f"✅ ¡CONEXIÓN EXITOSA! PostgreSQL: {version_info[0].split(',')[0]}")
-            return conexion
-            
-        except Exception as err:
-            print(f"❌ Intento {intento + 1} falló: {str(err)}")
-            if intento < max_intentos - 1:
-                print("🔄 Reintentando en 3 segundos...")
-                time.sleep(3)
-            else:
-                print("💥 Todos los intentos de conexión fallaron")
-                return None
-
-def resetear_secuencias():
-    """Resetea las secuencias de las tablas"""
-    conexion = None
-    cursor = None
-    
+    """Crear conexión a la base de datos"""
     try:
-        conexion = crear_conexion()
-        if not conexion:
-            print("💥 No se pudo conectar para resetear secuencias")
-            return False
-
-        cursor = conexion.cursor()
+        # Para Render.com - usa DATABASE_URL
+        database_url = os.environ.get('DATABASE_URL')
         
-        print("🔄 Reseteando secuencias...")
-        
-        # Resetear secuencia de usuarios si existe
-        cursor.execute("""
-            SELECT EXISTS (
-                SELECT 1 FROM information_schema.sequences 
-                WHERE sequence_name = 'usuarios_id_seq'
-            )
-        """)
-        if cursor.fetchone()[0]:
-            cursor.execute("""
-                SELECT setval('usuarios_id_seq', COALESCE((SELECT MAX(id) FROM usuarios), 1), false)
-            """)
-            print("✅ Secuencia 'usuarios_id_seq' reseteada")
+        if database_url:
+            # Render usa postgres://, necesitamos convertir a psycopg2's formato
+            if database_url.startswith('postgres://'):
+                database_url = database_url.replace('postgres://', 'postgresql://', 1)
+            
+            conexion = psycopg2.connect(database_url)
+            print("✅ Conectado a la base de datos (Render)")
         else:
-            print("ℹ Secuencia 'usuarios_id_seq' no existe aún")
-        
-        # Resetear secuencia de fichas si existe
-        cursor.execute("""
-            SELECT EXISTS (
-                SELECT 1 FROM information_schema.sequences 
-                WHERE sequence_name = 'fichas_id_seq'
+            # Para desarrollo local
+            conexion = psycopg2.connect(
+                host=os.environ.get('DB_HOST', 'localhost'),
+                database=os.environ.get('DB_NAME', 'mastv_fichas'),
+                user=os.environ.get('DB_USER', 'postgres'),
+                password=os.environ.get('DB_PASSWORD', ''),
+                port=os.environ.get('DB_PORT', '5432')
             )
-        """)
-        if cursor.fetchone()[0]:
-            cursor.execute("""
-                SELECT setval('fichas_id_seq', COALESCE((SELECT MAX(id) FROM fichas), 1), false)
-            """)
-            print("✅ Secuencia 'fichas_id_seq' reseteada")
-        else:
-            print("ℹ Secuencia 'fichas_id_seq' no existe aún")
+            print("✅ Conectado a la base de datos (Local)")
         
-        # Resetear secuencias SST si existen
-        cursor.execute("""
-            SELECT EXISTS (
-                SELECT 1 FROM information_schema.sequences 
-                WHERE sequence_name = 'sst_categorias_id_seq'
-            )
-        """)
-        if cursor.fetchone()[0]:
-            cursor.execute("""
-                SELECT setval('sst_categorias_id_seq', COALESCE((SELECT MAX(id) FROM sst_categorias), 1), false)
-            """)
-            print("✅ Secuencia 'sst_categorias_id_seq' reseteada")
+        return conexion
         
-        cursor.execute("""
-            SELECT EXISTS (
-                SELECT 1 FROM information_schema.sequences 
-                WHERE sequence_name = 'sst_contenido_id_seq'
-            )
-        """)
-        if cursor.fetchone()[0]:
-            cursor.execute("""
-                SELECT setval('sst_contenido_id_seq', COALESCE((SELECT MAX(id) FROM sst_contenido), 1), false)
-            """)
-            print("✅ Secuencia 'sst_contenido_id_seq' reseteada")
-        
-        cursor.execute("""
-            SELECT EXISTS (
-                SELECT 1 FROM information_schema.sequences 
-                WHERE sequence_name = 'sst_seguimiento_id_seq'
-            )
-        """)
-        if cursor.fetchone()[0]:
-            cursor.execute("""
-                SELECT setval('sst_seguimiento_id_seq', COALESCE((SELECT MAX(id) FROM sst_seguimiento), 1), false)
-            """)
-            print("✅ Secuencia 'sst_seguimiento_id_seq' reseteada")
-        
-        conexion.commit()
-        print("🎉 Secuencias reseteadas correctamente")
-        return True
+    except Exception as e:
+        print(f"❌ Error conectando a la base de datos: {e}")
+        return None
 
-    except Exception as err:
-        print(f"💥 Error reseteando secuencias: {str(err)}")
-        if conexion:
+def crear_tablas_usuarios():
+    """Crear tabla de usuarios"""
+    conexion = crear_conexion()
+    if conexion:
+        try:
+            cursor = conexion.cursor()
+            
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS usuarios (
+                    id SERIAL PRIMARY KEY,
+                    usuario VARCHAR(50) UNIQUE NOT NULL,
+                    password VARCHAR(255) NOT NULL,
+                    rol VARCHAR(20) DEFAULT 'usuario',
+                    permisos TEXT,
+                    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            # Insertar usuario admin por defecto si no existe
+            cursor.execute("SELECT COUNT(*) FROM usuarios WHERE usuario = 'admin'")
+            if cursor.fetchone()[0] == 0:
+                from werkzeug.security import generate_password_hash
+                password_hash = generate_password_hash('admin123')
+                cursor.execute(
+                    "INSERT INTO usuarios (usuario, password, rol) VALUES (%s, %s, %s)",
+                    ('admin', password_hash, 'admin')
+                )
+                print("✅ Usuario admin creado por defecto")
+            
+            conexion.commit()
+            print("✅ Tabla de usuarios creada/existe correctamente")
+            
+        except Exception as e:
+            print(f"❌ Error creando tabla de usuarios: {e}")
             conexion.rollback()
-        return False
-        
-    finally:
-        if cursor:
+        finally:
             cursor.close()
-        if conexion:
+            conexion.close()
+
+def crear_tablas_fichas():
+    """Crear tabla de fichas técnicas"""
+    conexion = crear_conexion()
+    if conexion:
+        try:
+            cursor = conexion.cursor()
+            
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS fichas (
+                    id SERIAL PRIMARY KEY,
+                    categoria VARCHAR(100) NOT NULL,
+                    problema TEXT NOT NULL,
+                    descripcion TEXT,
+                    causas TEXT,
+                    solucion TEXT NOT NULL,
+                    palabras_clave TEXT,
+                    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            conexion.commit()
+            print("✅ Tabla de fichas creada/existe correctamente")
+            
+        except Exception as e:
+            print(f"❌ Error creando tabla de fichas: {e}")
+            conexion.rollback()
+        finally:
+            cursor.close()
             conexion.close()
 
 def crear_tablas_sst():
@@ -191,8 +138,8 @@ def crear_tablas_sst():
                     usuario_creador INTEGER REFERENCES usuarios(id)
                 )
             ''')
-                        
-            # Tabla de seguimiento
+            
+            # Tabla de seguimiento de visualizaciones
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS sst_seguimiento (
                     id SERIAL PRIMARY KEY,
@@ -219,12 +166,10 @@ def crear_tablas_sst():
                     "INSERT INTO sst_categorias (nombre, color, descripcion) VALUES (%s, %s, %s)",
                     categorias
                 )
+                print("✅ Categorías SST creadas por defecto")
             
             conexion.commit()
             print("✅ Tablas SST creadas/existen correctamente")
-            
-            # Verificar y actualizar estructura si es necesario
-            actualizar_tabla_sst_contenido()
             
         except Exception as e:
             print(f"❌ Error creando tablas SST: {e}")
@@ -233,233 +178,33 @@ def crear_tablas_sst():
             cursor.close()
             conexion.close()
 
-def actualizar_tabla_sst_contenido():
-    """Agregar columna archivo_local si no existe"""
+def crear_tablas():
+    """Crear todas las tablas necesarias"""
+    print("🔧 Creando/verificando tablas...")
+    crear_tablas_usuarios()
+    crear_tablas_fichas()
+    crear_tablas_sst()
+    print("✅ Todas las tablas creadas/verificadas")
+
+def resetear_secuencias():
+    """Resetear secuencias de IDs si es necesario"""
     conexion = crear_conexion()
     if conexion:
         try:
             cursor = conexion.cursor()
             
-            # Verificar si la columna archivo_local existe
-            cursor.execute("""
-                SELECT column_name 
-                FROM information_schema.columns 
-                WHERE table_name = 'sst_contenido' AND column_name = 'archivo_local'
-            """)
+            # Resetear secuencia de fichas
+            cursor.execute("SELECT setval('fichas_id_seq', COALESCE((SELECT MAX(id) FROM fichas), 0) + 1, false)")
             
-            if not cursor.fetchone():
-                # Agregar la columna si no existe
-                cursor.execute("ALTER TABLE sst_contenido ADD COLUMN archivo_local VARCHAR(500)")
-                print("✅ Columna archivo_local agregada a sst_contenido")
+            # Resetear secuencia de usuarios
+            cursor.execute("SELECT setval('usuarios_id_seq', COALESCE((SELECT MAX(id) FROM usuarios), 0) + 1, false)")
             
             conexion.commit()
+            print("✅ Secuencias reseteadas correctamente")
             
         except Exception as e:
-            print(f"❌ Error actualizando tabla sst_contenido: {e}")
+            print(f"❌ Error reseteando secuencias: {e}")
             conexion.rollback()
         finally:
             cursor.close()
             conexion.close()
-
-def crear_tablas():
-    """Función mejorada para crear tablas"""
-    print("🔧 Iniciando creación de tablas...")
-    
-    conexion = None
-    cursor = None
-    
-    try:
-        conexion = crear_conexion()
-        if not conexion:
-            print("💥 No se pudo conectar para crear tablas")
-            return False
-
-        cursor = conexion.cursor()
-
-        # Tabla usuarios
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS usuarios (
-                id SERIAL PRIMARY KEY,
-                usuario VARCHAR(50) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                rol VARCHAR(50) NOT NULL DEFAULT 'asesor',
-                permisos JSONB,
-                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        print("✅ Tabla 'usuarios' lista")
-
-        # Tabla fichas
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS fichas (
-                id SERIAL PRIMARY KEY,
-                categoria VARCHAR(50) NOT NULL,
-                problema VARCHAR(255) NOT NULL,
-                descripcion TEXT,
-                causas TEXT,
-                solucion TEXT NOT NULL,
-                palabras_clave TEXT,
-                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        print("✅ Tabla 'fichas' lista")
-
-        # Insertar usuario admin por defecto si no existe
-        cursor.execute("SELECT COUNT(*) FROM usuarios WHERE usuario = 'admin'")
-        if cursor.fetchone()[0] == 0:
-            password_hash = generate_password_hash('admin123')
-            permisos_admin = json.dumps({
-                'ver_fichas': True, 
-                'agregar_fichas': True,
-                'editar_fichas': True, 
-                'eliminar_fichas': True,
-                'cambiar_password': True
-            })
-            cursor.execute(
-                "INSERT INTO usuarios (usuario, password, rol, permisos) VALUES (%s, %s, %s, %s)",
-                ('admin', password_hash, 'admin', permisos_admin)
-            )
-            print("✅ Usuario 'admin' creado (password: admin123)")
-        else:
-            print("ℹ Usuario 'admin' ya existe")
-
-        # Crear o resetear secuencias
-        try:
-            cursor.execute("""
-                SELECT setval('usuarios_id_seq', COALESCE((SELECT MAX(id) FROM usuarios), 1), true)
-            """)
-            cursor.execute("""
-                SELECT setval('fichas_id_seq', COALESCE((SELECT MAX(id) FROM fichas), 1), true)
-            """)
-            print("✅ Secuencias configuradas")
-        except Exception as seq_err:
-            print(f"ℹ Las secuencias se crearán automáticamente: {seq_err}")
-
-        # Crear tablas SST
-        print("🔧 Creando tablas SST...")
-        crear_tablas_sst()
-
-        conexion.commit()
-        print("🎉 Base de datos inicializada CORRECTAMENTE")
-        return True
-
-    except Exception as err:
-        print(f"💥 Error en creación de tablas: {str(err)}")
-        if conexion:
-            conexion.rollback()
-        return False
-        
-    finally:
-        if cursor:
-            cursor.close()
-        if conexion:
-            conexion.close()
-
-def verificar_tablas():
-    """Verificar que las tablas existen"""
-    conexion = None
-    cursor = None
-    
-    try:
-        conexion = crear_conexion()
-        if not conexion:
-            return False
-
-        cursor = conexion.cursor()
-        
-        # Verificar tabla usuarios
-        cursor.execute("""
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_schema = 'public' AND table_name = 'usuarios'
-            )
-        """)
-        usuarios_existe = cursor.fetchone()[0]
-        
-        # Verificar tabla fichas
-        cursor.execute("""
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_schema = 'public' AND table_name = 'fichas'
-            )
-        """)
-        fichas_existe = cursor.fetchone()[0]
-        
-        # Verificar tablas SST
-        cursor.execute("""
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_schema = 'public' AND table_name = 'sst_categorias'
-            )
-        """)
-        sst_categorias_existe = cursor.fetchone()[0]
-        
-        cursor.execute("""
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_schema = 'public' AND table_name = 'sst_contenido'
-            )
-        """)
-        sst_contenido_existe = cursor.fetchone()[0]
-        
-        # Verificar datos en usuarios
-        cursor.execute("SELECT COUNT(*) FROM usuarios")
-        total_usuarios = cursor.fetchone()[0]
-        
-        print(f"📊 Tabla 'usuarios' existe: {usuarios_existe} ({total_usuarios} usuarios)")
-        print(f"📊 Tabla 'fichas' existe: {fichas_existe}")
-        print(f"📊 Tabla 'sst_categorias' existe: {sst_categorias_existe}")
-        print(f"📊 Tabla 'sst_contenido' existe: {sst_contenido_existe}")
-        
-        return usuarios_existe and fichas_existe and sst_categorias_existe and sst_contenido_existe
-        
-    except Exception as err:
-        print(f"💥 Error verificando tablas: {err}")
-        return False
-        
-    finally:
-        if cursor:
-            cursor.close()
-        if conexion:
-            conexion.close()
-
-def verificar_conexion():
-    """Verificar solo la conexión sin crear tablas"""
-    conexion = None
-    try:
-        conexion = crear_conexion()
-        if conexion:
-            print("✅ Conexión a PostgreSQL verificada correctamente")
-            return True
-        else:
-            print("❌ No se pudo establecer conexión")
-            return False
-    finally:
-        if conexion:
-            conexion.close()
-
-if __name__ == "__main__":
-    print("🚀 Inicializando base de datos...")
-    
-    # Primero verificar conexión
-    print("🔍 Verificando conexión...")
-    if not verificar_conexion():
-        print("💥 No se puede continuar sin conexión a la base de datos")
-        exit(1)
-    
-    # Verificar si las tablas ya existen
-    print("🔍 Verificando tablas existentes...")
-    if verificar_tablas():
-        print("ℹ Las tablas ya existen, solo reseteando secuencias...")
-        if resetear_secuencias():
-            print("✅ Base de datos ya está lista")
-        else:
-            print("⚠ Problemas reseteando secuencias")
-    else:
-        print("🔧 Creando tablas...")
-        if crear_tablas():
-            print("🎉 ¡Base de datos inicializada correctamente!")
-        else:
-            print("💥 Error inicializando base de datos")
