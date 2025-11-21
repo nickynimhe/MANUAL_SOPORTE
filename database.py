@@ -174,19 +174,19 @@ def crear_tablas_sst():
                 )
             ''')
             
-            # Tabla de contenido SST
+            # Tabla de contenido SST - VERSIÓN CORREGIDA
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS sst_contenido (
                     id SERIAL PRIMARY KEY,
                     titulo VARCHAR(200) NOT NULL,
                     descripcion TEXT,
-                    tipo VARCHAR(50) NOT NULL, -- video, documento, imagen, enlace
+                    tipo VARCHAR(50) NOT NULL,
                     archivo_url TEXT,
-                    archivo_local VARCHAR(255),
+                    archivo_local VARCHAR(500),  -- Aumentado a 500 caracteres
                     video_url TEXT,
                     categoria_id INTEGER REFERENCES sst_categorias(id),
                     es_obligatorio BOOLEAN DEFAULT FALSE,
-                    duracion_video INTEGER, -- en minutos
+                    duracion_video INTEGER,
                     tags TEXT,
                     fecha_publicacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     usuario_creador INTEGER REFERENCES usuarios(id)
