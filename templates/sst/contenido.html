@@ -142,17 +142,14 @@
                                 {% endif %}
                                 
                                 {% if current_user.rol == 'admin' %}
-                                <!-- En la sección de botones administrativos -->
                                 <div class="btn-group w-100">
-                                    <a href="{{ url_for('sst_editar_contenido', id=item.id) }}" class="btn btn-outline-warning btn-sm">
+                                    <!-- Botones deshabilitados temporalmente -->
+                                    <button class="btn btn-outline-warning btn-sm" disabled title="Editar (próximamente)">
                                         <i class="fas fa-edit me-1"></i>Editar
-                                    </a>
-                                    <form method="POST" action="{{ url_for('sst_eliminar_contenido', id=item.id) }}" 
-                                          style="display: inline;" onsubmit="return confirm('¿Estás seguro de eliminar este contenido?');">
-                                        <button type="submit" class="btn btn-outline-danger btn-sm">
-                                            <i class="fas fa-trash me-1"></i>Eliminar
-                                        </button>
-                                    </form>
+                                    </button>
+                                    <button class="btn btn-outline-danger btn-sm" disabled title="Eliminar (próximamente)">
+                                        <i class="fas fa-trash me-1"></i>Eliminar
+                                    </button>
                                 </div>
                                 {% endif %}
                             </div>
@@ -205,11 +202,6 @@
     max-width: 400px;
     margin: 0 auto;
 }
-
-.bg-video { background-color: #0d6efd; color: white; }
-.bg-documento { background-color: #198754; color: white; }
-.bg-imagen { background-color: #6f42c1; color: white; }
-.bg-enlace { background-color: #fd7e14; color: white; }
 
 .input-group-text {
     border-radius: 8px 0 0 8px !important;
