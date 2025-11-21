@@ -174,7 +174,7 @@ def crear_tablas_sst():
                 )
             ''')
             
-            # Tabla de contenido SST - VERSIÓN CORREGIDA
+            # Tabla de contenido SST
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS sst_contenido (
                     id SERIAL PRIMARY KEY,
@@ -182,7 +182,7 @@ def crear_tablas_sst():
                     descripcion TEXT,
                     tipo VARCHAR(50) NOT NULL,
                     archivo_url TEXT,
-                    archivo_local VARCHAR(500),  -- Aumentado a 500 caracteres
+                    archivo_local VARCHAR(500),
                     video_url TEXT,
                     categoria_id INTEGER REFERENCES sst_categorias(id),
                     es_obligatorio BOOLEAN DEFAULT FALSE,
@@ -193,7 +193,7 @@ def crear_tablas_sst():
                 )
             ''')
             
-            # Tabla de seguimiento de visualizaciones
+            # Tabla de seguimiento
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS sst_seguimiento (
                     id SERIAL PRIMARY KEY,
@@ -223,6 +223,9 @@ def crear_tablas_sst():
             
             conexion.commit()
             print("✅ Tablas SST creadas/existen correctamente")
+            
+            # Verificar y actualizar estructura si es necesario
+            actualizar_tabla_sst_contenido()
             
         except Exception as e:
             print(f"❌ Error creando tablas SST: {e}")
