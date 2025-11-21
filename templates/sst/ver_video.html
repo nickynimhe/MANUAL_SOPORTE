@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}SST - {{ video.titulo }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Navegación -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('sst_dashboard') }}">SST</a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a href="{{ url_for('sst_contenido') }}">Contenido</a>
+                            </li>
+                            <li class="breadcrumb-item active">{{ video.titulo }}</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Video y información -->
+            <div class="row">
+                <!-- Video -->
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-0">
+                            <div class="ratio ratio-16x9">
+                                {% if video.video_url %}
+                                <iframe src="{{ video.video_url }}" 
+                                        frameborder="0" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowfullscreen>
+                                </iframe>
+                                {% else %}
+                                <div class="d-flex align-items-center justify-content-center bg-light">
+                                    <div class="text-center text-muted">
+                                        <i class="fas fa-video-slash fa-3x mb-3"></i>
+                                        <p>Video no disponible</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Descripción -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-info-circle me-2"></i>Descripción
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if video.descripcion %}
+                            <p class="card-text">{{ video.descripcion }}</p>
+                            {% else %}
+                            <p class="card-text text-muted">No hay descripción disponible para este video.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información lateral -->
+                <div class="col-lg-4">
+                    <!-- Información del video -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-play-circle me-2"></i>Información
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <strong>Título:</strong>
+                                <p class="mb-0">{{ video.titulo }}</p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Categoría:</strong>
+                                <p class="mb-0">
+                                    <span class="badge" style="background-color: {{ video.categoria_color }}; color: white;">
+                                        {{ video.categoria_nombre }}
+                                    </span>
+                                </p>
+                            </div>
+                            
+                            {% if video.duracion_video %}
+                            <div class="mb-3">
+                                <strong>Duración:</strong>
+                                <p class="mb-0">{{ video.duracion_video }} minutos</p>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="mb-3">
+                                <strong>Publicado:</strong>
+                                <p class="mb-0">{{ video.fecha_publicacion.strftime('%d/%m/%Y') }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Acciones -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-cog me-2"></i>Acciones
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>Volver al Listado
+                                </a>
+                                {% if current_user.rol == 'admin' %}
+                                <a href="#" class="btn btn-outline-warning">
+                                    <i class="fas fa-edit me-2"></i>Editar Video
+                                </a>
+                                <a href="#" class="btn btn-outline-danger">
+                                    <i class="fas fa-trash me-2"></i>Eliminar
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Completar video -->
+                    <div class="card border-0 shadow-sm mt-4">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-check-circle text-success fa-3x"></i>
+                            </div>
+                            <h6>¿Has completado este video?</h6>
+                            <button class="btn btn-success w-100">
+                                <i class="fas fa-check me-2"></i>Marcar como Completado
+                            </button>
+                            <small class="text-muted d-block mt-2">
+                                Tu progreso se guardará automáticamente
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
