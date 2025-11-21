@@ -1319,7 +1319,7 @@ def sst_contenido():
 @app.route('/sst/agregar', methods=['GET', 'POST'])
 @login_required
 def sst_agregar_contenido():
-    """Agregar nuevo contenido SST"""
+    """Agregar nuevo contenido SST - VERSIÓN SIMPLIFICADA"""
     if current_user.rol != 'admin':
         flash('No tienes permisos para agregar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
@@ -1345,6 +1345,7 @@ def sst_agregar_contenido():
                 })
             
             if request.method == 'POST':
+                # Obtener y limpiar datos del formulario
                 titulo = request.form.get('titulo', '').strip()
                 descripcion = request.form.get('descripcion', '').strip()
                 tipo = request.form.get('tipo', '').strip()
@@ -1353,68 +1354,92 @@ def sst_agregar_contenido():
                 tags = request.form.get('tags', '').strip()
                 
                 # Validaciones básicas
-                if not titulo or not tipo or not categoria_id:
-                    flash('Título, tipo y categoría son obligatorios', 'error')
+                if not titulo:
+                    flash('El título es obligatorio', 'error')
                     return render_template('sst/agregar_contenido.html', categorias=categorias)
                 
-                # Inicializar variables
+                if not tipo:
+                    flash('El tipo de contenido es obligatorio', 'error')
+                    return render_template('sst/agregar_contenido.html', categorias=categorias)
+                
+                if not categoria_id:
+                    flash('La categoría es obligatoria', 'error')
+                    return render_template('sst/agregar_contenido.html', categorias=categorias)
+                
+                # Validar que categoria_id sea un número
+                try:
+                    categoria_id_int = int(categoria_id)
+                except (ValueError, TypeError):
+                    flash('Categoría inválida', 'error')
+                    return render_template('sst/agregar_contenido.html', categorias=categorias)
+                
+                # Procesar archivos
                 archivo_url = None
                 archivo_local = None
                 video_url = None
-                duracion = None
                 
-                # Manejar subida de archivo local
-                if 'archivo_local' in request.files:
-                    file = request.files['archivo_local']
-                    if file and file.filename != '' and allowed_file(file.filename):
+                # Manejar archivo subido
+                file = request.files.get('archivo_local')
+                if file and file.filename != '':
+                    if allowed_file(file.filename):
                         filename = secure_filename(file.filename)
-                        # Agregar timestamp para hacer único el nombre
                         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                         filename = f"{timestamp}_{filename}"
                         file_path = os.path.join(app.config['UPLOAD_FOLDER_SST'], filename)
                         file.save(file_path)
                         archivo_local = filename
-                        print(f"✅ Archivo guardado: {file_path}")
-                    elif file and file.filename != '':
+                        print(f"✅ Archivo guardado: {filename}")
+                    else:
                         flash('Tipo de archivo no permitido', 'error')
                         return render_template('sst/agregar_contenido.html', categorias=categorias)
                 
-                # Manejar diferentes tipos de contenido
+                # Procesar según tipo
                 if tipo == 'video':
-                    video_url = request.form.get('video_url', '').strip()
-                    duracion = request.form.get('duracion_video', 0)
-                    # Si no hay video_url pero hay archivo local, es video local
+                    video_url = request.form.get('video_url', '').strip() or None
+                    # Validar que tenga al menos una fuente de video
                     if not video_url and not archivo_local:
-                        flash('Para contenido de video debe proporcionar una URL o subir un archivo', 'error')
+                        flash('Para video debe proporcionar una URL o subir un archivo', 'error')
                         return render_template('sst/agregar_contenido.html', categorias=categorias)
+                
                 elif tipo in ['documento', 'imagen']:
-                    archivo_url = request.form.get('archivo_url', '').strip()
-                    # Si no hay archivo local ni URL
+                    archivo_url = request.form.get('archivo_url', '').strip() or None
+                    # Validar que tenga al menos una fuente
                     if not archivo_local and not archivo_url:
                         flash('Debe proporcionar una URL o subir un archivo', 'error')
                         return render_template('sst/agregar_contenido.html', categorias=categorias)
-                else:  # enlace
+                
+                elif tipo == 'enlace':
                     archivo_url = request.form.get('archivo_url', '').strip()
                     if not archivo_url:
                         flash('Debe proporcionar una URL para enlaces', 'error')
                         return render_template('sst/agregar_contenido.html', categorias=categorias)
                 
-                # Insertar en la base de datos
+                # Insertar en la base de datos (sin duracion_video)
                 cursor.execute("""
                     INSERT INTO sst_contenido 
                     (titulo, descripcion, tipo, archivo_url, archivo_local, video_url, categoria_id, 
-                     es_obligatorio, duracion_video, tags, usuario_creador)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (titulo, descripcion, tipo, archivo_url, archivo_local, video_url, categoria_id,
-                      es_obligatorio, duracion, tags, current_user.id))
+                     es_obligatorio, tags, usuario_creador)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    titulo,
+                    descripcion or None,
+                    tipo,
+                    archivo_url,
+                    archivo_local,
+                    video_url,
+                    categoria_id_int,
+                    es_obligatorio,
+                    tags or None,
+                    current_user.id
+                ))
                 
                 conexion.commit()
-                flash('Contenido SST agregado correctamente', 'success')
+                flash('✅ Contenido SST agregado correctamente', 'success')
                 return redirect(url_for('sst_contenido'))
                 
     except Exception as e:
         flash(f'Error al agregar contenido SST: {str(e)}', 'error')
-        print(f"Error en sst_agregar_contenido: {e}")
+        print(f"❌ Error en sst_agregar_contenido: {e}")
         if conexion:
             conexion.rollback()
     finally:
