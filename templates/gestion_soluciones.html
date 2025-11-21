@@ -1,1 +1,200 @@
+{% extends "base.html" %}
 
+{% block title %}Gestión de Soluciones Visuales{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-2">Gestión de Soluciones Visuales</h1>
+            <p class="text-muted">Administra las guías paso a paso con imágenes</p>
+        </div>
+        {% if tiene_permiso('gestionar_soluciones') or current_user.rol == 'admin' %}
+        <a href="{{ url_for('agregar_solucion') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Agregar Solución
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h4 class="mb-0">{{ soluciones|length }}</h4>
+                            <span>Total Soluciones</span>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-images fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h4 class="mb-0">{{ soluciones|selectattr('activo')|list|length }}</h4>
+                            <span>Activas</span>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h4 class="mb-0">{{ soluciones|selectattr('categoria', 'equalto', 'Softv')|list|length }}</h4>
+                            <span>Softv</span>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-tv fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h4 class="mb-0">{{ soluciones|selectattr('categoria', 'equalto', 'Vortex')|list|length }}</h4>
+                            <span>Vortex</span>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-satellite-dish fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Soluciones -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Lista de Soluciones</h5>
+        </div>
+        <div class="card-body">
+            {% if soluciones %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Título</th>
+                            <th>Categoría</th>
+                            <th>Pasos</th>
+                            <th>Estado</th>
+                            <th>Fecha Creación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for solucion in soluciones %}
+                        <tr>
+                            <td>{{ solucion.id }}</td>
+                            <td>
+                                <strong>{{ solucion.titulo }}</strong>
+                                {% if solucion.descripcion %}
+                                <br><small class="text-muted">{{ solucion.descripcion[:100] }}{% if solucion.descripcion|length > 100 %}...{% endif %}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if solucion.categoria == 'Softv' %}bg-info{% else %}bg-warning{% endif %}">
+                                    {{ solucion.categoria }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-images me-1"></i>
+                                    {{ solucion.pasos|length }} pasos
+                                </span>
+                            </td>
+                            <td>
+                                {% if solucion.activo %}
+                                <span class="badge bg-success">Activa</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inactiva</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    {{ solucion.fecha_creacion.strftime('%d/%m/%Y') }}
+                                </small>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('editar_solucion', id=solucion.id) }}" 
+                                       class="btn btn-outline-primary" 
+                                       title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ url_for('eliminar_solucion', id=solucion.id) }}" 
+                                       class="btn btn-outline-danger" 
+                                       title="Eliminar"
+                                       onclick="return confirm('¿Estás seguro de que quieres eliminar esta solución?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                    <a href="{{ url_for('soluciones_visuales') }}#solution-{{ solucion.id }}" 
+                                       class="btn btn-outline-info" 
+                                       title="Ver">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="empty-state">
+                    <i class="fas fa-images fa-3x text-muted mb-3"></i>
+                    <h4>No hay soluciones visuales</h4>
+                    <p class="text-muted">Comienza agregando tu primera solución visual.</p>
+                    {% if tiene_permiso('gestionar_soluciones') or current_user.rol == 'admin' %}
+                    <a href="{{ url_for('agregar_solucion') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Agregar Primera Solución
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.empty-state {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+}
+</style>
+{% endblock %}
