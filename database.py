@@ -157,7 +157,7 @@ def resetear_secuencias():
             conexion.close()
 
 def crear_tablas_sst():
-    """Crear tablas específicas para SST"""
+    """Crear tablas específicas para SST - SIN DURACIÓN"""
     conexion = crear_conexion()
     if conexion:
         try:
@@ -174,7 +174,7 @@ def crear_tablas_sst():
                 )
             ''')
             
-            # Tabla de contenido SST
+            # Tabla de contenido SST - SIN duracion_video
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS sst_contenido (
                     id SERIAL PRIMARY KEY,
@@ -186,13 +186,12 @@ def crear_tablas_sst():
                     video_url TEXT,
                     categoria_id INTEGER REFERENCES sst_categorias(id),
                     es_obligatorio BOOLEAN DEFAULT FALSE,
-                    duracion_video INTEGER,
                     tags TEXT,
                     fecha_publicacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     usuario_creador INTEGER REFERENCES usuarios(id)
                 )
             ''')
-            
+                        
             # Tabla de seguimiento
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS sst_seguimiento (
