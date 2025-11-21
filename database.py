@@ -103,6 +103,21 @@ def resetear_secuencias():
         else:
             print("ℹ️ Secuencia 'fichas_id_seq' no existe aún")
         
+        # Resetear secuencia de soluciones_visuales si existe
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.sequences 
+                WHERE sequence_name = 'soluciones_visuales_id_seq'
+            )
+        """)
+        if cursor.fetchone()[0]:
+            cursor.execute("""
+                SELECT setval('soluciones_visuales_id_seq', COALESCE((SELECT MAX(id) FROM soluciones_visuales), 1), false)
+            """)
+            print("✅ Secuencia 'soluciones_visuales_id_seq' reseteada")
+        else:
+            print("ℹ️ Secuencia 'soluciones_visuales_id_seq' no existe aún")
+        
         conexion.commit()
         print("🎉 Secuencias reseteadas correctamente")
         return True
@@ -164,6 +179,21 @@ def crear_tablas():
         """)
         print("✅ Tabla 'fichas' lista")
 
+        # NUEVA TABLA: soluciones_visuales
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS soluciones_visuales (
+                id SERIAL PRIMARY KEY,
+                titulo VARCHAR(255) NOT NULL,
+                categoria VARCHAR(50) NOT NULL,
+                descripcion TEXT,
+                pasos JSONB NOT NULL,
+                activo BOOLEAN DEFAULT TRUE,
+                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        print("✅ Tabla 'soluciones_visuales' lista")
+
         # Insertar usuario admin por defecto si no existe
         cursor.execute("SELECT COUNT(*) FROM usuarios WHERE usuario = 'admin'")
         if cursor.fetchone()[0] == 0:
@@ -173,7 +203,8 @@ def crear_tablas():
                 'agregar_fichas': True,
                 'editar_fichas': True, 
                 'eliminar_fichas': True,
-                'cambiar_password': True
+                'cambiar_password': True,
+                'gestionar_soluciones': True  # Nuevo permiso
             })
             cursor.execute(
                 "INSERT INTO usuarios (usuario, password, rol, permisos) VALUES (%s, %s, %s, %s)",
@@ -183,6 +214,82 @@ def crear_tablas():
         else:
             print("ℹ️ Usuario 'admin' ya existe")
 
+        # Insertar datos de ejemplo para soluciones visuales
+        cursor.execute("SELECT COUNT(*) FROM soluciones_visuales")
+        if cursor.fetchone()[0] == 0:
+            soluciones_ejemplo = [
+                {
+                    'titulo': 'Consultar cliente en Softv',
+                    'categoria': 'Softv',
+                    'descripcion': 'Guía completa para buscar y consultar información de clientes en la plataforma Softv',
+                    'pasos': [
+                        {
+                            'imagen': 'softv/softv1.png',
+                            'titulo': 'Paso 1: Ingresar a Softv y acceder al menú lateral',
+                            'descripcion': 'Dentro de la plataforma Softv, ubique el menú desplegable lateral y seleccione la opción Facturación para continuar con el proceso.'
+                        },
+                        {
+                            'imagen': 'softv/softv2.png',
+                            'titulo': 'Paso 2: Ingresar al apartado de Cajas',
+                            'descripcion': 'Haga clic en la opción Cajas. Se abrirá una ventana con las herramientas disponibles para realizar la búsqueda del cliente.'
+                        },
+                        {
+                            'imagen': 'softv/softv3.png',
+                            'titulo': 'Paso 3: Buscar al cliente',
+                            'descripcion': 'Digite el número de documento del titular en el campo correspondiente. Una vez aparezca el registro del usuario, haga clic en el botón Seleccionar.'
+                        },
+                        {
+                            'imagen': 'softv/softv4.png',
+                            'titulo': 'Paso 4: Visualizar la información del cliente',
+                            'descripcion': 'Después de seleccionar al usuario, se mostrarán sus datos generales junto con los servicios activos y otra información relevante.'
+                        }
+                    ]
+                },
+                {
+                    'titulo': 'Consultar facturas de usuarios',
+                    'categoria': 'Softv',
+                    'descripcion': 'Cómo consultar el historial de pagos y facturas de los clientes en Softv',
+                    'pasos': [
+                        {
+                            'imagen': 'softv/softv5.png',
+                            'titulo': 'Paso 1: Acceder al botón Historial',
+                            'descripcion': 'En la parte inferior de la pantalla de información del usuario, ubique el botón Historial y haga clic en él.'
+                        },
+                        {
+                            'imagen': 'softv/softv6.png',
+                            'titulo': 'Paso 2: Ingresar al apartado de Pagos',
+                            'descripcion': 'Al abrir el historial, se mostrarán tres opciones. Seleccione la primera opción: Pagos.'
+                        }
+                    ]
+                },
+                {
+                    'titulo': 'Buscar usuario en Vortex',
+                    'categoria': 'Vortex',
+                    'descripcion': 'Guía para localizar usuarios en la plataforma Vortex mediante número de contrato',
+                    'pasos': [
+                        {
+                            'imagen': 'vortex/vortex1.png',
+                            'titulo': 'Paso 1: Acceder al menú Configure',
+                            'descripcion': 'En la parte superior del sistema, ubique la barra de menús y haga clic en la opción Configured.'
+                        },
+                        {
+                            'imagen': 'vortex/vortex2.png',
+                            'titulo': 'Paso 2: Ingresar el contrato en el área de búsqueda',
+                            'descripcion': 'Dentro de la sección Configured, en la parte superior encontrará el campo Search. Ingrese el número de contrato del usuario en este espacio.'
+                        }
+                    ]
+                }
+            ]
+            
+            for solucion in soluciones_ejemplo:
+                cursor.execute(
+                    "INSERT INTO soluciones_visuales (titulo, categoria, descripcion, pasos) VALUES (%s, %s, %s, %s)",
+                    (solucion['titulo'], solucion['categoria'], solucion['descripcion'], json.dumps(solucion['pasos']))
+                )
+            print("✅ Datos de ejemplo para soluciones visuales insertados")
+        else:
+            print("ℹ️ Tabla 'soluciones_visuales' ya tiene datos")
+
         # Crear o resetear secuencias
         try:
             cursor.execute("""
@@ -190,6 +297,9 @@ def crear_tablas():
             """)
             cursor.execute("""
                 SELECT setval('fichas_id_seq', COALESCE((SELECT MAX(id) FROM fichas), 1), true)
+            """)
+            cursor.execute("""
+                SELECT setval('soluciones_visuales_id_seq', COALESCE((SELECT MAX(id) FROM soluciones_visuales), 1), true)
             """)
             print("✅ Secuencias configuradas")
         except Exception as seq_err:
@@ -241,14 +351,28 @@ def verificar_tablas():
         """)
         fichas_existe = cursor.fetchone()[0]
         
+        # Verificar tabla soluciones_visuales
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'soluciones_visuales'
+            )
+        """)
+        soluciones_existe = cursor.fetchone()[0]
+        
         # Verificar datos en usuarios
         cursor.execute("SELECT COUNT(*) FROM usuarios")
         total_usuarios = cursor.fetchone()[0]
         
+        # Verificar datos en soluciones_visuales
+        cursor.execute("SELECT COUNT(*) FROM soluciones_visuales")
+        total_soluciones = cursor.fetchone()[0]
+        
         print(f"📊 Tabla 'usuarios' existe: {usuarios_existe} ({total_usuarios} usuarios)")
         print(f"📊 Tabla 'fichas' existe: {fichas_existe}")
+        print(f"📊 Tabla 'soluciones_visuales' existe: {soluciones_existe} ({total_soluciones} soluciones)")
         
-        return usuarios_existe and fichas_existe
+        return usuarios_existe and fichas_existe and soluciones_existe
         
     except Exception as err:
         print(f"💥 Error verificando tablas: {err}")
