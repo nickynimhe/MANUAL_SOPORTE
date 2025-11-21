@@ -231,6 +231,34 @@ def crear_tablas_sst():
             cursor.close()
             conexion.close()
 
+def actualizar_tabla_sst_contenido():
+    """Agregar columna archivo_local si no existe"""
+    conexion = crear_conexion()
+    if conexion:
+        try:
+            cursor = conexion.cursor()
+            
+            # Verificar si la columna archivo_local existe
+            cursor.execute("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'sst_contenido' AND column_name = 'archivo_local'
+            """)
+            
+            if not cursor.fetchone():
+                # Agregar la columna si no existe
+                cursor.execute("ALTER TABLE sst_contenido ADD COLUMN archivo_local VARCHAR(500)")
+                print("✅ Columna archivo_local agregada a sst_contenido")
+            
+            conexion.commit()
+            
+        except Exception as e:
+            print(f"❌ Error actualizando tabla sst_contenido: {e}")
+            conexion.rollback()
+        finally:
+            cursor.close()
+            conexion.close()
+
 def crear_tablas():
     """Función mejorada para crear tablas"""
     print("🔧 Iniciando creación de tablas...")
