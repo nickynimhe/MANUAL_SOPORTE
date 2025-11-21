@@ -1,67 +1,52 @@
 import os
 import psycopg2
-from urllib.parse import quote_plus
 from werkzeug.security import generate_password_hash
 import json
 import time
 
 def crear_conexion():
-    """Conexión mejorada con mejor manejo de errores"""
+    """Conexión mejorada y simplificada para Render"""
     max_intentos = 3
     for intento in range(max_intentos):
         try:
             print(f"🔗 Intento {intento + 1} de conexión a PostgreSQL...")
             
-            # Usar DATABASE_URL si existe
-            database_url = os.getenv('DATABASE_URL')
+            # Obtener DATABASE_URL desde config o variables de entorno
+            try:
+                from config import Config
+                database_url = Config.DATABASE_URL
+            except:
+                database_url = os.getenv('DATABASE_URL')
             
-            if database_url:
-                print("🔧 Usando DATABASE_URL de variable de entorno")
-                if database_url.startswith("postgres://"):
-                    database_url = database_url.replace("postgres://", "postgresql://", 1)
-                
-                # Agregar sslmode si es necesario para Render
-                if 'render.com' in database_url and 'sslmode=' not in database_url:
-                    database_url += '?sslmode=require'
-                    
-                print(f"🔗 URL: {database_url.split('@')[0]}@***")
-                conexion = psycopg2.connect(database_url)
-                
-            else:
-                # Usar variables individuales
-                user = os.getenv('DB_USER', 'soporte_tecnico_9sad_user')
-                password = os.getenv('DB_PASSWORD', 'T56GYS30j5w4k6zrdlvAh1GfExjT0t7a')
-                host = os.getenv('DB_HOST', 'dpg-d3g1q2nqaa0ldt0j7vug-a.oregon-postgres.render.com')
-                port = os.getenv('DB_PORT', '5432')
-                dbname = os.getenv('DB_NAME', 'soporte_tecnico_9sad')
-                
-                print(f"🔧 Configuración: host={host}, db={dbname}, user={user}")
-                
-                # Para Render, usar sslmode=require
-                if 'render.com' in host:
-                    conexion = psycopg2.connect(
-                        host=host,
-                        database=dbname,
-                        user=user,
-                        password=password,
-                        port=port,
-                        sslmode='require'
-                    )
-                else:
-                    conexion = psycopg2.connect(
-                        host=host,
-                        database=dbname,
-                        user=user,
-                        password=password,
-                        port=port
-                    )
+            if not database_url:
+                print("❌ DATABASE_URL no encontrada en configuración")
+                return None
+            
+            # Asegurar formato correcto
+            if database_url.startswith("postgres://"):
+                database_url = database_url.replace("postgres://", "postgresql://", 1)
+            
+            # Agregar sslmode para Render si es necesario
+            if 'render.com' in database_url and 'sslmode=' not in database_url:
+                database_url += '?sslmode=require'
+            
+            # Ocultar credenciales en logs
+            url_para_logs = database_url
+            if '@' in database_url:
+                partes = database_url.split('@')
+                url_para_logs = f"postgresql://***@{partes[1]}"
+            print(f"🔗 Conectando a: {url_para_logs}")
+            
+            # Crear conexión
+            conexion = psycopg2.connect(database_url)
             
             # Verificar que la conexión funciona
             cursor = conexion.cursor()
-            cursor.execute("SELECT 1")
+            cursor.execute("SELECT version()")
+            version_info = cursor.fetchone()
             cursor.close()
             
-            print("✅ ¡CONEXIÓN EXITOSA a PostgreSQL!")
+            print(f"✅ ¡CONEXIÓN EXITOSA! PostgreSQL: {version_info[0].split(',')[0]}")
             return conexion
             
         except Exception as err:
@@ -74,7 +59,7 @@ def crear_conexion():
                 return None
 
 def resetear_secuencias():
-    """Función CRÍTICA: Resetea las secuencias de las tablas"""
+    """Resetea las secuencias de las tablas"""
     conexion = None
     cursor = None
     
@@ -88,17 +73,35 @@ def resetear_secuencias():
         
         print("🔄 Reseteando secuencias...")
         
-        # Resetear secuencia de usuarios
+        # Resetear secuencia de usuarios si existe
         cursor.execute("""
-            SELECT setval('usuarios_id_seq', COALESCE((SELECT MAX(id) FROM usuarios), 1), false)
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.sequences 
+                WHERE sequence_name = 'usuarios_id_seq'
+            )
         """)
-        print("✅ Secuencia 'usuarios_id_seq' reseteada")
+        if cursor.fetchone()[0]:
+            cursor.execute("""
+                SELECT setval('usuarios_id_seq', COALESCE((SELECT MAX(id) FROM usuarios), 1), false)
+            """)
+            print("✅ Secuencia 'usuarios_id_seq' reseteada")
+        else:
+            print("ℹ️ Secuencia 'usuarios_id_seq' no existe aún")
         
-        # Resetear secuencia de fichas
+        # Resetear secuencia de fichas si existe
         cursor.execute("""
-            SELECT setval('fichas_id_seq', COALESCE((SELECT MAX(id) FROM fichas), 1), false)
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.sequences 
+                WHERE sequence_name = 'fichas_id_seq'
+            )
         """)
-        print("✅ Secuencia 'fichas_id_seq' reseteada")
+        if cursor.fetchone()[0]:
+            cursor.execute("""
+                SELECT setval('fichas_id_seq', COALESCE((SELECT MAX(id) FROM fichas), 1), false)
+            """)
+            print("✅ Secuencia 'fichas_id_seq' reseteada")
+        else:
+            print("ℹ️ Secuencia 'fichas_id_seq' no existe aún")
         
         conexion.commit()
         print("🎉 Secuencias reseteadas correctamente")
@@ -161,7 +164,7 @@ def crear_tablas():
         """)
         print("✅ Tabla 'fichas' lista")
 
-        # Insertar usuario admin por defecto
+        # Insertar usuario admin por defecto si no existe
         cursor.execute("SELECT COUNT(*) FROM usuarios WHERE usuario = 'admin'")
         if cursor.fetchone()[0] == 0:
             password_hash = generate_password_hash('admin123')
@@ -177,14 +180,20 @@ def crear_tablas():
                 ('admin', password_hash, 'admin', permisos_admin)
             )
             print("✅ Usuario 'admin' creado (password: admin123)")
+        else:
+            print("ℹ️ Usuario 'admin' ya existe")
 
-        # RESETEAR SECUENCIAS DESPUÉS DE CREAR TABLAS
-        cursor.execute("""
-            SELECT setval('usuarios_id_seq', COALESCE((SELECT MAX(id) FROM usuarios), 1), true)
-        """)
-        cursor.execute("""
-            SELECT setval('fichas_id_seq', COALESCE((SELECT MAX(id) FROM fichas), 1), true)
-        """)
+        # Crear o resetear secuencias
+        try:
+            cursor.execute("""
+                SELECT setval('usuarios_id_seq', COALESCE((SELECT MAX(id) FROM usuarios), 1), true)
+            """)
+            cursor.execute("""
+                SELECT setval('fichas_id_seq', COALESCE((SELECT MAX(id) FROM fichas), 1), true)
+            """)
+            print("✅ Secuencias configuradas")
+        except Exception as seq_err:
+            print(f"ℹ️ Las secuencias se crearán automáticamente: {seq_err}")
 
         conexion.commit()
         print("🎉 Base de datos inicializada CORRECTAMENTE")
@@ -215,14 +224,28 @@ def verificar_tablas():
         cursor = conexion.cursor()
         
         # Verificar tabla usuarios
-        cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'usuarios')")
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'usuarios'
+            )
+        """)
         usuarios_existe = cursor.fetchone()[0]
         
         # Verificar tabla fichas
-        cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'fichas')")
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'fichas'
+            )
+        """)
         fichas_existe = cursor.fetchone()[0]
         
-        print(f"📊 Tabla 'usuarios' existe: {usuarios_existe}")
+        # Verificar datos en usuarios
+        cursor.execute("SELECT COUNT(*) FROM usuarios")
+        total_usuarios = cursor.fetchone()[0]
+        
+        print(f"📊 Tabla 'usuarios' existe: {usuarios_existe} ({total_usuarios} usuarios)")
         print(f"📊 Tabla 'fichas' existe: {fichas_existe}")
         
         return usuarios_existe and fichas_existe
@@ -237,18 +260,41 @@ def verificar_tablas():
         if conexion:
             conexion.close()
 
+def verificar_conexion():
+    """Verificar solo la conexión sin crear tablas"""
+    conexion = None
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            print("✅ Conexión a PostgreSQL verificada correctamente")
+            return True
+        else:
+            print("❌ No se pudo establecer conexión")
+            return False
+    finally:
+        if conexion:
+            conexion.close()
+
 if __name__ == "__main__":
     print("🚀 Inicializando base de datos...")
     
-    # Primero resetear secuencias
-    print("🔄 Reseteando secuencias...")
-    if resetear_secuencias():
-        print("✅ Secuencias reseteadas")
-    else:
-        print("⚠️ No se pudieron resetear secuencias")
+    # Primero verificar conexión
+    print("🔍 Verificando conexión...")
+    if not verificar_conexion():
+        print("💥 No se puede continuar sin conexión a la base de datos")
+        exit(1)
     
-    # Luego crear tablas si es necesario
-    if crear_tablas():
-        print("🎉 ¡Base de datos lista!")
+    # Verificar si las tablas ya existen
+    print("🔍 Verificando tablas existentes...")
+    if verificar_tablas():
+        print("ℹ️ Las tablas ya existen, solo reseteando secuencias...")
+        if resetear_secuencias():
+            print("✅ Base de datos ya está lista")
+        else:
+            print("⚠️ Problemas reseteando secuencias")
     else:
-        print("💥 Error inicializando base de datos")
+        print("🔧 Creando tablas...")
+        if crear_tablas():
+            print("🎉 ¡Base de datos inicializada correctamente!")
+        else:
+            print("💥 Error inicializando base de datos")
