@@ -33,7 +33,7 @@
 
                 <div class="mb-3">
                     <label for="descripcion" class="form-label">Descripción</label>
-                    <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
+                    <textarea class="form-control" id="descripcion" name="descripcion" rows="3" placeholder="Breve descripción del contenido..."></textarea>
                 </div>
 
                 <div class="row">
@@ -59,42 +59,39 @@
 
                 <!-- Campos dinámicos según tipo -->
                 <div id="campos-video" class="campos-tipo" style="display: none;">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="video_url" class="form-label">URL del Video (YouTube, Vimeo, etc.)</label>
-                                <input type="url" class="form-control" id="video_url" name="video_url">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="duracion_video" class="form-label">Duración (minutos)</label>
-                                <input type="number" class="form-control" id="duracion_video" name="duracion_video" min="1">
-                            </div>
-                        </div>
+                    <div class="mb-3">
+                        <label for="video_url" class="form-label">URL del Video (YouTube, Vimeo, etc.)</label>
+                        <input type="url" class="form-control" id="video_url" name="video_url" placeholder="https://www.youtube.com/watch?v=...">
+                        <div class="form-text">Opcional si subes un archivo de video</div>
                     </div>
                 </div>
 
                 <div id="campos-archivo" class="campos-tipo" style="display: none;">
                     <div class="mb-3">
                         <label for="archivo_url" class="form-label">URL del Archivo</label>
-                        <input type="url" class="form-control" id="archivo_url" name="archivo_url">
+                        <input type="url" class="form-control" id="archivo_url" name="archivo_url" placeholder="https://...">
+                        <div class="form-text">Opcional si subes un archivo</div>
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="archivo_local" class="form-label">Subir Archivo</label>
                     <input type="file" class="form-control" id="archivo_local" name="archivo_local" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.mp4,.avi,.mov">
-                    <div class="form-text">Formatos permitidos: PDF, Word, Excel, PowerPoint, imágenes, videos</div>
+                    <div class="form-text">
+                        Formatos permitidos: PDF, Word, Excel, PowerPoint, imágenes, videos.<br>
+                        Máximo: 100MB
+                    </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="tags" class="form-label">Etiquetas</label>
-                    <input type="text" class="form-control" id="tags" name="tags" placeholder="Separar con comas">
+                    <input type="text" class="form-control" id="tags" name="tags" placeholder="Separar con comas (ej: seguridad, epp, procedimiento)">
                 </div>
 
-                <button type="submit" class="btn btn-primary">Agregar Contenido</button>
-                <a href="{{ url_for('sst_contenido') }}" class="btn btn-secondary">Cancelar</a>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('sst_contenido') }}" class="btn btn-secondary me-md-2">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Agregar Contenido</button>
+                </div>
             </form>
         </div>
     </div>
