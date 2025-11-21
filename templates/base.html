@@ -354,6 +354,12 @@
                             <span class="btn-text">Información</span>
                         </a>
 
+                        <!-- Agregar en el nav-group, después del botón de Información -->
+                        <a class="nav-btn secondary {% if request.endpoint and 'sst' in request.endpoint %}active{% endif %}" href="{{ url_for('sst_dashboard') }}">
+                            <i class="fas fa-shield-alt"></i>
+                            <span class="btn-text">SST</span>
+                        </a>
+
                         <!-- === BOTÓN PDF CORREGIDO PARA RENDER === -->
                         <a class="nav-btn primary" href="{{ url_for('static', filename='documentos/politicas-seguridad-crm-softv.pdf') }}" target="_blank">
                             <i class="fas fa-file-pdf"></i>
@@ -572,3 +578,4 @@
     </script>
 </body>
 </html>
+
