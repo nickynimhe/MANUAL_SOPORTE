@@ -1236,6 +1236,212 @@ def obtener_problemas(categoria):
     problemas = problemas_por_categoria.get(categoria, [])
     return jsonify(problemas)
 
+# Agregar después de las rutas existentes
+
+# ===== RUTAS SST =====
+
+@app.route('/sst')
+@login_required
+def sst_dashboard():
+    """Dashboard principal de SST"""
+    return render_template('sst/dashboard.html')
+
+@app.route('/sst/contenido')
+@login_required
+def sst_contenido():
+    """Lista de todo el contenido SST"""
+    cursor = None
+    conexion = None
+    contenido = []
+    
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            cursor.execute("""
+                SELECT sc.*, cat.nombre as categoria_nombre, cat.color as categoria_color,
+                       u.usuario as creador_nombre
+                FROM sst_contenido sc
+                LEFT JOIN sst_categorias cat ON sc.categoria_id = cat.id
+                LEFT JOIN usuarios u ON sc.usuario_creador = u.id
+                ORDER BY sc.fecha_publicacion DESC
+            """)
+            
+            contenido_data = cursor.fetchall()
+            
+            for item in contenido_data:
+                contenido.append({
+                    'id': item[0],
+                    'titulo': item[1],
+                    'descripcion': item[2],
+                    'tipo': item[3],
+                    'archivo_url': item[4],
+                    'video_url': item[5],
+                    'categoria_id': item[6],
+                    'es_obligatorio': item[7],
+                    'duracion_video': item[8],
+                    'tags': item[9],
+                    'fecha_publicacion': item[10],
+                    'categoria_nombre': item[12],
+                    'categoria_color': item[13],
+                    'creador_nombre': item[14]
+                })
+                
+    except Exception as e:
+        flash('Error al cargar el contenido SST', 'error')
+        print(f"Error en sst_contenido: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if conexion:
+            conexion.close()
+    
+    return render_template('sst/contenido.html', contenido=contenido)
+
+@app.route('/sst/agregar', methods=['GET', 'POST'])
+@login_required
+def sst_agregar_contenido():
+    """Agregar nuevo contenido SST"""
+    if current_user.rol != 'admin':
+        flash('No tienes permisos para agregar contenido SST', 'error')
+        return redirect(url_for('sst_dashboard'))
+    
+    cursor = None
+    conexion = None
+    categorias = []
+    
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            
+            if request.method == 'POST':
+                titulo = request.form['titulo']
+                descripcion = request.form['descripcion']
+                tipo = request.form['tipo']
+                categoria_id = request.form['categoria_id']
+                es_obligatorio = 'es_obligatorio' in request.form
+                tags = request.form['tags']
+                
+                # Manejar diferentes tipos de contenido
+                if tipo == 'video':
+                    video_url = request.form['video_url']
+                    duracion = request.form.get('duracion_video', 0)
+                    archivo_url = None
+                elif tipo == 'documento':
+                    # Aquí manejarías la subida de archivos
+                    archivo_url = request.form.get('archivo_url', '')
+                    video_url = None
+                    duracion = None
+                else:
+                    archivo_url = request.form.get('archivo_url', '')
+                    video_url = None
+                    duracion = None
+                
+                cursor.execute("""
+                    INSERT INTO sst_contenido 
+                    (titulo, descripcion, tipo, archivo_url, video_url, categoria_id, 
+                     es_obligatorio, duracion_video, tags, usuario_creador)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (titulo, descripcion, tipo, archivo_url, video_url, categoria_id,
+                      es_obligatorio, duracion, tags, current_user.id))
+                
+                conexion.commit()
+                flash('Contenido SST agregado correctamente', 'success')
+                return redirect(url_for('sst_contenido'))
+            
+            # GET: Cargar categorías
+            cursor.execute("SELECT id, nombre, color FROM sst_categorias ORDER BY nombre")
+            categorias_data = cursor.fetchall()
+            
+            for cat in categorias_data:
+                categorias.append({
+                    'id': cat[0],
+                    'nombre': cat[1],
+                    'color': cat[2]
+                })
+                
+    except Exception as e:
+        flash('Error al agregar contenido SST', 'error')
+        print(f"Error en sst_agregar_contenido: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if conexion:
+            conexion.close()
+    
+    return render_template('sst/agregar_contenido.html', categorias=categorias)
+
+@app.route('/sst/video/<int:id>')
+@login_required
+def sst_ver_video(id):
+    """Ver video específico de SST"""
+    cursor = None
+    conexion = None
+    video = None
+    
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            cursor.execute("""
+                SELECT sc.*, cat.nombre as categoria_nombre, cat.color as categoria_color
+                FROM sst_contenido sc
+                LEFT JOIN sst_categorias cat ON sc.categoria_id = cat.id
+                WHERE sc.id = %s AND sc.tipo = 'video'
+            """, (id,))
+            
+            video_data = cursor.fetchone()
+            
+            if video_data:
+                video = {
+                    'id': video_data[0],
+                    'titulo': video_data[1],
+                    'descripcion': video_data[2],
+                    'tipo': video_data[3],
+                    'video_url': video_data[5],
+                    'categoria_nombre': video_data[12],
+                    'categoria_color': video_data[13],
+                    'duracion_video': video_data[8],
+                    'fecha_publicacion': video_data[10]
+                }
+                
+                # Registrar visualización
+                cursor.execute("""
+                    INSERT INTO sst_seguimiento (usuario_id, contenido_id, fecha_visualizacion)
+                    VALUES (%s, %s, CURRENT_TIMESTAMP)
+                    ON CONFLICT (usuario_id, contenido_id) 
+                    DO UPDATE SET fecha_visualizacion = CURRENT_TIMESTAMP
+                """, (current_user.id, id))
+                
+                conexion.commit()
+                
+    except Exception as e:
+        flash('Error al cargar el video', 'error')
+        print(f"Error en sst_ver_video: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if conexion:
+            conexion.close()
+    
+    if not video:
+        flash('Video no encontrado', 'error')
+        return redirect(url_for('sst_contenido'))
+    
+    return render_template('sst/ver_video.html', video=video)
+
+@app.route('/sst/estadisticas')
+@login_required
+def sst_estadisticas():
+    """Estadísticas de visualización SST"""
+    if current_user.rol != 'admin':
+        flash('No tienes permisos para ver estadísticas', 'error')
+        return redirect(url_for('sst_dashboard'))
+    
+    # Aquí iría la lógica para estadísticas
+    return render_template('sst/estadisticas.html')
+
 if __name__ == '__main__':
     with app.app_context():
         print("🚀 Iniciando aplicación Flask...")
