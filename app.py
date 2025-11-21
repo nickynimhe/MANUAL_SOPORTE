@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from database import crear_conexion, crear_tablas
 from config import Config
@@ -6,6 +6,23 @@ from werkzeug.security import check_password_hash, generate_password_hash
 import psycopg2
 import json
 from datetime import datetime
+from werkzeug.utils import secure_filename
+import os
+
+# ===== CONFIGURACIÓN PARA SUBIDA DE ARCHIVOS SST =====
+app.config['UPLOAD_FOLDER_SST'] = 'static/uploads/sst'
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB máximo
+app.config['ALLOWED_EXTENSIONS'] = {
+    'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx',
+    'jpg', 'jpeg', 'png', 'gif', 'mp4', 'avi', 'mov'
+}
+
+# Crear directorio de uploads si no existe
+os.makedirs(app.config['UPLOAD_FOLDER_SST'], exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -1276,15 +1293,16 @@ def sst_contenido():
                     'descripcion': item[2],
                     'tipo': item[3],
                     'archivo_url': item[4],
-                    'video_url': item[5],
-                    'categoria_id': item[6],
-                    'es_obligatorio': item[7],
-                    'duracion_video': item[8],
-                    'tags': item[9],
-                    'fecha_publicacion': item[10],
-                    'categoria_nombre': item[12],
-                    'categoria_color': item[13],
-                    'creador_nombre': item[14]
+                    'archivo_local': item[5],
+                    'video_url': item[6],
+                    'categoria_id': item[7],
+                    'es_obligatorio': item[8],
+                    'duracion_video': item[9],
+                    'tags': item[10],
+                    'fecha_publicacion': item[11],
+                    'categoria_nombre': item[13],
+                    'categoria_color': item[14],
+                    'creador_nombre': item[15]
                 })
                 
     except Exception as e:
@@ -1323,27 +1341,47 @@ def sst_agregar_contenido():
                 es_obligatorio = 'es_obligatorio' in request.form
                 tags = request.form['tags']
                 
+                # Inicializar variables
+                archivo_url = None
+                archivo_local = None
+                video_url = None
+                duracion = None
+                
+                # Manejar subida de archivo local
+                if 'archivo_local' in request.files:
+                    file = request.files['archivo_local']
+                    if file and file.filename != '' and allowed_file(file.filename):
+                        filename = secure_filename(file.filename)
+                        # Agregar timestamp para hacer único el nombre
+                        from datetime import datetime
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        filename = f"{timestamp}_{filename}"
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER_SST'], filename)
+                        file.save(file_path)
+                        archivo_local = filename
+                        print(f"✅ Archivo guardado: {file_path}")
+                
                 # Manejar diferentes tipos de contenido
                 if tipo == 'video':
-                    video_url = request.form['video_url']
+                    video_url = request.form.get('video_url', '')
                     duracion = request.form.get('duracion_video', 0)
-                    archivo_url = None
-                elif tipo == 'documento':
-                    # Aquí manejarías la subida de archivos
+                    # Si no hay video_url pero hay archivo local, es video local
+                    if not video_url and archivo_local:
+                        tipo = 'video'
+                elif tipo in ['documento', 'imagen']:
                     archivo_url = request.form.get('archivo_url', '')
-                    video_url = None
-                    duracion = None
-                else:
+                    # Si hay archivo local, priorizamos sobre la URL
+                    if archivo_local:
+                        archivo_url = None
+                else:  # enlace
                     archivo_url = request.form.get('archivo_url', '')
-                    video_url = None
-                    duracion = None
                 
                 cursor.execute("""
                     INSERT INTO sst_contenido 
-                    (titulo, descripcion, tipo, archivo_url, video_url, categoria_id, 
+                    (titulo, descripcion, tipo, archivo_url, archivo_local, video_url, categoria_id, 
                      es_obligatorio, duracion_video, tags, usuario_creador)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (titulo, descripcion, tipo, archivo_url, video_url, categoria_id,
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (titulo, descripcion, tipo, archivo_url, archivo_local, video_url, categoria_id,
                       es_obligatorio, duracion, tags, current_user.id))
                 
                 conexion.commit()
@@ -1399,11 +1437,12 @@ def sst_ver_video(id):
                     'titulo': video_data[1],
                     'descripcion': video_data[2],
                     'tipo': video_data[3],
-                    'video_url': video_data[5],
-                    'categoria_nombre': video_data[12],
-                    'categoria_color': video_data[13],
-                    'duracion_video': video_data[8],
-                    'fecha_publicacion': video_data[10]
+                    'video_url': video_data[6],
+                    'archivo_local': video_data[5],
+                    'categoria_nombre': video_data[13],
+                    'categoria_color': video_data[14],
+                    'duracion_video': video_data[9],
+                    'fecha_publicacion': video_data[11]
                 }
                 
                 # Registrar visualización
@@ -1431,6 +1470,12 @@ def sst_ver_video(id):
     
     return render_template('sst/ver_video.html', video=video)
 
+@app.route('/sst/archivo/<filename>')
+@login_required
+def sst_servir_archivo(filename):
+    """Servir archivos subidos localmente"""
+    return send_from_directory(app.config['UPLOAD_FOLDER_SST'], filename)
+
 @app.route('/sst/estadisticas')
 @login_required
 def sst_estadisticas():
@@ -1439,7 +1484,6 @@ def sst_estadisticas():
         flash('No tienes permisos para ver estadísticas', 'error')
         return redirect(url_for('sst_dashboard'))
     
-    # Aquí iría la lógica para estadísticas
     return render_template('sst/estadisticas.html')
 
 if __name__ == '__main__':
