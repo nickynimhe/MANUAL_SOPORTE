@@ -4,19 +4,19 @@
 
 {% block content %}
 <div class="container-fluid">
-    <!-- Header -->
+    <!-- Header Mejorado -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h1 class="h3 mb-1">
-                        <i class="fas fa-list text-primary me-2"></i>
+                    <h1 class="h2 mb-2 fw-bold">
+                        <i class="fas fa-list me-2 text-primary"></i>
                         Contenido SST
                     </h1>
                     <p class="text-muted mb-0">Todos los recursos de seguridad y salud en el trabajo</p>
                 </div>
                 {% if current_user.rol == 'admin' %}
-                <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-primary">
+                <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-primary shadow-hover">
                     <i class="fas fa-plus me-2"></i>Agregar Contenido
                 </a>
                 {% endif %}
@@ -24,147 +24,195 @@
         </div>
     </div>
 
-    <!-- Filtros -->
+    <!-- Filtros Mejorados -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Buscar</label>
-                            <input type="text" class="form-control" placeholder="Buscar contenido...">
+                <div class="card-body p-4">
+                    <form method="GET" action="{{ url_for('sst_contenido') }}">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold text-dark">Buscar contenido</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-search text-muted"></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0" name="q" value="{{ request.args.get('q', '') }}" placeholder="Título, descripción...">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold text-dark">Categoría</label>
+                                <select class="form-select" name="categoria">
+                                    <option value="">Todas las categorías</option>
+                                    {% for cat in categorias %}
+                                    <option value="{{ cat.id }}" {% if request.args.get('categoria')|int == cat.id %}selected{% endif %}>
+                                        {{ cat.nombre }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold text-dark">Tipo</label>
+                                <select class="form-select" name="tipo">
+                                    <option value="">Todos los tipos</option>
+                                    <option value="video" {% if request.args.get('tipo') == 'video' %}selected{% endif %}>Video</option>
+                                    <option value="documento" {% if request.args.get('tipo') == 'documento' %}selected{% endif %}>Documento</option>
+                                    <option value="imagen" {% if request.args.get('tipo') == 'imagen' %}selected{% endif %}>Imagen</option>
+                                    <option value="enlace" {% if request.args.get('tipo') == 'enlace' %}selected{% endif %}>Enlace</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100 shadow-hover">
+                                    <i class="fas fa-filter me-2"></i>Filtrar
+                                </button>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Categoría</label>
-                            <select class="form-select">
-                                <option value="">Todas las categorías</option>
-                                <option value="1">Videos de Capacitación</option>
-                                <option value="2">Procedimientos de Seguridad</option>
-                                <option value="3">Primeros Auxilios</option>
-                                <option value="4">Equipos de Protección</option>
-                                <option value="5">Emergencias</option>
-                                <option value="6">Normativa Legal</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Tipo</label>
-                            <select class="form-select">
-                                <option value="">Todos los tipos</option>
-                                <option value="video">Video</option>
-                                <option value="documento">Documento</option>
-                                <option value="imagen">Imagen</option>
-                                <option value="enlace">Enlace</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">&nbsp;</label>
-                            <button class="btn btn-outline-primary w-100">
-                                <i class="fas fa-filter me-2"></i>Filtrar
-                            </button>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Lista de contenido -->
+    <!-- Lista de contenido mejorada -->
     <div class="row">
         <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    {% if contenido %}
-                    <div class="row g-4">
-                        {% for item in contenido %}
-                        <div class="col-md-6 col-lg-4">
-                            <div class="card h-100 border-0 shadow-sm">
-                                <div class="card-header" style="border-left: 4px solid {{ item.categoria_color }}; background-color: #f8f9fa;">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h6 class="card-title mb-0">{{ item.titulo }}</h6>
-                                        {% if item.es_obligatorio %}
-                                        <span class="badge bg-danger">Obligatorio</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <p class="card-text text-muted small">{{ item.descripcion or 'Sin descripción' }}</p>
-                                    
-                                    <div class="mb-3">
-                                        <span class="badge bg-primary">{{ item.tipo|title }}</span>
-                                        <span class="badge" style="background-color: {{ item.categoria_color }}; color: white;">
-                                            {{ item.categoria_nombre }}
-                                        </span>
-                                        {% if item.archivo_local %}
-                                        <span class="badge bg-success">Archivo Local</span>
-                                        {% endif %}
-                                    </div>
+            {% if contenido %}
+            <div class="row g-4">
+                {% for item in contenido %}
+                <div class="col-xl-4 col-lg-6 col-md-6">
+                    <div class="card content-card h-100 border-0 shadow-sm">
+                        <div class="card-header bg-white border-0 pb-0" style="border-left: 4px solid {{ item.categoria_color }};">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title fw-bold text-dark mb-0 flex-grow-1">{{ item.titulo }}</h6>
+                                {% if item.es_obligatorio %}
+                                <span class="badge bg-danger ms-2">Obligatorio</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="card-body pt-2">
+                            <p class="card-text text-muted small mb-3">{{ item.descripcion or 'Sin descripción disponible' }}</p>
+                            
+                            <div class="mb-3">
+                                <span class="badge bg-{{ item.tipo_color }} me-2">{{ item.tipo|title }}</span>
+                                <span class="badge bg-light text-dark">
+                                    <i class="fas fa-tag me-1"></i>{{ item.categoria_nombre }}
+                                </span>
+                                {% if item.archivo_local %}
+                                <span class="badge bg-success ms-2">
+                                    <i class="fas fa-download me-1"></i>Local
+                                </span>
+                                {% endif %}
+                            </div>
 
-                                    <div class="d-flex justify-content-between align-items-center text-muted small">
-                                        <div>
-                                            <i class="fas fa-user me-1"></i>
-                                            {{ item.creador_nombre }}
-                                        </div>
-                                        <div>
-                                            <i class="fas fa-calendar me-1"></i>
-                                            {{ item.fecha_publicacion.strftime('%d/%m/%Y') }}
-                                        </div>
-                                    </div>
+                            <div class="d-flex justify-content-between align-items-center text-muted small mb-3">
+                                <div>
+                                    <i class="fas fa-user me-1"></i>
+                                    {{ item.creador_nombre }}
                                 </div>
-                                <div class="card-footer bg-transparent">
-                                    <div class="d-grid gap-2">
-                                        {% if item.tipo == 'video' %}
-                                            {% if item.video_url %}
-                                            <a href="{{ url_for('sst_ver_video', id=item.id) }}" class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-play me-2"></i>Ver Video
-                                            </a>
-                                            {% elif item.archivo_local %}
-                                            <a href="{{ url_for('sst_servir_archivo', filename=item.archivo_local) }}" class="btn btn-outline-primary btn-sm" target="_blank">
-                                                <i class="fas fa-play me-2"></i>Ver Video Local
-                                            </a>
-                                            {% endif %}
-                                        {% else %}
-                                            {% if item.archivo_url %}
-                                            <a href="{{ item.archivo_url }}" class="btn btn-outline-secondary btn-sm" target="_blank">
-                                                <i class="fas fa-external-link-alt me-2"></i>Abrir Enlace
-                                            </a>
-                                            {% elif item.archivo_local %}
-                                            <a href="{{ url_for('sst_servir_archivo', filename=item.archivo_local) }}" class="btn btn-outline-secondary btn-sm" target="_blank">
-                                                <i class="fas fa-download me-2"></i>Descargar Archivo
-                                            </a>
-                                            {% endif %}
-                                        {% endif %}
-                                        
-                                        {% if current_user.rol == 'admin' %}
-                                        <div class="btn-group w-100">
-                                            <a href="#" class="btn btn-outline-warning btn-sm">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="#" class="btn btn-outline-danger btn-sm">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
-                                        </div>
-                                        {% endif %}
-                                    </div>
+                                <div>
+                                    <i class="fas fa-calendar me-1"></i>
+                                    {{ item.fecha_publicacion.strftime('%d/%m/%Y') }}
                                 </div>
                             </div>
                         </div>
-                        {% endfor %}
+                        
+                        <div class="card-footer bg-white border-0 pt-0">
+                            <div class="d-grid gap-2">
+                                {% if item.tipo == 'video' %}
+                                    {% if item.video_url %}
+                                    <a href="{{ url_for('sst_ver_video', id=item.id) }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-play me-2"></i>Ver Video
+                                    </a>
+                                    {% elif item.archivo_local %}
+                                    <a href="{{ url_for('sst_servir_archivo', filename=item.archivo_local) }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                        <i class="fas fa-play me-2"></i>Ver Video
+                                    </a>
+                                    {% endif %}
+                                {% else %}
+                                    {% if item.archivo_url %}
+                                    <a href="{{ item.archivo_url }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                                        <i class="fas fa-external-link-alt me-2"></i>Abrir Enlace
+                                    </a>
+                                    {% elif item.archivo_local %}
+                                    <a href="{{ url_for('sst_servir_archivo', filename=item.archivo_local) }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                                        <i class="fas fa-download me-2"></i>Descargar
+                                    </a>
+                                    {% endif %}
+                                {% endif %}
+                                
+                                {% if current_user.rol == 'admin' %}
+                                <div class="btn-group w-100">
+                                    <a href="{{ url_for('sst_editar_contenido', id=item.id) }}" class="btn btn-outline-warning btn-sm">
+                                        <i class="fas fa-edit me-1"></i>Editar
+                                    </a>
+                                    <a href="{{ url_for('sst_eliminar_contenido', id=item.id) }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar este contenido?')">
+                                        <i class="fas fa-trash me-1"></i>Eliminar
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
-                    {% else %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                        <h4 class="text-muted">No hay contenido disponible</h4>
-                        <p class="text-muted">No se ha agregado ningún contenido SST aún.</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox fa-4x text-muted mb-4"></i>
+                        <h4 class="text-muted mb-3">No hay contenido disponible</h4>
+                        <p class="text-muted mb-4">No se ha encontrado contenido con los filtros aplicados.</p>
                         {% if current_user.rol == 'admin' %}
-                        <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-primary">
+                        <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-primary shadow-hover">
                             <i class="fas fa-plus me-2"></i>Agregar Primer Contenido
                         </a>
                         {% endif %}
                     </div>
-                    {% endif %}
                 </div>
             </div>
+            {% endif %}
         </div>
     </div>
 </div>
+
+<style>
+.content-card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+}
+
+.content-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.shadow-hover {
+    transition: all 0.3s ease;
+}
+
+.shadow-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
+}
+
+.empty-state {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.bg-video { background-color: #0d6efd; color: white; }
+.bg-documento { background-color: #198754; color: white; }
+.bg-imagen { background-color: #6f42c1; color: white; }
+.bg-enlace { background-color: #fd7e14; color: white; }
+
+.input-group-text {
+    border-radius: 8px 0 0 8px !important;
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+}
+</style>
 {% endblock %}
