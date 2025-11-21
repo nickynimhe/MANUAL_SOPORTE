@@ -379,6 +379,13 @@
                                     </a>
                                 </li>
                                 {% endif %}
+                                {% if tiene_permiso('gestionar_soluciones') or current_user.rol == 'admin' %}
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('gestion_soluciones') }}">
+                                        <i class="fas fa-images me-2"></i>Gestionar Soluciones
+                                    </a>
+                                </li>
+                                {% endif %}
                                 {% if current_user.rol == 'admin' %}
                                 <li>
                                     <a class="dropdown-item" href="{{ url_for('gestion_usuarios') }}">
