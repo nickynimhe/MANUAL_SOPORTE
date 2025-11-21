@@ -113,23 +113,9 @@ def load_user(user_id):
             conexion.close()
     return None
 
-# Decorador personalizado para permisos
-def permiso_requerido(permiso):
-    def decorator(f):
-        @login_required
-        def decorated_function(*args, **kwargs):
-            if not current_user.puede(permiso):
-                flash('No tienes permisos para acceder a esta página', 'error')
-                return redirect(url_for('index'))
-            return f(*args, **kwargs)
-        decorated_function.__name__ = f.__name__
-        return decorated_function
-    return decorator
-
-# Rutas de autenticación
+# ===== RUTAS DE AUTENTICACIÓN =====
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # Si el usuario ya está autenticado, redirigir al index
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     
@@ -147,8 +133,7 @@ def login():
                 cursor.execute("SELECT * FROM usuarios WHERE usuario = %s", (usuario,))
                 user_data = cursor.fetchone()
                 
-                if user_data and user_data[2] and user_data[2].strip():  # user_data[2] es password
-                    # Convertir tupla a diccionario
+                if user_data and user_data[2] and user_data[2].strip():
                     user_dict = {
                         'id': user_data[0],
                         'usuario': user_data[1],
@@ -158,7 +143,6 @@ def login():
                     }
                     
                     if check_password_hash(user_dict['password'], password):
-                        # Cargar permisos desde JSON
                         permisos = {}
                         if user_dict.get('permisos'):
                             try:
@@ -188,6 +172,622 @@ def login():
     
     return render_template('login.html')
 
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('Sesión cerrada correctamente', 'info')
+    return redirect(url_for('login'))
+
+@app.route('/cambiar_password', methods=['GET', 'POST'])
+@login_required
+def cambiar_password():
+    cursor = None
+    conexion = None
+    
+    if request.method == 'POST':
+        password_actual = request.form['password_actual']
+        nueva_password = request.form['nueva_password']
+        confirmar_password = request.form['confirmar_password']
+        
+        if not password_actual or not nueva_password or not confirmar_password:
+            flash('Todos los campos son obligatorios', 'error')
+            return render_template('cambiar_password.html')
+        
+        if nueva_password != confirmar_password:
+            flash('Las nuevas contraseñas no coinciden', 'error')
+            return render_template('cambiar_password.html')
+        
+        if len(nueva_password) < 6:
+            flash('La nueva contraseña debe tener al menos 6 caracteres', 'error')
+            return render_template('cambiar_password.html')
+        
+        try:
+            conexion = crear_conexion()
+            if conexion:
+                cursor = conexion.cursor()
+                cursor.execute("SELECT password FROM usuarios WHERE id = %s", (current_user.id,))
+                usuario = cursor.fetchone()
+                
+                if usuario and check_password_hash(usuario[0], password_actual):
+                    hash_nueva_password = generate_password_hash(nueva_password)
+                    cursor.execute(
+                        "UPDATE usuarios SET password = %s WHERE id = %s",
+                        (hash_nueva_password, current_user.id)
+                    )
+                    conexion.commit()
+                    flash('Contraseña actualizada correctamente', 'success')
+                    return redirect(url_for('index'))
+                else:
+                    flash('La contraseña actual es incorrecta', 'error')
+            else:
+                flash('Error de conexión a la base de datos', 'error')
+                    
+        except Exception as e:
+            flash('Error al cambiar la contraseña', 'error')
+            print(f"Error en cambiar_password: {e}")
+        finally:
+            if cursor is not None:
+                cursor.close()
+            if conexion is not None:
+                conexion.close()
+    
+    return render_template('cambiar_password.html')
+
+# ===== RUTAS PRINCIPALES =====
+@app.route('/')
+@login_required
+def index():
+    if not current_user.puede('ver_fichas'):
+        flash('No tienes permisos para ver las fichas', 'error')
+        return redirect(url_for('login'))
+    
+    cursor = None
+    conexion = None
+    fichas = []
+    
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            cursor.execute("SELECT * FROM fichas ORDER BY fecha_actualizacion DESC")
+            fichas_data = cursor.fetchall()
+            
+            for ficha in fichas_data:
+                ficha_dict = {
+                    'id': ficha[0],
+                    'categoria': ficha[1],
+                    'problema': ficha[2],
+                    'descripcion': ficha[3],
+                    'causas': ficha[4],
+                    'solucion': ficha[5],
+                    'palabras_clave': ficha[6],
+                    'fecha_creacion': ficha[7],
+                    'fecha_actualizacion': ficha[8]
+                }
+                fichas.append(ficha_dict)
+                
+    except Exception as e:
+        flash('Error al cargar las fichas', 'error')
+        print(f"Error en index: {e}")
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conexion is not None:
+            conexion.close()
+    
+    return render_template('index.html', fichas=fichas, user=current_user)
+
+@app.route('/agregar', methods=['GET', 'POST'])
+@login_required
+def agregar_ficha():
+    if not current_user.puede('agregar_fichas'):
+        flash('No tienes permisos para realizar esta acción', 'error')
+        return redirect(url_for('index'))
+    
+    cursor = None
+    conexion = None
+    
+    if request.method == 'POST':
+        # Obtener datos del formulario
+        categoria = request.form.get('categoria', '')
+        problema = request.form.get('problema', '')
+        descripcion = request.form.get('descripcion', '')
+        causas = request.form.get('causas', '')
+        solucion = request.form.get('solucion', '')
+        palabras_clave = request.form.get('palabras_clave', '')
+        
+        print(f"📝 DATOS DEL FORMULARIO:")
+        print(f"   Categoría: {categoria}")
+        print(f"   Problema: {problema}")
+        
+        # Validar campos requeridos
+        campos_requeridos = {
+            'categoria': categoria,
+            'problema': problema, 
+            'causas': causas,
+            'solucion': solucion
+        }
+        
+        campos_faltantes = [campo for campo, valor in campos_requeridos.items() if not valor]
+        
+        if campos_faltantes:
+            print(f"❌ CAMPOS FALTANTES: {campos_faltantes}")
+            flash('Por favor, complete todos los campos requeridos', 'error')
+            return render_template('agregar_ficha.html')
+        
+        print("✅ TODOS LOS CAMPOS REQUERIDOS COMPLETOS")
+        
+        try:
+            conexion = crear_conexion()
+            if conexion:
+                cursor = conexion.cursor()
+                print("🔧 Ejecutando INSERT en la base de datos...")
+                
+                cursor.execute('''
+                    INSERT INTO fichas (categoria, problema, descripcion, causas, solucion, palabras_clave)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                ''', (categoria, problema, descripcion, causas, solucion, palabras_clave))
+                
+                conexion.commit()
+                print("✅ Ficha agregada correctamente a la base de datos")
+                flash('Ficha agregada correctamente', 'success')
+                return redirect(url_for('index'))
+            else:
+                print("❌ No hay conexión a la base de datos")
+                flash('Error de conexión a la base de datos', 'error')
+                
+        except psycopg2.IntegrityError as e:
+            print(f"❌ ERROR DE INTEGRIDAD (secuencia): {str(e)}")
+            flash('Error en la base de datos: problema con IDs. Por favor, contacte al administrador.', 'error')
+            if conexion:
+                conexion.rollback()
+                
+        except Exception as e:
+            print(f"❌ ERROR en base de datos: {str(e)}")
+            flash(f'Error al agregar la ficha: {str(e)}', 'error')
+            if conexion:
+                conexion.rollback()
+        finally:
+            if cursor is not None:
+                cursor.close()
+            if conexion is not None:
+                conexion.close()
+    
+    return render_template('agregar_ficha.html')
+
+@app.route('/editar/<int:id>', methods=['GET', 'POST'])
+@login_required
+def editar_ficha(id):
+    if not current_user.puede('editar_fichas'):
+        flash('No tienes permisos para realizar esta acción', 'error')
+        return redirect(url_for('index'))
+    
+    cursor = None
+    conexion = None
+    ficha = None
+    
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            
+            if request.method == 'POST':
+                categoria = request.form['categoria']
+                problema = request.form['problema']
+                descripcion = request.form['descripcion']
+                causas = request.form['causas']
+                solucion = request.form['solucion']
+                palabras_clave = request.form['palabras_clave']
+                
+                # Procesar causas (convertir saltos de línea a |)
+                causas_items = [item.strip() for item in causas.split('\n') if item.strip()]
+                causas_str = '|'.join(causas_items)
+                
+                cursor.execute('''
+                    UPDATE fichas 
+                    SET categoria=%s, problema=%s, descripcion=%s, 
+                    causas=%s, solucion=%s, palabras_clave=%s 
+                    WHERE id=%s
+                ''', (categoria, problema, descripcion, causas_str, solucion, palabras_clave, id))
+                
+                conexion.commit()
+                flash('Ficha actualizada correctamente', 'success')
+                return redirect(url_for('index'))
+            
+            # GET: Cargar datos de la ficha
+            cursor.execute("SELECT * FROM fichas WHERE id = %s", (id,))
+            ficha_data = cursor.fetchone()
+            
+            if ficha_data:
+                ficha = {
+                    'id': ficha_data[0],
+                    'categoria': ficha_data[1],
+                    'problema': ficha_data[2],
+                    'descripcion': ficha_data[3],
+                    'causas': ficha_data[4],
+                    'solucion': ficha_data[5],
+                    'palabras_clave': ficha_data[6],
+                    'fecha_creacion': ficha_data[7],
+                    'fecha_actualizacion': ficha_data[8]
+                }
+                
+                # Convertir | de vuelta a saltos de línea para el formulario
+                if ficha and ficha['causas']:
+                    ficha['causas'] = ficha['causas'].replace('|', '\n')
+            
+    except Exception as e:
+        flash('Error al cargar/editar la ficha', 'error')
+        print(f"Error en editar_ficha: {e}")
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conexion is not None:
+            conexion.close()
+    
+    if not ficha:
+        flash('Ficha no encontrada', 'error')
+        return redirect(url_for('index'))
+    
+    return render_template('editar_ficha.html', ficha=ficha)
+
+@app.route('/eliminar/<int:id>')
+@login_required
+def eliminar_ficha(id):
+    if not current_user.puede('eliminar_fichas'):
+        flash('No tienes permisos para realizar esta acción', 'error')
+        return redirect(url_for('index'))
+    
+    cursor = None
+    conexion = None
+    
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            cursor.execute("DELETE FROM fichas WHERE id = %s", (id,))
+            conexion.commit()
+            flash('Ficha eliminada correctamente', 'success')
+    except Exception as e:
+        flash('Error al eliminar la ficha', 'error')
+        print(f"Error en eliminar_ficha: {e}")
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conexion is not None:
+            conexion.close()
+    
+    return redirect(url_for('index'))
+
+@app.route('/buscar')
+@login_required
+def buscar():
+    if not current_user.puede('ver_fichas'):
+        flash('No tienes permisos para ver las fichas', 'error')
+        return redirect(url_for('index'))
+    
+    query = request.args.get('q', '')
+    categoria = request.args.get('categoria', '')
+    
+    cursor = None
+    conexion = None
+    fichas = []
+    
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            
+            if categoria and query:
+                sql = "SELECT * FROM fichas WHERE categoria = %s AND (problema LIKE %s OR palabras_clave LIKE %s)"
+                cursor.execute(sql, (categoria, f'%{query}%', f'%{query}%'))
+            elif categoria:
+                sql = "SELECT * FROM fichas WHERE categoria = %s"
+                cursor.execute(sql, (categoria,))
+            elif query:
+                sql = "SELECT * FROM fichas WHERE problema LIKE %s OR palabras_clave LIKE %s"
+                cursor.execute(sql, (f'%{query}%', f'%{query}%'))
+            else:
+                cursor.execute("SELECT * FROM fichas ORDER BY fecha_actualizacion DESC")
+            
+            fichas_data = cursor.fetchall()
+            
+            # Convertir tuplas a diccionarios
+            for ficha in fichas_data:
+                ficha_dict = {
+                    'id': ficha[0],
+                    'categoria': ficha[1],
+                    'problema': ficha[2],
+                    'descripcion': ficha[3],
+                    'causas': ficha[4],
+                    'solucion': ficha[5],
+                    'palabras_clave': ficha[6],
+                    'fecha_creacion': ficha[7],
+                    'fecha_actualizacion': ficha[8]
+                }
+                fichas.append(ficha_dict)
+                
+    except Exception as e:
+        flash('Error en la búsqueda', 'error')
+        print(f"Error en buscar: {e}")
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conexion is not None:
+            conexion.close()
+    
+    return render_template('buscar.html', fichas=fichas, query=query, categoria=categoria)
+
+@app.route('/ficha/<int:id>')
+@login_required
+def ver_ficha(id):
+    if not current_user.puede('ver_fichas'):
+        flash('No tienes permisos para ver las fichas', 'error')
+        return redirect(url_for('index'))
+    
+    cursor = None
+    conexion = None
+    ficha = None
+    
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            cursor.execute("SELECT * FROM fichas WHERE id = %s", (id,))
+            ficha_data = cursor.fetchone()
+            
+            if ficha_data:
+                ficha = {
+                    'id': ficha_data[0],
+                    'categoria': ficha_data[1],
+                    'problema': ficha_data[2],
+                    'descripcion': ficha_data[3],
+                    'causas': ficha_data[4],
+                    'solucion': ficha_data[5],
+                    'palabras_clave': ficha_data[6],
+                    'fecha_creacion': ficha_data[7],
+                    'fecha_actualizacion': ficha_data[8]
+                }
+                
+    except Exception as e:
+        flash('Error al cargar la ficha', 'error')
+        print(f"Error en ver_ficha: {e}")
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conexion is not None:
+            conexion.close()
+    
+    if not ficha:
+        flash('Ficha no encontrada', 'error')
+        return redirect(url_for('index'))
+    
+    return render_template('ver_ficha.html', ficha=ficha)
+
+# ===== RUTAS DE GESTIÓN DE USUARIOS =====
+@app.route('/usuarios')
+@login_required
+def gestion_usuarios():
+    if current_user.rol != 'admin':
+        flash('No tienes permisos para acceder a esta página', 'error')
+        return redirect(url_for('index'))
+    
+    cursor = None
+    conexion = None
+    usuarios = []
+    
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            cursor.execute("SELECT * FROM usuarios ORDER BY fecha_creacion DESC")
+            usuarios_data = cursor.fetchall()
+            
+            for usuario in usuarios_data:
+                usuario_dict = {
+                    'id': usuario[0],
+                    'usuario': usuario[1],
+                    'password': usuario[2],
+                    'rol': usuario[3],
+                    'permisos': usuario[4],
+                    'fecha_creacion': usuario[5],
+                    'fecha_actualizacion': usuario[6]
+                }
+                
+                if usuario_dict.get('permisos'):
+                    try:
+                        usuario_dict['permisos_parsed'] = json.loads(usuario_dict['permisos'])
+                    except:
+                        usuario_dict['permisos_parsed'] = {}
+                else:
+                    usuario_dict['permisos_parsed'] = {}
+                
+                usuarios.append(usuario_dict)
+                    
+    except Exception as e:
+        flash('Error al cargar los usuarios', 'error')
+        print(f"Error en gestion_usuarios: {e}")
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conexion is not None:
+            conexion.close()
+    
+    return render_template('gestion_usuarios.html', usuarios=usuarios)
+
+@app.route('/editar_usuario/<int:id>', methods=['GET', 'POST'])
+@login_required
+def editar_usuario(id):
+    if current_user.rol != 'admin':
+        flash('No tienes permisos para realizar esta acción', 'error')
+        return redirect(url_for('index'))
+    
+    cursor = None
+    conexion = None
+    usuario_data = None
+    
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            
+            if request.method == 'POST':
+                usuario = request.form['usuario']
+                password = request.form['password']
+                rol = request.form['rol']
+                
+                permisos = {
+                    'ver_fichas': True,
+                    'agregar_fichas': 'agregar_fichas' in request.form,
+                    'editar_fichas': 'editar_fichas' in request.form,
+                    'eliminar_fichas': 'eliminar_fichas' in request.form,
+                    'cambiar_password': True
+                }
+                
+                permisos_json = json.dumps(permisos)
+                
+                if password:
+                    hash_password = generate_password_hash(password)
+                    cursor.execute(
+                        "UPDATE usuarios SET usuario = %s, password = %s, rol = %s, permisos = %s WHERE id = %s",
+                        (usuario, hash_password, rol, permisos_json, id)
+                    )
+                else:
+                    cursor.execute(
+                        "UPDATE usuarios SET usuario = %s, rol = %s, permisos = %s WHERE id = %s",
+                        (usuario, rol, permisos_json, id)
+                    )
+                
+                conexion.commit()
+                flash('Usuario actualizado correctamente', 'success')
+                return redirect(url_for('gestion_usuarios'))
+            
+            cursor.execute("SELECT * FROM usuarios WHERE id = %s", (id,))
+            usuario = cursor.fetchone()
+            
+            if usuario:
+                usuario_data = {
+                    'id': usuario[0],
+                    'usuario': usuario[1],
+                    'password': usuario[2],
+                    'rol': usuario[3],
+                    'permisos': usuario[4],
+                    'fecha_creacion': usuario[5],
+                    'fecha_actualizacion': usuario[6]
+                }
+                
+                if usuario_data.get('permisos'):
+                    try:
+                        usuario_data['permisos_parsed'] = json.loads(usuario_data['permisos'])
+                    except:
+                        usuario_data['permisos_parsed'] = {}
+                else:
+                    usuario_data['permisos_parsed'] = {}
+            
+    except psycopg2.IntegrityError:
+        flash('El usuario ya existe', 'error')
+    except Exception as e:
+        flash('Error al editar el usuario', 'error')
+        print(f"Error en editar_usuario: {e}")
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conexion is not None:
+            conexion.close()
+    
+    if not usuario_data:
+        flash('Usuario no encontrado', 'error')
+        return redirect(url_for('gestion_usuarios'))
+    
+    return render_template('editar_usuario.html', usuario=usuario_data)
+
+@app.route('/agregar_usuario', methods=['GET', 'POST'])
+@login_required
+def agregar_usuario():
+    if current_user.rol != 'admin':
+        flash('No tienes permisos para realizar esta acción', 'error')
+        return redirect(url_for('index'))
+    
+    cursor = None
+    conexion = None
+    
+    if request.method == 'POST':
+        usuario = request.form['usuario']
+        password = request.form['password']
+        rol = request.form['rol']
+        
+        if not usuario or not password:
+            flash('Usuario y contraseña son obligatorios', 'error')
+            return render_template('agregar_usuario.html')
+        
+        permisos = {
+            'ver_fichas': True,
+            'agregar_fichas': 'agregar_fichas' in request.form,
+            'editar_fichas': 'editar_fichas' in request.form,
+            'eliminar_fichas': 'eliminar_fichas' in request.form,
+            'cambiar_password': True
+        }
+        
+        permisos_json = json.dumps(permisos)
+        hash_password = generate_password_hash(password)
+        
+        try:
+            conexion = crear_conexion()
+            if conexion:
+                cursor = conexion.cursor()
+                cursor.execute(
+                    "INSERT INTO usuarios (usuario, password, rol, permisos) VALUES (%s, %s, %s, %s)",
+                    (usuario, hash_password, rol, permisos_json)
+                )
+                conexion.commit()
+                flash('Usuario agregado correctamente', 'success')
+                return redirect(url_for('gestion_usuarios'))
+        except psycopg2.IntegrityError:
+            flash('El usuario ya existe', 'error')
+        except Exception as e:
+            flash('Error al agregar el usuario', 'error')
+            print(f"Error en agregar_usuario: {e}")
+        finally:
+            if cursor is not None:
+                cursor.close()
+            if conexion is not None:
+                conexion.close()
+    
+    return render_template('agregar_usuario.html')
+
+@app.route('/eliminar_usuario/<int:id>')
+@login_required
+def eliminar_usuario(id):
+    if current_user.rol != 'admin':
+        flash('No tienes permisos para realizar esta acción', 'error')
+        return redirect(url_for('index'))
+    
+    if id == current_user.id:
+        flash('No puedes eliminar tu propio usuario', 'error')
+        return redirect(url_for('gestion_usuarios'))
+    
+    cursor = None
+    conexion = None
+    
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            cursor.execute("DELETE FROM usuarios WHERE id = %s", (id,))
+            conexion.commit()
+            flash('Usuario eliminado correctamente', 'success')
+    except Exception as e:
+        flash('Error al eliminar el usuario', 'error')
+        print(f"Error en eliminar_usuario: {e}")
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conexion is not None:
+            conexion.close()
+    
+    return redirect(url_for('gestion_usuarios'))
+
+# ===== RUTAS DE INFORMACIÓN =====
 @app.route('/soluciones_visuales')
 @login_required
 def soluciones_visuales():
@@ -584,683 +1184,77 @@ def informacion_general():
     
     return render_template('informacion_general.html', informacion=informacion)
 
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    flash('Sesión cerrada correctamente', 'info')
-    return redirect(url_for('login'))
-
-# Ruta para cambiar contraseña (todos los usuarios)
-@app.route('/cambiar_password', methods=['GET', 'POST'])
-@login_required
-def cambiar_password():
-    cursor = None
-    conexion = None
-    
-    if request.method == 'POST':
-        password_actual = request.form['password_actual']
-        nueva_password = request.form['nueva_password']
-        confirmar_password = request.form['confirmar_password']
-        
-        # Validaciones
-        if not password_actual or not nueva_password or not confirmar_password:
-            flash('Todos los campos son obligatorios', 'error')
-            return render_template('cambiar_password.html')
-        
-        if nueva_password != confirmar_password:
-            flash('Las nuevas contraseñas no coinciden', 'error')
-            return render_template('cambiar_password.html')
-        
-        if len(nueva_password) < 6:
-            flash('La nueva contraseña debe tener al menos 6 caracteres', 'error')
-            return render_template('cambiar_password.html')
-        
-        # Verificar contraseña actual
-        try:
-            conexion = crear_conexion()
-            if conexion:
-                cursor = conexion.cursor()
-                cursor.execute("SELECT password FROM usuarios WHERE id = %s", (current_user.id,))
-                usuario = cursor.fetchone()
-                
-                if usuario and check_password_hash(usuario[0], password_actual):
-                    # Actualizar contraseña
-                    hash_nueva_password = generate_password_hash(nueva_password)
-                    cursor.execute(
-                        "UPDATE usuarios SET password = %s WHERE id = %s",
-                        (hash_nueva_password, current_user.id)
-                    )
-                    conexion.commit()
-                    flash('Contraseña actualizada correctamente', 'success')
-                    return redirect(url_for('index'))
-                else:
-                    flash('La contraseña actual es incorrecta', 'error')
-            else:
-                flash('Error de conexión a la base de datos', 'error')
-                    
-        except Exception as e:
-            flash('Error al cambiar la contraseña', 'error')
-            print(f"Error en cambiar_password: {e}")
-        finally:
-            if cursor is not None:
-                cursor.close()
-            if conexion is not None:
-                conexion.close()
-    
-    return render_template('cambiar_password.html')
-
-# Ruta para gestionar usuarios (solo admin)
-@app.route('/usuarios')
-@login_required
-def gestion_usuarios():
-    if current_user.rol != 'admin':
-        flash('No tienes permisos para acceder a esta página', 'error')
-        return redirect(url_for('index'))
-    
-    cursor = None
-    conexion = None
-    usuarios = []
-    
-    try:
-        conexion = crear_conexion()
-        if conexion:
-            cursor = conexion.cursor()
-            cursor.execute("SELECT * FROM usuarios ORDER BY fecha_creacion DESC")
-            usuarios_data = cursor.fetchall()
-            
-            # Convertir tuplas a diccionarios
-            for usuario in usuarios_data:
-                usuario_dict = {
-                    'id': usuario[0],
-                    'usuario': usuario[1],
-                    'password': usuario[2],
-                    'rol': usuario[3],
-                    'permisos': usuario[4],
-                    'fecha_creacion': usuario[5],
-                    'fecha_actualizacion': usuario[6]
-                }
-                
-                # Parsear permisos JSON para cada usuario
-                if usuario_dict.get('permisos'):
-                    try:
-                        usuario_dict['permisos_parsed'] = json.loads(usuario_dict['permisos'])
-                    except:
-                        usuario_dict['permisos_parsed'] = {}
-                else:
-                    usuario_dict['permisos_parsed'] = {}
-                
-                usuarios.append(usuario_dict)
-                    
-    except Exception as e:
-        flash('Error al cargar los usuarios', 'error')
-        print(f"Error en gestion_usuarios: {e}")
-    finally:
-        if cursor is not None:
-            cursor.close()
-        if conexion is not None:
-            conexion.close()
-    
-    return render_template('gestion_usuarios.html', usuarios=usuarios)
-
-# Ruta para editar usuario (solo admin)
-@app.route('/editar_usuario/<int:id>', methods=['GET', 'POST'])
-@login_required
-def editar_usuario(id):
-    if current_user.rol != 'admin':
-        flash('No tienes permisos para realizar esta acción', 'error')
-        return redirect(url_for('index'))
-    
-    cursor = None
-    conexion = None
-    usuario_data = None
-    
-    try:
-        conexion = crear_conexion()
-        if conexion:
-            cursor = conexion.cursor()
-            
-            if request.method == 'POST':
-                usuario = request.form['usuario']
-                password = request.form['password']
-                rol = request.form['rol']
-                
-                # Obtener permisos del formulario
-                permisos = {
-                    'ver_fichas': True,  # Siempre activo
-                    'agregar_fichas': 'agregar_fichas' in request.form,
-                    'editar_fichas': 'editar_fichas' in request.form,
-                    'eliminar_fichas': 'eliminar_fichas' in request.form,
-                    'cambiar_password': True  # Siempre permitido
-                }
-                
-                permisos_json = json.dumps(permisos)
-                
-                if password:
-                    hash_password = generate_password_hash(password)
-                    cursor.execute(
-                        "UPDATE usuarios SET usuario = %s, password = %s, rol = %s, permisos = %s WHERE id = %s",
-                        (usuario, hash_password, rol, permisos_json, id)
-                    )
-                else:
-                    cursor.execute(
-                        "UPDATE usuarios SET usuario = %s, rol = %s, permisos = %s WHERE id = %s",
-                        (usuario, rol, permisos_json, id)
-                    )
-                
-                conexion.commit()
-                flash('Usuario actualizado correctamente', 'success')
-                return redirect(url_for('gestion_usuarios'))
-            
-            # GET: Cargar datos del usuario
-            cursor.execute("SELECT * FROM usuarios WHERE id = %s", (id,))
-            usuario = cursor.fetchone()
-            
-            if usuario:
-                usuario_data = {
-                    'id': usuario[0],
-                    'usuario': usuario[1],
-                    'password': usuario[2],
-                    'rol': usuario[3],
-                    'permisos': usuario[4],
-                    'fecha_creacion': usuario[5],
-                    'fecha_actualizacion': usuario[6]
-                }
-                
-                if usuario_data.get('permisos'):
-                    try:
-                        usuario_data['permisos_parsed'] = json.loads(usuario_data['permisos'])
-                    except:
-                        usuario_data['permisos_parsed'] = {}
-                else:
-                    usuario_data['permisos_parsed'] = {}
-            
-    except psycopg2.IntegrityError:
-        flash('El usuario ya existe', 'error')
-    except Exception as e:
-        flash('Error al editar el usuario', 'error')
-        print(f"Error en editar_usuario: {e}")
-    finally:
-        if cursor is not None:
-            cursor.close()
-        if conexion is not None:
-            conexion.close()
-    
-    if not usuario_data:
-        flash('Usuario no encontrado', 'error')
-        return redirect(url_for('gestion_usuarios'))
-    
-    return render_template('editar_usuario.html', usuario=usuario_data)
-
-# Ruta para agregar usuario (solo admin)
-@app.route('/agregar_usuario', methods=['GET', 'POST'])
-@login_required
-def agregar_usuario():
-    if current_user.rol != 'admin':
-        flash('No tienes permisos para realizar esta acción', 'error')
-        return redirect(url_for('index'))
-    
-    cursor = None
-    conexion = None
-    
-    if request.method == 'POST':
-        usuario = request.form['usuario']
-        password = request.form['password']
-        rol = request.form['rol']
-        
-        if not usuario or not password:
-            flash('Usuario y contraseña son obligatorios', 'error')
-            return render_template('agregar_usuario.html')
-        
-        # Obtener permisos del formulario
-        permisos = {
-            'ver_fichas': True,  # Siempre activo
-            'agregar_fichas': 'agregar_fichas' in request.form,
-            'editar_fichas': 'editar_fichas' in request.form,
-            'eliminar_fichas': 'eliminar_fichas' in request.form,
-            'cambiar_password': True  # Siempre permitido
-        }
-        
-        permisos_json = json.dumps(permisos)
-        hash_password = generate_password_hash(password)
-        
-        try:
-            conexion = crear_conexion()
-            if conexion:
-                cursor = conexion.cursor()
-                cursor.execute(
-                    "INSERT INTO usuarios (usuario, password, rol, permisos) VALUES (%s, %s, %s, %s)",
-                    (usuario, hash_password, rol, permisos_json)
-                )
-                conexion.commit()
-                flash('Usuario agregado correctamente', 'success')
-                return redirect(url_for('gestion_usuarios'))
-        except psycopg2.IntegrityError:
-            flash('El usuario ya existe', 'error')
-        except Exception as e:
-            flash('Error al agregar el usuario', 'error')
-            print(f"Error en agregar_usuario: {e}")
-        finally:
-            if cursor is not None:
-                cursor.close()
-            if conexion is not None:
-                conexion.close()
-    
-    return render_template('agregar_usuario.html')
-
-# Ruta para eliminar usuario (solo admin)
-@app.route('/eliminar_usuario/<int:id>')
-@login_required
-def eliminar_usuario(id):
-    if current_user.rol != 'admin':
-        flash('No tienes permisos para realizar esta acción', 'error')
-        return redirect(url_for('index'))
-    
-    if id == current_user.id:
-        flash('No puedes eliminar tu propio usuario', 'error')
-        return redirect(url_for('gestion_usuarios'))
-    
-    cursor = None
-    conexion = None
-    
-    try:
-        conexion = crear_conexion()
-        if conexion:
-            cursor = conexion.cursor()
-            cursor.execute("DELETE FROM usuarios WHERE id = %s", (id,))
-            conexion.commit()
-            flash('Usuario eliminado correctamente', 'success')
-    except Exception as e:
-        flash('Error al eliminar el usuario', 'error')
-        print(f"Error en eliminar_usuario: {e}")
-    finally:
-        if cursor is not None:
-            cursor.close()
-        if conexion is not None:
-            conexion.close()
-    
-    return redirect(url_for('gestion_usuarios'))
-
-# Rutas principales
-@app.route('/')
-@login_required
-def index():
-    if not current_user.puede('ver_fichas'):
-        flash('No tienes permisos para ver las fichas', 'error')
-        return redirect(url_for('login'))
-    
-    cursor = None
-    conexion = None
-    fichas = []
-    
-    try:
-        conexion = crear_conexion()
-        if conexion:
-            cursor = conexion.cursor()
-            cursor.execute("SELECT * FROM fichas ORDER BY fecha_actualizacion DESC")
-            fichas_data = cursor.fetchall()
-            
-            # Convertir tuplas a diccionarios
-            for ficha in fichas_data:
-                ficha_dict = {
-                    'id': ficha[0],
-                    'categoria': ficha[1],
-                    'problema': ficha[2],
-                    'descripcion': ficha[3],
-                    'causas': ficha[4],
-                    'solucion': ficha[5],
-                    'palabras_clave': ficha[6],
-                    'fecha_creacion': ficha[7],
-                    'fecha_actualizacion': ficha[8]
-                }
-                fichas.append(ficha_dict)
-                
-    except Exception as e:
-        flash('Error al cargar las fichas', 'error')
-        print(f"Error en index: {e}")
-    finally:
-        if cursor is not None:
-            cursor.close()
-        if conexion is not None:
-            conexion.close()
-    
-    return render_template('index.html', fichas=fichas, user=current_user)
-
-@app.route('/agregar', methods=['GET', 'POST'])
-@login_required
-def agregar_ficha():
-    if not current_user.puede('agregar_fichas'):
-        flash('No tienes permisos para realizar esta acción', 'error')
-        return redirect(url_for('index'))
-    
-    cursor = None
-    conexion = None
-    
-    if request.method == 'POST':
-        # Obtener datos del formulario
-        categoria = request.form.get('categoria', '')
-        problema = request.form.get('problema', '')
-        descripcion = request.form.get('descripcion', '')
-        causas = request.form.get('causas', '')
-        solucion = request.form.get('solucion', '')
-        palabras_clave = request.form.get('palabras_clave', '')
-        
-        print(f"📝 DATOS DEL FORMULARIO:")
-        print(f"   Categoría: {categoria}")
-        print(f"   Problema: {problema}")
-        
-        # Validar campos requeridos
-        campos_requeridos = {
-            'categoria': categoria,
-            'problema': problema, 
-            'causas': causas,
-            'solucion': solucion
-        }
-        
-        campos_faltantes = [campo for campo, valor in campos_requeridos.items() if not valor]
-        
-        if campos_faltantes:
-            print(f"❌ CAMPOS FALTANTES: {campos_faltantes}")
-            flash('Por favor, complete todos los campos requeridos', 'error')
-            return render_template('agregar_ficha.html')
-        
-        print("✅ TODOS LOS CAMPOS REQUERIDOS COMPLETOS")
-        
-        try:
-            conexion = crear_conexion()
-            if conexion:
-                cursor = conexion.cursor()
-                print("🔧 Ejecutando INSERT en la base de datos...")
-                
-                cursor.execute('''
-                    INSERT INTO fichas (categoria, problema, descripcion, causas, solucion, palabras_clave)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                ''', (categoria, problema, descripcion, causas, solucion, palabras_clave))
-                
-                conexion.commit()
-                print("✅ Ficha agregada correctamente a la base de datos")
-                flash('Ficha agregada correctamente', 'success')
-                return redirect(url_for('index'))
-            else:
-                print("❌ No hay conexión a la base de datos")
-                flash('Error de conexión a la base de datos', 'error')
-                
-        except psycopg2.IntegrityError as e:
-            # ERROR ESPECÍFICO: duplicate key - problema de secuencia
-            print(f"❌ ERROR DE INTEGRIDAD (secuencia): {str(e)}")
-            flash('Error en la base de datos: problema con IDs. Por favor, contacte al administrador.', 'error')
-            if conexion:
-                conexion.rollback()
-                
-            # Intentar resetear la secuencia automáticamente
-            try:
-                from database import resetear_secuencias
-                resetear_secuencias()
-                print("🔄 Secuencia reseteada automáticamente")
-            except:
-                print("⚠ No se pudo resetear la secuencia automáticamente")
-                
-        except Exception as e:
-            print(f"❌ ERROR en base de datos: {str(e)}")
-            flash(f'Error al agregar la ficha: {str(e)}', 'error')
-            if conexion:
-                conexion.rollback()
-        finally:
-            if cursor is not None:
-                cursor.close()
-            if conexion is not None:
-                conexion.close()
-    
-    return render_template('agregar_ficha.html')
-
-@app.route('/editar/<int:id>', methods=['GET', 'POST'])
-@login_required
-def editar_ficha(id):
-    if not current_user.puede('editar_fichas'):
-        flash('No tienes permisos para realizar esta acción', 'error')
-        return redirect(url_for('index'))
-    
-    cursor = None
-    conexion = None
-    ficha = None
-    
-    try:
-        conexion = crear_conexion()
-        if conexion:
-            cursor = conexion.cursor()
-            
-            if request.method == 'POST':
-                categoria = request.form['categoria']
-                problema = request.form['problema']
-                descripcion = request.form['descripcion']
-                causas = request.form['causas']
-                solucion = request.form['solucion']
-                palabras_clave = request.form['palabras_clave']
-                
-                # Procesar causas (convertir saltos de línea a |)
-                causas_items = [item.strip() for item in causas.split('\n') if item.strip()]
-                causas_str = '|'.join(causas_items)
-                
-                cursor.execute('''
-                    UPDATE fichas 
-                    SET categoria=%s, problema=%s, descripcion=%s, 
-                    causas=%s, solucion=%s, palabras_clave=%s 
-                    WHERE id=%s
-                ''', (categoria, problema, descripcion, causas_str, solucion, palabras_clave, id))
-                
-                conexion.commit()
-                flash('Ficha actualizada correctamente', 'success')
-                return redirect(url_for('index'))
-            
-            # GET: Cargar datos de la ficha
-            cursor.execute("SELECT * FROM fichas WHERE id = %s", (id,))
-            ficha_data = cursor.fetchone()
-            
-            if ficha_data:
-                ficha = {
-                    'id': ficha_data[0],
-                    'categoria': ficha_data[1],
-                    'problema': ficha_data[2],
-                    'descripcion': ficha_data[3],
-                    'causas': ficha_data[4],
-                    'solucion': ficha_data[5],
-                    'palabras_clave': ficha_data[6],
-                    'fecha_creacion': ficha_data[7],
-                    'fecha_actualizacion': ficha_data[8]
-                }
-                
-                # Convertir | de vuelta a saltos de línea para el formulario
-                if ficha and ficha['causas']:
-                    ficha['causas'] = ficha['causas'].replace('|', '\n')
-            
-    except Exception as e:
-        flash('Error al cargar/editar la ficha', 'error')
-        print(f"Error en editar_ficha: {e}")
-    finally:
-        if cursor is not None:
-            cursor.close()
-        if conexion is not None:
-            conexion.close()
-    
-    if not ficha:
-        flash('Ficha no encontrada', 'error')
-        return redirect(url_for('index'))
-    
-    return render_template('editar_ficha.html', ficha=ficha)
-
-@app.route('/eliminar/<int:id>')
-@login_required
-def eliminar_ficha(id):
-    if not current_user.puede('eliminar_fichas'):
-        flash('No tienes permisos para realizar esta acción', 'error')
-        return redirect(url_for('index'))
-    
-    cursor = None
-    conexion = None
-    
-    try:
-        conexion = crear_conexion()
-        if conexion:
-            cursor = conexion.cursor()
-            cursor.execute("DELETE FROM fichas WHERE id = %s", (id,))
-            conexion.commit()
-            flash('Ficha eliminada correctamente', 'success')
-    except Exception as e:
-        flash('Error al eliminar la ficha', 'error')
-        print(f"Error en eliminar_ficha: {e}")
-    finally:
-        if cursor is not None:
-            cursor.close()
-        if conexion is not None:
-            conexion.close()
-    
-    return redirect(url_for('index'))
-
-@app.route('/buscar')
-@login_required
-def buscar():
-    if not current_user.puede('ver_fichas'):
-        flash('No tienes permisos para ver las fichas', 'error')
-        return redirect(url_for('index'))
-    
-    query = request.args.get('q', '')
-    categoria = request.args.get('categoria', '')
-    
-    cursor = None
-    conexion = None
-    fichas = []
-    
-    try:
-        conexion = crear_conexion()
-        if conexion:
-            cursor = conexion.cursor()
-            
-            if categoria and query:
-                sql = "SELECT * FROM fichas WHERE categoria = %s AND (problema LIKE %s OR palabras_clave LIKE %s)"
-                cursor.execute(sql, (categoria, f'%{query}%', f'%{query}%'))
-            elif categoria:
-                sql = "SELECT * FROM fichas WHERE categoria = %s"
-                cursor.execute(sql, (categoria,))
-            elif query:
-                sql = "SELECT * FROM fichas WHERE problema LIKE %s OR palabras_clave LIKE %s"
-                cursor.execute(sql, (f'%{query}%', f'%{query}%'))
-            else:
-                cursor.execute("SELECT * FROM fichas ORDER BY fecha_actualizacion DESC")
-            
-            fichas_data = cursor.fetchall()
-            
-            # Convertir tuplas a diccionarios
-            for ficha in fichas_data:
-                ficha_dict = {
-                    'id': ficha[0],
-                    'categoria': ficha[1],
-                    'problema': ficha[2],
-                    'descripcion': ficha[3],
-                    'causas': ficha[4],
-                    'solucion': ficha[5],
-                    'palabras_clave': ficha[6],
-                    'fecha_creacion': ficha[7],
-                    'fecha_actualizacion': ficha[8]
-                }
-                fichas.append(ficha_dict)
-                
-    except Exception as e:
-        flash('Error en la búsqueda', 'error')
-        print(f"Error en buscar: {e}")
-    finally:
-        if cursor is not None:
-            cursor.close()
-        if conexion is not None:
-            conexion.close()
-    
-    return render_template('buscar.html', fichas=fichas, query=query, categoria=categoria)
-
-@app.route('/ficha/<int:id>')
-@login_required
-def ver_ficha(id):
-    if not current_user.puede('ver_fichas'):
-        flash('No tienes permisos para ver las fichas', 'error')
-        return redirect(url_for('index'))
-    
-    cursor = None
-    conexion = None
-    ficha = None
-    
-    try:
-        conexion = crear_conexion()
-        if conexion:
-            cursor = conexion.cursor()
-            cursor.execute("SELECT * FROM fichas WHERE id = %s", (id,))
-            ficha_data = cursor.fetchone()
-            
-            if ficha_data:
-                ficha = {
-                    'id': ficha_data[0],
-                    'categoria': ficha_data[1],
-                    'problema': ficha_data[2],
-                    'descripcion': ficha_data[3],
-                    'causas': ficha_data[4],
-                    'solucion': ficha_data[5],
-                    'palabras_clave': ficha_data[6],
-                    'fecha_creacion': ficha_data[7],
-                    'fecha_actualizacion': ficha_data[8]
-                }
-                
-    except Exception as e:
-        flash('Error al cargar la ficha', 'error')
-        print(f"Error en ver_ficha: {e}")
-    finally:
-        if cursor is not None:
-            cursor.close()
-        if conexion is not None:
-            conexion.close()
-    
-    if not ficha:
-        flash('Ficha no encontrada', 'error')
-        return redirect(url_for('index'))
-    
-    return render_template('ver_ficha.html', ficha=ficha)
-
-# API para obtener problemas por categoría
-@app.route('/api/problemas/<categoria>')
-@login_required
-def obtener_problemas(categoria):
-    problemas_por_categoria = {
-        'TV': [
-            'No hay señal en el televisor',
-            'Imagen pixelada o con interferencias',
-            'Sin sonido en algunos canales',
-            'Problemas con la guía de programación',
-            'Otro problema con TV'
-        ],
-        'Internet': [
-            'Internet lento o intermitente',
-            'Sin conexión a internet',
-            'Problemas con WiFi',
-            'No puedo conectarme a sitios específicos',
-            'Velocidad inferior a la contratada',
-            'Problemas con el módem/router',
-            'Otro problema con Internet'
-        ],
-        'Equipo': [
-            'Equipo no enciende',
-            'Problemas con puertos HDMI/USB',
-            'Dispositivo no da MAC',
-            'Problemas niveles opticos',
-            'Otro problema con Equipo'
-        ]
-    }
-    
-    problemas = problemas_por_categoria.get(categoria, [])
-    return jsonify(problemas)
-
 # ===== RUTAS SST =====
 
 @app.route('/sst')
 @login_required
 def sst_dashboard():
     """Dashboard principal de SST"""
-    return render_template('sst/dashboard.html')
+    cursor = None
+    conexion = None
+    estadisticas = {
+        'total_videos': 0,
+        'total_documentos': 0,
+        'total_imagenes': 0,
+        'total_enlaces': 0,
+        'contenido_destacado': []
+    }
+    
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            
+            # Obtener estadísticas por tipo
+            cursor.execute("""
+                SELECT tipo, COUNT(*) as total 
+                FROM sst_contenido 
+                GROUP BY tipo
+            """)
+            
+            stats_data = cursor.fetchall()
+            for tipo, total in stats_data:
+                if tipo == 'video':
+                    estadisticas['total_videos'] = total
+                elif tipo == 'documento':
+                    estadisticas['total_documentos'] = total
+                elif tipo == 'imagen':
+                    estadisticas['total_imagenes'] = total
+                elif tipo == 'enlace':
+                    estadisticas['total_enlaces'] = total
+            
+            # Obtener contenido destacado (últimos 4)
+            cursor.execute("""
+                SELECT sc.*, cat.nombre as categoria_nombre, cat.color as categoria_color
+                FROM sst_contenido sc
+                LEFT JOIN sst_categorias cat ON sc.categoria_id = cat.id
+                ORDER BY sc.fecha_publicacion DESC
+                LIMIT 4
+            """)
+            
+            destacado_data = cursor.fetchall()
+            for item in destacado_data:
+                estadisticas['contenido_destacado'].append({
+                    'id': item[0],
+                    'titulo': item[1],
+                    'descripcion': item[2],
+                    'tipo': item[3],
+                    'es_obligatorio': item[8],
+                    'categoria_nombre': item[12],
+                    'categoria_color': item[13],
+                    'fecha_publicacion': item[10]
+                })
+                
+    except Exception as e:
+        flash('Error al cargar estadísticas SST', 'error')
+        print(f"Error en sst_dashboard: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if conexion:
+            conexion.close()
+    
+    return render_template('sst/dashboard.html', estadisticas=estadisticas)
 
 @app.route('/sst/contenido')
 @login_required
@@ -1269,20 +1263,53 @@ def sst_contenido():
     cursor = None
     conexion = None
     contenido = []
+    categorias = []
     
     try:
         conexion = crear_conexion()
         if conexion:
             cursor = conexion.cursor()
-            cursor.execute("""
+            
+            # Obtener categorías para filtros
+            cursor.execute("SELECT id, nombre, color FROM sst_categorias ORDER BY nombre")
+            categorias_data = cursor.fetchall()
+            for cat in categorias_data:
+                categorias.append({
+                    'id': cat[0],
+                    'nombre': cat[1],
+                    'color': cat[2]
+                })
+            
+            # Obtener contenido con filtros
+            query = request.args.get('q', '')
+            categoria = request.args.get('categoria', '')
+            tipo = request.args.get('tipo', '')
+            
+            sql = """
                 SELECT sc.*, cat.nombre as categoria_nombre, cat.color as categoria_color,
                        u.usuario as creador_nombre
                 FROM sst_contenido sc
                 LEFT JOIN sst_categorias cat ON sc.categoria_id = cat.id
                 LEFT JOIN usuarios u ON sc.usuario_creador = u.id
-                ORDER BY sc.fecha_publicacion DESC
-            """)
+                WHERE 1=1
+            """
+            params = []
             
+            if query:
+                sql += " AND (sc.titulo ILIKE %s OR sc.descripcion ILIKE %s OR sc.tags ILIKE %s)"
+                params.extend([f'%{query}%', f'%{query}%', f'%{query}%'])
+            
+            if categoria:
+                sql += " AND sc.categoria_id = %s"
+                params.append(int(categoria))
+            
+            if tipo:
+                sql += " AND sc.tipo = %s"
+                params.append(tipo)
+            
+            sql += " ORDER BY sc.fecha_publicacion DESC"
+            
+            cursor.execute(sql, params)
             contenido_data = cursor.fetchall()
             
             for item in contenido_data:
@@ -1313,12 +1340,12 @@ def sst_contenido():
         if conexion:
             conexion.close()
     
-    return render_template('sst/contenido.html', contenido=contenido)
+    return render_template('sst/contenido.html', contenido=contenido, categorias=categorias)
 
 @app.route('/sst/agregar', methods=['GET', 'POST'])
 @login_required
 def sst_agregar_contenido():
-    """Agregar nuevo contenido SST - VERSIÓN SIMPLIFICADA"""
+    """Agregar nuevo contenido SST"""
     if current_user.rol != 'admin':
         flash('No tienes permisos para agregar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
@@ -1332,7 +1359,7 @@ def sst_agregar_contenido():
         if conexion:
             cursor = conexion.cursor()
             
-            # Cargar categorías primero
+            # Cargar categorías
             cursor.execute("SELECT id, nombre, color FROM sst_categorias ORDER BY nombre")
             categorias_data = cursor.fetchall()
             
@@ -1395,14 +1422,12 @@ def sst_agregar_contenido():
                 # Procesar según tipo
                 if tipo == 'video':
                     video_url = request.form.get('video_url', '').strip() or None
-                    # Validar que tenga al menos una fuente de video
                     if not video_url and not archivo_local:
                         flash('Para video debe proporcionar una URL o subir un archivo', 'error')
                         return render_template('sst/agregar_contenido.html', categorias=categorias)
                 
                 elif tipo in ['documento', 'imagen']:
                     archivo_url = request.form.get('archivo_url', '').strip() or None
-                    # Validar que tenga al menos una fuente
                     if not archivo_local and not archivo_url:
                         flash('Debe proporcionar una URL o subir un archivo', 'error')
                         return render_template('sst/agregar_contenido.html', categorias=categorias)
@@ -1413,7 +1438,7 @@ def sst_agregar_contenido():
                         flash('Debe proporcionar una URL para enlaces', 'error')
                         return render_template('sst/agregar_contenido.html', categorias=categorias)
                 
-                # Insertar en la base de datos (sin duracion_video)
+                # Insertar en la base de datos
                 cursor.execute("""
                     INSERT INTO sst_contenido 
                     (titulo, descripcion, tipo, archivo_url, archivo_local, video_url, categoria_id, 
@@ -1449,10 +1474,189 @@ def sst_agregar_contenido():
     
     return render_template('sst/agregar_contenido.html', categorias=categorias)
 
+@app.route('/sst/contenido/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def sst_editar_contenido(id):
+    """Editar contenido SST existente"""
+    if current_user.rol != 'admin':
+        flash('No tienes permisos para editar contenido SST', 'error')
+        return redirect(url_for('sst_dashboard'))
+    
+    cursor = None
+    conexion = None
+    contenido = None
+    categorias = []
+    
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            
+            # Cargar categorías
+            cursor.execute("SELECT id, nombre, color FROM sst_categorias ORDER BY nombre")
+            categorias_data = cursor.fetchall()
+            for cat in categorias_data:
+                categorias.append({
+                    'id': cat[0],
+                    'nombre': cat[1],
+                    'color': cat[2]
+                })
+            
+            if request.method == 'POST':
+                # Obtener datos del formulario
+                titulo = request.form.get('titulo', '').strip()
+                descripcion = request.form.get('descripcion', '').strip()
+                tipo = request.form.get('tipo', '').strip()
+                categoria_id = request.form.get('categoria_id', '').strip()
+                es_obligatorio = 'es_obligatorio' in request.form
+                tags = request.form.get('tags', '').strip()
+                video_url = request.form.get('video_url', '').strip() or None
+                archivo_url = request.form.get('archivo_url', '').strip() or None
+                
+                # Validaciones
+                if not titulo or not tipo or not categoria_id:
+                    flash('Todos los campos obligatorios deben ser completados', 'error')
+                    return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
+                
+                # Procesar archivo subido
+                archivo_local = None
+                file = request.files.get('archivo_local')
+                if file and file.filename != '':
+                    if allowed_file(file.filename):
+                        filename = secure_filename(file.filename)
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        filename = f"{timestamp}_{filename}"
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER_SST'], filename)
+                        file.save(file_path)
+                        archivo_local = filename
+                    else:
+                        flash('Tipo de archivo no permitido', 'error')
+                        return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
+                
+                # Actualizar en base de datos
+                if archivo_local:
+                    # Si se subió nuevo archivo, actualizar archivo_local
+                    cursor.execute("""
+                        UPDATE sst_contenido 
+                        SET titulo=%s, descripcion=%s, tipo=%s, archivo_url=%s, 
+                            archivo_local=%s, video_url=%s, categoria_id=%s, 
+                            es_obligatorio=%s, tags=%s, fecha_actualizacion=CURRENT_TIMESTAMP
+                        WHERE id=%s
+                    """, (titulo, descripcion, tipo, archivo_url, archivo_local, 
+                          video_url, categoria_id, es_obligatorio, tags, id))
+                else:
+                    # Mantener el archivo_local existente
+                    cursor.execute("""
+                        UPDATE sst_contenido 
+                        SET titulo=%s, descripcion=%s, tipo=%s, archivo_url=%s, 
+                            video_url=%s, categoria_id=%s, es_obligatorio=%s, 
+                            tags=%s, fecha_actualizacion=CURRENT_TIMESTAMP
+                        WHERE id=%s
+                    """, (titulo, descripcion, tipo, archivo_url, video_url, 
+                          categoria_id, es_obligatorio, tags, id))
+                
+                conexion.commit()
+                flash('✅ Contenido actualizado correctamente', 'success')
+                return redirect(url_for('sst_contenido'))
+            
+            # GET: Cargar datos del contenido
+            cursor.execute("""
+                SELECT sc.*, cat.nombre as categoria_nombre, cat.color as categoria_color,
+                       u.usuario as creador_nombre
+                FROM sst_contenido sc
+                LEFT JOIN sst_categorias cat ON sc.categoria_id = cat.id
+                LEFT JOIN usuarios u ON sc.usuario_creador = u.id
+                WHERE sc.id = %s
+            """, (id,))
+            
+            contenido_data = cursor.fetchone()
+            if contenido_data:
+                contenido = {
+                    'id': contenido_data[0],
+                    'titulo': contenido_data[1],
+                    'descripcion': contenido_data[2],
+                    'tipo': contenido_data[3],
+                    'archivo_url': contenido_data[4],
+                    'archivo_local': contenido_data[5],
+                    'video_url': contenido_data[6],
+                    'categoria_id': contenido_data[7],
+                    'es_obligatorio': contenido_data[8],
+                    'tags': contenido_data[9],
+                    'fecha_publicacion': contenido_data[10],
+                    'usuario_creador': contenido_data[11],
+                    'categoria_nombre': contenido_data[12],
+                    'categoria_color': contenido_data[13],
+                    'creador_nombre': contenido_data[14],
+                    'fecha_creacion': contenido_data[15]
+                }
+                
+    except Exception as e:
+        flash(f'Error al editar contenido SST: {str(e)}', 'error')
+        print(f"❌ Error en sst_editar_contenido: {e}")
+        if conexion:
+            conexion.rollback()
+    finally:
+        if cursor:
+            cursor.close()
+        if conexion:
+            conexion.close()
+    
+    if not contenido:
+        flash('Contenido no encontrado', 'error')
+        return redirect(url_for('sst_contenido'))
+    
+    return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
+
+@app.route('/sst/contenido/<int:id>/eliminar', methods=['POST'])
+@login_required
+def sst_eliminar_contenido(id):
+    """Eliminar contenido SST"""
+    if current_user.rol != 'admin':
+        flash('No tienes permisos para eliminar contenido SST', 'error')
+        return redirect(url_for('sst_dashboard'))
+    
+    cursor = None
+    conexion = None
+    
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            
+            # Primero obtener información del archivo para eliminarlo físicamente
+            cursor.execute("SELECT archivo_local FROM sst_contenido WHERE id = %s", (id,))
+            resultado = cursor.fetchone()
+            
+            if resultado and resultado[0]:
+                # Eliminar archivo físico
+                archivo_path = os.path.join(app.config['UPLOAD_FOLDER_SST'], resultado[0])
+                if os.path.exists(archivo_path):
+                    os.remove(archivo_path)
+                    print(f"🗑️ Archivo eliminado: {resultado[0]}")
+            
+            # Eliminar de la base de datos
+            cursor.execute("DELETE FROM sst_contenido WHERE id = %s", (id,))
+            conexion.commit()
+            
+            flash('✅ Contenido eliminado correctamente', 'success')
+            
+    except Exception as e:
+        flash(f'Error al eliminar contenido SST: {str(e)}', 'error')
+        print(f"❌ Error en sst_eliminar_contenido: {e}")
+        if conexion:
+            conexion.rollback()
+    finally:
+        if cursor:
+            cursor.close()
+        if conexion:
+            conexion.close()
+    
+    return redirect(url_for('sst_contenido'))
+
 @app.route('/sst/video/<int:id>')
 @login_required
 def sst_ver_video(id):
-    """Ver video específico de SST - VERSIÓN MEJORADA"""
+    """Ver video específico de SST"""
     cursor = None
     conexion = None
     video = None
@@ -1476,19 +1680,13 @@ def sst_ver_video(id):
                     'titulo': video_data[1],
                     'descripcion': video_data[2],
                     'tipo': video_data[3],
-                    'archivo_url': str(video_data[4]) if video_data[4] else None,  # Convertir a string
-                    'archivo_local': str(video_data[5]) if video_data[5] else None,  # Convertir a string
-                    'video_url': str(video_data[6]) if video_data[6] else None,  # Convertir a string
+                    'archivo_url': str(video_data[4]) if video_data[4] else None,
+                    'archivo_local': str(video_data[5]) if video_data[5] else None,
+                    'video_url': str(video_data[6]) if video_data[6] else None,
                     'categoria_nombre': video_data[12],
                     'categoria_color': video_data[13],
                     'fecha_publicacion': video_data[10]
                 }
-                
-                print(f"🔍 Datos del video cargado:")
-                print(f"   Tipo: {video['tipo']}")
-                print(f"   Archivo local: {video['archivo_local']} (tipo: {type(video['archivo_local'])})")
-                print(f"   Video URL: {video['video_url']} (tipo: {type(video['video_url'])})")
-                print(f"   Archivo URL: {video['archivo_url']} (tipo: {type(video['archivo_url'])})")
                 
                 # Registrar visualización
                 cursor.execute("""
@@ -1518,9 +1716,8 @@ def sst_ver_video(id):
 @app.route('/sst/archivos/<filename>')
 @login_required
 def sst_servir_archivo(filename):
-    """Servir archivos subidos localmente - VERSIÓN MEJORADA"""
+    """Servir archivos subidos localmente"""
     try:
-        # Verificar que el archivo existe
         file_path = os.path.join(app.config['UPLOAD_FOLDER_SST'], filename)
         if not os.path.isfile(file_path):
             flash('Archivo no encontrado', 'error')
@@ -1542,7 +1739,93 @@ def sst_estadisticas():
         flash('No tienes permisos para ver estadísticas', 'error')
         return redirect(url_for('sst_dashboard'))
     
-    return render_template('sst/estadisticas.html')
+    cursor = None
+    conexion = None
+    estadisticas = {
+        'total_contenido': 0,
+        'total_visualizaciones': 0,
+        'contenido_mas_visto': [],
+        'usuarios_activos': []
+    }
+    
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            
+            # Total de contenido
+            cursor.execute("SELECT COUNT(*) FROM sst_contenido")
+            estadisticas['total_contenido'] = cursor.fetchone()[0]
+            
+            # Total de visualizaciones
+            cursor.execute("SELECT COUNT(*) FROM sst_seguimiento")
+            estadisticas['total_visualizaciones'] = cursor.fetchone()[0]
+            
+            # Contenido más visto
+            cursor.execute("""
+                SELECT sc.titulo, COUNT(ss.contenido_id) as visualizaciones
+                FROM sst_seguimiento ss
+                JOIN sst_contenido sc ON ss.contenido_id = sc.id
+                GROUP BY sc.id, sc.titulo
+                ORDER BY visualizaciones DESC
+                LIMIT 5
+            """)
+            estadisticas['contenido_mas_visto'] = cursor.fetchall()
+            
+            # Usuarios más activos
+            cursor.execute("""
+                SELECT u.usuario, COUNT(ss.usuario_id) as visualizaciones
+                FROM sst_seguimiento ss
+                JOIN usuarios u ON ss.usuario_id = u.id
+                GROUP BY u.id, u.usuario
+                ORDER BY visualizaciones DESC
+                LIMIT 5
+            """)
+            estadisticas['usuarios_activos'] = cursor.fetchall()
+                
+    except Exception as e:
+        flash('Error al cargar estadísticas', 'error')
+        print(f"Error en sst_estadisticas: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if conexion:
+            conexion.close()
+    
+    return render_template('sst/estadisticas.html', estadisticas=estadisticas)
+
+# ===== API PARA PROBLEMAS =====
+@app.route('/api/problemas/<categoria>')
+@login_required
+def obtener_problemas(categoria):
+    problemas_por_categoria = {
+        'TV': [
+            'No hay señal en el televisor',
+            'Imagen pixelada o con interferencias',
+            'Sin sonido en algunos canales',
+            'Problemas con la guía de programación',
+            'Otro problema con TV'
+        ],
+        'Internet': [
+            'Internet lento o intermitente',
+            'Sin conexión a internet',
+            'Problemas con WiFi',
+            'No puedo conectarme a sitios específicos',
+            'Velocidad inferior a la contratada',
+            'Problemas con el módem/router',
+            'Otro problema con Internet'
+        ],
+        'Equipo': [
+            'Equipo no enciende',
+            'Problemas con puertos HDMI/USB',
+            'Dispositivo no da MAC',
+            'Problemas niveles opticos',
+            'Otro problema con Equipo'
+        ]
+    }
+    
+    problemas = problemas_por_categoria.get(categoria, [])
+    return jsonify(problemas)
 
 if __name__ == '__main__':
     with app.app_context():
