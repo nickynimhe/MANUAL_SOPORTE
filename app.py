@@ -9,6 +9,7 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 import os
 
+# Crear la instancia de Flask PRIMERO
 app = Flask(__name__)
 app.config.from_object(Config)
 
@@ -1253,28 +1254,18 @@ def obtener_problemas(categoria):
     problemas = problemas_por_categoria.get(categoria, [])
     return jsonify(problemas)
 
-# Agregar después de las rutas existentes
-
 # ===== RUTAS SST =====
-
-# ===== RUTAS SST CORREGIDAS =====
 
 @app.route('/sst')
 @login_required
 def sst_dashboard():
     """Dashboard principal de SST"""
-    # Verificar que las tablas existan
-    from database import crear_tablas_sst
-    crear_tablas_sst()
     return render_template('sst/dashboard.html')
 
 @app.route('/sst/contenido')
 @login_required
 def sst_contenido():
     """Lista de todo el contenido SST"""
-    from database import crear_tablas_sst
-    crear_tablas_sst()
-    
     cursor = None
     conexion = None
     contenido = []
@@ -1328,14 +1319,10 @@ def sst_contenido():
 @app.route('/sst/agregar', methods=['GET', 'POST'])
 @login_required
 def sst_agregar_contenido():
-    """Agregar nuevo contenido SST - VERSIÓN CORREGIDA"""
+    """Agregar nuevo contenido SST"""
     if current_user.rol != 'admin':
         flash('No tienes permisos para agregar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
-    
-    from database import crear_tablas_sst, actualizar_tabla_sst_contenido
-    crear_tablas_sst()
-    actualizar_tabla_sst_contenido()
     
     cursor = None
     conexion = None
@@ -1346,7 +1333,7 @@ def sst_agregar_contenido():
         if conexion:
             cursor = conexion.cursor()
             
-            # Cargar categorías
+            # Cargar categorías primero
             cursor.execute("SELECT id, nombre, color FROM sst_categorias ORDER BY nombre")
             categorias_data = cursor.fetchall()
             
@@ -1358,7 +1345,6 @@ def sst_agregar_contenido():
                 })
             
             if request.method == 'POST':
-                # Obtener datos del formulario
                 titulo = request.form.get('titulo', '').strip()
                 descripcion = request.form.get('descripcion', '').strip()
                 tipo = request.form.get('tipo', '').strip()
@@ -1366,64 +1352,10 @@ def sst_agregar_contenido():
                 es_obligatorio = 'es_obligatorio' in request.form
                 tags = request.form.get('tags', '').strip()
                 
-                # Validaciones
+                # Validaciones básicas
                 if not titulo or not tipo or not categoria_id:
                     flash('Título, tipo y categoría son obligatorios', 'error')
                     return render_template('sst/agregar_contenido.html', categorias=categorias)
-                
-                # Procesar archivos
-                archivo_url = None
-                archivo_local = None
-                video_url = None
-                duracion = None
-                
-                # Manejar archivo subido
-                file = request.files.get('archivo_local')
-                if file and file.filename != '':
-                    if allowed_file(file.filename):
-                        filename = secure_filename(file.filename)
-                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                        filename = f"{timestamp}_{filename}"
-                        file_path = os.path.join(app.config['UPLOAD_FOLDER_SST'], filename)
-                        file.save(file_path)
-                        archivo_local = filename
-                        print(f"✅ Archivo guardado: {filename}")
-                    else:
-                        flash('Tipo de archivo no permitido', 'error')
-                        return render_template('sst/agregar_contenido.html', categorias=categorias)
-                
-                # Procesar según tipo
-                if tipo == 'video':
-                    video_url = request.form.get('video_url', '').strip()
-                    duracion = request.form.get('duracion_video', 0) or 0
-                elif tipo in ['documento', 'imagen', 'enlace']:
-                    archivo_url = request.form.get('archivo_url', '').strip()
-                
-                # Insertar en la base de datos
-                cursor.execute("""
-                    INSERT INTO sst_contenido 
-                    (titulo, descripcion, tipo, archivo_url, archivo_local, video_url, 
-                     categoria_id, es_obligatorio, duracion_video, tags, usuario_creador)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (titulo, descripcion, tipo, archivo_url, archivo_local, video_url,
-                      categoria_id, es_obligatorio, duracion, tags, current_user.id))
-                
-                conexion.commit()
-                flash('✅ Contenido SST agregado correctamente', 'success')
-                return redirect(url_for('sst_contenido'))
-                
-    except Exception as e:
-        flash(f'Error al agregar contenido SST: {str(e)}', 'error')
-        print(f"❌ Error en sst_agregar_contenido: {e}")
-        if conexion:
-            conexion.rollback()
-    finally:
-        if cursor:
-            cursor.close()
-        if conexion:
-            conexion.close()
-    
-    return render_template('sst/agregar_contenido.html', categorias=categorias)
                 
                 # Inicializar variables
                 archivo_url = None
@@ -1571,6 +1503,6 @@ def sst_estadisticas():
 
 if __name__ == '__main__':
     with app.app_context():
-        print("🚀 Iniciando aplicación Flask...")
+        print("🚀 Iniciando la aplicación Flask...")
         crear_tablas()
     app.run(host='0.0.0.0', port=5000, debug=True)
