@@ -3,29 +3,21 @@ import os
 from datetime import datetime
 
 def crear_conexion():
-    """Crear conexión a la base de datos"""
+    """Crear conexión a la base de datos - SOLO PARA RENDER"""
     try:
-        # Para Render.com - usa DATABASE_URL
+        # Solo usar DATABASE_URL de Render
         database_url = os.environ.get('DATABASE_URL')
         
-        if database_url:
-            # Render usa postgres://, necesitamos convertir a psycopg2's formato
-            if database_url.startswith('postgres://'):
-                database_url = database_url.replace('postgres://', 'postgresql://', 1)
-            
-            conexion = psycopg2.connect(database_url)
-            print("✅ Conectado a la base de datos (Render)")
-        else:
-            # Para desarrollo local
-            conexion = psycopg2.connect(
-                host=os.environ.get('DB_HOST', 'localhost'),
-                database=os.environ.get('DB_NAME', 'mastv_fichas'),
-                user=os.environ.get('DB_USER', 'postgres'),
-                password=os.environ.get('DB_PASSWORD', ''),
-                port=os.environ.get('DB_PORT', '5432')
-            )
-            print("✅ Conectado a la base de datos (Local)")
+        if not database_url:
+            print("❌ DATABASE_URL no encontrada en variables de entorno")
+            return None
         
+        # Render usa postgres://, necesitamos convertir a psycopg2's formato
+        if database_url.startswith('postgres://'):
+            database_url = database_url.replace('postgres://', 'postgresql://', 1)
+        
+        conexion = psycopg2.connect(database_url)
+        print("✅ Conectado a la base de datos de Render")
         return conexion
         
     except Exception as e:
