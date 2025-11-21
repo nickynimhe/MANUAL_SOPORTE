@@ -103,6 +103,43 @@ def resetear_secuencias():
         else:
             print("ℹ Secuencia 'fichas_id_seq' no existe aún")
         
+        # Resetear secuencias SST si existen
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.sequences 
+                WHERE sequence_name = 'sst_categorias_id_seq'
+            )
+        """)
+        if cursor.fetchone()[0]:
+            cursor.execute("""
+                SELECT setval('sst_categorias_id_seq', COALESCE((SELECT MAX(id) FROM sst_categorias), 1), false)
+            """)
+            print("✅ Secuencia 'sst_categorias_id_seq' reseteada")
+        
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.sequences 
+                WHERE sequence_name = 'sst_contenido_id_seq'
+            )
+        """)
+        if cursor.fetchone()[0]:
+            cursor.execute("""
+                SELECT setval('sst_contenido_id_seq', COALESCE((SELECT MAX(id) FROM sst_contenido), 1), false)
+            """)
+            print("✅ Secuencia 'sst_contenido_id_seq' reseteada")
+        
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.sequences 
+                WHERE sequence_name = 'sst_seguimiento_id_seq'
+            )
+        """)
+        if cursor.fetchone()[0]:
+            cursor.execute("""
+                SELECT setval('sst_seguimiento_id_seq', COALESCE((SELECT MAX(id) FROM sst_seguimiento), 1), false)
+            """)
+            print("✅ Secuencia 'sst_seguimiento_id_seq' reseteada")
+        
         conexion.commit()
         print("🎉 Secuencias reseteadas correctamente")
         return True
@@ -113,6 +150,98 @@ def resetear_secuencias():
             conexion.rollback()
         return False
         
+    finally:
+        if cursor:
+            cursor.close()
+        if conexion:
+            conexion.close()
+
+def crear_tablas_sst():
+    """Crear tablas para el módulo SST"""
+    conexion = None
+    cursor = None
+    
+    try:
+        conexion = crear_conexion()
+        if not conexion:
+            return False
+
+        cursor = conexion.cursor()
+
+        # Tabla para categorías SST
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS sst_categorias (
+                id SERIAL PRIMARY KEY,
+                nombre VARCHAR(100) NOT NULL,
+                descripcion TEXT,
+                icono VARCHAR(50),
+                color VARCHAR(20),
+                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        print("✅ Tabla 'sst_categorias' lista")
+
+        # Tabla para contenido SST
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS sst_contenido (
+                id SERIAL PRIMARY KEY,
+                titulo VARCHAR(200) NOT NULL,
+                descripcion TEXT,
+                tipo VARCHAR(50) NOT NULL, -- 'video', 'documento', 'imagen', 'enlace'
+                archivo_url TEXT,
+                video_url TEXT,
+                categoria_id INTEGER REFERENCES sst_categorias(id),
+                es_obligatorio BOOLEAN DEFAULT false,
+                duracion_video INTEGER, -- en minutos
+                tags TEXT,
+                fecha_publicacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                usuario_creador INTEGER REFERENCES usuarios(id)
+            )
+        """)
+        print("✅ Tabla 'sst_contenido' lista")
+
+        # Tabla para seguimiento de visualización
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS sst_seguimiento (
+                id SERIAL PRIMARY KEY,
+                usuario_id INTEGER REFERENCES usuarios(id),
+                contenido_id INTEGER REFERENCES sst_contenido(id),
+                fecha_visualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                porcentaje_visto INTEGER DEFAULT 0,
+                completado BOOLEAN DEFAULT false,
+                tiempo_total_visto INTEGER DEFAULT 0 -- en segundos
+            )
+        """)
+        print("✅ Tabla 'sst_seguimiento' lista")
+
+        # Insertar categorías por defecto
+        categorias_default = [
+            ('Videos de Capacitación', 'Contenido audiovisual para formación en SST', 'fa-video', '#dc2626'),
+            ('Procedimientos de Seguridad', 'Protocolos y procedimientos de seguridad', 'fa-clipboard-list', '#059669'),
+            ('Primeros Auxilios', 'Guías y procedimientos de primeros auxilios', 'fa-first-aid', '#ef4444'),
+            ('Equipos de Protección', 'Uso y mantenimiento de EPP', 'fa-hard-hat', '#f59e0b'),
+            ('Emergencias', 'Procedimientos para situaciones de emergencia', 'fa-exclamation-triangle', '#7c3aed'),
+            ('Normativa Legal', 'Leyes y decretos de SST', 'fa-gavel', '#374151')
+        ]
+
+        cursor.execute("SELECT COUNT(*) FROM sst_categorias")
+        if cursor.fetchone()[0] == 0:
+            cursor.executemany(
+                "INSERT INTO sst_categorias (nombre, descripcion, icono, color) VALUES (%s, %s, %s, %s)",
+                categorias_default
+            )
+            print("✅ Categorías SST creadas por defecto")
+
+        conexion.commit()
+        print("🎉 Tablas SST creadas correctamente")
+        return True
+
+    except Exception as err:
+        print(f"💥 Error creando tablas SST: {str(err)}")
+        if conexion:
+            conexion.rollback()
+        return False
     finally:
         if cursor:
             cursor.close()
@@ -195,6 +324,10 @@ def crear_tablas():
         except Exception as seq_err:
             print(f"ℹ Las secuencias se crearán automáticamente: {seq_err}")
 
+        # ===== CREAR TABLAS SST DESPUÉS DE LAS TABLAS PRINCIPALES =====
+        print("🔧 Creando tablas SST...")
+        crear_tablas_sst()
+
         conexion.commit()
         print("🎉 Base de datos inicializada CORRECTAMENTE")
         return True
@@ -241,14 +374,33 @@ def verificar_tablas():
         """)
         fichas_existe = cursor.fetchone()[0]
         
+        # Verificar tablas SST
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'sst_categorias'
+            )
+        """)
+        sst_categorias_existe = cursor.fetchone()[0]
+        
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'sst_contenido'
+            )
+        """)
+        sst_contenido_existe = cursor.fetchone()[0]
+        
         # Verificar datos en usuarios
         cursor.execute("SELECT COUNT(*) FROM usuarios")
         total_usuarios = cursor.fetchone()[0]
         
         print(f"📊 Tabla 'usuarios' existe: {usuarios_existe} ({total_usuarios} usuarios)")
         print(f"📊 Tabla 'fichas' existe: {fichas_existe}")
+        print(f"📊 Tabla 'sst_categorias' existe: {sst_categorias_existe}")
+        print(f"📊 Tabla 'sst_contenido' existe: {sst_contenido_existe}")
         
-        return usuarios_existe and fichas_existe
+        return usuarios_existe and fichas_existe and sst_categorias_existe and sst_contenido_existe
         
     except Exception as err:
         print(f"💥 Error verificando tablas: {err}")
