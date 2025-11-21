@@ -1,1 +1,226 @@
+{% extends "base.html" %}
 
+{% block title %}Agregar Solución Visual{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-2">Agregar Solución Visual</h1>
+                    <p class="text-muted">Crea una nueva guía paso a paso con imágenes</p>
+                </div>
+                <a href="{{ url_for('gestion_soluciones') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+            </div>
+
+            <!-- Formulario -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" id="solucionForm">
+                        <!-- Información Básica -->
+                        <div class="row mb-4">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="titulo" class="form-label">Título de la Solución *</label>
+                                    <input type="text" class="form-control" id="titulo" name="titulo" 
+                                           required maxlength="255" placeholder="Ej: Consultar cliente en Softv">
+                                    <div class="form-text">Título descriptivo de la solución.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="categoria" class="form-label">Categoría *</label>
+                                    <select class="form-select" id="categoria" name="categoria" required>
+                                        <option value="">Seleccionar categoría</option>
+                                        <option value="Softv">Softv</option>
+                                        <option value="Vortex">Vortex</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" 
+                                      rows="3" placeholder="Descripción general de la solución..."></textarea>
+                            <div class="form-text">Opcional. Breve descripción de lo que cubre esta solución.</div>
+                        </div>
+
+                        <!-- Pasos -->
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0">Pasos de la Solución *</h5>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="agregarPaso">
+                                    <i class="fas fa-plus me-1"></i>Agregar Paso
+                                </button>
+                            </div>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Cada paso debe tener al menos una imagen y un título. Las imágenes deben estar en la carpeta <code>static/img/soluciones/</code>
+                            </div>
+                            
+                            <div id="pasosContainer">
+                                <!-- Los pasos se agregarán aquí dinámicamente -->
+                            </div>
+                            <input type="hidden" id="pasoCount" name="paso_count" value="0">
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('gestion_soluciones') }}" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Guardar Solución
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template para paso -->
+<template id="pasoTemplate">
+    <div class="card paso-card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">Paso <span class="numero-paso">1</span></h6>
+            <button type="button" class="btn btn-sm btn-outline-danger eliminar-paso">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Imagen *</label>
+                        <input type="text" class="form-control paso-imagen" 
+                               placeholder="Ej: softv/softv1.png" required>
+                        <div class="form-text">Ruta relativa desde static/img/soluciones/</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Título del Paso *</label>
+                        <input type="text" class="form-control paso-titulo" 
+                               placeholder="Ej: Paso 1: Ingresar al sistema" required>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Descripción del Paso</label>
+                <textarea class="form-control paso-descripcion" 
+                          rows="2" placeholder="Descripción detallada del paso..."></textarea>
+            </div>
+        </div>
+    </div>
+</template>
+
+<style>
+.paso-card {
+    border-left: 4px solid #007bff;
+}
+
+.eliminar-paso {
+    border: none;
+    padding: 0.25rem 0.5rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const pasosContainer = document.getElementById('pasosContainer');
+    const pasoCount = document.getElementById('pasoCount');
+    const agregarPasoBtn = document.getElementById('agregarPaso');
+    const pasoTemplate = document.getElementById('pasoTemplate');
+    let contadorPasos = 0;
+
+    // Agregar primer paso automáticamente
+    agregarPaso();
+
+    // Función para agregar paso
+    function agregarPaso() {
+        contadorPasos++;
+        const clone = pasoTemplate.content.cloneNode(true);
+        const pasoElement = clone.querySelector('.paso-card');
+        
+        // Actualizar número de paso
+        pasoElement.querySelector('.numero-paso').textContent = contadorPasos;
+        
+        // Configurar inputs con nombres únicos
+        const imagenInput = pasoElement.querySelector('.paso-imagen');
+        const tituloInput = pasoElement.querySelector('.paso-titulo');
+        const descripcionInput = pasoElement.querySelector('.paso-descripcion');
+        
+        imagenInput.name = `paso_${contadorPasos}_imagen`;
+        tituloInput.name = `paso_${contadorPasos}_titulo`;
+        descripcionInput.name = `paso_${contadorPasos}_descripcion`;
+        
+        // Configurar eliminar paso
+        pasoElement.querySelector('.eliminar-paso').addEventListener('click', function() {
+            if (contadorPasos > 1) {
+                pasoElement.remove();
+                contadorPasos--;
+                actualizarNumerosPasos();
+                actualizarPasoCount();
+            } else {
+                alert('Debe haber al menos un paso.');
+            }
+        });
+        
+        pasosContainer.appendChild(pasoElement);
+        actualizarPasoCount();
+    }
+
+    // Actualizar números de pasos
+    function actualizarNumerosPasos() {
+        const pasos = pasosContainer.querySelectorAll('.paso-card');
+        pasos.forEach((paso, index) => {
+            paso.querySelector('.numero-paso').textContent = index + 1;
+        });
+    }
+
+    // Actualizar contador hidden
+    function actualizarPasoCount() {
+        pasoCount.value = contadorPasos;
+    }
+
+    // Event listener para agregar paso
+    agregarPasoBtn.addEventListener('click', agregarPaso);
+
+    // Validación del formulario
+    document.getElementById('solucionForm').addEventListener('submit', function(e) {
+        const tienePasosValidos = contadorPasos > 0;
+        
+        if (!tienePasosValidos) {
+            e.preventDefault();
+            alert('Debe agregar al menos un paso válido.');
+            return;
+        }
+
+        // Validar que cada paso tenga imagen y título
+        const pasosInvalidos = [];
+        const pasos = pasosContainer.querySelectorAll('.paso-card');
+        
+        pasos.forEach((paso, index) => {
+            const imagen = paso.querySelector('.paso-imagen').value.trim();
+            const titulo = paso.querySelector('.paso-titulo').value.trim();
+            
+            if (!imagen || !titulo) {
+                pasosInvalidos.push(index + 1);
+            }
+        });
+
+        if (pasosInvalidos.length > 0) {
+            e.preventDefault();
+            alert(`Los siguientes pasos están incompletos: ${pasosInvalidos.join(', ')}`);
+        }
+    });
+});
+</script>
+{% endblock %}
