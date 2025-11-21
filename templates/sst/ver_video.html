@@ -33,7 +33,7 @@
 
                     <!-- REPRODUCTOR DE VIDEO -->
                     <div class="video-container mb-4">
-                        {% if video.video_url %}
+                        {% if video.video_url and video.video_url is string %}
                             <!-- Video desde URL externa (YouTube, Vimeo, etc.) -->
                             <div class="embed-responsive embed-responsive-16by9">
                                 {% if 'youtube.com' in video.video_url or 'youtu.be' in video.video_url %}
@@ -63,7 +63,7 @@
                                 {% endif %}
                             </div>
                         
-                        {% elif video.archivo_local %}
+                        {% elif video.archivo_local and video.archivo_local is string %}
                             <!-- Video desde archivo local -->
                             <div class="embed-responsive embed-responsive-16by9">
                                 <video controls class="embed-responsive-item w-100" style="height: 400px;">
@@ -72,7 +72,7 @@
                                 </video>
                             </div>
                         
-                        {% elif video.archivo_url %}
+                        {% elif video.archivo_url and video.archivo_url is string %}
                             <!-- Video desde URL directa -->
                             <div class="embed-responsive embed-responsive-16by9">
                                 <video controls class="embed-responsive-item w-100" style="height: 400px;">
@@ -85,7 +85,10 @@
                             <div class="alert alert-warning text-center">
                                 <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
                                 <h5>No hay fuente de video disponible</h5>
-                                <p class="mb-0">Este contenido no tiene una fuente de video configurada.</p>
+                                <p class="mb-0">Este contenido no tiene una fuente de video configurada o hay un problema con los datos.</p>
+                                {% if video.video_url %}
+                                    <small class="text-muted">Tipo de video_url: {{ video.video_url.__class__.__name__ }}</small>
+                                {% endif %}
                             </div>
                         {% endif %}
                     </div>
@@ -98,9 +101,12 @@
                                 <li><strong>Tipo:</strong> {{ video.tipo|title }}</li>
                                 <li><strong>Categoría:</strong> {{ video.categoria_nombre }}</li>
                                 <li><strong>Publicado:</strong> {{ video.fecha_publicacion.strftime('%d/%m/%Y a las %H:%M') }}</li>
+                                {% if video.video_url %}
+                                    <li><strong>Video URL (tipo):</strong> {{ video.video_url.__class__.__name__ }}</li>
+                                {% endif %}
                             </ul>
                         </div>
-                        {% if video.archivo_local %}
+                        {% if video.archivo_local and video.archivo_local is string %}
                         <div class="col-md-6">
                             <h6>Descargar:</h6>
                             <a href="{{ url_for('sst_servir_archivo', filename=video.archivo_local) }}" 
