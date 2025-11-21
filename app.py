@@ -1453,7 +1453,7 @@ def sst_agregar_contenido():
 @app.route('/sst/video/<int:id>')
 @login_required
 def sst_ver_video(id):
-    """Ver video específico de SST"""
+    """Ver video específico de SST - SIN DURACIÓN"""
     cursor = None
     conexion = None
     video = None
@@ -1481,10 +1481,10 @@ def sst_ver_video(id):
                     'archivo_local': video_data[5],
                     'categoria_nombre': video_data[13],
                     'categoria_color': video_data[14],
-                    'duracion_video': video_data[9],
                     'fecha_publicacion': video_data[11]
+                    # Eliminado: 'duracion_video'
                 }
-                
+                                
                 # Registrar visualización
                 cursor.execute("""
                     INSERT INTO sst_seguimiento (usuario_id, contenido_id, fecha_visualizacion)
