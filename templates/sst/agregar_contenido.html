@@ -1,220 +1,119 @@
 {% extends "base.html" %}
 
-{% block title %}SST - Agregar Contenido{% endblock %}
+{% block title %}Agregar Contenido SST{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <!-- Header -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 class="h3 mb-1">
-                                <i class="fas fa-plus text-success me-2"></i>
-                                Agregar Contenido SST
-                            </h1>
-                            <p class="text-muted mb-0">Agrega nuevo contenido de seguridad y salud en el trabajo</p>
+<div class="container mt-4">
+    <h2>Agregar Contenido SST</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="titulo" class="form-label">Título *</label>
+                            <input type="text" class="form-control" id="titulo" name="titulo" required>
                         </div>
-                        <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Volver
-                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="categoria_id" class="form-label">Categoría *</label>
+                            <select class="form-control" id="categoria_id" name="categoria_id" required>
+                                <option value="">Seleccionar categoría</option>
+                                {% for categoria in categorias %}
+                                <option value="{{ categoria.id }}" style="color: {{ categoria.color }}">
+                                    {{ categoria.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Formulario -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <form method="POST" action="{{ url_for('sst_agregar_contenido') }}" enctype="multipart/form-data">
-                        <!-- Información básica -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h5 class="text-primary mb-3">
-                                    <i class="fas fa-info-circle me-2"></i>Información Básica
-                                </h5>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="titulo" class="form-label">Título *</label>
-                                    <input type="text" class="form-control" id="titulo" name="titulo" required 
-                                           placeholder="Ej: Procedimiento de Evacuación">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="categoria_id" class="form-label">Categoría *</label>
-                                    <select class="form-select" id="categoria_id" name="categoria_id" required>
-                                        <option value="">Seleccionar categoría...</option>
-                                        {% for categoria in categorias %}
-                                        <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="mb-3">
-                                    <label for="descripcion" class="form-label">Descripción</label>
-                                    <textarea class="form-control" id="descripcion" name="descripcion" 
-                                              rows="3" placeholder="Descripción detallada del contenido..."></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tipo de contenido -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h5 class="text-primary mb-3">
-                                    <i class="fas fa-file me-2"></i>Tipo de Contenido
-                                </h5>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="tipo" class="form-label">Tipo *</label>
-                                    <select class="form-select" id="tipo" name="tipo" required onchange="toggleFields()">
-                                        <option value="">Seleccionar tipo...</option>
-                                        <option value="video">Video</option>
-                                        <option value="documento">Documento</option>
-                                        <option value="imagen">Imagen</option>
-                                        <option value="enlace">Enlace</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="tags" class="form-label">Etiquetas</label>
-                                    <input type="text" class="form-control" id="tags" name="tags" 
-                                           placeholder="Ej: seguridad, evacuación, emergencia">
-                                    <div class="form-text">Separar con comas</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Campos específicos por tipo -->
-                        <div id="video-fields" class="row mb-4" style="display: none;">
-                            <div class="col-12">
-                                <h6 class="text-info mb-3">
-                                    <i class="fas fa-video me-2"></i>Información del Video
-                                </h6>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="video_url" class="form-label">URL del Video (externo)</label>
-                                    <input type="url" class="form-control" id="video_url" name="video_url" 
-                                           placeholder="https://youtube.com/embed/... o https://vimeo.com/...">
-                                    <div class="form-text">Usar URL de embed (YouTube, Vimeo, etc.)</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="duracion_video" class="form-label">Duración (minutos)</label>
-                                    <input type="number" class="form-control" id="duracion_video" name="duracion_video" 
-                                           min="1" placeholder="Ej: 15">
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="mb-3">
-                                    <label for="archivo_local_video" class="form-label">O subir video local</label>
-                                    <input type="file" class="form-control" id="archivo_local_video" name="archivo_local" 
-                                           accept="video/*">
-                                    <div class="form-text">Formatos permitidos: MP4, AVI, MOV (máx. 100MB)</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="archivo-fields" class="row mb-4" style="display: none;">
-                            <div class="col-12">
-                                <h6 class="text-info mb-3">
-                                    <i class="fas fa-file-upload me-2"></i>Información del Archivo
-                                </h6>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="archivo_url" class="form-label">URL del Archivo (externo)</label>
-                                    <input type="url" class="form-control" id="archivo_url" name="archivo_url" 
-                                           placeholder="https://ejemplo.com/documento.pdf">
-                                    <div class="form-text">URL donde está alojado el archivo externo</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="archivo_local" class="form-label">O subir archivo local</label>
-                                    <input type="file" class="form-control" id="archivo_local" name="archivo_local" 
-                                           accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif">
-                                    <div class="form-text">
-                                        Formatos: PDF, Word, Excel, PowerPoint, imágenes (máx. 100MB)
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Configuración adicional -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h5 class="text-primary mb-3">
-                                    <i class="fas fa-cog me-2"></i>Configuración Adicional
-                                </h5>
-                            </div>
-                            <div class="col-12">
-                                <div class="form-check form-switch mb-3">
-                                    <input class="form-check-input" type="checkbox" id="es_obligatorio" name="es_obligatorio">
-                                    <label class="form-check-label" for="es_obligatorio">
-                                        <strong>Contenido Obligatorio</strong>
-                                    </label>
-                                    <div class="form-text">Los usuarios deberán completar este contenido obligatoriamente</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Botones -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="d-flex justify-content-between">
-                                    <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-secondary">
-                                        <i class="fas fa-times me-2"></i>Cancelar
-                                    </a>
-                                    <button type="submit" class="btn btn-success">
-                                        <i class="fas fa-save me-2"></i>Guardar Contenido
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
+                <div class="mb-3">
+                    <label for="descripcion" class="form-label">Descripción</label>
+                    <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
                 </div>
-            </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="tipo" class="form-label">Tipo de Contenido *</label>
+                            <select class="form-control" id="tipo" name="tipo" required>
+                                <option value="">Seleccionar tipo</option>
+                                <option value="video">Video</option>
+                                <option value="documento">Documento</option>
+                                <option value="imagen">Imagen</option>
+                                <option value="enlace">Enlace</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="es_obligatorio" name="es_obligatorio">
+                            <label class="form-check-label" for="es_obligatorio">Contenido Obligatorio</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campos dinámicos según tipo -->
+                <div id="campos-video" class="campos-tipo" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="video_url" class="form-label">URL del Video (YouTube, Vimeo, etc.)</label>
+                                <input type="url" class="form-control" id="video_url" name="video_url">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="duracion_video" class="form-label">Duración (minutos)</label>
+                                <input type="number" class="form-control" id="duracion_video" name="duracion_video" min="1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="campos-archivo" class="campos-tipo" style="display: none;">
+                    <div class="mb-3">
+                        <label for="archivo_url" class="form-label">URL del Archivo</label>
+                        <input type="url" class="form-control" id="archivo_url" name="archivo_url">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="archivo_local" class="form-label">Subir Archivo</label>
+                    <input type="file" class="form-control" id="archivo_local" name="archivo_local" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.mp4,.avi,.mov">
+                    <div class="form-text">Formatos permitidos: PDF, Word, Excel, PowerPoint, imágenes, videos</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="tags" class="form-label">Etiquetas</label>
+                    <input type="text" class="form-control" id="tags" name="tags" placeholder="Separar con comas">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Agregar Contenido</button>
+                <a href="{{ url_for('sst_contenido') }}" class="btn btn-secondary">Cancelar</a>
+            </form>
         </div>
     </div>
 </div>
 
 <script>
-function toggleFields() {
-    const tipo = document.getElementById('tipo').value;
-    const videoFields = document.getElementById('video-fields');
-    const archivoFields = document.getElementById('archivo-fields');
+document.getElementById('tipo').addEventListener('change', function() {
+    // Ocultar todos los campos primero
+    document.querySelectorAll('.campos-tipo').forEach(function(el) {
+        el.style.display = 'none';
+    });
     
-    // Ocultar todos primero
-    videoFields.style.display = 'none';
-    archivoFields.style.display = 'none';
-    
-    // Mostrar según el tipo
+    // Mostrar campos según el tipo seleccionado
+    const tipo = this.value;
     if (tipo === 'video') {
-        videoFields.style.display = 'block';
-    } else if (['documento', 'imagen', 'enlace'].includes(tipo)) {
-        archivoFields.style.display = 'block';
-        
-        // Para enlaces, ocultar subida de archivos
-        if (tipo === 'enlace') {
-            document.getElementById('archivo_local').style.display = 'none';
-        } else {
-            document.getElementById('archivo_local').style.display = 'block';
-        }
+        document.getElementById('campos-video').style.display = 'block';
+    } else if (tipo === 'documento' || tipo === 'imagen' || tipo === 'enlace') {
+        document.getElementById('campos-archivo').style.display = 'block';
     }
-}
-
-// Inicializar al cargar la página
-document.addEventListener('DOMContentLoaded', function() {
-    toggleFields();
 });
 </script>
 {% endblock %}
