@@ -1257,16 +1257,24 @@ def obtener_problemas(categoria):
 
 # ===== RUTAS SST =====
 
+# ===== RUTAS SST CORREGIDAS =====
+
 @app.route('/sst')
 @login_required
 def sst_dashboard():
     """Dashboard principal de SST"""
+    # Verificar que las tablas existan
+    from database import crear_tablas_sst
+    crear_tablas_sst()
     return render_template('sst/dashboard.html')
 
 @app.route('/sst/contenido')
 @login_required
 def sst_contenido():
     """Lista de todo el contenido SST"""
+    from database import crear_tablas_sst
+    crear_tablas_sst()
+    
     cursor = None
     conexion = None
     contenido = []
@@ -1300,6 +1308,7 @@ def sst_contenido():
                     'duracion_video': item[9],
                     'tags': item[10],
                     'fecha_publicacion': item[11],
+                    'usuario_creador': item[12],
                     'categoria_nombre': item[13],
                     'categoria_color': item[14],
                     'creador_nombre': item[15]
@@ -1324,6 +1333,9 @@ def sst_agregar_contenido():
         flash('No tienes permisos para agregar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
     
+    from database import crear_tablas_sst
+    crear_tablas_sst()
+    
     cursor = None
     conexion = None
     categorias = []
@@ -1333,13 +1345,29 @@ def sst_agregar_contenido():
         if conexion:
             cursor = conexion.cursor()
             
+            # Cargar categorías primero
+            cursor.execute("SELECT id, nombre, color FROM sst_categorias ORDER BY nombre")
+            categorias_data = cursor.fetchall()
+            
+            for cat in categorias_data:
+                categorias.append({
+                    'id': cat[0],
+                    'nombre': cat[1],
+                    'color': cat[2]
+                })
+            
             if request.method == 'POST':
-                titulo = request.form['titulo']
-                descripcion = request.form['descripcion']
-                tipo = request.form['tipo']
-                categoria_id = request.form['categoria_id']
+                titulo = request.form.get('titulo', '').strip()
+                descripcion = request.form.get('descripcion', '').strip()
+                tipo = request.form.get('tipo', '').strip()
+                categoria_id = request.form.get('categoria_id', '').strip()
                 es_obligatorio = 'es_obligatorio' in request.form
-                tags = request.form['tags']
+                tags = request.form.get('tags', '').strip()
+                
+                # Validaciones básicas
+                if not titulo or not tipo or not categoria_id:
+                    flash('Título, tipo y categoría son obligatorios', 'error')
+                    return render_template('sst/agregar_contenido.html', categorias=categorias)
                 
                 # Inicializar variables
                 archivo_url = None
@@ -1353,29 +1381,37 @@ def sst_agregar_contenido():
                     if file and file.filename != '' and allowed_file(file.filename):
                         filename = secure_filename(file.filename)
                         # Agregar timestamp para hacer único el nombre
-                        from datetime import datetime
                         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                         filename = f"{timestamp}_{filename}"
                         file_path = os.path.join(app.config['UPLOAD_FOLDER_SST'], filename)
                         file.save(file_path)
                         archivo_local = filename
                         print(f"✅ Archivo guardado: {file_path}")
+                    elif file and file.filename != '':
+                        flash('Tipo de archivo no permitido', 'error')
+                        return render_template('sst/agregar_contenido.html', categorias=categorias)
                 
                 # Manejar diferentes tipos de contenido
                 if tipo == 'video':
-                    video_url = request.form.get('video_url', '')
+                    video_url = request.form.get('video_url', '').strip()
                     duracion = request.form.get('duracion_video', 0)
                     # Si no hay video_url pero hay archivo local, es video local
-                    if not video_url and archivo_local:
-                        tipo = 'video'
+                    if not video_url and not archivo_local:
+                        flash('Para contenido de video debe proporcionar una URL o subir un archivo', 'error')
+                        return render_template('sst/agregar_contenido.html', categorias=categorias)
                 elif tipo in ['documento', 'imagen']:
-                    archivo_url = request.form.get('archivo_url', '')
-                    # Si hay archivo local, priorizamos sobre la URL
-                    if archivo_local:
-                        archivo_url = None
+                    archivo_url = request.form.get('archivo_url', '').strip()
+                    # Si no hay archivo local ni URL
+                    if not archivo_local and not archivo_url:
+                        flash('Debe proporcionar una URL o subir un archivo', 'error')
+                        return render_template('sst/agregar_contenido.html', categorias=categorias)
                 else:  # enlace
-                    archivo_url = request.form.get('archivo_url', '')
+                    archivo_url = request.form.get('archivo_url', '').strip()
+                    if not archivo_url:
+                        flash('Debe proporcionar una URL para enlaces', 'error')
+                        return render_template('sst/agregar_contenido.html', categorias=categorias)
                 
+                # Insertar en la base de datos
                 cursor.execute("""
                     INSERT INTO sst_contenido 
                     (titulo, descripcion, tipo, archivo_url, archivo_local, video_url, categoria_id, 
@@ -1387,21 +1423,12 @@ def sst_agregar_contenido():
                 conexion.commit()
                 flash('Contenido SST agregado correctamente', 'success')
                 return redirect(url_for('sst_contenido'))
-            
-            # GET: Cargar categorías
-            cursor.execute("SELECT id, nombre, color FROM sst_categorias ORDER BY nombre")
-            categorias_data = cursor.fetchall()
-            
-            for cat in categorias_data:
-                categorias.append({
-                    'id': cat[0],
-                    'nombre': cat[1],
-                    'color': cat[2]
-                })
                 
     except Exception as e:
-        flash('Error al agregar contenido SST', 'error')
+        flash(f'Error al agregar contenido SST: {str(e)}', 'error')
         print(f"Error en sst_agregar_contenido: {e}")
+        if conexion:
+            conexion.rollback()
     finally:
         if cursor:
             cursor.close()
