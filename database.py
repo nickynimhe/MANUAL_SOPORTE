@@ -157,96 +157,78 @@ def resetear_secuencias():
             conexion.close()
 
 def crear_tablas_sst():
-    """Crear tablas para el módulo SST"""
-    conexion = None
-    cursor = None
-    
-    try:
-        conexion = crear_conexion()
-        if not conexion:
-            return False
-
-        cursor = conexion.cursor()
-
-        # Tabla para categorías SST
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS sst_categorias (
-                id SERIAL PRIMARY KEY,
-                nombre VARCHAR(100) NOT NULL,
-                descripcion TEXT,
-                icono VARCHAR(50),
-                color VARCHAR(20),
-                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        print("✅ Tabla 'sst_categorias' lista")
-
-        # Tabla para contenido SST
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS sst_contenido (
-                id SERIAL PRIMARY KEY,
-                titulo VARCHAR(200) NOT NULL,
-                descripcion TEXT,
-                tipo VARCHAR(50) NOT NULL,
-                archivo_url TEXT,
-                archivo_local TEXT,
-                video_url TEXT,
-                categoria_id INTEGER REFERENCES sst_categorias(id),
-                es_obligatorio BOOLEAN DEFAULT false,
-                duracion_video INTEGER,
-                tags TEXT,
-                fecha_publicacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                usuario_creador INTEGER REFERENCES usuarios(id)
-            )
-        """)
-        print("✅ Tabla 'sst_contenido' lista")
-
-        # Tabla para seguimiento de visualización
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS sst_seguimiento (
-                id SERIAL PRIMARY KEY,
-                usuario_id INTEGER REFERENCES usuarios(id),
-                contenido_id INTEGER REFERENCES sst_contenido(id),
-                fecha_visualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                porcentaje_visto INTEGER DEFAULT 0,
-                completado BOOLEAN DEFAULT false,
-                tiempo_total_visto INTEGER DEFAULT 0
-            )
-        """)
-        print("✅ Tabla 'sst_seguimiento' lista")
-
-        # Insertar categorías por defecto
-        categorias_default = [
-            ('Videos de Capacitación', 'Contenido audiovisual para formación en SST', 'fa-video', '#dc2626'),
-            ('Procedimientos de Seguridad', 'Protocolos y procedimientos de seguridad', 'fa-clipboard-list', '#059669'),
-            ('Primeros Auxilios', 'Guías y procedimientos de primeros auxilios', 'fa-first-aid', '#ef4444'),
-            ('Equipos de Protección', 'Uso y mantenimiento de EPP', 'fa-hard-hat', '#f59e0b'),
-            ('Emergencias', 'Procedimientos para situaciones de emergencia', 'fa-exclamation-triangle', '#7c3aed'),
-            ('Normativa Legal', 'Leyes y decretos de SST', 'fa-gavel', '#374151')
-        ]
-
-        cursor.execute("SELECT COUNT(*) FROM sst_categorias")
-        if cursor.fetchone()[0] == 0:
-            cursor.executemany(
-                "INSERT INTO sst_categorias (nombre, descripcion, icono, color) VALUES (%s, %s, %s, %s)",
-                categorias_default
-            )
-            print("✅ Categorías SST creadas por defecto")
-
-        conexion.commit()
-        print("🎉 Tablas SST creadas correctamente")
-        return True
-
-    except Exception as err:
-        print(f"💥 Error creando tablas SST: {str(err)}")
-        if conexion:
+    """Crear tablas específicas para SST"""
+    conexion = crear_conexion()
+    if conexion:
+        try:
+            cursor = conexion.cursor()
+            
+            # Tabla de categorías SST
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS sst_categorias (
+                    id SERIAL PRIMARY KEY,
+                    nombre VARCHAR(100) NOT NULL,
+                    color VARCHAR(20),
+                    descripcion TEXT,
+                    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            # Tabla de contenido SST
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS sst_contenido (
+                    id SERIAL PRIMARY KEY,
+                    titulo VARCHAR(200) NOT NULL,
+                    descripcion TEXT,
+                    tipo VARCHAR(50) NOT NULL, -- video, documento, imagen, enlace
+                    archivo_url TEXT,
+                    archivo_local VARCHAR(255),
+                    video_url TEXT,
+                    categoria_id INTEGER REFERENCES sst_categorias(id),
+                    es_obligatorio BOOLEAN DEFAULT FALSE,
+                    duracion_video INTEGER, -- en minutos
+                    tags TEXT,
+                    fecha_publicacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    usuario_creador INTEGER REFERENCES usuarios(id)
+                )
+            ''')
+            
+            # Tabla de seguimiento de visualizaciones
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS sst_seguimiento (
+                    id SERIAL PRIMARY KEY,
+                    usuario_id INTEGER REFERENCES usuarios(id),
+                    contenido_id INTEGER REFERENCES sst_contenido(id),
+                    fecha_visualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    completado BOOLEAN DEFAULT FALSE,
+                    UNIQUE(usuario_id, contenido_id)
+                )
+            ''')
+            
+            # Insertar categorías por defecto
+            categorias = [
+                ('Seguridad General', '#FF6B6B', 'Contenido general de seguridad'),
+                ('Procedimientos', '#4ECDC4', 'Procedimientos de seguridad'),
+                ('Equipos de Protección', '#45B7D1', 'Uso de EPP'),
+                ('Emergencias', '#FFA07A', 'Procedimientos de emergencia'),
+                ('Salud Ocupacional', '#98D8C8', 'Salud en el trabajo')
+            ]
+            
+            cursor.execute("SELECT COUNT(*) FROM sst_categorias")
+            if cursor.fetchone()[0] == 0:
+                cursor.executemany(
+                    "INSERT INTO sst_categorias (nombre, color, descripcion) VALUES (%s, %s, %s)",
+                    categorias
+                )
+            
+            conexion.commit()
+            print("✅ Tablas SST creadas/existen correctamente")
+            
+        except Exception as e:
+            print(f"❌ Error creando tablas SST: {e}")
             conexion.rollback()
-        return False
-    finally:
-        if cursor:
+        finally:
             cursor.close()
-        if conexion:
             conexion.close()
 
 def crear_tablas():
