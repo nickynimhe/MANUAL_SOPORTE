@@ -1,23 +1,23 @@
 import psycopg2
 import os
 from datetime import datetime
+from config import Config
 
 def crear_conexion():
-    """Crear conexión a la base de datos - SOLO PARA RENDER"""
+    """Crear conexión a la base de datos PostgreSQL de Render"""
     try:
-        # Solo usar DATABASE_URL de Render
-        database_url = os.environ.get('DATABASE_URL')
+        # Usar la DATABASE_URL de la configuración
+        database_url = Config.DATABASE_URL
         
         if not database_url:
-            print("❌ DATABASE_URL no encontrada en variables de entorno")
+            print("❌ DATABASE_URL no configurada")
             return None
         
-        # Render usa postgres://, necesitamos convertir a psycopg2's formato
-        if database_url.startswith('postgres://'):
-            database_url = database_url.replace('postgres://', 'postgresql://', 1)
+        print(f"🔗 Conectando a: {database_url.split('@')[1] if '@' in database_url else database_url}")
         
+        # Conectar usando la URL completa
         conexion = psycopg2.connect(database_url)
-        print("✅ Conectado a la base de datos de Render")
+        print("✅ Conectado a la base de datos PostgreSQL de Render")
         return conexion
         
     except Exception as e:
@@ -96,7 +96,7 @@ def crear_tablas_fichas():
             conexion.close()
 
 def crear_tablas_sst():
-    """Crear tablas específicas para SST - SIN DURACIÓN"""
+    """Crear tablas específicas para SST"""
     conexion = crear_conexion()
     if conexion:
         try:
@@ -113,7 +113,7 @@ def crear_tablas_sst():
                 )
             ''')
             
-            # Tabla de contenido SST - SIN duracion_video
+            # Tabla de contenido SST
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS sst_contenido (
                     id SERIAL PRIMARY KEY,
