@@ -1296,13 +1296,12 @@ def sst_contenido():
                     'video_url': item[6],
                     'categoria_id': item[7],
                     'es_obligatorio': item[8],
-                    'duracion_video': item[9],
-                    'tags': item[10],
-                    'fecha_publicacion': item[11],
-                    'usuario_creador': item[12],
-                    'categoria_nombre': item[13],
-                    'categoria_color': item[14],
-                    'creador_nombre': item[15]
+                    'tags': item[9],
+                    'fecha_publicacion': item[10],
+                    'usuario_creador': item[11],
+                    'categoria_nombre': item[12],
+                    'categoria_color': item[13],
+                    'creador_nombre': item[14]
                 })
                 
     except Exception as e:
@@ -1453,7 +1452,7 @@ def sst_agregar_contenido():
 @app.route('/sst/video/<int:id>')
 @login_required
 def sst_ver_video(id):
-    """Ver video específico de SST - SIN DURACIÓN"""
+    """Ver video específico de SST - VERSIÓN CORREGIDA"""
     cursor = None
     conexion = None
     video = None
@@ -1466,7 +1465,7 @@ def sst_ver_video(id):
                 SELECT sc.*, cat.nombre as categoria_nombre, cat.color as categoria_color
                 FROM sst_contenido sc
                 LEFT JOIN sst_categorias cat ON sc.categoria_id = cat.id
-                WHERE sc.id = %s AND sc.tipo = 'video'
+                WHERE sc.id = %s
             """, (id,))
             
             video_data = cursor.fetchone()
@@ -1477,14 +1476,20 @@ def sst_ver_video(id):
                     'titulo': video_data[1],
                     'descripcion': video_data[2],
                     'tipo': video_data[3],
-                    'video_url': video_data[6],
+                    'archivo_url': video_data[4],
                     'archivo_local': video_data[5],
-                    'categoria_nombre': video_data[13],
-                    'categoria_color': video_data[14],
-                    'fecha_publicacion': video_data[11]
-                    # Eliminado: 'duracion_video'
+                    'video_url': video_data[6],
+                    'categoria_nombre': video_data[12],
+                    'categoria_color': video_data[13],
+                    'fecha_publicacion': video_data[10]
                 }
-                                
+                
+                print(f"🔍 Datos del video cargado:")
+                print(f"   Tipo: {video['tipo']}")
+                print(f"   Archivo local: {video['archivo_local']}")
+                print(f"   Video URL: {video['video_url']}")
+                print(f"   Archivo URL: {video['archivo_url']}")
+                
                 # Registrar visualización
                 cursor.execute("""
                     INSERT INTO sst_seguimiento (usuario_id, contenido_id, fecha_visualizacion)
@@ -1496,8 +1501,8 @@ def sst_ver_video(id):
                 conexion.commit()
                 
     except Exception as e:
-        flash('Error al cargar el video', 'error')
-        print(f"Error en sst_ver_video: {e}")
+        flash('Error al cargar el contenido', 'error')
+        print(f"❌ Error en sst_ver_video: {e}")
     finally:
         if cursor:
             cursor.close()
@@ -1505,16 +1510,29 @@ def sst_ver_video(id):
             conexion.close()
     
     if not video:
-        flash('Video no encontrado', 'error')
+        flash('Contenido no encontrado', 'error')
         return redirect(url_for('sst_contenido'))
     
     return render_template('sst/ver_video.html', video=video)
 
-@app.route('/sst/archivo/<filename>')
+@app.route('/sst/archivos/<filename>')
 @login_required
 def sst_servir_archivo(filename):
-    """Servir archivos subidos localmente"""
-    return send_from_directory(app.config['UPLOAD_FOLDER_SST'], filename)
+    """Servir archivos subidos localmente - VERSIÓN MEJORADA"""
+    try:
+        # Verificar que el archivo existe
+        file_path = os.path.join(app.config['UPLOAD_FOLDER_SST'], filename)
+        if not os.path.isfile(file_path):
+            flash('Archivo no encontrado', 'error')
+            return redirect(url_for('sst_contenido'))
+        
+        print(f"📁 Sirviendo archivo: {filename}")
+        return send_from_directory(app.config['UPLOAD_FOLDER_SST'], filename)
+    
+    except Exception as e:
+        flash('Error al cargar el archivo', 'error')
+        print(f"❌ Error en sst_servir_archivo: {e}")
+        return redirect(url_for('sst_contenido'))
 
 @app.route('/sst/estadisticas')
 @login_required
