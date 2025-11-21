@@ -126,26 +126,39 @@ def soluciones_visuales():
             cursor.execute("SELECT * FROM soluciones_visuales WHERE activo = TRUE ORDER BY categoria, titulo")
             soluciones_data = cursor.fetchall()
             
+            print(f"🔍 Se encontraron {len(soluciones_data)} soluciones en la base de datos")
+            
             for solucion in soluciones_data:
-                pasos = json.loads(solucion[4]) if solucion[4] else []
-                soluciones.append({
-                    'id': solucion[0],
-                    'titulo': solucion[1],
-                    'categoria': solucion[2],
-                    'descripcion': solucion[3],
-                    'imagenes': [paso['imagen'] for paso in pasos if paso.get('imagen')],
-                    'pasos': pasos
-                })
+                try:
+                    pasos = json.loads(solucion[4]) if solucion[4] else []
+                    print(f"📝 Solución {solucion[0]}: {solucion[1]} - {len(pasos)} pasos")
+                    
+                    soluciones.append({
+                        'id': solucion[0],
+                        'titulo': solucion[1],
+                        'categoria': solucion[2],
+                        'descripcion': solucion[3],
+                        'imagenes': [paso['imagen'] for paso in pasos if paso.get('imagen')],
+                        'pasos': pasos
+                    })
+                except json.JSONDecodeError as e:
+                    print(f"❌ Error decodificando JSON para solución {solucion[0]}: {e}")
+                    continue
+                    
+        else:
+            print("❌ No se pudo conectar a la base de datos")
+            flash('Error de conexión a la base de datos', 'error')
                 
     except Exception as e:
+        print(f"💥 Error en soluciones_visuales: {e}")
         flash('Error al cargar las soluciones visuales', 'error')
-        print(f"Error en soluciones_visuales: {e}")
     finally:
         if cursor is not None:
             cursor.close()
         if conexion is not None:
             conexion.close()
     
+    print(f"🎯 Enviando {len(soluciones)} soluciones al template")
     return render_template('soluciones_visuales.html', soluciones=soluciones)
 
 @app.route('/gestion_soluciones')
