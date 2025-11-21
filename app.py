@@ -9,6 +9,9 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 import os
 
+app = Flask(__name__)
+app.config.from_object(Config)
+
 # ===== CONFIGURACIÓN PARA SUBIDA DE ARCHIVOS SST =====
 app.config['UPLOAD_FOLDER_SST'] = 'static/uploads/sst'
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB máximo
@@ -23,9 +26,6 @@ os.makedirs(app.config['UPLOAD_FOLDER_SST'], exist_ok=True)
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
-
-app = Flask(__name__)
-app.config.from_object(Config)
 
 # Configurar Flask-Login
 login_manager = LoginManager()
