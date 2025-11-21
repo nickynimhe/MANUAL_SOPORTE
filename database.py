@@ -187,12 +187,13 @@ def crear_tablas_sst():
                 id SERIAL PRIMARY KEY,
                 titulo VARCHAR(200) NOT NULL,
                 descripcion TEXT,
-                tipo VARCHAR(50) NOT NULL, -- 'video', 'documento', 'imagen', 'enlace'
+                tipo VARCHAR(50) NOT NULL,
                 archivo_url TEXT,
+                archivo_local TEXT,
                 video_url TEXT,
                 categoria_id INTEGER REFERENCES sst_categorias(id),
                 es_obligatorio BOOLEAN DEFAULT false,
-                duracion_video INTEGER, -- en minutos
+                duracion_video INTEGER,
                 tags TEXT,
                 fecha_publicacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -210,7 +211,7 @@ def crear_tablas_sst():
                 fecha_visualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 porcentaje_visto INTEGER DEFAULT 0,
                 completado BOOLEAN DEFAULT false,
-                tiempo_total_visto INTEGER DEFAULT 0 -- en segundos
+                tiempo_total_visto INTEGER DEFAULT 0
             )
         """)
         print("✅ Tabla 'sst_seguimiento' lista")
@@ -324,7 +325,7 @@ def crear_tablas():
         except Exception as seq_err:
             print(f"ℹ Las secuencias se crearán automáticamente: {seq_err}")
 
-        # ===== CREAR TABLAS SST DESPUÉS DE LAS TABLAS PRINCIPALES =====
+        # Crear tablas SST
         print("🔧 Creando tablas SST...")
         crear_tablas_sst()
 
