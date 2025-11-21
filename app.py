@@ -1452,7 +1452,7 @@ def sst_agregar_contenido():
 @app.route('/sst/video/<int:id>')
 @login_required
 def sst_ver_video(id):
-    """Ver video específico de SST - VERSIÓN CORREGIDA"""
+    """Ver video específico de SST - VERSIÓN MEJORADA"""
     cursor = None
     conexion = None
     video = None
@@ -1476,9 +1476,9 @@ def sst_ver_video(id):
                     'titulo': video_data[1],
                     'descripcion': video_data[2],
                     'tipo': video_data[3],
-                    'archivo_url': video_data[4],
-                    'archivo_local': video_data[5],
-                    'video_url': video_data[6],
+                    'archivo_url': str(video_data[4]) if video_data[4] else None,  # Convertir a string
+                    'archivo_local': str(video_data[5]) if video_data[5] else None,  # Convertir a string
+                    'video_url': str(video_data[6]) if video_data[6] else None,  # Convertir a string
                     'categoria_nombre': video_data[12],
                     'categoria_color': video_data[13],
                     'fecha_publicacion': video_data[10]
@@ -1486,9 +1486,9 @@ def sst_ver_video(id):
                 
                 print(f"🔍 Datos del video cargado:")
                 print(f"   Tipo: {video['tipo']}")
-                print(f"   Archivo local: {video['archivo_local']}")
-                print(f"   Video URL: {video['video_url']}")
-                print(f"   Archivo URL: {video['archivo_url']}")
+                print(f"   Archivo local: {video['archivo_local']} (tipo: {type(video['archivo_local'])})")
+                print(f"   Video URL: {video['video_url']} (tipo: {type(video['video_url'])})")
+                print(f"   Archivo URL: {video['archivo_url']} (tipo: {type(video['archivo_url'])})")
                 
                 # Registrar visualización
                 cursor.execute("""
