@@ -1,8 +1,15 @@
 import os
+from datetime import timedelta
 
 class Config:
     # Es recomendable definir un valor por defecto solo para desarrollo local
     SECRET_KEY = os.environ.get('SECRET_KEY', 'manual-soporte-secret-key-2025-mastv')
+
+     # Configuración de sesión
+    PERMANENT_SESSION_LIFETIME = timedelta(days=7)
+    
+    # Configuración de Flask-Login
+    SESSION_PROTECTION = 'strong'
     
     # URL completa de conexión para PostgreSQL - USAR ESTA
     DATABASE_URL = os.environ.get('DATABASE_URL')
