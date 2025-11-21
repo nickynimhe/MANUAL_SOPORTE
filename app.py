@@ -1333,8 +1333,9 @@ def sst_agregar_contenido():
         flash('No tienes permisos para agregar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
     
-    from database import crear_tablas_sst
+    from database import crear_tablas_sst, actualizar_tabla_sst_contenido
     crear_tablas_sst()
+    actualizar_tabla_sst_contenido() 
     
     cursor = None
     conexion = None
