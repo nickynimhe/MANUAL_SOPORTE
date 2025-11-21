@@ -1,166 +1,179 @@
 {% extends "base.html" %}
 
-{% block title %}SST - {{ video.titulo }}{% endblock %}
+{% block title %}{{ video.titulo }} - SST{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <!-- Navegación -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item">
-                                <a href="{{ url_for('sst_dashboard') }}">SST</a>
-                            </li>
-                            <li class="breadcrumb-item">
-                                <a href="{{ url_for('sst_contenido') }}">Contenido</a>
-                            </li>
-                            <li class="breadcrumb-item active">{{ video.titulo }}</li>
-                        </ol>
-                    </nav>
-                </div>
-            </div>
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('sst_dashboard') }}">SST</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('sst_contenido') }}">Contenido</a></li>
+            <li class="breadcrumb-item active">{{ video.titulo }}</li>
+        </ol>
+    </nav>
 
-            <!-- Video y información -->
-            <div class="row">
-                <!-- Video -->
-                <div class="col-lg-8">
-                    <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-body p-0">
-                            {% if video.video_url %}
-                            <div class="ratio ratio-16x9">
-                                <iframe src="{{ video.video_url }}" 
-                                        frameborder="0" 
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                        allowfullscreen>
-                                </iframe>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">{{ video.titulo }}</h4>
+                    <small class="text-muted">
+                        <span class="badge" style="background-color: {{ video.categoria_color }}; color: white;">
+                            {{ video.categoria_nombre }}
+                        </span>
+                        • {{ video.fecha_publicacion.strftime('%d/%m/%Y') }}
+                    </small>
+                </div>
+                <div class="card-body">
+                    {% if video.descripcion %}
+                    <div class="mb-3">
+                        <p class="card-text">{{ video.descripcion }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- REPRODUCTOR DE VIDEO -->
+                    <div class="video-container mb-4">
+                        {% if video.video_url %}
+                            <!-- Video desde URL externa (YouTube, Vimeo, etc.) -->
+                            <div class="embed-responsive embed-responsive-16by9">
+                                {% if 'youtube.com' in video.video_url or 'youtu.be' in video.video_url %}
+                                    {# Convertir URL de YouTube a embed #}
+                                    {% set youtube_id = video.video_url.split('v=')[1].split('&')[0] if 'v=' in video.video_url else video.video_url.split('/')[-1] %}
+                                    <iframe class="embed-responsive-item" 
+                                            src="https://www.youtube.com/embed/{{ youtube_id }}" 
+                                            frameborder="0" 
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                            allowfullscreen>
+                                    </iframe>
+                                {% elif 'vimeo.com' in video.video_url %}
+                                    {# Convertir URL de Vimeo a embed #}
+                                    {% set vimeo_id = video.video_url.split('/')[-1] %}
+                                    <iframe class="embed-responsive-item" 
+                                            src="https://player.vimeo.com/video/{{ vimeo_id }}" 
+                                            frameborder="0" 
+                                            allow="autoplay; fullscreen; picture-in-picture" 
+                                            allowfullscreen>
+                                    </iframe>
+                                {% else %}
+                                    {# Video HTML5 genérico #}
+                                    <video controls class="embed-responsive-item w-100" style="height: 400px;">
+                                        <source src="{{ video.video_url }}" type="video/mp4">
+                                        Tu navegador no soporta el elemento video.
+                                    </video>
+                                {% endif %}
                             </div>
-                            {% elif video.archivo_local %}
-                            <div class="ratio ratio-16x9">
-                                <video controls style="width: 100%; height: 100%;">
+                        
+                        {% elif video.archivo_local %}
+                            <!-- Video desde archivo local -->
+                            <div class="embed-responsive embed-responsive-16by9">
+                                <video controls class="embed-responsive-item w-100" style="height: 400px;">
                                     <source src="{{ url_for('sst_servir_archivo', filename=video.archivo_local) }}" type="video/mp4">
                                     Tu navegador no soporta el elemento video.
                                 </video>
                             </div>
-                            {% else %}
-                            <div class="d-flex align-items-center justify-content-center bg-light" style="height: 400px;">
-                                <div class="text-center text-muted">
-                                    <i class="fas fa-video-slash fa-3x mb-3"></i>
-                                    <p>Video no disponible</p>
-                                </div>
+                        
+                        {% elif video.archivo_url %}
+                            <!-- Video desde URL directa -->
+                            <div class="embed-responsive embed-responsive-16by9">
+                                <video controls class="embed-responsive-item w-100" style="height: 400px;">
+                                    <source src="{{ video.archivo_url }}" type="video/mp4">
+                                    Tu navegador no soporta el elemento video.
+                                </video>
                             </div>
-                            {% endif %}
-                        </div>
+                        
+                        {% else %}
+                            <div class="alert alert-warning text-center">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                                <h5>No hay fuente de video disponible</h5>
+                                <p class="mb-0">Este contenido no tiene una fuente de video configurada.</p>
+                            </div>
+                        {% endif %}
                     </div>
 
-                    <!-- Descripción -->
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-header bg-light">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-info-circle me-2"></i>Descripción
-                            </h5>
+                    <!-- INFORMACIÓN ADICIONAL -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Información del Contenido:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Tipo:</strong> {{ video.tipo|title }}</li>
+                                <li><strong>Categoría:</strong> {{ video.categoria_nombre }}</li>
+                                <li><strong>Publicado:</strong> {{ video.fecha_publicacion.strftime('%d/%m/%Y a las %H:%M') }}</li>
+                            </ul>
                         </div>
-                        <div class="card-body">
-                            {% if video.descripcion %}
-                            <p class="card-text">{{ video.descripcion }}</p>
-                            {% else %}
-                            <p class="card-text text-muted">No hay descripción disponible para este video.</p>
-                            {% endif %}
+                        {% if video.archivo_local %}
+                        <div class="col-md-6">
+                            <h6>Descargar:</h6>
+                            <a href="{{ url_for('sst_servir_archivo', filename=video.archivo_local) }}" 
+                               class="btn btn-outline-primary btn-sm" 
+                               download>
+                                <i class="fas fa-download"></i> Descargar Archivo
+                            </a>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Información lateral -->
-                <div class="col-lg-4">
-                    <!-- Información del video -->
-                    <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-play-circle me-2"></i>Información
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <strong>Título:</strong>
-                                <p class="mb-0">{{ video.titulo }}</p>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <strong>Categoría:</strong>
-                                <p class="mb-0">
-                                    <span class="badge" style="background-color: {{ video.categoria_color }}; color: white;">
-                                        {{ video.categoria_nombre }}
-                                    </span>
-                                </p>
-                            </div>
-                            
-                            {% if video.duracion_video %}
-                            <div class="mb-3">
-                                <strong>Duración:</strong>
-                                <p class="mb-0">{{ video.duracion_video }} minutos</p>
-                            </div>
-                            {% endif %}
-                            
-                            <div class="mb-3">
-                                <strong>Publicado:</strong>
-                                <p class="mb-0">{{ video.fecha_publicacion.strftime('%d/%m/%Y') }}</p>
-                            </div>
-
-                            {% if video.archivo_local %}
-                            <div class="mb-3">
-                                <strong>Tipo:</strong>
-                                <p class="mb-0">
-                                    <span class="badge bg-success">Archivo Local</span>
-                                </p>
-                            </div>
-                            {% endif %}
-                        </div>
+        <!-- SIDEBAR -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Acciones</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Volver al Listado
+                        </a>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Acciones -->
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-header bg-secondary text-white">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-cog me-2"></i>Acciones
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="d-grid gap-2">
-                                <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-primary">
-                                    <i class="fas fa-arrow-left me-2"></i>Volver al Listado
-                                </a>
-                                {% if current_user.rol == 'admin' %}
-                                <a href="#" class="btn btn-outline-warning">
-                                    <i class="fas fa-edit me-2"></i>Editar Video
-                                </a>
-                                <a href="#" class="btn btn-outline-danger">
-                                    <i class="fas fa-trash me-2"></i>Eliminar
-                                </a>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Completar video -->
-                    <div class="card border-0 shadow-sm mt-4">
-                        <div class="card-body text-center">
-                            <div class="mb-3">
-                                <i class="fas fa-check-circle text-success fa-3x"></i>
-                            </div>
-                            <h6>¿Has completado este video?</h6>
-                            <button class="btn btn-success w-100">
-                                <i class="fas fa-check me-2"></i>Marcar como Completado
-                            </button>
-                            <small class="text-muted d-block mt-2">
-                                Tu progreso se guardará automáticamente
-                            </small>
-                        </div>
+            <!-- INFORMACIÓN DE VISUALIZACIÓN -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Estado</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        <strong>Visualización registrada</strong>
+                        <br>
+                        <small>Tu progreso ha sido guardado</small>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.video-container {
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.embed-responsive-16by9 {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    overflow: hidden;
+}
+.embed-responsive-16by9::before {
+    display: block;
+    content: "";
+    padding-top: 56.25%; /* 16:9 aspect ratio */
+}
+.embed-responsive-item {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+</style>
 {% endblock %}
