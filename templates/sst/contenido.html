@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}SST - Contenido{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-1">
+                        <i class="fas fa-list text-primary me-2"></i>
+                        Contenido SST
+                    </h1>
+                    <p class="text-muted mb-0">Todos los recursos de seguridad y salud en el trabajo</p>
+                </div>
+                {% if current_user.rol == 'admin' %}
+                <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Agregar Contenido
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Buscar</label>
+                            <input type="text" class="form-control" placeholder="Buscar contenido...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Categoría</label>
+                            <select class="form-select">
+                                <option value="">Todas las categorías</option>
+                                <option value="1">Videos de Capacitación</option>
+                                <option value="2">Procedimientos de Seguridad</option>
+                                <option value="3">Primeros Auxilios</option>
+                                <option value="4">Equipos de Protección</option>
+                                <option value="5">Emergencias</option>
+                                <option value="6">Normativa Legal</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Tipo</label>
+                            <select class="form-select">
+                                <option value="">Todos los tipos</option>
+                                <option value="video">Video</option>
+                                <option value="documento">Documento</option>
+                                <option value="imagen">Imagen</option>
+                                <option value="enlace">Enlace</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <button class="btn btn-outline-primary w-100">
+                                <i class="fas fa-filter me-2"></i>Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de contenido -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    {% if contenido %}
+                    <div class="row g-4">
+                        {% for item in contenido %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-header" style="border-left: 4px solid {{ item.categoria_color }}; background-color: #f8f9fa;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h6 class="card-title mb-0">{{ item.titulo }}</h6>
+                                        {% if item.es_obligatorio %}
+                                        <span class="badge bg-danger">Obligatorio</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text text-muted small">{{ item.descripcion or 'Sin descripción' }}</p>
+                                    
+                                    <div class="mb-3">
+                                        <span class="badge bg-primary">{{ item.tipo|title }}</span>
+                                        <span class="badge" style="background-color: {{ item.categoria_color }}; color: white;">
+                                            {{ item.categoria_nombre }}
+                                        </span>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center text-muted small">
+                                        <div>
+                                            <i class="fas fa-user me-1"></i>
+                                            {{ item.creador_nombre }}
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-calendar me-1"></i>
+                                            {{ item.fecha_publicacion.strftime('%d/%m/%Y') }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <div class="d-grid gap-2">
+                                        {% if item.tipo == 'video' %}
+                                        <a href="{{ url_for('sst_ver_video', id=item.id) }}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-play me-2"></i>Ver Video
+                                        </a>
+                                        {% else %}
+                                        <a href="#" class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-eye me-2"></i>Ver Contenido
+                                        </a>
+                                        {% endif %}
+                                        
+                                        {% if current_user.rol == 'admin' %}
+                                        <div class="btn-group w-100">
+                                            <a href="#" class="btn btn-outline-warning btn-sm">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-outline-danger btn-sm">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No hay contenido disponible</h4>
+                        <p class="text-muted">No se ha agregado ningún contenido SST aún.</p>
+                        {% if current_user.rol == 'admin' %}
+                        <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Agregar Primer Contenido
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
