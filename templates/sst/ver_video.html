@@ -29,22 +29,29 @@
                 <div class="col-lg-8">
                     <div class="card border-0 shadow-sm mb-4">
                         <div class="card-body p-0">
+                            {% if video.video_url %}
                             <div class="ratio ratio-16x9">
-                                {% if video.video_url %}
                                 <iframe src="{{ video.video_url }}" 
                                         frameborder="0" 
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                                         allowfullscreen>
                                 </iframe>
-                                {% else %}
-                                <div class="d-flex align-items-center justify-content-center bg-light">
-                                    <div class="text-center text-muted">
-                                        <i class="fas fa-video-slash fa-3x mb-3"></i>
-                                        <p>Video no disponible</p>
-                                    </div>
-                                </div>
-                                {% endif %}
                             </div>
+                            {% elif video.archivo_local %}
+                            <div class="ratio ratio-16x9">
+                                <video controls style="width: 100%; height: 100%;">
+                                    <source src="{{ url_for('sst_servir_archivo', filename=video.archivo_local) }}" type="video/mp4">
+                                    Tu navegador no soporta el elemento video.
+                                </video>
+                            </div>
+                            {% else %}
+                            <div class="d-flex align-items-center justify-content-center bg-light" style="height: 400px;">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-video-slash fa-3x mb-3"></i>
+                                    <p>Video no disponible</p>
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -100,6 +107,15 @@
                                 <strong>Publicado:</strong>
                                 <p class="mb-0">{{ video.fecha_publicacion.strftime('%d/%m/%Y') }}</p>
                             </div>
+
+                            {% if video.archivo_local %}
+                            <div class="mb-3">
+                                <strong>Tipo:</strong>
+                                <p class="mb-0">
+                                    <span class="badge bg-success">Archivo Local</span>
+                                </p>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
 
