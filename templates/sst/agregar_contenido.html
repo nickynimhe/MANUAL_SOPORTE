@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container-fluid">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
+        <div class="col-lg-10">
             <!-- Header -->
             <div class="row mb-4">
                 <div class="col-12">
@@ -27,7 +27,7 @@
             <!-- Formulario -->
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
-                    <form method="POST" action="{{ url_for('sst_agregar_contenido') }}">
+                    <form method="POST" action="{{ url_for('sst_agregar_contenido') }}" enctype="multipart/form-data">
                         <!-- Información básica -->
                         <div class="row mb-4">
                             <div class="col-12">
@@ -98,19 +98,27 @@
                                     <i class="fas fa-video me-2"></i>Información del Video
                                 </h6>
                             </div>
-                            <div class="col-md-8">
+                            <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="video_url" class="form-label">URL del Video *</label>
+                                    <label for="video_url" class="form-label">URL del Video (externo)</label>
                                     <input type="url" class="form-control" id="video_url" name="video_url" 
                                            placeholder="https://youtube.com/embed/... o https://vimeo.com/...">
                                     <div class="form-text">Usar URL de embed (YouTube, Vimeo, etc.)</div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="duracion_video" class="form-label">Duración (minutos)</label>
                                     <input type="number" class="form-control" id="duracion_video" name="duracion_video" 
                                            min="1" placeholder="Ej: 15">
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="archivo_local_video" class="form-label">O subir video local</label>
+                                    <input type="file" class="form-control" id="archivo_local_video" name="archivo_local" 
+                                           accept="video/*">
+                                    <div class="form-text">Formatos permitidos: MP4, AVI, MOV (máx. 100MB)</div>
                                 </div>
                             </div>
                         </div>
@@ -121,12 +129,22 @@
                                     <i class="fas fa-file-upload me-2"></i>Información del Archivo
                                 </h6>
                             </div>
-                            <div class="col-12">
+                            <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="archivo_url" class="form-label">URL del Archivo</label>
+                                    <label for="archivo_url" class="form-label">URL del Archivo (externo)</label>
                                     <input type="url" class="form-control" id="archivo_url" name="archivo_url" 
                                            placeholder="https://ejemplo.com/documento.pdf">
-                                    <div class="form-text">URL donde está alojado el archivo</div>
+                                    <div class="form-text">URL donde está alojado el archivo externo</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="archivo_local" class="form-label">O subir archivo local</label>
+                                    <input type="file" class="form-control" id="archivo_local" name="archivo_local" 
+                                           accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif">
+                                    <div class="form-text">
+                                        Formatos: PDF, Word, Excel, PowerPoint, imágenes (máx. 100MB)
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -184,6 +202,13 @@ function toggleFields() {
         videoFields.style.display = 'block';
     } else if (['documento', 'imagen', 'enlace'].includes(tipo)) {
         archivoFields.style.display = 'block';
+        
+        // Para enlaces, ocultar subida de archivos
+        if (tipo === 'enlace') {
+            document.getElementById('archivo_local').style.display = 'none';
+        } else {
+            document.getElementById('archivo_local').style.display = 'block';
+        }
     }
 }
 
