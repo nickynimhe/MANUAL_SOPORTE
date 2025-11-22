@@ -380,6 +380,7 @@
     justify-content: center;
     opacity: 0;
     transition: all 0.3s ease;
+    pointer-events: none;
 }
 
 .corporate-card:hover .card-overlay {
@@ -389,6 +390,7 @@
 .overlay-content {
     text-align: center;
     color: var(--corporate-white);
+    pointer-events: auto;
 }
 
 .steps-indicator {
@@ -405,6 +407,7 @@
     border-radius: var(--corporate-radius);
     font-weight: 600;
     transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .view-btn:hover {
@@ -464,6 +467,7 @@
     font-size: 0.9rem;
     font-weight: 500;
     transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .action-btn:hover {
@@ -664,6 +668,7 @@
     border-radius: var(--corporate-radius);
     font-weight: 600;
     transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .corporate-btn:hover {
@@ -759,6 +764,22 @@
     justify-content: center;
     height: 400px;
     color: var(--corporate-gray);
+}
+
+/* ASEGURAR QUE LOS BOTONES SON CLICKEABLES */
+.view-solution, .action-btn, .filter-btn, .corporate-btn {
+    cursor: pointer !important;
+    position: relative;
+    z-index: 10;
+}
+
+/* Mejorar feedback visual de los botones */
+.filter-btn, .action-btn, .view-btn, .corporate-btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.filter-btn:active, .action-btn:active, .view-btn:active, .corporate-btn:active {
+    transform: scale(0.95) !important;
 }
 </style>
 
@@ -1102,12 +1123,52 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentCarouselHandler = null;
     const solutionModal = new bootstrap.Modal(document.getElementById('solutionModal'));
     
-    // Filtrado por servicio
+    // Elementos del DOM
     const serviceFilters = document.querySelectorAll('.corporate-filter');
     const solutionItems = document.querySelectorAll('.solution-item');
     const noSolutions = document.getElementById('noSolutions');
     const resetFiltersBtn = document.querySelector('.reset-filters');
     
+    // DEBUG: Verificar que todo esté cargado correctamente
+    console.log('=== DEBUG: Elementos cargados ===');
+    console.log('Botones Ver:', document.querySelectorAll('.view-solution').length);
+    console.log('Filtros:', document.querySelectorAll('.corporate-filter').length);
+    console.log('Items solución:', document.querySelectorAll('.solution-item').length);
+    
+    // Verificar que los data attributes estén correctos
+    document.querySelectorAll('.view-solution').forEach((btn, index) => {
+        console.log(`Botón ${index + 1}:`, btn, 'Data ID:', btn.getAttribute('data-solution-id'));
+    });
+    
+    // Función para aplicar filtros
+    function applyFilter(service) {
+        let visibleCount = 0;
+        
+        solutionItems.forEach(item => {
+            const itemService = item.getAttribute('data-service');
+            const shouldShow = service === 'all' || itemService === service;
+            
+            if (shouldShow) {
+                item.style.display = 'block';
+                item.style.animation = 'fadeInUp 0.6s ease-out';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Mostrar/ocultar estado vacío
+        noSolutions.classList.toggle('d-none', visibleCount > 0);
+        
+        // Animación para estado vacío
+        if (visibleCount === 0) {
+            noSolutions.style.animation = 'fadeInUp 0.6s ease-out';
+        }
+        
+        console.log(`Filtro aplicado: ${service}, Elementos visibles: ${visibleCount}`);
+    }
+    
+    // Event listeners para filtros
     serviceFilters.forEach(filter => {
         filter.addEventListener('click', function() {
             const service = this.getAttribute('data-service');
@@ -1116,20 +1177,8 @@ document.addEventListener('DOMContentLoaded', function() {
             serviceFilters.forEach(btn => btn.classList.remove('active'));
             this.classList.add('active');
             
-            // Filtrar soluciones
-            let visibleCount = 0;
-            solutionItems.forEach(item => {
-                const itemService = item.getAttribute('data-service');
-                
-                if (service === 'all' || itemService === service) {
-                    item.style.display = 'block';
-                    visibleCount++;
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-            
-            noSolutions.classList.toggle('d-none', visibleCount > 0);
+            // Aplicar filtro
+            applyFilter(service);
         });
     });
     
@@ -1144,38 +1193,38 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Modal de solución
+    // CORREGIDO: Event listener para botones "Ver" - MÁS ROBUSTO
     document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('view-solution') || e.target.closest('.view-solution')) {
-            const button = e.target.classList.contains('view-solution') ? e.target : e.target.closest('.view-solution');
-            const solutionId = button.getAttribute('data-solution-id');
-            loadSolutionModal(solutionId);
+        // Manejar clics en botones "Ver"
+        const viewSolutionBtn = e.target.closest('.view-solution');
+        if (viewSolutionBtn) {
+            const solutionId = viewSolutionBtn.getAttribute('data-solution-id');
+            console.log('Botón Ver clickeado, ID:', solutionId);
+            if (solutionId) {
+                loadSolutionModal(solutionId);
+            }
+            return;
         }
     });
     
     // Función para cargar el modal
     function loadSolutionModal(solutionId) {
         const solutionData = SOLUTIONS_DATA[solutionId];
+        console.log('Cargando solución:', solutionId, solutionData);
+        
         if (!solutionData) {
             alert('Esta solución está en desarrollo. Próximamente disponible.');
             return;
         }
         
-        // Configuración inicial
+        // Configuración inicial del modal
         const modalHeader = document.getElementById('modalHeader');
         modalHeader.style.background = solutionData.servicio === 'Vortex' 
             ? 'linear-gradient(135deg, var(--corporate-blue), var(--corporate-blue-dark))' 
             : 'linear-gradient(135deg, var(--corporate-red), #dc2626)';
         
         document.getElementById('solutionModalTitle').textContent = solutionData.titulo;
-        document.getElementById('solutionModalSubtitle').textContent = ${solutionData.servicio} - ${solutionData.pasos.length} pasos;
-        
-        // Mostrar loading state
-        const carouselInner = document.getElementById('carouselInner');
-        const carouselIndicators = document.getElementById('carouselIndicators');
-        
-        carouselInner.innerHTML = '<div class="carousel-loading"><div class="spinner-border"></div><p class="mt-2">Cargando imágenes...</p></div>';
-        carouselIndicators.innerHTML = '';
+        document.getElementById('solutionModalSubtitle').textContent = `${solutionData.servicio} - ${solutionData.pasos.length} pasos`;
         
         // Construir carousel
         buildCarousel(solutionData);
@@ -1200,7 +1249,7 @@ document.addEventListener('DOMContentLoaded', function() {
             indicator.type = 'button';
             indicator.setAttribute('data-bs-target', '#solutionCarousel');
             indicator.setAttribute('data-bs-slide-to', index.toString());
-            indicator.setAttribute('aria-label', Paso ${index + 1});
+            indicator.setAttribute('aria-label', `Paso ${index + 1}`);
             if (index === 0) {
                 indicator.classList.add('active');
                 indicator.setAttribute('aria-current', 'true');
@@ -1209,10 +1258,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Crear item del carousel
             const carouselItem = document.createElement('div');
-            carouselItem.className = carousel-item ${index === 0 ? 'active' : ''};
+            carouselItem.className = `carousel-item ${index === 0 ? 'active' : ''}`;
             
             // CORRECCIÓN: Usar la ruta correcta para las imágenes
-            const imagePath = /static/img/soluciones/${paso.imagen};
+            const imagePath = `/static/img/soluciones/${paso.imagen}`;
             
             carouselItem.innerHTML = `
                 <div class="carousel-image-container">
@@ -1250,7 +1299,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Función para manejar errores de imágenes
-    function handleImageError(img) {
+    window.handleImageError = function(img) {
         console.log('Error cargando imagen:', img.src);
         img.style.display = 'none';
         const fallback = img.nextElementSibling;
@@ -1267,7 +1316,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateStepInfo(index, paso, totalSteps) {
         document.getElementById('stepTitle').textContent = paso.titulo;
         document.getElementById('stepDescription').textContent = paso.descripcion;
-        document.getElementById('stepCounter').textContent = Paso ${index + 1} de ${totalSteps};
+        document.getElementById('stepCounter').textContent = `Paso ${index + 1} de ${totalSteps}`;
     }
     
     // Pre-cargar imágenes para mejor performance
@@ -1275,7 +1324,7 @@ document.addEventListener('DOMContentLoaded', function() {
         Object.values(SOLUTIONS_DATA).forEach(solution => {
             solution.pasos.forEach(paso => {
                 const img = new Image();
-                img.src = /static/img/soluciones/${paso.imagen};
+                img.src = `/static/img/soluciones/${paso.imagen}`;
             });
         });
     }
