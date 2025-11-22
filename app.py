@@ -1190,71 +1190,7 @@ def informacion_general():
 @login_required
 def sst_dashboard():
     """Dashboard principal de SST"""
-    cursor = None
-    conexion = None
-    estadisticas = {
-        'total_videos': 0,
-        'total_documentos': 0,
-        'total_imagenes': 0,
-        'total_enlaces': 0,
-        'contenido_destacado': []
-    }
-    
-    try:
-        conexion = crear_conexion()
-        if conexion:
-            cursor = conexion.cursor()
-            
-            # Obtener estadísticas por tipo
-            cursor.execute("""
-                SELECT tipo, COUNT(*) as total 
-                FROM sst_contenido 
-                GROUP BY tipo
-            """)
-            
-            stats_data = cursor.fetchall()
-            for tipo, total in stats_data:
-                if tipo == 'video':
-                    estadisticas['total_videos'] = total
-                elif tipo == 'documento':
-                    estadisticas['total_documentos'] = total
-                elif tipo == 'imagen':
-                    estadisticas['total_imagenes'] = total
-                elif tipo == 'enlace':
-                    estadisticas['total_enlaces'] = total
-            
-            # Obtener contenido destacado (últimos 4)
-            cursor.execute("""
-                SELECT sc.*, cat.nombre as categoria_nombre, cat.color as categoria_color
-                FROM sst_contenido sc
-                LEFT JOIN sst_categorias cat ON sc.categoria_id = cat.id
-                ORDER BY sc.fecha_publicacion DESC
-                LIMIT 4
-            """)
-            
-            destacado_data = cursor.fetchall()
-            for item in destacado_data:
-                estadisticas['contenido_destacado'].append({
-                    'id': item[0],
-                    'titulo': item[1],
-                    'descripcion': item[2],
-                    'tipo': item[3],
-                    'es_obligatorio': item[8],
-                    'categoria_nombre': item[12],
-                    'categoria_color': item[13],
-                    'fecha_publicacion': item[10]
-                })
-                
-    except Exception as e:
-        flash('Error al cargar estadísticas SST', 'error')
-        print(f"Error en sst_dashboard: {e}")
-    finally:
-        if cursor:
-            cursor.close()
-        if conexion:
-            conexion.close()
-    
-    return render_template('sst/dashboard.html', estadisticas=estadisticas)
+    return render_template('sst/dashboard.html')
 
 @app.route('/sst/contenido')
 @login_required
@@ -1656,7 +1592,7 @@ def sst_eliminar_contenido(id):
 @app.route('/sst/video/<int:id>')
 @login_required
 def sst_ver_video(id):
-    """Ver video específico de SST"""
+    """Ver video específico de SST - SIN ESTADÍSTICAS"""
     cursor = None
     conexion = None
     video = None
@@ -1687,16 +1623,7 @@ def sst_ver_video(id):
                     'categoria_color': video_data[13],
                     'fecha_publicacion': video_data[10]
                 }
-                
-                # Registrar visualización
-                cursor.execute("""
-                    INSERT INTO sst_seguimiento (usuario_id, contenido_id, fecha_visualizacion)
-                    VALUES (%s, %s, CURRENT_TIMESTAMP)
-                    ON CONFLICT (usuario_id, contenido_id) 
-                    DO UPDATE SET fecha_visualizacion = CURRENT_TIMESTAMP
-                """, (current_user.id, id))
-                
-                conexion.commit()
+                # QUITAMOS todo el código de seguimiento/estadísticas
                 
     except Exception as e:
         flash('Error al cargar el contenido', 'error')
@@ -1730,69 +1657,6 @@ def sst_servir_archivo(filename):
         flash('Error al cargar el archivo', 'error')
         print(f"❌ Error en sst_servir_archivo: {e}")
         return redirect(url_for('sst_contenido'))
-
-@app.route('/sst/estadisticas')
-@login_required
-def sst_estadisticas():
-    """Estadísticas de visualización SST"""
-    if current_user.rol != 'admin':
-        flash('No tienes permisos para ver estadísticas', 'error')
-        return redirect(url_for('sst_dashboard'))
-    
-    cursor = None
-    conexion = None
-    estadisticas = {
-        'total_contenido': 0,
-        'total_visualizaciones': 0,
-        'contenido_mas_visto': [],
-        'usuarios_activos': []
-    }
-    
-    try:
-        conexion = crear_conexion()
-        if conexion:
-            cursor = conexion.cursor()
-            
-            # Total de contenido
-            cursor.execute("SELECT COUNT(*) FROM sst_contenido")
-            estadisticas['total_contenido'] = cursor.fetchone()[0]
-            
-            # Total de visualizaciones
-            cursor.execute("SELECT COUNT(*) FROM sst_seguimiento")
-            estadisticas['total_visualizaciones'] = cursor.fetchone()[0]
-            
-            # Contenido más visto
-            cursor.execute("""
-                SELECT sc.titulo, COUNT(ss.contenido_id) as visualizaciones
-                FROM sst_seguimiento ss
-                JOIN sst_contenido sc ON ss.contenido_id = sc.id
-                GROUP BY sc.id, sc.titulo
-                ORDER BY visualizaciones DESC
-                LIMIT 5
-            """)
-            estadisticas['contenido_mas_visto'] = cursor.fetchall()
-            
-            # Usuarios más activos
-            cursor.execute("""
-                SELECT u.usuario, COUNT(ss.usuario_id) as visualizaciones
-                FROM sst_seguimiento ss
-                JOIN usuarios u ON ss.usuario_id = u.id
-                GROUP BY u.id, u.usuario
-                ORDER BY visualizaciones DESC
-                LIMIT 5
-            """)
-            estadisticas['usuarios_activos'] = cursor.fetchall()
-                
-    except Exception as e:
-        flash('Error al cargar estadísticas', 'error')
-        print(f"Error en sst_estadisticas: {e}")
-    finally:
-        if cursor:
-            cursor.close()
-        if conexion:
-            conexion.close()
-    
-    return render_template('sst/estadisticas.html', estadisticas=estadisticas)
 
 # ===== API PARA PROBLEMAS =====
 @app.route('/api/problemas/<categoria>')
