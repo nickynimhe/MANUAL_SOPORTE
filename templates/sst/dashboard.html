@@ -1,10 +1,11 @@
+<!-- En templates/sst/dashboard.html -->
 {% extends "base.html" %}
 
 {% block title %}SST - Dashboard{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <!-- Header Mejorado -->
+    <!-- Header -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
@@ -13,77 +14,13 @@
                         <i class="fas fa-shield-alt me-2 text-primary"></i>
                         Seguridad y Salud en el Trabajo
                     </h1>
-                    <p class="text-muted mb-0">Sistema integral de gestión de capacitación</p>
+                    <p class="text-muted mb-0">Sistema de gestión de contenido de capacitación</p>
                 </div>
                 {% if current_user.rol == 'admin' %}
                 <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-primary btn-lg shadow-hover">
                     <i class="fas fa-plus me-2"></i>Nuevo Contenido
                 </a>
                 {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- Estadísticas Mejoradas -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card stats-card video-card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0 bg-primary bg-opacity-10 p-3 rounded-3">
-                            <i class="fas fa-video fa-2x text-primary"></i>
-                        </div>
-                        <div class="flex-grow-1 ms-3 text-end">
-                            <h2 class="mb-0 fw-bold text-dark">12</h2>
-                            <p class="mb-0 text-muted">Videos Activos</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card stats-card document-card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0 bg-success bg-opacity-10 p-3 rounded-3">
-                            <i class="fas fa-file-pdf fa-2x text-success"></i>
-                        </div>
-                        <div class="flex-grow-1 ms-3 text-end">
-                            <h2 class="mb-0 fw-bold text-dark">8</h2>
-                            <p class="mb-0 text-muted">Documentos</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card stats-card completed-card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0 bg-warning bg-opacity-10 p-3 rounded-3">
-                            <i class="fas fa-check-circle fa-2x text-warning"></i>
-                        </div>
-                        <div class="flex-grow-1 ms-3 text-end">
-                            <h2 class="mb-0 fw-bold text-dark">15</h2>
-                            <p class="mb-0 text-muted">Completados</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card stats-card pending-card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0 bg-info bg-opacity-10 p-3 rounded-3">
-                            <i class="fas fa-clock fa-2x text-info"></i>
-                        </div>
-                        <div class="flex-grow-1 ms-3 text-end">
-                            <h2 class="mb-0 fw-bold text-dark">5</h2>
-                            <p class="mb-0 text-muted">Pendientes</p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -109,9 +46,6 @@
                         <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-outline-success btn-hover py-3">
                             <i class="fas fa-plus me-2"></i>Agregar Contenido
                         </a>
-                        <a href="{{ url_for('sst_estadisticas') }}" class="btn btn-outline-info btn-hover py-3">
-                            <i class="fas fa-chart-bar me-2"></i>Ver Estadísticas
-                        </a>
                         {% endif %}
                     </div>
                 </div>
@@ -127,13 +61,30 @@
                 </div>
                 <div class="card-body p-3">
                     <div class="d-grid gap-2">
-                        {% for cat in categorias %}
-                        <a href="{{ url_for('sst_contenido') }}?categoria={{ cat.id }}" class="btn btn-category text-start py-2">
-                            <i class="fas {{ cat.icono }} me-2" style="color: {{ cat.color }}"></i>
-                            <span class="flex-grow-1">{{ cat.nombre }}</span>
-                            <small class="badge bg-light text-dark ms-2">{{ cat.count }}</small>
+                        <a href="{{ url_for('sst_contenido') }}?categoria=1" class="btn btn-category text-start py-2">
+                            <i class="fas fa-video me-2 text-primary"></i>
+                            <span class="flex-grow-1">Videos de Capacitación</span>
                         </a>
-                        {% endfor %}
+                        <a href="{{ url_for('sst_contenido') }}?categoria=2" class="btn btn-category text-start py-2">
+                            <i class="fas fa-clipboard-list me-2 text-success"></i>
+                            <span class="flex-grow-1">Procedimientos de Seguridad</span>
+                        </a>
+                        <a href="{{ url_for('sst_contenido') }}?categoria=3" class="btn btn-category text-start py-2">
+                            <i class="fas fa-first-aid me-2 text-danger"></i>
+                            <span class="flex-grow-1">Primeros Auxilios</span>
+                        </a>
+                        <a href="{{ url_for('sst_contenido') }}?categoria=4" class="btn btn-category text-start py-2">
+                            <i class="fas fa-hard-hat me-2 text-warning"></i>
+                            <span class="flex-grow-1">Equipos de Protección</span>
+                        </a>
+                        <a href="{{ url_for('sst_contenido') }}?categoria=5" class="btn btn-category text-start py-2">
+                            <i class="fas fa-exclamation-triangle me-2 text-info"></i>
+                            <span class="flex-grow-1">Emergencias</span>
+                        </a>
+                        <a href="{{ url_for('sst_contenido') }}?categoria=6" class="btn btn-category text-start py-2">
+                            <i class="fas fa-gavel me-2 text-secondary"></i>
+                            <span class="flex-grow-1">Normativa Legal</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -146,7 +97,7 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0 fw-bold text-dark">
                             <i class="fas fa-star me-2 text-warning"></i>
-                            Contenido Destacado
+                            Contenido Reciente
                         </h5>
                         <a href="{{ url_for('sst_contenido') }}" class="btn btn-sm btn-outline-primary">
                             Ver Todo <i class="fas fa-arrow-right ms-1"></i>
@@ -154,31 +105,13 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="row g-4">
-                        {% for item in contenido_destacado %}
-                        <div class="col-md-6">
-                            <div class="card content-card h-100 border-0 shadow-sm-hover">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-start mb-3">
-                                        {% if item.es_obligatorio %}
-                                        <span class="badge bg-danger me-2">Obligatorio</span>
-                                        {% endif %}
-                                        <span class="badge bg-{{ item.tipo_color }}">{{ item.tipo|title }}</span>
-                                    </div>
-                                    <h6 class="card-title fw-bold text-dark mb-2">{{ item.titulo }}</h6>
-                                    <p class="card-text text-muted small mb-3">{{ item.descripcion|truncate(100) }}</p>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="badge bg-light text-dark">
-                                            <i class="fas fa-tag me-1"></i>{{ item.categoria_nombre }}
-                                        </span>
-                                        <a href="{{ url_for('sst_ver_contenido', id=item.id) }}" class="btn btn-sm btn-primary">
-                                            Ver <i class="fas fa-arrow-right ms-1"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-play-circle fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Explora el contenido de capacitación</h5>
+                        <p class="text-muted">Accede a videos, documentos y recursos de seguridad</p>
+                        <a href="{{ url_for('sst_contenido') }}" class="btn btn-primary">
+                            <i class="fas fa-list me-2"></i>Ver Todo el Contenido
+                        </a>
                     </div>
                 </div>
             </div>
@@ -187,21 +120,6 @@
 </div>
 
 <style>
-.stats-card {
-    transition: all 0.3s ease;
-    border-radius: 12px;
-}
-
-.stats-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
-}
-
-.video-card:hover { border-left: 4px solid #0d6efd; }
-.document-card:hover { border-left: 4px solid #198754; }
-.completed-card:hover { border-left: 4px solid #ffc107; }
-.pending-card:hover { border-left: 4px solid #0dcaf0; }
-
 .btn-category {
     border: 1px solid #e9ecef;
     padding: 12px 15px;
@@ -215,7 +133,7 @@
 }
 
 .btn-category:hover {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: #f8f9fa;
     border-color: #0d6efd;
     transform: translateX(5px);
 }
@@ -231,31 +149,13 @@
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-.content-card {
-    transition: all 0.3s ease;
-    border-radius: 12px;
-}
-
-.content-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
-}
-
 .shadow-hover {
     transition: all 0.3s ease;
 }
 
 .shadow-hover:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
-}
-
-.shadow-sm-hover {
-    transition: all 0.3s ease;
-}
-
-.shadow-sm-hover:hover {
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 
 .card {
