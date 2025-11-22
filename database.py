@@ -1,34 +1,44 @@
 import psycopg2
 import os
-from datetime import datetime
 from config import Config
 
 def crear_conexion():
-    """Crear conexión a la base de datos PostgreSQL de Render"""
+    """Crear conexión a la base de datos PostgreSQL en Render"""
     try:
-        # Usar la DATABASE_URL de la configuración
-        database_url = Config.DATABASE_URL
+        # Usar DATABASE_URL de Render
+        database_url = os.environ.get('DATABASE_URL')
         
-        if not database_url:
-            print("❌ DATABASE_URL no configurada")
-            return None
-        
-        print(f"🔗 Conectando a: {database_url.split('@')[1] if '@' in database_url else database_url}")
-        
-        # Conectar usando la URL completa
-        conexion = psycopg2.connect(database_url)
-        print("✅ Conectado a la base de datos PostgreSQL de Render")
-        return conexion
-        
+        if database_url:
+            # Render usa formato postgresql://, pero psycopg2 necesita postgresql://
+            if database_url.startswith('postgres://'):
+                database_url = database_url.replace('postgres://', 'postgresql://', 1)
+            
+            conexion = psycopg2.connect(database_url)
+            print(f"🔗 Conectado a la base de datos PostgreSQL de Render")
+            return conexion
+        else:
+            # Fallback a configuración local
+            conexion = psycopg2.connect(
+                host=Config.DB_HOST,
+                database=Config.DB_NAME,
+                user=Config.DB_USER,
+                password=Config.DB_PASSWORD,
+                port=Config.DB_PORT
+            )
+            print(f"🔗 Conectado a: {Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME}")
+            return conexion
+            
     except Exception as e:
-        print(f"❌ Error conectando a la base de datos: {e}")
+        print(f"❌ Error de conexión: {e}")
         return None
 
-def crear_tablas_usuarios():
-    """Crear tabla de usuarios"""
-    conexion = crear_conexion()
-    if conexion:
-        try:
+def crear_tabla_usuarios():
+    """Crear tabla de usuarios si no existe"""
+    conexion = None
+    cursor = None
+    try:
+        conexion = crear_conexion()
+        if conexion:
             cursor = conexion.cursor()
             
             cursor.execute('''
@@ -52,30 +62,35 @@ def crear_tablas_usuarios():
                     "INSERT INTO usuarios (usuario, password, rol) VALUES (%s, %s, %s)",
                     ('admin', password_hash, 'admin')
                 )
-                print("✅ Usuario admin creado por defecto")
+                print("✅ Usuario admin creado: admin / admin123")
             
             conexion.commit()
             print("✅ Tabla de usuarios creada/existe correctamente")
             
-        except Exception as e:
-            print(f"❌ Error creando tabla de usuarios: {e}")
+    except Exception as e:
+        print(f"❌ Error al crear tabla usuarios: {e}")
+        if conexion:
             conexion.rollback()
-        finally:
+    finally:
+        if cursor:
             cursor.close()
+        if conexion:
             conexion.close()
 
-def crear_tablas_fichas():
-    """Crear tabla de fichas técnicas"""
-    conexion = crear_conexion()
-    if conexion:
-        try:
+def crear_tabla_fichas():
+    """Crear tabla de fichas técnicas si no existe"""
+    conexion = None
+    cursor = None
+    try:
+        conexion = crear_conexion()
+        if conexion:
             cursor = conexion.cursor()
             
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS fichas (
                     id SERIAL PRIMARY KEY,
-                    categoria VARCHAR(100) NOT NULL,
-                    problema TEXT NOT NULL,
+                    categoria VARCHAR(50) NOT NULL,
+                    problema VARCHAR(255) NOT NULL,
                     descripcion TEXT,
                     causas TEXT,
                     solucion TEXT NOT NULL,
@@ -88,115 +103,117 @@ def crear_tablas_fichas():
             conexion.commit()
             print("✅ Tabla de fichas creada/existe correctamente")
             
-        except Exception as e:
-            print(f"❌ Error creando tabla de fichas: {e}")
+    except Exception as e:
+        print(f"❌ Error al crear tabla fichas: {e}")
+        if conexion:
             conexion.rollback()
-        finally:
+    finally:
+        if cursor:
             cursor.close()
+        if conexion:
             conexion.close()
 
 def crear_tablas_sst():
-    """Crear tablas específicas para SST"""
-    conexion = crear_conexion()
-    if conexion:
-        try:
+    """Crear tablas para el módulo SST (SIMPLIFICADO - sin estadísticas)"""
+    conexion = None
+    cursor = None
+    try:
+        conexion = crear_conexion()
+        if conexion:
             cursor = conexion.cursor()
+            print("🔧 Creando/verificando tablas SST...")
             
             # Tabla de categorías SST
-            cursor.execute('''
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS sst_categorias (
                     id SERIAL PRIMARY KEY,
-                    nombre VARCHAR(100) NOT NULL,
-                    color VARCHAR(20),
-                    descripcion TEXT,
+                    nombre VARCHAR(100) NOT NULL UNIQUE,
+                    color VARCHAR(7) DEFAULT '#007bff',
+                    icono VARCHAR(50) DEFAULT 'fa-folder',
                     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            ''')
+            """)
             
-            # Tabla de contenido SST
-            cursor.execute('''
+            # Tabla de contenido SST (SIMPLIFICADA - sin estadísticas)
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS sst_contenido (
                     id SERIAL PRIMARY KEY,
-                    titulo VARCHAR(200) NOT NULL,
+                    titulo VARCHAR(255) NOT NULL,
                     descripcion TEXT,
-                    tipo VARCHAR(50) NOT NULL,
-                    archivo_url TEXT,
-                    archivo_local VARCHAR(500),
-                    video_url TEXT,
+                    tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('video', 'documento', 'imagen', 'enlace')),
+                    archivo_url VARCHAR(500),
+                    archivo_local VARCHAR(255),
+                    video_url VARCHAR(500),
                     categoria_id INTEGER REFERENCES sst_categorias(id),
                     es_obligatorio BOOLEAN DEFAULT FALSE,
-                    tags TEXT,
+                    tags VARCHAR(500),
                     fecha_publicacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    usuario_creador INTEGER REFERENCES usuarios(id)
+                    usuario_creador INTEGER REFERENCES usuarios(id),
+                    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            ''')
+            """)
             
-            # Tabla de seguimiento de visualizaciones
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS sst_seguimiento (
-                    id SERIAL PRIMARY KEY,
-                    usuario_id INTEGER REFERENCES usuarios(id),
-                    contenido_id INTEGER REFERENCES sst_contenido(id),
-                    fecha_visualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    completado BOOLEAN DEFAULT FALSE,
-                    UNIQUE(usuario_id, contenido_id)
-                )
-            ''')
-            
-            # Insertar categorías por defecto
-            categorias = [
-                ('Seguridad General', '#FF6B6B', 'Contenido general de seguridad'),
-                ('Procedimientos', '#4ECDC4', 'Procedimientos de seguridad'),
-                ('Equipos de Protección', '#45B7D1', 'Uso de EPP'),
-                ('Emergencias', '#FFA07A', 'Procedimientos de emergencia'),
-                ('Salud Ocupacional', '#98D8C8', 'Salud en el trabajo')
-            ]
-            
-            cursor.execute("SELECT COUNT(*) FROM sst_categorias")
-            if cursor.fetchone()[0] == 0:
-                cursor.executemany(
-                    "INSERT INTO sst_categorias (nombre, color, descripcion) VALUES (%s, %s, %s)",
-                    categorias
-                )
-                print("✅ Categorías SST creadas por defecto")
+            # INSERTAR CATEGORÍAS BÁSICAS (si no existen)
+            cursor.execute("""
+                INSERT INTO sst_categorias (nombre, color, icono) 
+                VALUES 
+                    ('Videos de Capacitación', '#007bff', 'fa-video'),
+                    ('Procedimientos de Seguridad', '#28a745', 'fa-clipboard-list'),
+                    ('Primeros Auxilios', '#dc3545', 'fa-first-aid'),
+                    ('Equipos de Protección', '#ffc107', 'fa-hard-hat'),
+                    ('Emergencias', '#17a2b8', 'fa-exclamation-triangle'),
+                    ('Normativa Legal', '#6c757d', 'fa-gavel')
+                ON CONFLICT (nombre) DO NOTHING
+            """)
             
             conexion.commit()
             print("✅ Tablas SST creadas/existen correctamente")
             
-        except Exception as e:
-            print(f"❌ Error creando tablas SST: {e}")
+    except Exception as e:
+        print(f"❌ Error al crear tablas SST: {e}")
+        if conexion:
             conexion.rollback()
-        finally:
+    finally:
+        if cursor:
             cursor.close()
+        if conexion:
             conexion.close()
 
 def crear_tablas():
-    """Crear todas las tablas necesarias"""
+    """Función principal para crear todas las tablas"""
     print("🔧 Creando/verificando tablas...")
-    crear_tablas_usuarios()
-    crear_tablas_fichas()
-    crear_tablas_sst()
+    
+    crear_tabla_usuarios()
+    crear_tabla_fichas() 
+    crear_tablas_sst()  # Tablas SST simplificadas
+    
     print("✅ Todas las tablas creadas/verificadas")
 
+# Función para resetear secuencias (útil en desarrollo)
 def resetear_secuencias():
-    """Resetear secuencias de IDs si es necesario"""
-    conexion = crear_conexion()
-    if conexion:
-        try:
+    """Resetear secuencias de IDs (útil en desarrollo)"""
+    conexion = None
+    cursor = None
+    try:
+        conexion = crear_conexion()
+        if conexion:
             cursor = conexion.cursor()
             
-            # Resetear secuencia de fichas
-            cursor.execute("SELECT setval('fichas_id_seq', COALESCE((SELECT MAX(id) FROM fichas), 0) + 1, false)")
+            # Resetear secuencias para todas las tablas
+            tablas = ['usuarios', 'fichas', 'sst_contenido', 'sst_categorias']
             
-            # Resetear secuencia de usuarios
-            cursor.execute("SELECT setval('usuarios_id_seq', COALESCE((SELECT MAX(id) FROM usuarios), 0) + 1, false)")
+            for tabla in tablas:
+                cursor.execute(f"SELECT setval(pg_get_serial_sequence('{tabla}', 'id'), coalesce(max(id), 1), false) FROM {tabla}")
             
             conexion.commit()
-            print("✅ Secuencias reseteadas correctamente")
+            print("🔄 Secuencias reseteadas correctamente")
             
-        except Exception as e:
-            print(f"❌ Error reseteando secuencias: {e}")
+    except Exception as e:
+        print(f"⚠ Error al resetear secuencias: {e}")
+        if conexion:
             conexion.rollback()
-        finally:
+    finally:
+        if cursor:
             cursor.close()
+        if conexion:
             conexion.close()
