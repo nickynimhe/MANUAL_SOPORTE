@@ -45,7 +45,7 @@
                                 <select class="form-select" name="categoria">
                                     <option value="">Todas las categorías</option>
                                     {% for cat in categorias %}
-                                    <option value="{{ cat.id }}" {% if request.args.get('categoria')|int == cat.id %}selected{% endif %}>
+                                    <option value="{{ cat.id }}" {% if request.args.get('categoria')|string == cat.id|string %}selected{% endif %}>
                                         {{ cat.nombre }}
                                     </option>
                                     {% endfor %}
@@ -94,25 +94,34 @@
                             <p class="card-text text-muted small mb-3">{{ item.descripcion or 'Sin descripción disponible' }}</p>
                             
                             <div class="mb-3">
-                                <!-- Añadir colores para tipos -->
+                                <!-- Colores para tipos -->
                                 {% if item.tipo == 'video' %}
-                                <span class="badge bg-danger me-2">{{ item.tipo|title }}</span>
+                                <span class="badge bg-danger me-2">
+                                    <i class="fas fa-video me-1"></i>Video
+                                </span>
                                 {% elif item.tipo == 'documento' %}
-                                <span class="badge bg-primary me-2">{{ item.tipo|title }}</span>
+                                <span class="badge bg-primary me-2">
+                                    <i class="fas fa-file-pdf me-1"></i>Documento
+                                </span>
                                 {% elif item.tipo == 'imagen' %}
-                                <span class="badge bg-success me-2">{{ item.tipo|title }}</span>
+                                <span class="badge bg-success me-2">
+                                    <i class="fas fa-image me-1"></i>Imagen
+                                </span>
                                 {% elif item.tipo == 'enlace' %}
-                                <span class="badge bg-warning me-2">{{ item.tipo|title }}</span>
+                                <span class="badge bg-warning me-2">
+                                    <i class="fas fa-link me-1"></i>Enlace
+                                </span>
                                 {% else %}
                                 <span class="badge bg-secondary me-2">{{ item.tipo|title }}</span>
                                 {% endif %}
                                 
-                                <span class="badge bg-light text-dark">
+                                <span class="badge" style="background-color: {{ item.categoria_color }}; color: white;">
                                     <i class="fas fa-tag me-1"></i>{{ item.categoria_nombre }}
                                 </span>
+                                
                                 {% if item.archivo_local %}
                                 <span class="badge bg-success ms-2">
-                                    <i class="fas fa-download me-1"></i>Local
+                                    <i class="fas fa-download me-1"></i>Archivo Local
                                 </span>
                                 {% endif %}
                             </div>
@@ -129,47 +138,74 @@
                             </div>
                         </div>
                         
-                        <!-- Botones de acción -->
+                        <!-- Botones de acción MEJORADOS -->
                         <div class="card-footer bg-white border-0 pt-0">
                             <div class="d-grid gap-2">
+                                <!-- VIDEO: Prioridad archivo local sobre URL -->
                                 {% if item.tipo == 'video' %}
-                                    {% if item.video_url %}
-                                    <a href="{{ item.video_url }}" class="btn btn-outline-primary btn-sm" target="_blank">
-                                        <i class="fas fa-play me-2"></i>Ver Video (URL)
-                                    </a>
-                                    {% elif item.archivo_local %}
-                                    <a href="{{ url_for('sst_servir_archivo', filename=item.archivo_local) }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                    {% if item.archivo_local %}
+                                    <a href="{{ url_for('sst_servir_archivo', filename=item.archivo_local) }}" 
+                                       class="btn btn-outline-primary btn-sm" target="_blank">
                                         <i class="fas fa-play me-2"></i>Ver Video
                                     </a>
-                                    {% endif %}
-                                {% elif item.tipo == 'documento' %}
-                                    {% if item.archivo_url %}
-                                    <a href="{{ item.archivo_url }}" class="btn btn-outline-secondary btn-sm" target="_blank">
-                                        <i class="fas fa-external-link-alt me-2"></i>Abrir Documento
+                                    {% elif item.video_url %}
+                                    <a href="{{ item.video_url }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                        <i class="fas fa-external-link-alt me-2"></i>Ver Video (URL)
                                     </a>
-                                    {% elif item.archivo_local %}
-                                    <a href="{{ url_for('sst_servir_archivo', filename=item.archivo_local) }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                                    {% else %}
+                                    <button class="btn btn-outline-secondary btn-sm" disabled>
+                                        <i class="fas fa-ban me-2"></i>Sin archivo
+                                    </button>
+                                    {% endif %}
+
+                                <!-- DOCUMENTO: Prioridad archivo local sobre URL -->
+                                {% elif item.tipo == 'documento' %}
+                                    {% if item.archivo_local %}
+                                    <a href="{{ url_for('sst_servir_archivo', filename=item.archivo_local) }}" 
+                                       class="btn btn-outline-primary btn-sm" target="_blank">
                                         <i class="fas fa-download me-2"></i>Descargar Documento
                                     </a>
-                                    {% endif %}
-                                {% elif item.tipo == 'imagen' %}
-                                    {% if item.archivo_url %}
-                                    <a href="{{ item.archivo_url }}" class="btn btn-outline-info btn-sm" target="_blank">
-                                        <i class="fas fa-external-link-alt me-2"></i>Ver Imagen
+                                    {% elif item.archivo_url %}
+                                    <a href="{{ item.archivo_url }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                        <i class="fas fa-external-link-alt me-2"></i>Abrir Documento
                                     </a>
-                                    {% elif item.archivo_local %}
-                                    <a href="{{ url_for('sst_servir_archivo', filename=item.archivo_local) }}" class="btn btn-outline-info btn-sm" target="_blank">
+                                    {% else %}
+                                    <button class="btn btn-outline-secondary btn-sm" disabled>
+                                        <i class="fas fa-ban me-2"></i>Sin archivo
+                                    </button>
+                                    {% endif %}
+
+                                <!-- IMAGEN: Prioridad archivo local sobre URL -->
+                                {% elif item.tipo == 'imagen' %}
+                                    {% if item.archivo_local %}
+                                    <a href="{{ url_for('sst_servir_archivo', filename=item.archivo_local) }}" 
+                                       class="btn btn-outline-success btn-sm" target="_blank">
                                         <i class="fas fa-eye me-2"></i>Ver Imagen
                                     </a>
+                                    {% elif item.archivo_url %}
+                                    <a href="{{ item.archivo_url }}" class="btn btn-outline-success btn-sm" target="_blank">
+                                        <i class="fas fa-external-link-alt me-2"></i>Ver Imagen (URL)
+                                    </a>
+                                    {% else %}
+                                    <button class="btn btn-outline-secondary btn-sm" disabled>
+                                        <i class="fas fa-ban me-2"></i>Sin archivo
+                                    </button>
                                     {% endif %}
+
+                                <!-- ENLACE: Solo URL -->
                                 {% elif item.tipo == 'enlace' %}
                                     {% if item.archivo_url %}
                                     <a href="{{ item.archivo_url }}" class="btn btn-outline-warning btn-sm" target="_blank">
                                         <i class="fas fa-external-link-alt me-2"></i>Abrir Enlace
                                     </a>
+                                    {% else %}
+                                    <button class="btn btn-outline-secondary btn-sm" disabled>
+                                        <i class="fas fa-ban me-2"></i>Sin enlace
+                                    </button>
                                     {% endif %}
                                 {% endif %}
                                 
+                                <!-- Botones de administración -->
                                 {% if current_user.rol == 'admin' %}
                                 <div class="btn-group w-100">
                                     <a href="{{ url_for('sst_editar_contenido', id=item.id) }}" class="btn btn-outline-warning btn-sm">
@@ -239,6 +275,10 @@
 
 .form-control, .form-select {
     border-radius: 8px;
+}
+
+.badge {
+    font-size: 0.75em;
 }
 </style>
 {% endblock %}
