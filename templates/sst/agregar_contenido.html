@@ -4,158 +4,115 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-xl-8 col-lg-10">
+    <div class="row">
+        <div class="col-12">
             <!-- Header -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 class="h2 mb-2 fw-bold">
-                                <i class="fas fa-plus-circle me-2 text-success"></i>
-                                Agregar Contenido
-                            </h1>
-                            <p class="text-muted mb-0">Crear nuevo material de capacitación SST</p>
-                        </div>
-                        <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Volver
-                        </a>
-                    </div>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2 mb-2 fw-bold">
+                        <i class="fas fa-plus me-2 text-primary"></i>
+                        Agregar Contenido SST
+                    </h1>
+                    <p class="text-muted mb-0">Agrega nuevo contenido de seguridad y salud en el trabajo</p>
                 </div>
+                <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver al Listado
+                </a>
             </div>
 
-            <!-- Formulario Mejorado -->
+            <!-- Formulario -->
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-4">
-                    <form method="POST" enctype="multipart/form-data" id="contenidoForm">
-                        <div class="row">
-                            <!-- Información Básica -->
-                            <div class="col-md-6">
-                                <div class="mb-4">
-                                    <label for="titulo" class="form-label fw-bold text-dark">Título del contenido *</label>
-                                    <input type="text" class="form-control form-control-lg" id="titulo" name="titulo" required 
-                                           placeholder="Ingresa un título descriptivo">
-                                    <div class="form-text">Ej: "Procedimiento de Evacuación - Edificio Principal"</div>
-                                </div>
+                    <form method="POST" action="{{ url_for('sst_agregar_contenido') }}" enctype="multipart/form-data" id="contenidoForm">
+                        <!-- Información Básica -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="fw-bold text-primary mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>Información Básica
+                                </h5>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-4">
-                                    <label for="categoria_id" class="form-label fw-bold text-dark">Categoría *</label>
-                                    <select class="form-select form-select-lg" id="categoria_id" name="categoria_id" required>
-                                        <option value="">Seleccionar categoría</option>
-                                        {% for categoria in categorias %}
-                                        <option value="{{ categoria.id }}" data-color="{{ categoria.color }}">
-                                            {{ categoria.nombre }}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
+                            
+                            <!-- Título -->
+                            <div class="col-md-8 mb-3">
+                                <label for="titulo" class="form-label fw-bold">Título <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="titulo" name="titulo" 
+                                       value="{{ request.form.get('titulo', '') }}" required 
+                                       placeholder="Ingrese el título del contenido">
+                                <div class="form-text">Título descriptivo del contenido</div>
+                            </div>
+
+                            <!-- Categoría -->
+                            <div class="col-md-4 mb-3">
+                                <label for="categoria_id" class="form-label fw-bold">Categoría <span class="text-danger">*</span></label>
+                                <select class="form-select" id="categoria_id" name="categoria_id" required>
+                                    <option value="">Seleccione una categoría</option>
+                                    {% for categoria in categorias %}
+                                    <option value="{{ categoria.id }}" 
+                                            {% if request.form.get('categoria_id')|string == categoria.id|string %}selected{% endif %}>
+                                        {{ categoria.nombre }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Descripción -->
+                            <div class="col-12 mb-3">
+                                <label for="descripcion" class="form-label fw-bold">Descripción</label>
+                                <textarea class="form-control" id="descripcion" name="descripcion" 
+                                          rows="3" placeholder="Descripción detallada del contenido...">{{ request.form.get('descripcion', '') }}</textarea>
+                            </div>
+
+                            <!-- Tags -->
+                            <div class="col-md-6 mb-3">
+                                <label for="tags" class="form-label fw-bold">Palabras clave (Tags)</label>
+                                <input type="text" class="form-control" id="tags" name="tags" 
+                                       value="{{ request.form.get('tags', '') }}" 
+                                       placeholder="separadas por comas (ej: seguridad, prevención, equipos)">
+                                <div class="form-text">Separe con comas para múltiples tags</div>
+                            </div>
+
+                            <!-- Tipo y Obligatorio -->
+                            <div class="col-md-3 mb-3">
+                                <label for="tipo" class="form-label fw-bold">Tipo de Contenido <span class="text-danger">*</span></label>
+                                <select class="form-select" id="tipo" name="tipo" required onchange="mostrarCamposTipo()">
+                                    <option value="">Seleccione tipo</option>
+                                    <option value="video" {% if request.form.get('tipo') == 'video' %}selected{% endif %}>Video</option>
+                                    <option value="documento" {% if request.form.get('tipo') == 'documento' %}selected{% endif %}>Documento</option>
+                                    <option value="imagen" {% if request.form.get('tipo') == 'imagen' %}selected{% endif %}>Imagen</option>
+                                    <option value="enlace" {% if request.form.get('tipo') == 'enlace' %}selected{% endif %}>Enlace</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">Configuración</label>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="es_obligatorio" name="es_obligatorio"
+                                           {% if request.form.get('es_obligatorio') %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="es_obligatorio">
+                                        Contenido Obligatorio
+                                    </label>
                                 </div>
+                                <div class="form-text">Los usuarios deben ver este contenido</div>
                             </div>
                         </div>
 
-                        <!-- Descripción -->
-                        <div class="mb-4">
-                            <label for="descripcion" class="form-label fw-bold text-dark">Descripción del contenido</label>
-                            <textarea class="form-control" id="descripcion" name="descripcion" rows="4" 
-                                      placeholder="Describe el propósito y contenido del material..."></textarea>
-                            <div class="form-text d-flex justify-content-between">
-                                <span>Máximo 500 caracteres</span>
-                                <span id="descripcionContador">0/500</span>
-                            </div>
+                        <!-- Campos Dinámicos por Tipo -->
+                        <div id="camposTipo">
+                            <!-- Los campos específicos se mostrarán aquí según el tipo seleccionado -->
                         </div>
 
-                        <!-- Tipo y Configuración -->
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-4">
-                                    <label for="tipo" class="form-label fw-bold text-dark">Tipo de contenido *</label>
-                                    <select class="form-select form-select-lg" id="tipo" name="tipo" required>
-                                        <option value="">Seleccionar tipo</option>
-                                        <option value="video" data-icon="fa-play">Video</option>
-                                        <option value="documento" data-icon="fa-file-pdf">Documento</option>
-                                        <option value="imagen" data-icon="fa-image">Imagen</option>
-                                        <option value="enlace" data-icon="fa-link">Enlace externo</option>
-                                    </select>
+                        <!-- Botones -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-2"></i>Cancelar
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>Guardar Contenido
+                                    </button>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-4">
-                                    <label class="form-label fw-bold text-dark">Configuración</label>
-                                    <div class="form-check form-switch mt-2">
-                                        <input class="form-check-input" type="checkbox" id="es_obligatorio" name="es_obligatorio">
-                                        <label class="form-check-label fw-medium" for="es_obligatorio">
-                                            Contenido obligatorio
-                                        </label>
-                                        <div class="form-text">Los usuarios deberán completar este contenido</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Campos dinámicos -->
-                        <div id="campos-dinamicos">
-                            <!-- Campos para Video -->
-                            <div id="campos-video" class="campos-tipo" style="display: none;">
-                                <div class="mb-4">
-                                    <label for="video_url" class="form-label fw-bold text-dark">URL del video</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light">
-                                            <i class="fas fa-link text-muted"></i>
-                                        </span>
-                                        <input type="url" class="form-control" id="video_url" name="video_url" 
-                                               placeholder="https://www.youtube.com/watch?v=... o https://vimeo.com/...">
-                                    </div>
-                                    <div class="form-text">Soporta YouTube, Vimeo y otros servicios de video</div>
-                                </div>
-                            </div>
-
-                            <!-- Campos para Enlaces/Archivos -->
-                            <div id="campos-archivo" class="campos-tipo" style="display: none;">
-                                <div class="mb-4">
-                                    <label for="archivo_url" class="form-label fw-bold text-dark">URL del recurso</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light">
-                                            <i class="fas fa-globe text-muted"></i>
-                                        </span>
-                                        <input type="url" class="form-control" id="archivo_url" name="archivo_url" 
-                                               placeholder="https://...">
-                                    </div>
-                                    <div class="form-text">Enlace externo al documento o recurso</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Subida de archivos -->
-                        <div class="mb-4">
-                            <label for="archivo_local" class="form-label fw-bold text-dark">
-                                <i class="fas fa-cloud-upload-alt me-2"></i>Subir archivo
-                            </label>
-                            <input type="file" class="form-control" id="archivo_local" name="archivo_local" 
-                                   accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.mp4,.avi,.mov">
-                            <div class="form-text">
-                                Formatos soportados: PDF, Word, Excel, PowerPoint, imágenes (JPG, PNG, GIF), videos (MP4, AVI, MOV)<br>
-                                Tamaño máximo: 100MB
-                            </div>
-                        </div>
-
-                        <!-- Etiquetas -->
-                        <div class="mb-4">
-                            <label for="tags" class="form-label fw-bold text-dark">
-                                <i class="fas fa-tags me-2"></i>Etiquetas
-                            </label>
-                            <input type="text" class="form-control" id="tags" name="tags" 
-                                   placeholder="seguridad, epp, procedimiento, emergencia">
-                            <div class="form-text">Separa las etiquetas con comas para una mejor organización</div>
-                        </div>
-
-                        <!-- Botones de acción -->
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end border-top pt-4">
-                            <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-secondary btn-lg me-md-3">
-                                <i class="fas fa-times me-2"></i>Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-success btn-lg shadow-hover">
-                                <i class="fas fa-save me-2"></i>Guardar Contenido
-                            </button>
                         </div>
                     </form>
                 </div>
@@ -164,90 +121,183 @@
     </div>
 </div>
 
+<!-- JavaScript para campos dinámicos -->
 <script>
+function mostrarCamposTipo() {
+    const tipo = document.getElementById('tipo').value;
+    const camposTipo = document.getElementById('camposTipo');
+    
+    let html = '';
+    
+    switch(tipo) {
+        case 'video':
+            html = `
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="fw-bold text-primary mb-3">
+                            <i class="fas fa-video me-2"></i>Configuración de Video
+                        </h5>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="archivo_local" class="form-label fw-bold">Subir Archivo de Video</label>
+                        <input type="file" class="form-control" id="archivo_local" name="archivo_local" 
+                               accept="video/*,.mp4,.avi,.mov,.wmv">
+                        <div class="form-text">Formatos: MP4, AVI, MOV, WMV (Máx. 100MB)</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="video_url" class="form-label fw-bold">O URL de Video</label>
+                        <input type="url" class="form-control" id="video_url" name="video_url" 
+                               value="{{ request.form.get('video_url', '') }}" 
+                               placeholder="https://youtube.com/... o https://vimeo.com/...">
+                        <div class="form-text">Enlace a YouTube, Vimeo, etc.</div>
+                    </div>
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Nota:</strong> Puede subir un archivo de video O proporcionar una URL, no ambos.
+                        </div>
+                    </div>
+                </div>
+            `;
+            break;
+            
+        case 'documento':
+            html = `
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="fw-bold text-primary mb-3">
+                            <i class="fas fa-file-pdf me-2"></i>Configuración de Documento
+                        </h5>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="archivo_local" class="form-label fw-bold">Subir Documento</label>
+                        <input type="file" class="form-control" id="archivo_local" name="archivo_local" 
+                               accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx">
+                        <div class="form-text">Formatos: PDF, DOC, DOCX, PPT, XLS (Máx. 100MB)</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="archivo_url" class="form-label fw-bold">O URL del Documento</label>
+                        <input type="url" class="form-control" id="archivo_url" name="archivo_url" 
+                               value="{{ request.form.get('archivo_url', '') }}" 
+                               placeholder="https://ejemplo.com/documento.pdf">
+                        <div class="form-text">Enlace directo al documento</div>
+                    </div>
+                </div>
+            `;
+            break;
+            
+        case 'imagen':
+            html = `
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="fw-bold text-primary mb-3">
+                            <i class="fas fa-image me-2"></i>Configuración de Imagen
+                        </h5>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="archivo_local" class="form-label fw-bold">Subir Imagen</label>
+                        <input type="file" class="form-control" id="archivo_local" name="archivo_local" 
+                               accept="image/*,.jpg,.jpeg,.png,.gif">
+                        <div class="form-text">Formatos: JPG, PNG, GIF (Máx. 100MB)</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="archivo_url" class="form-label fw-bold">O URL de la Imagen</label>
+                        <input type="url" class="form-control" id="archivo_url" name="archivo_url" 
+                               value="{{ request.form.get('archivo_url', '') }}" 
+                               placeholder="https://ejemplo.com/imagen.jpg">
+                        <div class="form-text">Enlace directo a la imagen</div>
+                    </div>
+                </div>
+            `;
+            break;
+            
+        case 'enlace':
+            html = `
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h5 class="fw-bold text-primary mb-3">
+                            <i class="fas fa-link me-2"></i>Configuración de Enlace
+                        </h5>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <label for="archivo_url" class="form-label fw-bold">URL del Enlace <span class="text-danger">*</span></label>
+                        <input type="url" class="form-control" id="archivo_url" name="archivo_url" 
+                               value="{{ request.form.get('archivo_url', '') }}" required
+                               placeholder="https://ejemplo.com/recurso">
+                        <div class="form-text">Enlace a recurso externo</div>
+                    </div>
+                </div>
+            `;
+            break;
+            
+        default:
+            html = `
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Seleccione un tipo de contenido para ver las opciones específicas.
+                </div>
+            `;
+    }
+    
+    camposTipo.innerHTML = html;
+}
+
+// Mostrar campos al cargar la página si ya hay un tipo seleccionado
 document.addEventListener('DOMContentLoaded', function() {
-    const tipoSelect = document.getElementById('tipo');
-    const descripcionTextarea = document.getElementById('descripcion');
-    const descripcionContador = document.getElementById('descripcionContador');
+    mostrarCamposTipo();
+});
+
+// Validación del formulario
+document.getElementById('contenidoForm').addEventListener('submit', function(e) {
+    const tipo = document.getElementById('tipo').value;
+    const archivoLocal = document.getElementById('archivo_local')?.files[0];
+    const archivoUrl = document.getElementById('archivo_url')?.value;
+    const videoUrl = document.getElementById('video_url')?.value;
     
-    // Controlar campos dinámicos
-    tipoSelect.addEventListener('change', function() {
-        document.querySelectorAll('.campos-tipo').forEach(el => el.style.display = 'none');
-        
-        const tipo = this.value;
-        if (tipo === 'video') {
-            document.getElementById('campos-video').style.display = 'block';
-        } else if (['documento', 'imagen', 'enlace'].includes(tipo)) {
-            document.getElementById('campos-archivo').style.display = 'block';
-        }
-    });
+    let isValid = true;
+    let errorMessage = '';
     
-    // Contador de descripción
-    descripcionTextarea.addEventListener('input', function() {
-        const length = this.value.length;
-        descripcionContador.textContent = `${length}/500`;
-        
-        if (length > 500) {
-            descripcionContador.classList.add('text-danger');
-        } else {
-            descripcionContador.classList.remove('text-danger');
-        }
-    });
+    switch(tipo) {
+        case 'video':
+            if (!archivoLocal && !videoUrl) {
+                isValid = false;
+                errorMessage = 'Para video debe subir un archivo o proporcionar una URL';
+            }
+            break;
+        case 'documento':
+        case 'imagen':
+            if (!archivoLocal && !archivoUrl) {
+                isValid = false;
+                errorMessage = 'Debe subir un archivo o proporcionar una URL';
+            }
+            break;
+        case 'enlace':
+            if (!archivoUrl) {
+                isValid = false;
+                errorMessage = 'Debe proporcionar una URL para enlaces';
+            }
+            break;
+    }
     
-    // Validación de formulario
-    document.getElementById('contenidoForm').addEventListener('submit', function(e) {
-        const titulo = document.getElementById('titulo').value.trim();
-        const tipo = document.getElementById('tipo').value;
-        const categoria = document.getElementById('categoria_id').value;
-        
-        if (!titulo || !tipo || !categoria) {
-            e.preventDefault();
-            alert('Por favor completa todos los campos obligatorios (*)');
-            return false;
-        }
-        
-        // Validar que al menos haya URL o archivo
-        const tieneUrl = document.getElementById('video_url')?.value || document.getElementById('archivo_url')?.value;
-        const tieneArchivo = document.getElementById('archivo_local')?.files.length > 0;
-        
-        if (!tieneUrl && !tieneArchivo) {
-            e.preventDefault();
-            alert('Debes proporcionar una URL o subir un archivo para el contenido');
-            return false;
-        }
-    });
+    if (!isValid) {
+        e.preventDefault();
+        alert('Error: ' + errorMessage);
+    }
 });
 </script>
 
 <style>
-.campos-tipo {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 20px;
-    margin: 15px 0;
-    border-left: 4px solid #0d6efd;
-}
-
-.form-control-lg, .form-select-lg {
-    border-radius: 10px;
-    padding: 12px 16px;
-}
-
-.shadow-hover {
-    transition: all 0.3s ease;
-}
-
-.shadow-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
-}
-
 .card {
     border-radius: 12px;
 }
 
-.input-group-text {
-    border-radius: 8px 0 0 8px !important;
+.form-label {
+    color: #2c3e50;
+}
+
+.alert {
+    border-radius: 8px;
+    border: none;
 }
 </style>
 {% endblock %}
