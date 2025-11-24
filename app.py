@@ -21,12 +21,11 @@ app.config['ALLOWED_EXTENSIONS'] = {
     'jpg', 'jpeg', 'png', 'gif', 'mp4', 'avi', 'mov'
 }
 
-# Crear directorio de uploads si no existe
-os.makedirs(app.config['UPLOAD_FOLDER_SST'], exist_ok=True)
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+# Crear directorio de uploads si no existe - MEJORADO
+upload_path = app.config['UPLOAD_FOLDER_SST']
+os.makedirs(upload_path, exist_ok=True)
+print(f"📁 Directorio de uploads: {upload_path}")
+print(f"📁 ¿Existe el directorio?: {os.path.exists(upload_path)}")
 
 # Configurar Flask-Login
 login_manager = LoginManager()
