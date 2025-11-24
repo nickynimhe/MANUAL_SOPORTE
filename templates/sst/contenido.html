@@ -142,14 +142,17 @@
                                 {% endif %}
                                 
                                 {% if current_user.rol == 'admin' %}
+                               <!-- En la sección de botones administrativos, reemplaza esto: -->
                                 <div class="btn-group w-100">
-                                    <!-- Botones deshabilitados temporalmente -->
-                                    <button class="btn btn-outline-warning btn-sm" disabled title="Editar (próximamente)">
+                                    <a href="{{ url_for('sst_editar_contenido', id=item.id) }}" class="btn btn-outline-warning btn-sm">
                                         <i class="fas fa-edit me-1"></i>Editar
-                                    </button>
-                                    <button class="btn btn-outline-danger btn-sm" disabled title="Eliminar (próximamente)">
-                                        <i class="fas fa-trash me-1"></i>Eliminar
-                                    </button>
+                                    </a>
+                                    <form method="POST" action="{{ url_for('sst_eliminar_contenido', id=item.id) }}" 
+                                          style="display: inline;" onsubmit="return confirm('¿Estás seguro de eliminar este contenido?');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="fas fa-trash me-1"></i>Eliminar
+                                        </button>
+                                    </form>
                                 </div>
                                 {% endif %}
                             </div>
