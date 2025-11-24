@@ -137,14 +137,14 @@ def crear_tablas_sst():
         """, commit=True)
         
         # Tabla de contenido SST
-        ejecutar_consulte("""
+        ejecutar_consulta("""
             CREATE TABLE IF NOT EXISTS sst_contenido (
                 id SERIAL PRIMARY KEY,
                 titulo VARCHAR(255) NOT NULL,
                 descripcion TEXT,
                 tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('video', 'documento', 'imagen', 'enlace')),
                 archivo_url VARCHAR(500),
-                archivo_local VARCHAR(500),  <!-- Aumentado de 255 a 500 -->
+                archivo_local VARCHAR(500),
                 video_url VARCHAR(500),
                 categoria_id INTEGER REFERENCES sst_categorias(id),
                 es_obligatorio BOOLEAN DEFAULT FALSE,
@@ -183,7 +183,7 @@ def verificar_y_crear_categorias_sst():
             categorias_insertadas = 0
             for nombre, color, icono in categorias:
                 try:
-                    ejecutar_consulte(
+                    ejecutar_consulta(
                         "INSERT INTO sst_categorias (nombre, color, icono) VALUES (%s, %s, %s)",
                         (nombre, color, icono),
                         commit=True
@@ -215,7 +215,7 @@ def crear_tablas():
 def obtener_categorias_sst():
     """Obtener todas las categorías SST"""
     try:
-        resultado = ejecutar_consulte(
+        resultado = ejecutar_consulta(
             "SELECT id, nombre, color, icono FROM sst_categorias ORDER BY nombre",
             fetch=True
         )
@@ -252,7 +252,7 @@ def obtener_contenido_sst(filtros=None):
         
         query += " ORDER BY sc.fecha_publicacion DESC"
         
-        resultado = ejecutar_consulte(query, params, fetch=True)
+        resultado = ejecutar_consulta(query, params, fetch=True)
         return resultado or []
         
     except Exception as e:
