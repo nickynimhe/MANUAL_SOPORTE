@@ -1281,7 +1281,7 @@ def sst_contenido():
 @app.route('/sst/agregar', methods=['GET', 'POST'])
 @login_required
 def sst_agregar_contenido():
-    """Agregar nuevo contenido SST"""
+    """Agregar nuevo contenido SST - VERSIÓN MEJORADA"""
     if current_user.rol != 'admin':
         flash('No tienes permisos para agregar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
@@ -1334,6 +1334,87 @@ def sst_agregar_contenido():
                 except (ValueError, TypeError):
                     flash('Categoría inválida', 'error')
                     return render_template('sst/agregar_contenido.html', categorias=categorias)
+                
+                # Procesar archivos
+                archivo_url = None
+                archivo_local = None
+                video_url = None
+                
+                # Manejar archivo subido - MEJORADO
+                file = request.files.get('archivo_local')
+                if file and file.filename != '':
+                    print(f"📁 Archivo recibido: {file.filename}")
+                    if allowed_file(file.filename):
+                        filename = secure_filename(file.filename)
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        filename = f"{timestamp}_{filename}"
+                        file_path = os.path.join(app.config['UPLOAD_FOLDER_SST'], filename)
+                        
+                        # Asegurar que el directorio existe
+                        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                        
+                        # Guardar archivo
+                        file.save(file_path)
+                        archivo_local = filename
+                        print(f"✅ Archivo guardado: {filename} en {file_path}")
+                    else:
+                        flash('Tipo de archivo no permitido', 'error')
+                        return render_template('sst/agregar_contenido.html', categorias=categorias)
+                
+                # Procesar según tipo
+                if tipo == 'video':
+                    video_url = request.form.get('video_url', '').strip() or None
+                    if not video_url and not archivo_local:
+                        flash('Para video debe proporcionar una URL o subir un archivo', 'error')
+                        return render_template('sst/agregar_contenido.html', categorias=categorias)
+                
+                elif tipo in ['documento', 'imagen']:
+                    archivo_url = request.form.get('archivo_url', '').strip() or None
+                    if not archivo_local and not archivo_url:
+                        flash('Debe proporcionar una URL o subir un archivo', 'error')
+                        return render_template('sst/agregar_contenido.html', categorias=categorias)
+                
+                elif tipo == 'enlace':
+                    archivo_url = request.form.get('archivo_url', '').strip()
+                    if not archivo_url:
+                        flash('Debe proporcionar una URL para enlaces', 'error')
+                        return render_template('sst/agregar_contenido.html', categorias=categorias)
+                
+                # Insertar en la base de datos
+                cursor.execute("""
+                    INSERT INTO sst_contenido 
+                    (titulo, descripcion, tipo, archivo_url, archivo_local, video_url, categoria_id, 
+                     es_obligatorio, tags, usuario_creador)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    titulo,
+                    descripcion or None,
+                    tipo,
+                    archivo_url,
+                    archivo_local,
+                    video_url,
+                    categoria_id_int,
+                    es_obligatorio,
+                    tags or None,
+                    current_user.id
+                ))
+                
+                conexion.commit()
+                flash('✅ Contenido SST agregado correctamente', 'success')
+                return redirect(url_for('sst_contenido'))
+                
+    except Exception as e:
+        flash(f'Error al agregar contenido SST: {str(e)}', 'error')
+        print(f"❌ Error en sst_agregar_contenido: {e}")
+        if conexion:
+            conexion.rollback()
+    finally:
+        if cursor:
+            cursor.close()
+        if conexion:
+            conexion.close()
+    
+    return render_template('sst/agregar_contenido.html', categorias=categorias)
                 
                 # Procesar archivos
                 archivo_url = None
