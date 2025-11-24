@@ -114,7 +114,7 @@ def crear_tabla_fichas():
             conexion.close()
 
 def crear_tablas_sst():
-    """Crear tablas para el módulo SST (SIMPLIFICADO - sin estadísticas)"""
+    """Crear tablas para el módulo SST - VERSIÓN CORREGIDA"""
     conexion = None
     cursor = None
     try:
@@ -134,7 +134,7 @@ def crear_tablas_sst():
                 )
             """)
             
-            # Tabla de contenido SST (SIMPLIFICADA - sin estadísticas)
+            # Tabla de contenido SST
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS sst_contenido (
                     id SERIAL PRIMARY KEY,
@@ -153,21 +153,37 @@ def crear_tablas_sst():
                 )
             """)
             
-            # INSERTAR CATEGORÍAS BÁSICAS (si no existen)
-            cursor.execute("""
-                INSERT INTO sst_categorias (nombre, color, icono) 
-                VALUES 
-                    ('Videos de Capacitación', '#007bff', 'fa-video'),
-                    ('Procedimientos de Seguridad', '#28a745', 'fa-clipboard-list'),
-                    ('Primeros Auxilios', '#dc3545', 'fa-first-aid'),
-                    ('Equipos de Protección', '#ffc107', 'fa-hard-hat'),
-                    ('Emergencias', '#17a2b8', 'fa-exclamation-triangle'),
-                    ('Normativa Legal', '#6c757d', 'fa-gavel')
-                ON CONFLICT (nombre) DO NOTHING
-            """)
+            conexion.commit()
+            print("✅ Tablas SST base creadas correctamente")
+            
+            # INSERTAR CATEGORÍAS BÁSICAS (con verificación manual para evitar conflictos)
+            categorias = [
+                ('Videos de Capacitación', '#007bff', 'fa-video'),
+                ('Procedimientos de Seguridad', '#28a745', 'fa-clipboard-list'),
+                ('Primeros Auxilios', '#dc3545', 'fa-first-aid'),
+                ('Equipos de Protección', '#ffc107', 'fa-hard-hat'),
+                ('Emergencias', '#17a2b8', 'fa-exclamation-triangle'),
+                ('Normativa Legal', '#6c757d', 'fa-gavel')
+            ]
+            
+            categorias_insertadas = 0
+            for nombre, color, icono in categorias:
+                # Verificar si la categoría ya existe
+                cursor.execute("SELECT COUNT(*) FROM sst_categorias WHERE nombre = %s", (nombre,))
+                if cursor.fetchone()[0] == 0:
+                    try:
+                        cursor.execute(
+                            "INSERT INTO sst_categorias (nombre, color, icono) VALUES (%s, %s, %s)",
+                            (nombre, color, icono)
+                        )
+                        categorias_insertadas += 1
+                        print(f"✅ Categoría '{nombre}' insertada")
+                    except Exception as e:
+                        print(f"⚠ No se pudo insertar categoría '{nombre}': {e}")
+                        continue
             
             conexion.commit()
-            print("✅ Tablas SST creadas/existen correctamente")
+            print(f"✅ {categorias_insertadas} categorías SST insertadas correctamente")
             
     except Exception as e:
         print(f"❌ Error al crear tablas SST: {e}")
@@ -185,7 +201,7 @@ def crear_tablas():
     
     crear_tabla_usuarios()
     crear_tabla_fichas() 
-    crear_tablas_sst()  # Tablas SST simplificadas
+    crear_tablas_sst()
     
     print("✅ Todas las tablas creadas/verificadas")
 
@@ -203,7 +219,11 @@ def resetear_secuencias():
             tablas = ['usuarios', 'fichas', 'sst_contenido', 'sst_categorias']
             
             for tabla in tablas:
-                cursor.execute(f"SELECT setval(pg_get_serial_sequence('{tabla}', 'id'), coalesce(max(id), 1), false) FROM {tabla}")
+                try:
+                    cursor.execute(f"SELECT setval(pg_get_serial_sequence('{tabla}', 'id'), coalesce(max(id), 1), false) FROM {tabla}")
+                except Exception as e:
+                    print(f"⚠ No se pudo resetear secuencia para {tabla}: {e}")
+                    continue
             
             conexion.commit()
             print("🔄 Secuencias reseteadas correctamente")
@@ -212,6 +232,34 @@ def resetear_secuencias():
         print(f"⚠ Error al resetear secuencias: {e}")
         if conexion:
             conexion.rollback()
+    finally:
+        if cursor:
+            cursor.close()
+        if conexion:
+            conexion.close()
+
+# Función para verificar el estado de las tablas
+def verificar_tablas():
+    """Verificar que todas las tablas existan"""
+    conexion = None
+    cursor = None
+    try:
+        conexion = crear_conexion()
+        if conexion:
+            cursor = conexion.cursor()
+            
+            tablas = ['usuarios', 'fichas', 'sst_categorias', 'sst_contenido']
+            
+            for tabla in tablas:
+                cursor.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = %s)", (tabla,))
+                existe = cursor.fetchone()[0]
+                if existe:
+                    print(f"✅ Tabla '{tabla}' existe")
+                else:
+                    print(f"❌ Tabla '{tabla}' NO existe")
+            
+    except Exception as e:
+        print(f"❌ Error al verificar tablas: {e}")
     finally:
         if cursor:
             cursor.close()
