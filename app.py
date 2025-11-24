@@ -1771,6 +1771,31 @@ def sst_servir_archivo(filename):
         print(f"❌ Error en sst_servir_archivo: {e}")
         return redirect(url_for('sst_contenido'))
 
+@app.route('/debug/uploads')
+@login_required
+def debug_uploads():
+    """Ruta temporal para debug de uploads"""
+    if current_user.rol != 'admin':
+        return "No autorizado"
+    
+    upload_path = app.config['UPLOAD_FOLDER_SST']
+    info = {
+        'upload_path': upload_path,
+        'exists': os.path.exists(upload_path),
+        'files': []
+    }
+    
+    if os.path.exists(upload_path):
+        for filename in os.listdir(upload_path):
+            file_path = os.path.join(upload_path, filename)
+            info['files'].append({
+                'name': filename,
+                'size': os.path.getsize(file_path),
+                'path': file_path
+            })
+    
+    return jsonify(info)
+
 # ===== API PARA PROBLEMAS =====
 @app.route('/api/problemas/<categoria>')
 @login_required
