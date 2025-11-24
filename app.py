@@ -1724,18 +1724,51 @@ def sst_ver_video(id):
 @app.route('/sst/archivos/<filename>')
 @login_required
 def sst_servir_archivo(filename):
-    """Servir archivos subidos localmente"""
+    """Servir archivos subidos localmente - VERSIÓN MEJORADA"""
     try:
-        file_path = os.path.join(app.config['UPLOAD_FOLDER_SST'], filename)
-        if not os.path.isfile(file_path):
-            flash('Archivo no encontrado', 'error')
+        # Verificar seguridad del filename
+        if '..' in filename or filename.startswith('/'):
+            flash('Ruta de archivo inválida', 'error')
             return redirect(url_for('sst_contenido'))
         
-        print(f"📁 Sirviendo archivo: {filename}")
-        return send_from_directory(app.config['UPLOAD_FOLDER_SST'], filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER_SST'], filename)
+        
+        print(f"📁 Intentando servir archivo: {filename}")
+        print(f"📁 Ruta completa: {file_path}")
+        print(f"📁 ¿Existe el archivo?: {os.path.isfile(file_path)}")
+        
+        if not os.path.isfile(file_path):
+            flash(f'Archivo no encontrado: {filename}', 'error')
+            return redirect(url_for('sst_contenido'))
+        
+        # Determinar el tipo MIME para una mejor experiencia
+        mime_types = {
+            '.pdf': 'application/pdf',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.png': 'image/png',
+            '.gif': 'image/gif',
+            '.mp4': 'video/mp4',
+            '.avi': 'video/x-msvideo',
+            '.mov': 'video/quicktime',
+            '.doc': 'application/msword',
+            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        }
+        
+        # Obtener extensión del archivo
+        _, ext = os.path.splitext(filename.lower())
+        mimetype = mime_types.get(ext, 'application/octet-stream')
+        
+        print(f"✅ Sirviendo archivo: {filename} (tipo: {mimetype})")
+        return send_from_directory(
+            app.config['UPLOAD_FOLDER_SST'], 
+            filename, 
+            as_attachment=False,  # Para que se muestre en el navegador
+            mimetype=mimetype
+        )
     
     except Exception as e:
-        flash('Error al cargar el archivo', 'error')
+        flash(f'Error al cargar el archivo: {str(e)}', 'error')
         print(f"❌ Error en sst_servir_archivo: {e}")
         return redirect(url_for('sst_contenido'))
 
