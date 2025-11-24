@@ -196,29 +196,20 @@ def verificar_y_crear_categorias_sst():
                 categorias_insertadas = 0
                 for nombre, color, icono in categorias:
                     try:
-                        # Usar INSERT ON CONFLICT para evitar duplicados
-                        cursor.execute("""
-                            INSERT INTO sst_categorias (nombre, color, icono) 
-                            VALUES (%s, %s, %s)
-                            ON CONFLICT (nombre) DO NOTHING
-                        """, (nombre, color, icono))
-                        
-                        # Verificar si se insertó
-                        cursor.execute("SELECT COUNT(*) FROM sst_categorias WHERE nombre = %s", (nombre,))
-                        if cursor.fetchone()[0] > 0:
-                            categorias_insertadas += 1
-                            print(f"✅ Categoría '{nombre}' creada/verificada")
-                        else:
-                            print(f"⚠ Categoría '{nombre}' ya existe")
-                            
+                        cursor.execute(
+                            "INSERT INTO sst_categorias (nombre, color, icono) VALUES (%s, %s, %s)",
+                            (nombre, color, icono)
+                        )
+                        categorias_insertadas += 1
+                        print(f"✅ Categoría '{nombre}' creada")
                     except Exception as e:
-                        print(f"❌ Error al crear categoría '{nombre}': {e}")
+                        print(f"⚠ Error al crear categoría '{nombre}': {e}")
                         continue
                 
                 conexion.commit()
-                print(f"✅ {categorias_insertadas} categorías SST creadas/verificadas correctamente")
+                print(f"✅ {categorias_insertadas} categorías SST creadas correctamente")
             else:
-                print(f"✅ Ya existen {count} categorías SST, no es necesario crear más")
+                print(f"✅ Ya existen {count} categorías SST")
                 
     except Exception as e:
         print(f"❌ Error al verificar categorías SST: {e}")
