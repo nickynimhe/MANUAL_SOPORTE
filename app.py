@@ -1,6 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory, make_response
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from database import crear_conexion, crear_tablas, verificar_y_crear_categorias_sst, obtener_categorias_sst, obtener_contenido_sst, ejecutar_consulta
+from database import crear_conexion, crear_tablas, verificar_y_crear_categorias_sst, obtener_categorias_sst, obtener_contenido_sst, ejecutar_consulta, guardar_archivo_en_bd, insertar_contenido_con_archivo, obtener_archivo_desde_bd
 from config import Config
 from werkzeug.security import check_password_hash, generate_password_hash
 import psycopg2
@@ -22,7 +22,7 @@ app.config['ALLOWED_EXTENSIONS'] = {
     'jpg', 'jpeg', 'png', 'gif', 'mp4', 'avi', 'mov', 'mkv'
 }
 
-# Crear directorio de uploads si no existe
+# Crear directorio de uploads si no existe (para compatibilidad temporal)
 upload_path = app.config['UPLOAD_FOLDER_SST']
 os.makedirs(upload_path, exist_ok=True)
 print(f"📁 Directorio de uploads: {upload_path}")
@@ -1042,7 +1042,7 @@ def informacion_general():
     
     return render_template('informacion_general.html', informacion=informacion)
 
-# ===== RUTAS SST =====
+# ===== RUTAS SST MEJORADAS =====
 
 @app.route('/sst')
 @login_required
@@ -1084,16 +1084,19 @@ def sst_contenido():
                 'descripcion': item[2],
                 'tipo': item[3],
                 'archivo_url': item[4],
-                'archivo_local': item[5],
-                'video_url': item[6],
-                'categoria_id': item[7],
-                'es_obligatorio': item[8],
-                'tags': item[9],
-                'fecha_publicacion': item[10],
-                'usuario_creador': item[11],
-                'categoria_nombre': item[12],
-                'categoria_color': item[13],
-                'creador_nombre': item[14]
+                'tiene_archivo': item[5] is not None,  # archivo_data
+                'archivo_nombre': item[6],
+                'archivo_tipo': item[7],
+                'archivo_tamano': item[8],
+                'video_url': item[9],
+                'categoria_id': item[10],
+                'es_obligatorio': item[11],
+                'tags': item[12],
+                'fecha_publicacion': item[13],
+                'usuario_creador': item[14],
+                'categoria_nombre': item[15],
+                'categoria_color': item[16],
+                'creador_nombre': item[17]
             }
             contenido.append(contenido_dict)
                 
@@ -1106,7 +1109,7 @@ def sst_contenido():
 @app.route('/sst/agregar', methods=['GET', 'POST'])
 @login_required
 def sst_agregar_contenido():
-    """Agregar nuevo contenido SST - VERSIÓN CORREGIDA"""
+    """Agregar nuevo contenido SST - VERSIÓN MEJORADA CON BD"""
     if current_user.rol != 'admin':
         flash('No tienes permisos para agregar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
@@ -1146,34 +1149,23 @@ def sst_agregar_contenido():
                 flash('❌ Categoría inválida', 'error')
                 return render_template('sst/agregar_contenido.html', categorias=categorias)
             
-            # Procesar archivo subido
-            archivo_local = None
+            # Procesar archivo subido - AHORA SE GUARDA EN BD
+            archivo_data = None
             file = request.files.get('archivo_local')
             
             if file and file.filename != '':
                 if allowed_file(file.filename):
-                    # Generar nombre seguro y guardar archivo
-                    filename = generar_nombre_seguro(file.filename)
-                    file_path = os.path.join(app.config['UPLOAD_FOLDER_SST'], filename)
-                    
-                    # Asegurar que el directorio existe
-                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                    
-                    # Guardar archivo
-                    file.save(file_path)
-                    
-                    # Verificar que el archivo se guardó
-                    if os.path.exists(file_path):
-                        archivo_local = filename
-                        print(f"✅ Archivo guardado: {filename}")
-                        
-                        # SI SE SUBIÓ ARCHIVO LOCAL, LIMPIAR AMBAS URLs
-                        video_url = None
-                        archivo_url = None
-                        print("📁 Archivo local detectado - Limpiando video_url y archivo_url")
-                    else:
-                        flash('❌ Error al guardar el archivo en el servidor', 'error')
+                    # Guardar archivo en la base de datos
+                    archivo_data = guardar_archivo_en_bd(file)
+                    if not archivo_data:
+                        flash('❌ Error al procesar el archivo', 'error')
                         return render_template('sst/agregar_contenido.html', categorias=categorias)
+                    
+                    print(f"✅ Archivo guardado en BD: {archivo_data['nombre']} ({archivo_data['tamano']} bytes)")
+                    
+                    # Si se subió archivo local, limpiar URLs
+                    video_url = None
+                    archivo_url = None
                 else:
                     extensiones_permitidas = ', '.join(app.config['ALLOWED_EXTENSIONS'])
                     flash(f'❌ Tipo de archivo no permitido. Extensiones válidas: {extensiones_permitidas}', 'error')
@@ -1182,16 +1174,16 @@ def sst_agregar_contenido():
             # Validaciones específicas por tipo
             validation_error = None
             if tipo == 'video':
-                if not video_url and not archivo_local:
+                if not video_url and not archivo_data:
                     validation_error = 'Para video debe proporcionar una URL de video o subir un archivo'
             elif tipo in ['documento', 'imagen']:
-                if not archivo_url and not archivo_local:
+                if not archivo_url and not archivo_data:
                     validation_error = 'Debe proporcionar una URL o subir un archivo'
             elif tipo == 'enlace':
                 if not archivo_url:
                     validation_error = 'Debe proporcionar una URL para enlaces'
                 # Para enlaces, no permitir archivos locales
-                archivo_local = None
+                archivo_data = None
                 video_url = None
             
             if validation_error:
@@ -1204,28 +1196,26 @@ def sst_agregar_contenido():
             descripcion = descripcion if descripcion else None
             tags = tags if tags else None
             
-            # Insertar en la base de datos
+            # Insertar en la base de datos usando la nueva función
             try:
-                ejecutar_consulta("""
-                    INSERT INTO sst_contenido 
-                    (titulo, descripcion, tipo, archivo_url, archivo_local, video_url, 
-                     categoria_id, es_obligatorio, tags, usuario_creador)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (
-                    titulo,
-                    descripcion,
-                    tipo,
-                    archivo_url,
-                    archivo_local,  # <-- ESTE ES EL VALOR IMPORTANTE
-                    video_url,
-                    categoria_id_int,
-                    es_obligatorio,
-                    tags,
-                    current_user.id
-                ), commit=True)
+                success = insertar_contenido_con_archivo(
+                    titulo=titulo,
+                    descripcion=descripcion,
+                    tipo=tipo,
+                    categoria_id=categoria_id_int,
+                    es_obligatorio=es_obligatorio,
+                    tags=tags,
+                    usuario_creador=current_user.id,
+                    archivo_data=archivo_data,
+                    video_url=video_url,
+                    archivo_url=archivo_url
+                )
                 
-                flash('✅ Contenido SST agregado correctamente', 'success')
-                return redirect(url_for('sst_contenido'))
+                if success:
+                    flash('✅ Contenido SST agregado correctamente', 'success')
+                    return redirect(url_for('sst_contenido'))
+                else:
+                    flash('❌ Error al guardar en la base de datos', 'error')
                 
             except Exception as db_error:
                 flash(f'❌ Error de base de datos: {str(db_error)}', 'error')
@@ -1236,6 +1226,29 @@ def sst_agregar_contenido():
         print(f"❌ ERROR GENERAL EN SST_AGREGAR_CONTENIDO: {e}")
     
     return render_template('sst/agregar_contenido.html', categorias=categorias)
+
+@app.route('/sst/archivo/<int:id>')
+@login_required
+def sst_descargar_archivo(id):
+    """Descargar archivo desde la base de datos"""
+    try:
+        archivo = obtener_archivo_desde_bd(id)
+        
+        if not archivo:
+            flash('Archivo no encontrado', 'error')
+            return redirect(url_for('sst_contenido'))
+        
+        # Crear respuesta con el archivo
+        response = make_response(archivo['data'])
+        response.headers.set('Content-Type', archivo['tipo'])
+        response.headers.set('Content-Disposition', 'inline', filename=archivo['nombre'])
+        
+        return response
+        
+    except Exception as e:
+        flash(f'Error al descargar el archivo: {str(e)}', 'error')
+        print(f"❌ Error en sst_descargar_archivo: {e}")
+        return redirect(url_for('sst_contenido'))
 
 @app.route('/sst/contenido/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
@@ -1275,14 +1288,14 @@ def sst_editar_contenido(id):
                 return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
             
             # Procesar archivo subido
-            archivo_local = None
+            archivo_data = None
             file = request.files.get('archivo_local')
             if file and file.filename != '':
                 if allowed_file(file.filename):
-                    filename = generar_nombre_seguro(file.filename)
-                    file_path = os.path.join(app.config['UPLOAD_FOLDER_SST'], filename)
-                    file.save(file_path)
-                    archivo_local = filename
+                    archivo_data = guardar_archivo_en_bd(file)
+                    if not archivo_data:
+                        flash('Error al procesar el archivo', 'error')
+                        return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
                     
                     # Si se subió nuevo archivo, limpiar URLs
                     video_url = None
@@ -1292,26 +1305,33 @@ def sst_editar_contenido(id):
                     return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
             
             # Actualizar en base de datos
-            if archivo_local:
-                # Si se subió nuevo archivo, actualizar archivo_local
+            if archivo_data:
+                # Si se subió nuevo archivo, actualizar con archivo
                 ejecutar_consulta("""
                     UPDATE sst_contenido 
                     SET titulo=%s, descripcion=%s, tipo=%s, archivo_url=%s, 
-                        archivo_local=%s, video_url=%s, categoria_id=%s, 
-                        es_obligatorio=%s, tags=%s, fecha_actualizacion=CURRENT_TIMESTAMP
+                        archivo_data=%s, archivo_nombre=%s, archivo_tipo=%s, archivo_tamano=%s,
+                        video_url=%s, categoria_id=%s, es_obligatorio=%s, 
+                        tags=%s, fecha_actualizacion=CURRENT_TIMESTAMP
                     WHERE id=%s
-                """, (titulo, descripcion, tipo, archivo_url, archivo_local, 
-                      video_url, categoria_id, es_obligatorio, tags, id), commit=True)
+                """, (
+                    titulo, descripcion, tipo, archivo_url,
+                    psycopg2.Binary(archivo_data['data']), archivo_data['nombre'], 
+                    archivo_data['tipo'], archivo_data['tamano'],
+                    video_url, categoria_id, es_obligatorio, tags, id
+                ), commit=True)
             else:
-                # Mantener el archivo_local existente
+                # Mantener el archivo existente, solo actualizar otros campos
                 ejecutar_consulta("""
                     UPDATE sst_contenido 
                     SET titulo=%s, descripcion=%s, tipo=%s, archivo_url=%s, 
                         video_url=%s, categoria_id=%s, es_obligatorio=%s, 
                         tags=%s, fecha_actualizacion=CURRENT_TIMESTAMP
                     WHERE id=%s
-                """, (titulo, descripcion, tipo, archivo_url, video_url, 
-                      categoria_id, es_obligatorio, tags, id), commit=True)
+                """, (
+                    titulo, descripcion, tipo, archivo_url, video_url, 
+                    categoria_id, es_obligatorio, tags, id
+                ), commit=True)
             
             flash('✅ Contenido actualizado correctamente', 'success')
             return redirect(url_for('sst_contenido'))
@@ -1334,16 +1354,19 @@ def sst_editar_contenido(id):
                 'descripcion': contenido_data[2],
                 'tipo': contenido_data[3],
                 'archivo_url': contenido_data[4],
-                'archivo_local': contenido_data[5],
-                'video_url': contenido_data[6],
-                'categoria_id': contenido_data[7],
-                'es_obligatorio': contenido_data[8],
-                'tags': contenido_data[9],
-                'fecha_publicacion': contenido_data[10],
-                'usuario_creador': contenido_data[11],
-                'categoria_nombre': contenido_data[12],
-                'categoria_color': contenido_data[13],
-                'creador_nombre': contenido_data[14]
+                'tiene_archivo': contenido_data[5] is not None,
+                'archivo_nombre': contenido_data[6],
+                'archivo_tipo': contenido_data[7],
+                'archivo_tamano': contenido_data[8],
+                'video_url': contenido_data[9],
+                'categoria_id': contenido_data[10],
+                'es_obligatorio': contenido_data[11],
+                'tags': contenido_data[12],
+                'fecha_publicacion': contenido_data[13],
+                'usuario_creador': contenido_data[14],
+                'categoria_nombre': contenido_data[15],
+                'categoria_color': contenido_data[16],
+                'creador_nombre': contenido_data[17]
             }
                 
     except Exception as e:
@@ -1365,21 +1388,7 @@ def sst_eliminar_contenido(id):
         return redirect(url_for('sst_dashboard'))
     
     try:
-        # Primero obtener información del archivo para eliminarlo físicamente
-        resultado = ejecutar_consulta(
-            "SELECT archivo_local FROM sst_contenido WHERE id = %s", 
-            (id,), 
-            fetch=True
-        )
-        
-        if resultado and resultado[0] and resultado[0][0]:
-            # Eliminar archivo físico
-            archivo_path = os.path.join(app.config['UPLOAD_FOLDER_SST'], resultado[0][0])
-            if os.path.exists(archivo_path):
-                os.remove(archivo_path)
-                print(f"🗑️ Archivo eliminado: {resultado[0][0]}")
-        
-        # Eliminar de la base de datos
+        # Eliminar de la base de datos (el archivo se elimina automáticamente)
         ejecutar_consulta("DELETE FROM sst_contenido WHERE id = %s", (id,), commit=True)
         
         flash('✅ Contenido eliminado correctamente', 'success')
@@ -1411,12 +1420,14 @@ def sst_ver_video(id):
                 'titulo': video_data[1],
                 'descripcion': video_data[2],
                 'tipo': video_data[3],
-                'archivo_url': str(video_data[4]) if video_data[4] else None,
-                'archivo_local': str(video_data[5]) if video_data[5] else None,
-                'video_url': str(video_data[6]) if video_data[6] else None,
-                'categoria_nombre': video_data[12],
-                'categoria_color': video_data[13],
-                'fecha_publicacion': video_data[10]
+                'archivo_url': video_data[4],
+                'tiene_archivo': video_data[5] is not None,
+                'archivo_nombre': video_data[6],
+                'archivo_tipo': video_data[7],
+                'video_url': video_data[9],
+                'categoria_nombre': video_data[15],
+                'categoria_color': video_data[16],
+                'fecha_publicacion': video_data[13]
             }
                 
     except Exception as e:
@@ -1428,52 +1439,6 @@ def sst_ver_video(id):
         return redirect(url_for('sst_contenido'))
     
     return render_template('sst/ver_video.html', video=video)
-
-@app.route('/sst/archivos/<filename>')
-@login_required
-def sst_servir_archivo(filename):
-    """Servir archivos subidos localmente"""
-    try:
-        # Verificar seguridad del filename
-        if '..' in filename or filename.startswith('/'):
-            flash('Ruta de archivo inválida', 'error')
-            return redirect(url_for('sst_contenido'))
-        
-        file_path = os.path.join(app.config['UPLOAD_FOLDER_SST'], filename)
-        
-        if not os.path.isfile(file_path):
-            flash(f'Archivo no encontrado: {filename}', 'error')
-            return redirect(url_for('sst_contenido'))
-        
-        # Determinar el tipo MIME
-        mime_types = {
-            '.pdf': 'application/pdf',
-            '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg',
-            '.png': 'image/png',
-            '.gif': 'image/gif',
-            '.mp4': 'video/mp4',
-            '.avi': 'video/x-msvideo',
-            '.mov': 'video/quicktime',
-            '.doc': 'application/msword',
-            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        }
-        
-        # Obtener extensión del archivo
-        _, ext = os.path.splitext(filename.lower())
-        mimetype = mime_types.get(ext, 'application/octet-stream')
-        
-        return send_from_directory(
-            app.config['UPLOAD_FOLDER_SST'], 
-            filename, 
-            as_attachment=False,
-            mimetype=mimetype
-        )
-    
-    except Exception as e:
-        flash(f'Error al cargar el archivo: {str(e)}', 'error')
-        print(f"❌ Error en sst_servir_archivo: {e}")
-        return redirect(url_for('sst_contenido'))
 
 # ===== API PARA PROBLEMAS =====
 @app.route('/api/problemas/<categoria>')
