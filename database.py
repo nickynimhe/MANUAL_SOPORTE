@@ -121,7 +121,7 @@ def crear_tabla_fichas():
         print(f"❌ Error al crear tabla fichas: {e}")
 
 def crear_tablas_sst():
-    """Crear tablas para el módulo SST"""
+    """Crear tablas para el módulo SST - VERSIÓN MEJORADA"""
     try:
         print("🔧 Creando/verificando tablas SST...")
         
@@ -136,7 +136,7 @@ def crear_tablas_sst():
             )
         """, commit=True)
         
-        # Tabla de contenido SST
+        # Tabla de contenido SST - AHORA CON ALMACENAMIENTO EN BD
         ejecutar_consulta("""
             CREATE TABLE IF NOT EXISTS sst_contenido (
                 id SERIAL PRIMARY KEY,
@@ -144,7 +144,10 @@ def crear_tablas_sst():
                 descripcion TEXT,
                 tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('video', 'documento', 'imagen', 'enlace')),
                 archivo_url VARCHAR(500),
-                archivo_local VARCHAR(500),
+                archivo_data BYTEA,  -- Almacena el archivo directamente en la BD
+                archivo_nombre VARCHAR(255),  -- Nombre original del archivo
+                archivo_tipo VARCHAR(100),  -- MIME type
+                archivo_tamano INTEGER,  -- Tamaño en bytes
                 video_url VARCHAR(500),
                 categoria_id INTEGER REFERENCES sst_categorias(id),
                 es_obligatorio BOOLEAN DEFAULT FALSE,
@@ -155,7 +158,7 @@ def crear_tablas_sst():
             )
         """, commit=True)
         
-        print("✅ Tablas SST base creadas correctamente")
+        print("✅ Tablas SST MEJORADAS creadas correctamente")
         
     except Exception as e:
         print(f"❌ Error al crear tablas SST: {e}")
@@ -258,6 +261,97 @@ def obtener_contenido_sst(filtros=None):
     except Exception as e:
         print(f"❌ Error al obtener contenido SST: {e}")
         return []
+
+def guardar_archivo_en_bd(archivo_file):
+    """Guardar archivo en la base de datos y retornar datos"""
+    try:
+        if not archivo_file or archivo_file.filename == '':
+            return None
+        
+        # Leer datos del archivo
+        archivo_data = archivo_file.read()
+        archivo_nombre = archivo_file.filename
+        archivo_tipo = archivo_file.content_type
+        archivo_tamano = len(archivo_data)
+        
+        return {
+            'data': archivo_data,
+            'nombre': archivo_nombre,
+            'tipo': archivo_tipo,
+            'tamano': archivo_tamano
+        }
+        
+    except Exception as e:
+        print(f"❌ Error al guardar archivo en BD: {e}")
+        return None
+
+def insertar_contenido_con_archivo(titulo, descripcion, tipo, categoria_id, es_obligatorio, 
+                                  tags, usuario_creador, archivo_data=None, video_url=None, archivo_url=None):
+    """Insertar contenido SST con archivo en la base de datos"""
+    try:
+        conexion = crear_conexion()
+        if not conexion:
+            return False
+            
+        cursor = conexion.cursor()
+        
+        if archivo_data:
+            # Insertar con archivo
+            cursor.execute("""
+                INSERT INTO sst_contenido 
+                (titulo, descripcion, tipo, archivo_url, archivo_data, archivo_nombre, 
+                 archivo_tipo, archivo_tamano, video_url, categoria_id, es_obligatorio, 
+                 tags, usuario_creador)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                titulo, descripcion, tipo, archivo_url,
+                psycopg2.Binary(archivo_data['data']),  # Archivo como binario
+                archivo_data['nombre'], archivo_data['tipo'], archivo_data['tamano'],
+                video_url, categoria_id, es_obligatorio, tags, usuario_creador
+            ))
+        else:
+            # Insertar sin archivo
+            cursor.execute("""
+                INSERT INTO sst_contenido 
+                (titulo, descripcion, tipo, archivo_url, video_url, 
+                 categoria_id, es_obligatorio, tags, usuario_creador)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                titulo, descripcion, tipo, archivo_url, video_url,
+                categoria_id, es_obligatorio, tags, usuario_creador
+            ))
+        
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error al insertar contenido con archivo: {e}")
+        if conexion:
+            conexion.rollback()
+        return False
+
+def obtener_archivo_desde_bd(contenido_id):
+    """Obtener archivo desde la base de datos"""
+    try:
+        resultado = ejecutar_consulta(
+            "SELECT archivo_data, archivo_nombre, archivo_tipo FROM sst_contenido WHERE id = %s",
+            (contenido_id,),
+            fetch=True
+        )
+        
+        if resultado and resultado[0] and resultado[0][0]:
+            return {
+                'data': resultado[0][0],
+                'nombre': resultado[0][1],
+                'tipo': resultado[0][2]
+            }
+        return None
+        
+    except Exception as e:
+        print(f"❌ Error al obtener archivo desde BD: {e}")
+        return None
 
 # Si se ejecuta este archivo directamente
 if __name__ == '__main__':
