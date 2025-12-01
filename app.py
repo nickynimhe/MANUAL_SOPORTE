@@ -60,24 +60,104 @@ def inject_permissions():
             if hasattr(current_user, 'permisos'):
                 return current_user.permisos.get(permiso, False)
         return False
-    return dict(tiene_permiso=tiene_permiso)
+    
+    def puede_acceder_modulo(modulo):
+        if current_user.is_authenticated:
+            if current_user.rol == 'admin':
+                return True
+            if modulo == 'sst' and current_user.rol in ['admin', 'sst']:
+                return True
+            if modulo == 'soporte' and current_user.rol in ['admin', 'soporte']:
+                return True
+            if modulo == 'dashboard' and current_user.rol == 'admin':
+                return True
+        return False
+    
+    def obtener_modulo_principal():
+        if current_user.is_authenticated:
+            return getattr(current_user, 'modulo_principal', 'soporte')
+        return 'soporte'
+    
+    return dict(
+        tiene_permiso=tiene_permiso,
+        puede_acceder_modulo=puede_acceder_modulo,
+        obtener_modulo_principal=obtener_modulo_principal
+    )
+
+# ===== FILTROS PERSONALIZADOS JINJA2 =====
+@app.template_filter('format_date')
+def format_date_filter(date_value, format='%d/%m/%Y'):
+    """Filtro para formatear fechas manejando valores None"""
+    if date_value is None:
+        return 'Sin fecha'
+    try:
+        return date_value.strftime(format)
+    except:
+        return 'Fecha inválida'
+
+@app.template_filter('safe_tags')
+def safe_tags_filter(tags_value):
+    """Filtro seguro para manejar tags"""
+    if tags_value is None:
+        return []
+    
+    if isinstance(tags_value, str):
+        # Si es string, separar por comas
+        return [tag.strip() for tag in tags_value.split(',') if tag.strip()]
+    elif isinstance(tags_value, (int, float)):
+        # Si es número, convertirlo a string
+        return [str(tags_value)]
+    else:
+        # Para cualquier otro tipo
+        return []
 
 class User(UserMixin):
-    def __init__(self, id, usuario, rol, permisos=None):
+    def __init__(self, id, usuario, rol, modulo_principal, permisos=None):
         self.id = id
         self.usuario = usuario
         self.rol = rol
-        self.permisos = permisos or {
-            'ver_fichas': True,
-            'agregar_fichas': False,
-            'editar_fichas': False,
-            'eliminar_fichas': False,
-            'cambiar_password': True
-        }
+        self.modulo_principal = modulo_principal
+        self.permisos = permisos or {}
+        
+        # Definir permisos por rol
+        if rol == 'admin':
+            self.permisos = {
+                'ver_fichas': True,
+                'agregar_fichas': True,
+                'editar_fichas': True,
+                'eliminar_fichas': True,
+                'cambiar_password': True,
+                'gestion_usuarios': True,
+                'acceder_sst': True,
+                'acceder_soporte': True,
+                'acceder_dashboard': True
+            }
+        elif rol == 'sst':
+            self.permisos = {
+                'ver_fichas': False,
+                'agregar_fichas': False,
+                'editar_fichas': False,
+                'eliminar_fichas': False,
+                'cambiar_password': True,
+                'gestion_usuarios': False,
+                'acceder_sst': True,
+                'acceder_soporte': False,
+                'acceder_dashboard': False
+            }
+        elif rol == 'soporte':
+            self.permisos = {
+                'ver_fichas': True,
+                'agregar_fichas': True,
+                'editar_fichas': True,
+                'eliminar_fichas': True,
+                'cambiar_password': True,
+                'gestion_usuarios': False,
+                'acceder_sst': False,
+                'acceder_soporte': True,
+                'acceder_dashboard': False
+            }
 
     def puede(self, permiso):
-        if self.rol == 'admin':
-            return True
         return self.permisos.get(permiso, False)
 
 @login_manager.user_loader
@@ -96,10 +176,11 @@ def load_user(user_id):
                 'usuario': user_data[1],
                 'password': user_data[2],
                 'rol': user_data[3],
-                'permisos': user_data[4]
+                'modulo_principal': user_data[4] if user_data[4] else 'soporte',
+                'permisos': user_data[5]
             }
             
-            # Cargar permisos desde JSON
+            # Cargar permisos desde JSON si existen
             permisos = {}
             if user_dict.get('permisos'):
                 try:
@@ -111,6 +192,7 @@ def load_user(user_id):
                 user_dict['id'], 
                 user_dict['usuario'], 
                 user_dict['rol'],
+                user_dict['modulo_principal'],
                 permisos
             )
     except Exception as e:
@@ -121,7 +203,7 @@ def load_user(user_id):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     if request.method == 'POST':
         usuario = request.form['usuario']
@@ -141,7 +223,8 @@ def login():
                     'usuario': user_data[1],
                     'password': user_data[2],
                     'rol': user_data[3],
-                    'permisos': user_data[4]
+                    'modulo_principal': user_data[4] if user_data[4] else 'soporte',
+                    'permisos': user_data[5]
                 }
                 
                 if check_password_hash(user_dict['password'], password):
@@ -152,10 +235,16 @@ def login():
                         except:
                             permisos = {}
                     
-                    user = User(user_dict['id'], user_dict['usuario'], user_dict['rol'], permisos)
+                    user = User(
+                        user_dict['id'], 
+                        user_dict['usuario'], 
+                        user_dict['rol'],
+                        user_dict['modulo_principal'],
+                        permisos
+                    )
                     login_user(user)
-                    flash('¡Inicio de sesión exitoso!', 'success')
-                    return redirect(url_for('index'))
+                    flash(f'¡Bienvenido {user.usuario}!', 'success')
+                    return redirect_a_modulo_principal()
                 else:
                     flash('Usuario o contraseña incorrectos', 'error')
             else:
@@ -166,6 +255,17 @@ def login():
             print(f"Error en login: {e}")
     
     return render_template('login.html')
+
+def redirect_a_modulo_principal():
+    """Redirige al usuario a su módulo principal"""
+    if current_user.is_authenticated:
+        if current_user.rol == 'admin':
+            return redirect(url_for('dashboard'))
+        elif current_user.rol == 'sst':
+            return redirect(url_for('sst_dashboard'))
+        elif current_user.rol == 'soporte':
+            return redirect(url_for('index'))
+    return redirect(url_for('login'))
 
 @app.route('/logout')
 @login_required
@@ -209,7 +309,7 @@ def cambiar_password():
                     commit=True
                 )
                 flash('Contraseña actualizada correctamente', 'success')
-                return redirect(url_for('index'))
+                return redirect_a_modulo_principal()
             else:
                 flash('La contraseña actual es incorrecta', 'error')
                     
@@ -219,13 +319,46 @@ def cambiar_password():
     
     return render_template('cambiar_password.html')
 
-# ===== RUTAS PRINCIPALES =====
+# ===== DASHBOARD PRINCIPAL (Solo Admin) =====
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    if not current_user.puede('acceder_dashboard'):
+        flash('No tienes permisos para acceder al dashboard', 'error')
+        return redirect_a_modulo_principal()
+    
+    # Estadísticas para el dashboard
+    stats = {}
+    try:
+        # Contar fichas técnicas
+        resultado_fichas = ejecutar_consulta("SELECT COUNT(*) FROM fichas", fetch=True)
+        stats['total_fichas'] = resultado_fichas[0][0] if resultado_fichas else 0
+        
+        # Contar contenido SST
+        resultado_sst = ejecutar_consulta("SELECT COUNT(*) FROM sst_contenido", fetch=True)
+        stats['total_sst'] = resultado_sst[0][0] if resultado_sst else 0
+        
+        # Contar usuarios
+        resultado_usuarios = ejecutar_consulta("SELECT COUNT(*) FROM usuarios", fetch=True)
+        stats['total_usuarios'] = resultado_usuarios[0][0] if resultado_usuarios else 0
+        
+    except Exception as e:
+        print(f"Error al cargar estadísticas: {e}")
+        stats = {'total_fichas': 0, 'total_sst': 0, 'total_usuarios': 0}
+    
+    return render_template('dashboard.html', stats=stats)
+
+# ===== RUTAS DE SOPORTE TÉCNICO =====
 @app.route('/')
 @login_required
 def index():
+    if not current_user.puede('acceder_soporte'):
+        flash('No tienes permisos para acceder al módulo de soporte', 'error')
+        return redirect_a_modulo_principal()
+    
     if not current_user.puede('ver_fichas'):
         flash('No tienes permisos para ver las fichas', 'error')
-        return redirect(url_for('login'))
+        return redirect_a_modulo_principal()
     
     fichas = []
     try:
@@ -256,6 +389,10 @@ def index():
 @app.route('/agregar', methods=['GET', 'POST'])
 @login_required
 def agregar_ficha():
+    if not current_user.puede('acceder_soporte'):
+        flash('No tienes permisos para acceder al módulo de soporte', 'error')
+        return redirect_a_modulo_principal()
+    
     if not current_user.puede('agregar_fichas'):
         flash('No tienes permisos para realizar esta acción', 'error')
         return redirect(url_for('index'))
@@ -299,6 +436,10 @@ def agregar_ficha():
 @app.route('/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
 def editar_ficha(id):
+    if not current_user.puede('acceder_soporte'):
+        flash('No tienes permisos para acceder al módulo de soporte', 'error')
+        return redirect_a_modulo_principal()
+    
     if not current_user.puede('editar_fichas'):
         flash('No tienes permisos para realizar esta acción', 'error')
         return redirect(url_for('index'))
@@ -362,6 +503,10 @@ def editar_ficha(id):
 @app.route('/eliminar/<int:id>')
 @login_required
 def eliminar_ficha(id):
+    if not current_user.puede('acceder_soporte'):
+        flash('No tienes permisos para acceder al módulo de soporte', 'error')
+        return redirect_a_modulo_principal()
+    
     if not current_user.puede('eliminar_fichas'):
         flash('No tienes permisos para realizar esta acción', 'error')
         return redirect(url_for('index'))
@@ -378,6 +523,10 @@ def eliminar_ficha(id):
 @app.route('/buscar')
 @login_required
 def buscar():
+    if not current_user.puede('acceder_soporte'):
+        flash('No tienes permisos para acceder al módulo de soporte', 'error')
+        return redirect_a_modulo_principal()
+    
     if not current_user.puede('ver_fichas'):
         flash('No tienes permisos para ver las fichas', 'error')
         return redirect(url_for('index'))
@@ -434,6 +583,10 @@ def buscar():
 @app.route('/ficha/<int:id>')
 @login_required
 def ver_ficha(id):
+    if not current_user.puede('acceder_soporte'):
+        flash('No tienes permisos para acceder al módulo de soporte', 'error')
+        return redirect_a_modulo_principal()
+    
     if not current_user.puede('ver_fichas'):
         flash('No tienes permisos para ver las fichas', 'error')
         return redirect(url_for('index'))
@@ -466,13 +619,13 @@ def ver_ficha(id):
     
     return render_template('ver_ficha.html', ficha=ficha)
 
-# ===== RUTAS DE GESTIÓN DE USUARIOS =====
+# ===== RUTAS DE GESTIÓN DE USUARIOS (Solo Admin) =====
 @app.route('/usuarios')
 @login_required
 def gestion_usuarios():
-    if current_user.rol != 'admin':
+    if not current_user.puede('gestion_usuarios'):
         flash('No tienes permisos para acceder a esta página', 'error')
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     usuarios = []
     
@@ -485,9 +638,10 @@ def gestion_usuarios():
                 'usuario': usuario[1],
                 'password': usuario[2],
                 'rol': usuario[3],
-                'permisos': usuario[4],
-                'fecha_creacion': usuario[5],
-                'fecha_actualizacion': usuario[6]
+                'modulo_principal': usuario[4] if usuario[4] else 'soporte',
+                'permisos': usuario[5],
+                'fecha_creacion': usuario[6],
+                'fecha_actualizacion': usuario[7]
             }
             
             if usuario_dict.get('permisos'):
@@ -509,9 +663,9 @@ def gestion_usuarios():
 @app.route('/editar_usuario/<int:id>', methods=['GET', 'POST'])
 @login_required
 def editar_usuario(id):
-    if current_user.rol != 'admin':
+    if not current_user.puede('gestion_usuarios'):
         flash('No tienes permisos para realizar esta acción', 'error')
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     usuario_data = None
     
@@ -520,9 +674,10 @@ def editar_usuario(id):
             usuario = request.form['usuario']
             password = request.form['password']
             rol = request.form['rol']
+            modulo_principal = request.form['modulo_principal']
             
             permisos = {
-                'ver_fichas': True,
+                'ver_fichas': 'ver_fichas' in request.form,
                 'agregar_fichas': 'agregar_fichas' in request.form,
                 'editar_fichas': 'editar_fichas' in request.form,
                 'eliminar_fichas': 'eliminar_fichas' in request.form,
@@ -534,14 +689,14 @@ def editar_usuario(id):
             if password:
                 hash_password = generate_password_hash(password)
                 ejecutar_consulta(
-                    "UPDATE usuarios SET usuario = %s, password = %s, rol = %s, permisos = %s WHERE id = %s",
-                    (usuario, hash_password, rol, permisos_json, id),
+                    "UPDATE usuarios SET usuario = %s, password = %s, rol = %s, modulo_principal = %s, permisos = %s WHERE id = %s",
+                    (usuario, hash_password, rol, modulo_principal, permisos_json, id),
                     commit=True
                 )
             else:
                 ejecutar_consulta(
-                    "UPDATE usuarios SET usuario = %s, rol = %s, permisos = %s WHERE id = %s",
-                    (usuario, rol, permisos_json, id),
+                    "UPDATE usuarios SET usuario = %s, rol = %s, modulo_principal = %s, permisos = %s WHERE id = %s",
+                    (usuario, rol, modulo_principal, permisos_json, id),
                     commit=True
                 )
             
@@ -557,9 +712,10 @@ def editar_usuario(id):
                 'usuario': usuario[1],
                 'password': usuario[2],
                 'rol': usuario[3],
-                'permisos': usuario[4],
-                'fecha_creacion': usuario[5],
-                'fecha_actualizacion': usuario[6]
+                'modulo_principal': usuario[4] if usuario[4] else 'soporte',
+                'permisos': usuario[5],
+                'fecha_creacion': usuario[6],
+                'fecha_actualizacion': usuario[7]
             }
             
             if usuario_data.get('permisos'):
@@ -585,21 +741,22 @@ def editar_usuario(id):
 @app.route('/agregar_usuario', methods=['GET', 'POST'])
 @login_required
 def agregar_usuario():
-    if current_user.rol != 'admin':
+    if not current_user.puede('gestion_usuarios'):
         flash('No tienes permisos para realizar esta acción', 'error')
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     if request.method == 'POST':
         usuario = request.form['usuario']
         password = request.form['password']
         rol = request.form['rol']
+        modulo_principal = request.form['modulo_principal']
         
         if not usuario or not password:
             flash('Usuario y contraseña son obligatorios', 'error')
             return render_template('agregar_usuario.html')
         
         permisos = {
-            'ver_fichas': True,
+            'ver_fichas': 'ver_fichas' in request.form,
             'agregar_fichas': 'agregar_fichas' in request.form,
             'editar_fichas': 'editar_fichas' in request.form,
             'eliminar_fichas': 'eliminar_fichas' in request.form,
@@ -611,8 +768,8 @@ def agregar_usuario():
         
         try:
             ejecutar_consulta(
-                "INSERT INTO usuarios (usuario, password, rol, permisos) VALUES (%s, %s, %s, %s)",
-                (usuario, hash_password, rol, permisos_json),
+                "INSERT INTO usuarios (usuario, password, rol, modulo_principal, permisos) VALUES (%s, %s, %s, %s, %s)",
+                (usuario, hash_password, rol, modulo_principal, permisos_json),
                 commit=True
             )
             flash('Usuario agregado correctamente', 'success')
@@ -628,9 +785,9 @@ def agregar_usuario():
 @app.route('/eliminar_usuario/<int:id>')
 @login_required
 def eliminar_usuario(id):
-    if current_user.rol != 'admin':
+    if not current_user.puede('gestion_usuarios'):
         flash('No tienes permisos para realizar esta acción', 'error')
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     if id == current_user.id:
         flash('No puedes eliminar tu propio usuario', 'error')
@@ -1048,12 +1205,16 @@ def informacion_general():
 @login_required
 def sst_dashboard():
     """Dashboard principal de SST"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
     return render_template('sst/dashboard.html')
 
 @app.route('/sst/contenido')
 @login_required
 def sst_contenido():
-    """Lista de todo el contenido SST"""
+    """Lista de todo el contenido SST - VERSIÓN CORREGIDA"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
@@ -1082,8 +1243,14 @@ def sst_contenido():
         contenido_data = obtener_contenido_sst(filtros)
         
         for item in contenido_data:
-            # Asegurar que fecha_publicacion no sea None
-            fecha_publicacion = item[13]  # posición 13 es fecha_publicacion
+            # Manejar tags de forma segura
+            tags_value = item[12]
+            if tags_value is None:
+                tags_str = ''
+            elif isinstance(tags_value, (int, float)):
+                tags_str = str(tags_value)
+            else:
+                tags_str = str(tags_value)
             
             contenido_dict = {
                 'id': item[0],
@@ -1098,8 +1265,8 @@ def sst_contenido():
                 'video_url': item[9],
                 'categoria_id': item[10],
                 'es_obligatorio': item[11],
-                'tags': item[12],
-                'fecha_publicacion': fecha_publicacion or datetime.now(),  # Si es None, usa fecha actual
+                'tags': tags_str,  # Ahora siempre es string
+                'fecha_publicacion': item[13],
                 'usuario_creador': item[14],
                 'categoria_nombre': item[15],
                 'categoria_color': item[16],
@@ -1117,6 +1284,10 @@ def sst_contenido():
 @login_required
 def sst_agregar_contenido():
     """Agregar nuevo contenido SST - VERSIÓN MEJORADA CON BD"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
     if current_user.rol != 'admin':
         flash('No tienes permisos para agregar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
@@ -1238,6 +1409,10 @@ def sst_agregar_contenido():
 @login_required
 def sst_descargar_archivo(id):
     """Descargar archivo desde la base de datos"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
     try:
         archivo = obtener_archivo_desde_bd(id)
         
@@ -1261,6 +1436,10 @@ def sst_descargar_archivo(id):
 @login_required
 def sst_editar_contenido(id):
     """Editar contenido SST existente"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
     if current_user.rol != 'admin':
         flash('No tienes permisos para editar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
@@ -1368,7 +1547,7 @@ def sst_editar_contenido(id):
                 'video_url': contenido_data[9],
                 'categoria_id': contenido_data[10],
                 'es_obligatorio': contenido_data[11],
-                'tags': contenido_data[12],
+                'tags': str(contenido_data[12]) if contenido_data[12] is not None else '',
                 'fecha_publicacion': contenido_data[13],
                 'usuario_creador': contenido_data[14],
                 'categoria_nombre': contenido_data[15],
@@ -1390,6 +1569,10 @@ def sst_editar_contenido(id):
 @login_required
 def sst_eliminar_contenido(id):
     """Eliminar contenido SST"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
     if current_user.rol != 'admin':
         flash('No tienes permisos para eliminar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
@@ -1410,6 +1593,10 @@ def sst_eliminar_contenido(id):
 @login_required
 def sst_ver_video(id):
     """Ver video específico de SST"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
     video = None
     
     try:
@@ -1451,6 +1638,9 @@ def sst_ver_video(id):
 @app.route('/api/problemas/<categoria>')
 @login_required
 def obtener_problemas(categoria):
+    if not current_user.puede('acceder_soporte'):
+        return jsonify([])
+    
     problemas_por_categoria = {
         'TV': [
             'No hay señal en el televisor',
