@@ -24,3 +24,11 @@ class Config:
     DB_USER = os.environ.get('DB_USER', 'soporte_tecnico_bujd_user')
     DB_PASSWORD = os.environ.get('DB_PASSWORD', '4O43zJ3NiE5NrvdeMYD3hxsXgIOWVonw')
     DB_PORT = os.environ.get('DB_PORT', '5432')
+
+    # Configuración de Flask-Login
+    REMEMBER_COOKIE_DURATION = timedelta(days=7)
+    
+    # Configuración de sesiones
+    SESSION_COOKIE_SECURE = False  # Cambiar a True en producción con HTTPS
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
