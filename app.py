@@ -1054,6 +1054,10 @@ def sst_dashboard():
 @login_required
 def sst_contenido():
     """Lista de todo el contenido SST"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
     contenido = []
     categorias = []
     
@@ -1078,13 +1082,16 @@ def sst_contenido():
         contenido_data = obtener_contenido_sst(filtros)
         
         for item in contenido_data:
+            # Asegurar que fecha_publicacion no sea None
+            fecha_publicacion = item[13]  # posición 13 es fecha_publicacion
+            
             contenido_dict = {
                 'id': item[0],
                 'titulo': item[1],
                 'descripcion': item[2],
                 'tipo': item[3],
                 'archivo_url': item[4],
-                'tiene_archivo': item[5] is not None,  # archivo_data
+                'tiene_archivo': item[5] is not None,
                 'archivo_nombre': item[6],
                 'archivo_tipo': item[7],
                 'archivo_tamano': item[8],
@@ -1092,7 +1099,7 @@ def sst_contenido():
                 'categoria_id': item[10],
                 'es_obligatorio': item[11],
                 'tags': item[12],
-                'fecha_publicacion': item[13],
+                'fecha_publicacion': fecha_publicacion or datetime.now(),  # Si es None, usa fecha actual
                 'usuario_creador': item[14],
                 'categoria_nombre': item[15],
                 'categoria_color': item[16],
