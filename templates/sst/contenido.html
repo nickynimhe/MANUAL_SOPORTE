@@ -192,33 +192,52 @@
                             <div class="content-preview mb-3">
                                 {% if item.tipo == 'video' %}
                                     {% if item.tiene_archivo %}
-                                        <!-- VIDEO DESDE BD -->
+                                        <!-- VIDEO DESDE BD - REPRODUCCIÓN DIRECTA -->
                                         <div class="video-thumbnail position-relative">
                                             <div class="ratio ratio-16x9 bg-dark rounded">
-                                                <video class="rounded" style="object-fit: cover;" preload="metadata">
+                                                <!-- Mini reproductor que se reproduce DIRECTAMENTE -->
+                                                <video class="rounded w-100 h-100" 
+                                                       controls 
+                                                       preload="metadata"
+                                                       style="object-fit: cover;">
                                                     <source src="{{ url_for('sst_descargar_archivo', id=item.id) }}" 
                                                             type="{{ item.archivo_tipo }}">
+                                                    Tu navegador no soporta videos HTML5.
                                                 </video>
-                                                <div class="position-absolute top-50 start-50 translate-middle">
-                                                    <div class="btn btn-primary btn-lg rounded-circle" style="width: 60px; height: 60px;">
-                                                        <i class="fas fa-play"></i>
+                                                
+                                                <!-- Overlay para abrir en pantalla completa -->
+                                                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
+                                                     style="background: rgba(0,0,0,0.3); cursor: pointer;"
+                                                     onclick="window.location.href='{{ url_for('sst_ver_video', id=item.id) }}'">
+                                                    <div class="text-center text-white">
+                                                        <i class="fas fa-expand fa-2x mb-2"></i>
+                                                        <br>
+                                                        <small>Ver en pantalla completa</small>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <small class="text-muted d-block mt-1">
-                                                <i class="fas fa-film"></i> 
-                                                {% set filename = item.archivo_nombre if item.archivo_nombre else 'Video sin nombre' %}
-                                                {% if filename|length > 30 %}
-                                                    {{ filename[:30] }}...
-                                                {% else %}
-                                                    {{ filename }}
-                                                {% endif %}
-                                                {% if item.archivo_tamano %}
-                                                <span class="badge bg-light text-dark ms-1">
-                                                    {{ (item.archivo_tamano / 1024 / 1024)|round(2) }} MB
-                                                </span>
-                                                {% endif %}
-                                            </small>
+                                            
+                                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-film"></i> 
+                                                    {% set filename = item.archivo_nombre if item.archivo_nombre else 'Video' %}
+                                                    {% if filename|length > 25 %}
+                                                        {{ filename[:25] }}...
+                                                    {% else %}
+                                                        {{ filename }}
+                                                    {% endif %}
+                                                </small>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{{ url_for('sst_ver_video', id=item.id) }}" 
+                                                       class="btn btn-outline-primary btn-sm" title="Ver completo">
+                                                        <i class="fas fa-expand"></i>
+                                                    </a>
+                                                    <a href="{{ url_for('sst_descargar_archivo_forzado', id=item.id) }}" 
+                                                       class="btn btn-outline-secondary btn-sm" title="Descargar">
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
                                         </div>
                                     {% elif item.video_url %}
                                         <!-- VIDEO EXTERNO -->
@@ -231,9 +250,14 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <small class="text-muted d-block mt-1">
-                                                <i class="fas fa-link"></i> Enlace externo
-                                            </small>
+                                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-link"></i> Enlace externo
+                                                </small>
+                                                <a href="{{ item.video_url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-external-link-alt"></i> Abrir
+                                                </a>
+                                            </div>
                                         </div>
                                     {% endif %}
                                     
@@ -254,6 +278,16 @@
                                             {{ (item.archivo_tamano / 1024)|round(1) }} KB
                                         </small>
                                         {% endif %}
+                                        <div class="mt-2">
+                                            <a href="{{ url_for('sst_descargar_archivo', id=item.id) }}" 
+                                               class="btn btn-outline-primary btn-sm" target="_blank">
+                                                <i class="fas fa-eye"></i> Ver
+                                            </a>
+                                            <a href="{{ url_for('sst_descargar_archivo_forzado', id=item.id) }}" 
+                                               class="btn btn-outline-success btn-sm" download>
+                                                <i class="fas fa-download"></i> Descargar
+                                            </a>
+                                        </div>
                                     </div>
                                     
                                 {% elif item.tipo == 'imagen' %}
@@ -264,7 +298,8 @@
                                                 <img src="{{ url_for('sst_descargar_archivo', id=item.id) }}" 
                                                      alt="{{ item.titulo }}" 
                                                      class="img-fluid" 
-                                                     style="object-fit: cover; width: 100%; height: 100%;">
+                                                     style="object-fit: cover; width: 100%; height: 100%; cursor: pointer;"
+                                                     onclick="window.location.href='{{ url_for('sst_descargar_archivo', id=item.id) }}'">
                                             {% elif item.archivo_url %}
                                                 <img src="{{ item.archivo_url }}" 
                                                      alt="{{ item.titulo }}" 
@@ -276,15 +311,23 @@
                                                 </div>
                                             {% endif %}
                                         </div>
-                                        <small class="text-muted d-block mt-1">
-                                            <i class="fas fa-image"></i> 
-                                            {% set img_name = item.archivo_nombre if item.archivo_nombre else 'Imagen' %}
-                                            {% if img_name|length > 30 %}
-                                                {{ img_name[:30] }}...
-                                            {% else %}
-                                                {{ img_name }}
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-image"></i> 
+                                                {% set img_name = item.archivo_nombre if item.archivo_nombre else 'Imagen' %}
+                                                {% if img_name|length > 30 %}
+                                                    {{ img_name[:30] }}...
+                                                {% else %}
+                                                    {{ img_name }}
+                                                {% endif %}
+                                            </small>
+                                            {% if item.tiene_archivo %}
+                                            <a href="{{ url_for('sst_descargar_archivo_forzado', id=item.id) }}" 
+                                               class="btn btn-outline-secondary btn-sm" download>
+                                                <i class="fas fa-download"></i>
+                                            </a>
                                             {% endif %}
-                                        </small>
+                                        </div>
                                     </div>
                                     
                                 {% elif item.tipo == 'enlace' %}
@@ -292,7 +335,7 @@
                                     <div class="link-preview p-3 bg-info bg-opacity-10 rounded text-center">
                                         <i class="fas fa-link fa-3x text-info mb-2"></i>
                                         <p class="mb-1 fw-bold">Enlace Externo</p>
-                                        <small class="text-muted d-block">
+                                        <small class="text-muted d-block mb-2">
                                             {% if item.archivo_url %}
                                                 {% if item.archivo_url|length > 40 %}
                                                     {{ item.archivo_url[:40] }}...
@@ -303,6 +346,12 @@
                                                 Sin URL
                                             {% endif %}
                                         </small>
+                                        {% if item.archivo_url %}
+                                        <a href="{{ item.archivo_url }}" target="_blank" 
+                                           class="btn btn-outline-info btn-sm">
+                                            <i class="fas fa-external-link-alt"></i> Visitar Enlace
+                                        </a>
+                                        {% endif %}
                                     </div>
                                 {% endif %}
                             </div>
@@ -343,40 +392,40 @@
                                     {% if item.tipo == 'video' %}
                                         {% if item.tiene_archivo %}
                                             <a href="{{ url_for('sst_ver_video', id=item.id) }}" 
-                                               class="btn btn-primary">
+                                               class="btn btn-primary btn-sm">
                                                 <i class="fas fa-play"></i> Ver
                                             </a>
                                         {% elif item.video_url %}
                                             <a href="{{ item.video_url }}" 
                                                target="_blank" 
-                                               class="btn btn-primary">
+                                               class="btn btn-primary btn-sm">
                                                 <i class="fas fa-external-link-alt"></i> Abrir
                                             </a>
                                         {% endif %}
                                     {% elif item.tipo == 'documento' or item.tipo == 'imagen' %}
                                         {% if item.tiene_archivo %}
                                             <a href="{{ url_for('sst_descargar_archivo', id=item.id) }}" 
-                                               class="btn btn-outline-primary" download>
-                                                <i class="fas fa-download"></i>
+                                               class="btn btn-outline-primary btn-sm" target="_blank">
+                                                <i class="fas fa-eye"></i>
                                             </a>
                                         {% elif item.archivo_url %}
                                             <a href="{{ item.archivo_url }}" 
                                                target="_blank" 
-                                               class="btn btn-outline-primary">
+                                               class="btn btn-outline-primary btn-sm">
                                                 <i class="fas fa-external-link-alt"></i>
                                             </a>
                                         {% endif %}
                                     {% elif item.tipo == 'enlace' %}
                                         <a href="{{ item.archivo_url if item.archivo_url else '#' }}" 
                                            target="_blank" 
-                                           class="btn btn-outline-info {% if not item.archivo_url %}disabled{% endif %}">
+                                           class="btn btn-outline-info btn-sm {% if not item.archivo_url %}disabled{% endif %}">
                                             <i class="fas fa-external-link-alt"></i> Visitar
                                         </a>
                                     {% endif %}
                                     
                                     {% if current_user.rol == 'admin' %}
                                     <a href="{{ url_for('sst_editar_contenido', id=item.id) }}" 
-                                       class="btn btn-outline-secondary">
+                                       class="btn btn-outline-secondary btn-sm">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     {% endif %}
@@ -481,6 +530,11 @@
     line-height: 1.4;
 }
 
+/* Estilos para mini reproductor */
+video {
+    background-color: #000;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .card-header .dropdown {
@@ -491,41 +545,16 @@
     .card-title {
         font-size: 1rem;
     }
+    .video-thumbnail .btn-group {
+        flex-direction: column;
+        gap: 5px;
+    }
 }
 </style>
 
 <!-- SCRIPT PARA MEJORAR INTERACCIÓN -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Hacer que los videos en miniatura se reproduzcan al pasar el mouse
-    const videoThumbnails = document.querySelectorAll('.video-thumbnail video');
-    videoThumbnails.forEach(video => {
-        const parent = video.closest('.video-thumbnail');
-        const playButton = parent?.querySelector('.fa-play')?.closest('.btn');
-        
-        if (parent && playButton) {
-            playButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                const card = this.closest('.card');
-                const title = card.querySelector('.card-title').textContent;
-                const videoId = this.closest('.card').dataset.id;
-                
-                if (videoId) {
-                    window.location.href = `/sst/video/${videoId}`;
-                }
-            });
-        }
-        
-        // Pausar todos los videos cuando se hace clic en otro
-        video.addEventListener('play', function() {
-            videoThumbnails.forEach(otherVideo => {
-                if (otherVideo !== video && !otherVideo.paused) {
-                    otherVideo.pause();
-                }
-            });
-        });
-    });
-    
     // Confirmación mejorada para eliminación
     const deleteForms = document.querySelectorAll('form[action*="eliminar"]');
     deleteForms.forEach(form => {
@@ -549,6 +578,22 @@ document.addEventListener('DOMContentLoaded', function() {
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Controlar mini reproductores de video
+    const miniVideos = document.querySelectorAll('.video-thumbnail video');
+    miniVideos.forEach(video => {
+        // Pausar otros videos cuando se reproduce uno
+        video.addEventListener('play', function() {
+            miniVideos.forEach(otherVideo => {
+                if (otherVideo !== video && !otherVideo.paused) {
+                    otherVideo.pause();
+                }
+            });
+        });
+        
+        // Limitar volumen de mini reproductores
+        video.volume = 0.3;
     });
 });
 </script>
