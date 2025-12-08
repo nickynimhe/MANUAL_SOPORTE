@@ -14,7 +14,7 @@
 
     <div class="row">
         <div class="col-lg-8">
-            <div class="card">
+            <div class="card shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div>
                         <h4 class="mb-0">{{ video.titulo }}</h4>
@@ -39,133 +39,104 @@
                     {% if video.descripcion %}
                     <div class="mb-4">
                         <h6>Descripción:</h6>
-                        <p class="card-text">{{ video.descripcion|safe }}</p>
+                        <p class="card-text">{{ video.descripcion }}</p>
                     </div>
                     {% endif %}
 
-                    <!-- REPRODUCTOR DE VIDEO -->
+                    <!-- REPRODUCTOR DE VIDEO PRINCIPAL -->
                     <div class="video-container mb-4">
-                        {% if video.es_video_en_bd %}
-                            <!-- Video desde Base de Datos -->
+                        {% if video.tiene_archivo and video.archivo_tipo and video.archivo_tipo.startswith('video/') %}
+                            <!-- VIDEO SUBIDO DESDE DISPOSITIVO - REPRODUCCIÓN DIRECTA -->
                             <div class="embed-responsive embed-responsive-16by9">
-                                <video id="videoPlayer" controls class="embed-responsive-item" 
-                                       preload="metadata" poster="">
-                                    <source src="{{ url_for('sst_stream_video', id=video.id) }}" 
+                                <video id="mainVideoPlayer" 
+                                       controls 
+                                       class="embed-responsive-item w-100" 
+                                       style="background: #000;"
+                                       preload="auto">
+                                    <source src="{{ url_for('sst_descargar_archivo', id=video.id) }}" 
                                             type="{{ video.archivo_tipo }}">
-                                    Tu navegador no soporta el elemento video.
+                                    Tu navegador no soporta videos HTML5.
                                 </video>
                             </div>
                             
-                            <div class="video-controls mt-2 d-flex justify-content-between align-items-center">
-                                <small class="text-muted">
-                                    <i class="fas fa-file-video"></i> {{ video.archivo_nombre }}
-                                    ({{ (video.archivo_tamano / 1024 / 1024)|round(2) }} MB)
-                                </small>
-                                <div>
-                                    <a href="{{ url_for('sst_descargar_archivo', id=video.id) }}" 
-                                       class="btn btn-sm btn-outline-primary" download>
-                                        <i class="fas fa-download"></i> Descargar
-                                    </a>
+                            <!-- CONTROLES DEL VIDEO -->
+                            <div class="video-controls mt-3 p-3 bg-light rounded">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-info-circle"></i> Información:</h6>
+                                        <ul class="list-unstyled mb-0">
+                                            <li><strong>Nombre:</strong> {{ video.archivo_nombre }}</li>
+                                            <li><strong>Tamaño:</strong> {{ (video.archivo_tamano / 1024 / 1024)|round(2) }} MB</li>
+                                            <li><strong>Formato:</strong> {{ video.archivo_tipo|replace('video/', '')|upper }}</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <div class="btn-group">
+                                            <button class="btn btn-outline-primary" onclick="toggleFullScreen()">
+                                                <i class="fas fa-expand"></i> Pantalla completa
+                                            </button>
+                                            <a href="{{ url_for('sst_descargar_archivo_forzado', id=video.id) }}" 
+                                               class="btn btn-outline-success" download>
+                                                <i class="fas fa-download"></i> Descargar
+                                            </a>
+                                            {% if current_user.rol == 'admin' %}
+                                            <a href="{{ url_for('sst_editar_contenido', id=video.id) }}" 
+                                               class="btn btn-outline-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         
-                        {% elif video.es_video_url %}
-                            <!-- Video desde URL externa -->
-                            <div class="embed-responsive embed-responsive-16by9">
-                                {% if 'youtube.com' in video.video_url or 'youtu.be' in video.video_url %}
-                                    <!-- YouTube -->
-                                    {% set youtube_id = '' %}
-                                    {% if 'v=' in video.video_url %}
-                                        {% set youtube_id = video.video_url.split('v=')[1].split('&')[0] %}
-                                    {% elif 'youtu.be/' in video.video_url %}
-                                        {% set youtube_id = video.video_url.split('youtu.be/')[1].split('?')[0] %}
-                                    {% endif %}
-                                    
-                                    {% if youtube_id %}
-                                    <iframe class="embed-responsive-item" 
-                                            src="https://www.youtube.com/embed/{{ youtube_id }}?rel=0" 
-                                            frameborder="0" 
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                            allowfullscreen
-                                            title="YouTube video player">
-                                    </iframe>
-                                    {% else %}
-                                    <div class="alert alert-warning">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                        URL de YouTube no válida
-                                    </div>
-                                    {% endif %}
-                                    
-                                {% elif 'vimeo.com' in video.video_url %}
-                                    <!-- Vimeo -->
-                                    {% set vimeo_id = video.video_url.split('/')[-1].split('?')[0] %}
-                                    <iframe class="embed-responsive-item" 
-                                            src="https://player.vimeo.com/video/{{ vimeo_id }}" 
-                                            frameborder="0" 
-                                            allow="autoplay; fullscreen; picture-in-picture" 
-                                            allowfullscreen>
-                                    </iframe>
-                                    
-                                {% elif video.video_url|is_video_url %}
-                                    <!-- Video HTML5 desde URL -->
-                                    <video controls class="embed-responsive-item" preload="metadata">
-                                        <source src="{{ video.video_url }}" type="video/mp4">
-                                        Tu navegador no soporta el elemento video.
-                                    </video>
-                                    
-                                {% else %}
-                                    <!-- Enlace genérico -->
-                                    <div class="alert alert-info text-center p-5">
-                                        <i class="fas fa-external-link-alt fa-3x mb-3"></i>
-                                        <h5>Video Externo</h5>
-                                        <p>Este contenido está alojado en una plataforma externa.</p>
-                                        <a href="{{ video.video_url }}" target="_blank" 
-                                           class="btn btn-primary">
-                                            <i class="fas fa-external-link-alt"></i> Abrir Video
-                                        </a>
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            {% if 'youtube.com' not in video.video_url and 'vimeo.com' not in video.video_url and video.video_url|is_video_url %}
-                            <div class="video-controls mt-2 d-flex justify-content-between align-items-center">
-                                <small class="text-muted">
-                                    <i class="fas fa-link"></i> Video externo
-                                </small>
-                                <a href="{{ video.video_url }}" target="_blank" 
-                                   class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-external-link-alt"></i> Abrir en nueva pestaña
+                        {% elif video.video_url %}
+                            <!-- VIDEO EXTERNO (YouTube, Vimeo, etc.) -->
+                            <div class="alert alert-info mb-3">
+                                <i class="fas fa-external-link-alt"></i> 
+                                Este es un video externo. 
+                                <a href="{{ video.video_url }}" target="_blank" class="alert-link">
+                                    Haz clic aquí para verlo en su sitio original
                                 </a>
                             </div>
+                            
+                            {% if 'youtube.com' in video.video_url or 'youtu.be' in video.video_url %}
+                                <!-- YouTube Embed -->
+                                {% set youtube_id = '' %}
+                                {% if 'v=' in video.video_url %}
+                                    {% set youtube_id = video.video_url.split('v=')[1].split('&')[0] %}
+                                {% elif 'youtu.be/' in video.video_url %}
+                                    {% set youtube_id = video.video_url.split('youtu.be/')[1].split('?')[0] %}
+                                {% endif %}
+                                
+                                {% if youtube_id %}
+                                <div class="ratio ratio-16x9">
+                                    <iframe src="https://www.youtube.com/embed/{{ youtube_id }}" 
+                                            frameborder="0" 
+                                            allowfullscreen
+                                            class="w-100 h-100">
+                                    </iframe>
+                                </div>
+                                {% endif %}
+                                
+                            {% else %}
+                                <!-- Otros videos externos -->
+                                <div class="ratio ratio-16x9">
+                                    <video controls class="w-100 h-100">
+                                        <source src="{{ video.video_url }}" type="video/mp4">
+                                        Tu navegador no soporta videos HTML5.
+                                    </video>
+                                </div>
                             {% endif %}
                         
-                        {% elif video.archivo_url and video.archivo_url|is_video_url %}
-                            <!-- Video desde archivo_url (URL directa) -->
-                            <div class="embed-responsive embed-responsive-16by9">
-                                <video controls class="embed-responsive-item" preload="metadata">
-                                    <source src="{{ video.archivo_url }}" type="video/mp4">
-                                    Tu navegador no soporta el elemento video.
-                                </video>
-                            </div>
-                            
-                            <div class="video-controls mt-2 d-flex justify-content-between align-items-center">
-                                <small class="text-muted">
-                                    <i class="fas fa-link"></i> Archivo externo
-                                </small>
-                                <a href="{{ video.archivo_url }}" target="_blank" 
-                                   class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-external-link-alt"></i> Abrir enlace
-                                </a>
-                            </div>
-                        
                         {% else %}
-                            <!-- Sin video disponible -->
-                            <div class="alert alert-warning text-center p-5">
+                            <!-- SIN VIDEO -->
+                            <div class="alert alert-warning text-center py-5">
                                 <i class="fas fa-video-slash fa-3x mb-3"></i>
-                                <h5>Video no disponible</h5>
-                                <p>No se encontró una fuente de video válida para este contenido.</p>
+                                <h4>Video no disponible</h4>
+                                <p class="mb-0">Este contenido no tiene un video asociado o hubo un error al cargarlo.</p>
                                 
-                                {% if video.tiene_archivo and video.archivo_tipo.startswith('image/') %}
+                                {% if video.tiene_archivo and video.archivo_tipo and video.archivo_tipo.startswith('image/') %}
                                 <div class="mt-3">
                                     <img src="{{ url_for('sst_descargar_archivo', id=video.id) }}" 
                                          alt="{{ video.titulo }}"
@@ -186,7 +157,7 @@
                     <div class="card">
                         <div class="card-header">
                             <h6 class="mb-0">
-                                <i class="fas fa-info-circle"></i> Información del Video
+                                <i class="fas fa-info-circle"></i> Información del Contenido
                             </h6>
                         </div>
                         <div class="card-body">
@@ -209,20 +180,24 @@
                                 </div>
                                 <div class="col-md-6">
                                     <ul class="list-unstyled">
-                                        {% if video.es_video_en_bd %}
+                                        {% if video.tiene_archivo %}
                                         <li class="mb-2">
                                             <strong><i class="fas fa-database"></i> Almacenamiento:</strong>
                                             Base de Datos
                                         </li>
                                         <li class="mb-2">
                                             <strong><i class="fas fa-file"></i> Formato:</strong>
-                                            {{ video.archivo_tipo|replace('video/', '')|upper }}
+                                            {% if video.archivo_tipo %}
+                                                {{ video.archivo_tipo|replace('video/', '')|upper }}
+                                            {% else %}
+                                                Desconocido
+                                            {% endif %}
                                         </li>
                                         <li class="mb-2">
                                             <strong><i class="fas fa-weight-hanging"></i> Tamaño:</strong>
                                             {{ (video.archivo_tamano / 1024 / 1024)|round(2) }} MB
                                         </li>
-                                        {% elif video.es_video_url %}
+                                        {% elif video.video_url %}
                                         <li class="mb-2">
                                             <strong><i class="fas fa-cloud"></i> Almacenamiento:</strong>
                                             Plataforma Externa
@@ -239,7 +214,7 @@
                                 </div>
                             </div>
                             
-                            {% if video.tags %}
+                            {% if video.tags and video.tags|trim %}
                             <div class="mt-3">
                                 <strong><i class="fas fa-tags"></i> Etiquetas:</strong>
                                 {% for tag in video.tags|safe_tags %}
@@ -266,8 +241,8 @@
                             <i class="fas fa-arrow-left"></i> Volver al Listado
                         </a>
                         
-                        {% if video.es_video_en_bd %}
-                        <a href="{{ url_for('sst_descargar_archivo', id=video.id) }}" 
+                        {% if video.tiene_archivo %}
+                        <a href="{{ url_for('sst_descargar_archivo_forzado', id=video.id) }}" 
                            class="btn btn-outline-primary" download>
                             <i class="fas fa-download"></i> Descargar Video
                         </a>
@@ -328,7 +303,7 @@
                         <p><strong>Creador:</strong> {{ video.creador_nombre or 'admin' }}</p>
                         <p><strong>Última actualización:</strong> {{ video.fecha_publicacion|format_date }}</p>
                         
-                        {% if video.es_video_en_bd %}
+                        {% if video.tiene_archivo %}
                         <p><strong>Resolución recomendada:</strong> 1280x720 (HD)</p>
                         <p><strong>Compatibilidad:</strong> Chrome, Firefox, Edge, Safari</p>
                         {% endif %}
@@ -368,13 +343,35 @@
 </div>
 {% endif %}
 
+<!-- ESTILOS PERSONALIZADOS -->
 <style>
 .video-container {
     background: #000;
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
-    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
+
+.video-controls {
+    border-top: 3px solid #007bff;
+}
+
+/* Mejoras para el reproductor de video */
+#mainVideoPlayer {
+    outline: none;
+    max-height: 70vh;
+}
+
+#mainVideoPlayer::-webkit-media-controls-panel {
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+}
+
+#mainVideoPlayer::-webkit-media-controls-play-button,
+#mainVideoPlayer::-webkit-media-controls-volume-slider,
+#mainVideoPlayer::-webkit-media-controls-mute-button {
+    filter: brightness(1.5);
+}
+
 .embed-responsive-16by9 {
     position: relative;
     display: block;
@@ -382,12 +379,14 @@
     padding: 0;
     overflow: hidden;
 }
+
 .embed-responsive-16by9::before {
     display: block;
     content: "";
     padding-top: 56.25%; /* 16:9 aspect ratio */
 }
-.embed-responsive-item {
+
+.embed-responsive-16by9 > * {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -395,59 +394,67 @@
     width: 100%;
     height: 100%;
     border: 0;
-    background: #000;
 }
-.video-controls {
-    background: #f8f9fa;
-    padding: 10px 15px;
-    border-radius: 0 0 8px 8px;
-    border: 1px solid #dee2e6;
-    border-top: none;
-}
-/* Mejoras para el reproductor de video */
-video {
-    background-color: #000;
-    max-height: 70vh;
-}
-video::-webkit-media-controls-panel {
-    background-color: rgba(0, 0, 0, 0.7);
-}
-video::-webkit-media-controls-play-button,
-video::-webkit-media-controls-volume-slider,
-video::-webkit-media-controls-mute-button {
-    filter: invert(1);
-}
-/* Responsividad */
+
+/* Responsive */
 @media (max-width: 768px) {
-    .video-controls {
-        flex-direction: column;
-        gap: 10px;
-        text-align: center;
+    .video-controls .btn-group {
+        flex-wrap: wrap;
+        justify-content: center;
     }
-    .embed-responsive-16by9::before {
-        padding-top: 75%; /* 4:3 en móviles */
+    .video-controls .btn {
+        margin-bottom: 5px;
+    }
+    .card-body .row > div {
+        margin-bottom: 15px;
     }
 }
 </style>
 
+<!-- SCRIPTS PARA VIDEO -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Registrar visualización
-    if (typeof video !== 'undefined' && video.id) {
-        // Aquí podrías agregar una llamada AJAX para registrar la visualización
-        console.log('Video visualizado:', video.id);
+// Pantalla completa para el video
+function toggleFullScreen() {
+    const video = document.getElementById('mainVideoPlayer');
+    if (!document.fullscreenElement) {
+        if (video.requestFullscreen) {
+            video.requestFullscreen();
+        } else if (video.mozRequestFullScreen) { // Firefox
+            video.mozRequestFullScreen();
+        } else if (video.webkitRequestFullscreen) { // Chrome, Safari y Opera
+            video.webkitRequestFullscreen();
+        } else if (video.msRequestFullscreen) { // IE/Edge
+            video.msRequestFullscreen();
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
     }
-    
-    // Configurar eventos del reproductor
-    const videoPlayer = document.getElementById('videoPlayer');
-    if (videoPlayer) {
-        videoPlayer.addEventListener('play', function() {
-            console.log('Video iniciado');
+}
+
+// Cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('mainVideoPlayer');
+    if (video) {
+        // Intentar reproducir automáticamente (solo si el usuario interactúa)
+        video.addEventListener('click', function() {
+            if (video.paused) {
+                video.play().catch(e => console.log('Auto-play bloqueado:', e));
+            }
         });
         
-        videoPlayer.addEventListener('ended', function() {
-            console.log('Video finalizado');
-            // Podrías marcar como completado aquí
+        // Mostrar tiempo de reproducción
+        video.addEventListener('timeupdate', function() {
+            const currentTime = formatTime(video.currentTime);
+            const duration = formatTime(video.duration);
+            console.log(`Reproduciendo: ${currentTime} / ${duration}`);
+        });
+        
+        // Registrar cuando el video termina
+        video.addEventListener('ended', function() {
+            console.log('Video terminado');
+            // Aquí podrías agregar lógica para marcar como completado
         });
     }
     
@@ -455,8 +462,43 @@ document.addEventListener('DOMContentLoaded', function() {
     const deleteModal = document.getElementById('deleteModal');
     if (deleteModal) {
         deleteModal.addEventListener('show.bs.modal', function(event) {
-            console.log('Mostrar modal de eliminación para video:', video.id);
+            console.log('Mostrar modal de eliminación para video:', {{ video.id }});
         });
+    }
+});
+
+// Formatear tiempo (mm:ss)
+function formatTime(seconds) {
+    if (isNaN(seconds)) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+// Teclas de acceso rápido
+document.addEventListener('keydown', function(e) {
+    const video = document.getElementById('mainVideoPlayer');
+    if (!video) return;
+    
+    switch(e.key.toLowerCase()) {
+        case ' ':
+        case 'k':
+            e.preventDefault();
+            if (video.paused) video.play();
+            else video.pause();
+            break;
+        case 'f':
+            toggleFullScreen();
+            break;
+        case 'm':
+            video.muted = !video.muted;
+            break;
+        case 'arrowleft':
+            video.currentTime -= 10;
+            break;
+        case 'arrowright':
+            video.currentTime += 10;
+            break;
     }
 });
 </script>
