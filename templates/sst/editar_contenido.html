@@ -1,201 +1,354 @@
 {% extends "base.html" %}
 
-{% block title %}Editar Contenido SST{% endblock %}
+{% block title %}Editar Contenido SST - {{ contenido.titulo }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-xl-8 col-lg-10">
-            <!-- Header -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 class="h2 mb-2 fw-bold">
-                                <i class="fas fa-edit me-2 text-warning"></i>
-                                Editar Contenido
-                            </h1>
-                            <p class="text-muted mb-0">Modificar material de capacitación existente</p>
-                        </div>
-                        <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Volver
-                        </a>
-                    </div>
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('sst_dashboard') }}">SST</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('sst_contenido') }}">Contenido</a></li>
+            <li class="breadcrumb-item active">Editar: {{ contenido.titulo }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0"><i class="fas fa-edit"></i> Editar Contenido SST</h4>
                 </div>
-            </div>
-
-            <!-- Formulario de Edición -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <form method="POST" enctype="multipart/form-data" id="editarContenidoForm">
-                        <div class="row">
-                            <!-- Información Básica -->
-                            <div class="col-md-6">
-                                <div class="mb-4">
-                                    <label for="titulo" class="form-label fw-bold text-dark">Título del contenido *</label>
-                                    <input type="text" class="form-control form-control-lg" id="titulo" name="titulo" 
-                                           value="{{ contenido.titulo }}" required placeholder="Ingresa un título descriptivo">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-4">
-                                    <label for="categoria_id" class="form-label fw-bold text-dark">Categoría *</label>
-                                    <select class="form-select form-select-lg" id="categoria_id" name="categoria_id" required>
-                                        <option value="">Seleccionar categoría</option>
-                                        {% for categoria in categorias %}
-                                        <option value="{{ categoria.id }}" 
-                                                {% if contenido.categoria_id == categoria.id %}selected{% endif %}>
-                                            {{ categoria.nombre }}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
+                
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <!-- TÍTULO -->
+                        <div class="mb-3">
+                            <label for="titulo" class="form-label">
+                                <i class="fas fa-heading"></i> Título *
+                            </label>
+                            <input type="text" class="form-control" id="titulo" name="titulo" 
+                                   value="{{ contenido.titulo if contenido.titulo else '' }}" 
+                                   required>
                         </div>
-
-                        <!-- Descripción -->
-                        <div class="mb-4">
-                            <label for="descripcion" class="form-label fw-bold text-dark">Descripción del contenido</label>
-                            <textarea class="form-control" id="descripcion" name="descripcion" rows="4" 
-                                      placeholder="Describe el propósito y contenido del material...">{{ contenido.descripcion or '' }}</textarea>
-                            <div class="form-text d-flex justify-content-between">
-                                <span>Máximo 500 caracteres</span>
-                                <span id="descripcionContador">{{ (contenido.descripcion or '')|length }}/500</span>
-                            </div>
+                        
+                        <!-- DESCRIPCIÓN -->
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">
+                                <i class="fas fa-align-left"></i> Descripción
+                            </label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" 
+                                      rows="3">{{ contenido.descripcion if contenido.descripcion else '' }}</textarea>
                         </div>
-
-                        <!-- Tipo y Configuración -->
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-4">
-                                    <label for="tipo" class="form-label fw-bold text-dark">Tipo de contenido *</label>
-                                    <select class="form-select form-select-lg" id="tipo" name="tipo" required>
-                                        <option value="">Seleccionar tipo</option>
-                                        <option value="video" {% if contenido.tipo == 'video' %}selected{% endif %}>Video</option>
-                                        <option value="documento" {% if contenido.tipo == 'documento' %}selected{% endif %}>Documento</option>
-                                        <option value="imagen" {% if contenido.tipo == 'imagen' %}selected{% endif %}>Imagen</option>
-                                        <option value="enlace" {% if contenido.tipo == 'enlace' %}selected{% endif %}>Enlace externo</option>
-                                    </select>
+                        
+                        <!-- TIPO -->
+                        <div class="mb-3">
+                            <label for="tipo" class="form-label">
+                                <i class="fas fa-file-alt"></i> Tipo de Contenido *
+                            </label>
+                            <select class="form-control" id="tipo" name="tipo" required>
+                                <option value="video" {% if contenido.tipo == 'video' %}selected{% endif %}>
+                                    <i class="fas fa-video"></i> Video
+                                </option>
+                                <option value="documento" {% if contenido.tipo == 'documento' %}selected{% endif %}>
+                                    <i class="fas fa-file-pdf"></i> Documento
+                                </option>
+                                <option value="imagen" {% if contenido.tipo == 'imagen' %}selected{% endif %}>
+                                    <i class="fas fa-image"></i> Imagen
+                                </option>
+                                <option value="enlace" {% if contenido.tipo == 'enlace' %}selected{% endif %}>
+                                    <i class="fas fa-link"></i> Enlace
+                                </option>
+                            </select>
+                        </div>
+                        
+                        <!-- CATEGORÍA -->
+                        <div class="mb-3">
+                            <label for="categoria_id" class="form-label">
+                                <i class="fas fa-folder"></i> Categoría *
+                            </label>
+                            <select class="form-control" id="categoria_id" name="categoria_id" required>
+                                <option value="">Seleccionar categoría</option>
+                                {% for cat in categorias %}
+                                <option value="{{ cat.id }}" 
+                                        {% if contenido.categoria_id == cat.id|string or contenido.categoria_id == cat.id %}selected{% endif %}
+                                        style="color: {{ cat.color }}">
+                                    {{ cat.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- CAMPOS DINÁMICOS SEGÚN TIPO -->
+                        <div id="videoFields" class="mb-3" style="display: {% if contenido.tipo == 'video' %}block{% else %}none{% endif %};">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <i class="fas fa-video"></i> Configuración de Video
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-4">
-                                    <label class="form-label fw-bold text-dark">Configuración</label>
-                                    <div class="form-check form-switch mt-2">
-                                        <input class="form-check-input" type="checkbox" id="es_obligatorio" name="es_obligatorio" 
-                                               {% if contenido.es_obligatorio %}checked{% endif %}>
-                                        <label class="form-check-label fw-medium" for="es_obligatorio">
-                                            Contenido obligatorio
+                                <div class="card-body">
+                                    <!-- VIDEO URL -->
+                                    <div class="mb-3">
+                                        <label for="video_url" class="form-label">
+                                            URL de Video (YouTube, Vimeo, etc.)
                                         </label>
+                                        <input type="url" class="form-control" id="video_url" name="video_url"
+                                               value="{{ contenido.video_url if contenido.video_url else '' }}"
+                                               placeholder="https://www.youtube.com/watch?v=... o https://vimeo.com/...">
+                                        <small class="text-muted">Deja vacío si subirás un archivo local</small>
+                                    </div>
+                                    
+                                    <!-- ARCHIVO LOCAL -->
+                                    <div class="mb-3">
+                                        <label for="archivo_local" class="form-label">
+                                            <i class="fas fa-upload"></i> Subir Archivo de Video
+                                        </label>
+                                        <input type="file" class="form-control" id="archivo_local" name="archivo_local"
+                                               accept="video/*">
+                                        <small class="text-muted">
+                                            Formatos aceptados: MP4, AVI, MOV, MKV
+                                            {% if contenido.archivo_nombre %}
+                                            <br>
+                                            <strong>Archivo actual:</strong> {{ contenido.archivo_nombre }}
+                                            ({{ (contenido.archivo_tamano / 1024 / 1024)|round(2) if contenido.archivo_tamano else 0 }} MB)
+                                            {% endif %}
+                                        </small>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Campos dinámicos -->
-                        <div id="campos-dinamicos">
-                            <!-- Campos para Video -->
-                            <div id="campos-video" class="campos-tipo" style="display: {% if contenido.tipo == 'video' %}block{% else %}none{% endif %};">
-                                <div class="mb-4">
-                                    <label for="video_url" class="form-label fw-bold text-dark">URL del video</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light">
-                                            <i class="fas fa-link text-muted"></i>
-                                        </span>
-                                        <input type="url" class="form-control" id="video_url" name="video_url" 
-                                               value="{{ contenido.video_url or '' }}" placeholder="https://www.youtube.com/watch?v=...">
-                                    </div>
-                                    <div class="form-text">Soporta YouTube, Vimeo y otros servicios de video</div>
+                        
+                        <div id="documentoFields" class="mb-3" style="display: {% if contenido.tipo == 'documento' %}block{% else %}none{% endif %};">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <i class="fas fa-file-pdf"></i> Configuración de Documento
                                 </div>
-                            </div>
-
-                            <!-- Campos para Enlaces/Archivos -->
-                            <div id="campos-archivo" class="campos-tipo" style="display: {% if contenido.tipo in ['documento', 'imagen', 'enlace'] %}block{% else %}none{% endif %};">
-                                <div class="mb-4">
-                                    <label for="archivo_url" class="form-label fw-bold text-dark">URL del recurso</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light">
-                                            <i class="fas fa-globe text-muted"></i>
-                                        </span>
-                                        <input type="url" class="form-control" id="archivo_url" name="archivo_url" 
-                                               value="{{ contenido.archivo_url or '' }}" placeholder="https://...">
+                                <div class="card-body">
+                                    <!-- ARCHIVO URL -->
+                                    <div class="mb-3">
+                                        <label for="archivo_url" class="form-label">
+                                            URL del Documento
+                                        </label>
+                                        <input type="url" class="form-control" id="archivo_url" name="archivo_url"
+                                               value="{{ contenido.archivo_url if contenido.archivo_url else '' }}"
+                                               placeholder="https://...">
+                                    </div>
+                                    
+                                    <!-- ARCHIVO LOCAL -->
+                                    <div class="mb-3">
+                                        <label for="archivo_local" class="form-label">
+                                            <i class="fas fa-upload"></i> Subir Documento
+                                        </label>
+                                        <input type="file" class="form-control" id="archivo_local" name="archivo_local"
+                                               accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx">
+                                        <small class="text-muted">
+                                            Formatos aceptados: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX
+                                            {% if contenido.archivo_nombre %}
+                                            <br>
+                                            <strong>Archivo actual:</strong> {{ contenido.archivo_nombre }}
+                                            ({{ (contenido.archivo_tamano / 1024)|round(1) if contenido.archivo_tamano else 0 }} KB)
+                                            {% endif %}
+                                        </small>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Archivo actual -->
-                        {% if contenido.archivo_local %}
-                        <div class="mb-4">
-                            <label class="form-label fw-bold text-dark">Archivo actual</label>
-                            <div class="alert alert-info d-flex align-items-center">
-                                <i class="fas fa-file me-3 fa-lg"></i>
-                                <div>
-                                    <strong>{{ contenido.archivo_local }}</strong>
-                                    <br>
-                                    <small class="text-muted">Este archivo permanecerá a menos que subas uno nuevo</small>
+                        
+                        <div id="imagenFields" class="mb-3" style="display: {% if contenido.tipo == 'imagen' %}block{% else %}none{% endif %};">
+                            <div class="card">
+                                <div class="card-header bg-success text-white">
+                                    <i class="fas fa-image"></i> Configuración de Imagen
+                                </div>
+                                <div class="card-body">
+                                    <!-- ARCHIVO URL -->
+                                    <div class="mb-3">
+                                        <label for="archivo_url" class="form-label">
+                                            URL de la Imagen
+                                        </label>
+                                        <input type="url" class="form-control" id="archivo_url" name="archivo_url"
+                                               value="{{ contenido.archivo_url if contenido.archivo_url else '' }}"
+                                               placeholder="https://...">
+                                    </div>
+                                    
+                                    <!-- ARCHIVO LOCAL -->
+                                    <div class="mb-3">
+                                        <label for="archivo_local" class="form-label">
+                                            <i class="fas fa-upload"></i> Subir Imagen
+                                        </label>
+                                        <input type="file" class="form-control" id="archivo_local" name="archivo_local"
+                                               accept="image/*">
+                                        <small class="text-muted">
+                                            Formatos aceptados: JPG, JPEG, PNG, GIF
+                                            {% if contenido.archivo_nombre %}
+                                            <br>
+                                            <strong>Archivo actual:</strong> {{ contenido.archivo_nombre }}
+                                            {% if contenido.tiene_archivo %}
+                                            <br>
+                                            <img src="{{ url_for('sst_descargar_archivo', id=contenido.id) }}" 
+                                                 alt="Vista previa" 
+                                                 style="max-width: 200px; max-height: 150px; margin-top: 10px;">
+                                            {% endif %}
+                                            {% endif %}
+                                        </small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        {% endif %}
-
-                        <!-- Subida de nuevo archivo -->
-                        <div class="mb-4">
-                            <label for="archivo_local" class="form-label fw-bold text-dark">
-                                <i class="fas fa-cloud-upload-alt me-2"></i>
-                                {% if contenido.archivo_local %}Reemplazar archivo{% else %}Subir archivo{% endif %}
+                        
+                        <div id="enlaceFields" class="mb-3" style="display: {% if contenido.tipo == 'enlace' %}block{% else %}none{% endif %};">
+                            <div class="card">
+                                <div class="card-header bg-info text-white">
+                                    <i class="fas fa-link"></i> Configuración de Enlace
+                                </div>
+                                <div class="card-body">
+                                    <!-- ARCHIVO URL -->
+                                    <div class="mb-3">
+                                        <label for="archivo_url" class="form-label">
+                                            URL del Enlace *
+                                        </label>
+                                        <input type="url" class="form-control" id="archivo_url" name="archivo_url"
+                                               value="{{ contenido.archivo_url if contenido.archivo_url else '' }}"
+                                               placeholder="https://..."
+                                               {% if contenido.tipo == 'enlace' %}required{% endif %}>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- OBLIGATORIO -->
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="es_obligatorio" name="es_obligatorio"
+                                       {% if contenido.es_obligatorio %}checked{% endif %}>
+                                <label class="form-check-label" for="es_obligatorio">
+                                    <i class="fas fa-exclamation-circle"></i> Contenido Obligatorio
+                                </label>
+                                <small class="text-muted d-block">
+                                    Los usuarios deben visualizar este contenido obligatoriamente
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <!-- ETIQUETAS -->
+                        <div class="mb-3">
+                            <label for="tags" class="form-label">
+                                <i class="fas fa-tags"></i> Etiquetas (separadas por comas)
                             </label>
-                            <input type="file" class="form-control" id="archivo_local" name="archivo_local" 
-                                   accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.mp4,.avi,.mov">
-                            <div class="form-text">
-                                {% if contenido.archivo_local %}
-                                Deja vacío para mantener el archivo actual
-                                {% endif %}
-                                Formatos soportados: PDF, Word, Excel, PowerPoint, imágenes, videos. Tamaño máximo: 100MB
+                            <input type="text" class="form-control" id="tags" name="tags"
+                                   value="{{ contenido.tags if contenido.tags else '' }}"
+                                   placeholder="seguridad, procedimiento, equipo">
+                            <small class="text-muted">Ejemplo: seguridad, procedimiento, equipo, ppe</small>
+                        </div>
+                        
+                        <!-- INFORMACIÓN DEL CONTENIDO -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-secondary text-white">
+                                <i class="fas fa-info-circle"></i> Información del Contenido
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>ID:</strong> {{ contenido.id }}</p>
+                                        <p><strong>Estado:</strong> 
+                                            <span class="badge {% if contenido.tiene_archivo %}bg-success{% else %}bg-warning{% endif %}">
+                                                {% if contenido.tiene_archivo %}
+                                                    <i class="fas fa-check"></i> Con archivo
+                                                {% else %}
+                                                    <i class="fas fa-exclamation"></i> Sin archivo
+                                                {% endif %}
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        {% if contenido.fecha_publicacion %}
+                                        <p><strong>Publicado:</strong> 
+                                            {{ contenido.fecha_publicacion.strftime('%d/%m/%Y %H:%M') if contenido.fecha_publicacion else 'Sin fecha' }}
+                                        </p>
+                                        {% endif %}
+                                        {% if contenido.fecha_creacion %}
+                                        <p><strong>Creado:</strong> 
+                                            {{ contenido.fecha_creacion.strftime('%d/%m/%Y %H:%M') if contenido.fecha_creacion else 'Sin fecha' }}
+                                        </p>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </div>
                         </div>
-
-                        <!-- Etiquetas -->
-                        <div class="mb-4">
-                            <label for="tags" class="form-label fw-bold text-dark">
-                                <i class="fas fa-tags me-2"></i>Etiquetas
-                            </label>
-                            <input type="text" class="form-control" id="tags" name="tags" 
-                                   value="{{ contenido.tags or '' }}" placeholder="seguridad, epp, procedimiento, emergencia">
-                            <div class="form-text">Separa las etiquetas con comas</div>
-                        </div>
-
-                        <!-- Información de auditoría -->
-                        <div class="mb-4 p-3 bg-light rounded">
-                            <h6 class="fw-bold text-dark mb-3">
-                                <i class="fas fa-info-circle me-2"></i>Información del contenido
-                            </h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <small class="text-muted">
-                                        <i class="fas fa-user me-1"></i>
-                                        Creado por: <strong>{{ contenido.creador_nombre }}</strong>
-                                    </small>
-                                </div>
-                                <div class="col-md-6">
-                                    <small class="text-muted">
-                                        <i class="fas fa-calendar me-1"></i>
-                                        Fecha de creación: <strong>{{ contenido.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}</strong>
-                                    </small>
-                                </div>
+                        
+                        <!-- BOTONES -->
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <a href="{{ url_for('sst_contenido') }}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </a>
+                                <a href="{{ url_for('sst_ver_video', id=contenido.id) if contenido.tipo == 'video' else url_for('sst_contenido') }}" 
+                                   class="btn btn-info">
+                                    <i class="fas fa-eye"></i> Ver Contenido
+                                </a>
                             </div>
-                        </div>
-
-                        <!-- Botones de acción -->
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end border-top pt-4">
-                            <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-secondary btn-lg me-md-3">
-                                <i class="fas fa-times me-2"></i>Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-warning btn-lg shadow-hover">
-                                <i class="fas fa-save me-2"></i>Actualizar Contenido
-                            </button>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Guardar Cambios
+                                </button>
+                            </div>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SIDEBAR -->
+        <div class="col-lg-4">
+            <!-- AYUDA -->
+            <div class="card mb-3">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-question-circle"></i> Instrucciones</h6>
+                </div>
+                <div class="card-body">
+                    <small>
+                        <p><strong>Tipo de contenido:</strong></p>
+                        <ul class="mb-3">
+                            <li><strong>Video:</strong> Sube archivo MP4 o enlace de YouTube/Vimeo</li>
+                            <li><strong>Documento:</strong> PDF, Word, Excel, PowerPoint</li>
+                            <li><strong>Imagen:</strong> JPG, PNG, GIF</li>
+                            <li><strong>Enlace:</strong> Solo URL externa</li>
+                        </ul>
+                        <p class="mb-0"><strong>Nota:</strong> Si subes un nuevo archivo, reemplazará el existente.</p>
+                    </small>
+                </div>
+            </div>
+            
+            <!-- PREVISUALIZACIÓN -->
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0"><i class="fas fa-eye"></i> Vista Previa</h6>
+                </div>
+                <div class="card-body">
+                    <h6>{{ contenido.titulo }}</h6>
+                    <small class="text-muted d-block mb-2">
+                        <span class="badge" style="background-color: {{ contenido.categoria_color }}; color: white;">
+                            {{ contenido.categoria_nombre }}
+                        </span>
+                        <span class="badge bg-secondary">{{ contenido.tipo|title }}</span>
+                    </small>
+                    
+                    {% if contenido.descripcion %}
+                    <p class="mb-2">{{ contenido.descripcion[:100] }}{% if contenido.descripcion|length > 100 %}...{% endif %}</p>
+                    {% endif %}
+                    
+                    {% if contenido.tiene_archivo and contenido.archivo_nombre %}
+                    <div class="alert alert-light border">
+                        <i class="fas fa-file"></i> 
+                        <strong>Archivo actual:</strong>
+                        <br>
+                        <small>{{ contenido.archivo_nombre }}</small>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('sst_descargar_archivo', id=contenido.id) }}" 
+                           class="btn btn-outline-primary btn-sm" download>
+                            <i class="fas fa-download"></i> Descargar Actual
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -203,71 +356,55 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const tipoSelect = document.getElementById('tipo');
-    const descripcionTextarea = document.getElementById('descripcion');
-    const descripcionContador = document.getElementById('descripcionContador');
+// Mostrar/ocultar campos según tipo de contenido
+document.getElementById('tipo').addEventListener('change', function() {
+    const tipo = this.value;
     
-    // Mostrar/ocultar campos según tipo
-    function actualizarCampos() {
-        document.querySelectorAll('.campos-tipo').forEach(el => el.style.display = 'none');
-        
-        const tipo = tipoSelect.value;
-        if (tipo === 'video') {
-            document.getElementById('campos-video').style.display = 'block';
-        } else if (['documento', 'imagen', 'enlace'].includes(tipo)) {
-            document.getElementById('campos-archivo').style.display = 'block';
-        }
+    // Ocultar todos los campos
+    document.getElementById('videoFields').style.display = 'none';
+    document.getElementById('documentoFields').style.display = 'none';
+    document.getElementById('imagenFields').style.display = 'none';
+    document.getElementById('enlaceFields').style.display = 'none';
+    
+    // Mostrar campos correspondientes
+    if (tipo === 'video') {
+        document.getElementById('videoFields').style.display = 'block';
+    } else if (tipo === 'documento') {
+        document.getElementById('documentoFields').style.display = 'block';
+    } else if (tipo === 'imagen') {
+        document.getElementById('imagenFields').style.display = 'block';
+    } else if (tipo === 'enlace') {
+        document.getElementById('enlaceFields').style.display = 'block';
     }
-    
-    tipoSelect.addEventListener('change', actualizarCampos);
-    
-    // Contador de descripción
-    descripcionTextarea.addEventListener('input', function() {
-        const length = this.value.length;
-        descripcionContador.textContent = `${length}/500`;
-        
-        if (length > 500) {
-            descripcionContador.classList.add('text-danger');
-        } else {
-            descripcionContador.classList.remove('text-danger');
-        }
+});
+
+// Validar tamaño de archivo
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const fileSize = this.files[0].size; // en bytes
+                const maxSize = 100 * 1024 * 1024; // 100MB
+                
+                if (fileSize > maxSize) {
+                    alert('El archivo es demasiado grande. Máximo 100MB.');
+                    this.value = '';
+                }
+            }
+        });
     });
     
-    // Mostrar campos correctos al cargar la página
-    actualizarCampos();
+    // Validar URL
+    const urlInputs = document.querySelectorAll('input[type="url"]');
+    urlInputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.value && !this.value.startsWith('http://') && !this.value.startsWith('https://')) {
+                alert('La URL debe comenzar con http:// o https://');
+                this.focus();
+            }
+        });
+    });
 });
 </script>
-
-<style>
-.campos-tipo {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 20px;
-    margin: 15px 0;
-    border-left: 4px solid #0d6efd;
-}
-
-.form-control-lg, .form-select-lg {
-    border-radius: 10px;
-    padding: 12px 16px;
-}
-
-.shadow-hover {
-    transition: all 0.3s ease;
-}
-
-.shadow-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
-}
-
-.card {
-    border-radius: 12px;
-}
-
-.input-group-text {
-    border-radius: 8px 0 0 8px !important;
-}
-</style>
 {% endblock %}
