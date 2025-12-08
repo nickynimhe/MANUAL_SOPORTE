@@ -178,7 +178,7 @@
                             <!-- DESCRIPCIÓN -->
                             {% if item.descripcion %}
                             <p class="card-text text-muted mb-3" style="font-size: 0.9rem;">
-                                {{ item.descripcion|truncate(150) }}
+                                {{ item.descripcion|truncate(150) if item.descripcion else '' }}
                             </p>
                             {% endif %}
                             
@@ -201,7 +201,7 @@
                                             </div>
                                             <small class="text-muted d-block mt-1">
                                                 <i class="fas fa-film"></i> 
-                                                {{ item.archivo_nombre|truncate(30) }}
+                                                {{ item.archivo_nombre|default('Video sin nombre')|truncate(30) if item.archivo_nombre else 'Video sin nombre' }}
                                                 {% if item.archivo_tamano %}
                                                 <span class="badge bg-light text-dark ms-1">
                                                     {{ (item.archivo_tamano / 1024 / 1024)|round(2) }} MB
@@ -230,7 +230,10 @@
                                     <!-- DOCUMENTO -->
                                     <div class="document-preview p-3 bg-light rounded text-center">
                                         <i class="fas fa-file-pdf fa-3x text-danger mb-2"></i>
-                                        <p class="mb-1 fw-bold">{{ item.archivo_nombre|default('Documento')|truncate(30) }}</p>
+                                        <p class="mb-1 fw-bold">
+                                            {{ (item.archivo_nombre|default('Documento'))[:30] }}
+                                            {% if (item.archivo_nombre|default('')|length) > 30 %}...{% endif %}
+                                        </p>
                                         {% if item.archivo_tamano %}
                                         <small class="text-muted">
                                             {{ (item.archivo_tamano / 1024)|round(1) }} KB
@@ -260,7 +263,8 @@
                                         </div>
                                         <small class="text-muted d-block mt-1">
                                             <i class="fas fa-image"></i> 
-                                            {{ item.archivo_nombre|default('Imagen')|truncate(30) }}
+                                            {{ (item.archivo_nombre|default('Imagen'))[:30] }}
+                                            {% if (item.archivo_nombre|default('')|length) > 30 %}...{% endif %}
                                         </small>
                                     </div>
                                     
@@ -270,14 +274,15 @@
                                         <i class="fas fa-link fa-3x text-info mb-2"></i>
                                         <p class="mb-1 fw-bold">Enlace Externo</p>
                                         <small class="text-muted d-block">
-                                            {{ item.archivo_url|truncate(40) }}
+                                            {{ item.archivo_url[:40] if item.archivo_url else 'Sin URL' }}
+                                            {% if item.archivo_url and item.archivo_url|length > 40 %}...{% endif %}
                                         </small>
                                     </div>
                                 {% endif %}
                             </div>
                             
                             <!-- ETIQUETAS -->
-                            {% if item.tags %}
+                            {% if item.tags and item.tags|trim %}
                             <div class="tags-container mt-2">
                                 {% for tag in item.tags|safe_tags %}
                                 <span class="badge bg-light text-dark border me-1 mb-1">
@@ -336,9 +341,9 @@
                                             </a>
                                         {% endif %}
                                     {% elif item.tipo == 'enlace' %}
-                                        <a href="{{ item.archivo_url }}" 
+                                        <a href="{{ item.archivo_url if item.archivo_url else '#' }}" 
                                            target="_blank" 
-                                           class="btn btn-outline-info">
+                                           class="btn btn-outline-info {% if not item.archivo_url %}disabled{% endif %}">
                                             <i class="fas fa-external-link-alt"></i> Visitar
                                         </a>
                                     {% endif %}
@@ -356,41 +361,6 @@
                 </div>
                 {% endfor %}
             </div>
-            
-            <!-- PAGINACIÓN (Si implementas paginación en el futuro) -->
-            {% if pagination and pagination.pages > 1 %}
-            <nav aria-label="Paginación de contenido" class="mt-4">
-                <ul class="pagination justify-content-center">
-                    {% if pagination.has_prev %}
-                    <li class="page-item">
-                        <a class="page-link" href="{{ url_for('sst_contenido', page=pagination.prev_num, **request.args) }}">
-                            <i class="fas fa-chevron-left"></i>
-                        </a>
-                    </li>
-                    {% endif %}
-                    
-                    {% for page in pagination.iter_pages() %}
-                        {% if page %}
-                            <li class="page-item {% if page == pagination.page %}active{% endif %}">
-                                <a class="page-link" href="{{ url_for('sst_contenido', page=page, **request.args) }}">
-                                    {{ page }}
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled"><span class="page-link">...</span></li>
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {% if pagination.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="{{ url_for('sst_contenido', page=pagination.next_num, **request.args) }}">
-                            <i class="fas fa-chevron-right"></i>
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
-            {% endif %}
             
             {% else %}
             <!-- SIN CONTENIDO -->
