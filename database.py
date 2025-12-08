@@ -228,10 +228,16 @@ def obtener_categorias_sst():
         return []
 
 def obtener_contenido_sst(filtros=None):
-    """Obtener contenido SST con filtros opcionales"""
+    """Obtener contenido SST con filtros opcionales - VERSIÓN CORREGIDA"""
     try:
         query = """
-            SELECT sc.*, cat.nombre as categoria_nombre, cat.color as categoria_color,
+            SELECT sc.id, sc.titulo, sc.descripcion, sc.tipo, sc.archivo_url, 
+                   sc.archivo_data, sc.archivo_nombre, sc.archivo_tipo, sc.archivo_tamano,
+                   sc.video_url, sc.categoria_id, sc.es_obligatorio, sc.tags,
+                   -- CONVERTIR EXPLÍCITAMENTE LA FECHA
+                   sc.fecha_publicacion::text as fecha_publicacion_str,
+                   sc.usuario_creador,
+                   cat.nombre as categoria_nombre, cat.color as categoria_color,
                    u.usuario as creador_nombre
             FROM sst_contenido sc
             LEFT JOIN sst_categorias cat ON sc.categoria_id = cat.id
@@ -256,7 +262,23 @@ def obtener_contenido_sst(filtros=None):
         query += " ORDER BY sc.fecha_publicacion DESC"
         
         resultado = ejecutar_consulta(query, params, fetch=True)
-        return resultado or []
+        
+        contenido = []
+        for item in resultado or []:
+            # Convertir fecha string a datetime
+            fecha_str = item[13]  # fecha_publicacion_str
+            try:
+                from datetime import datetime
+                fecha_publicacion = datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S')
+            except:
+                fecha_publicacion = None
+            
+            # Reconstruir tupla con datetime
+            item_list = list(item)
+            item_list[13] = fecha_publicacion  # Reemplazar string con datetime
+            contenido.append(tuple(item_list))
+        
+        return contenido
         
     except Exception as e:
         print(f"❌ Error al obtener contenido SST: {e}")
