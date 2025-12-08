@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory, make_response
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, send_from_directory, make_response, Response
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from database import crear_conexion, crear_tablas, verificar_y_crear_categorias_sst, obtener_categorias_sst, obtener_contenido_sst, ejecutar_consulta, guardar_archivo_en_bd, insertar_contenido_con_archivo, obtener_archivo_desde_bd
 from config import Config
@@ -9,6 +9,8 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 import os
 import urllib.parse
+import mimetypes
+from io import BytesIO
 
 # Crear la instancia de Flask PRIMERO
 app = Flask(__name__)
@@ -110,6 +112,23 @@ def safe_tags_filter(tags_value):
     else:
         # Para cualquier otro tipo
         return []
+
+# Filtro para verificar si una URL es de video
+@app.template_filter('is_video_url')
+def is_video_url_filter(url):
+    """Verificar si una URL es de video"""
+    if not url:
+        return False
+    video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.webm']
+    return any(url.lower().endswith(ext) for ext in video_extensions)
+
+# Filtro para obtener la extensión del archivo
+@app.template_filter('file_extension')
+def file_extension_filter(filename):
+    """Obtener extensión del archivo"""
+    if not filename:
+        return ''
+    return os.path.splitext(filename)[1].lower().replace('.', '')
 
 class User(UserMixin):
     def __init__(self, id, usuario, rol, modulo_principal, permisos=None):
@@ -260,7 +279,6 @@ def redirect_a_modulo_principal():
     """Redirige al usuario a su módulo principal"""
     if current_user.is_authenticated:
         if current_user.rol == 'admin':
-            # Admin va al dashboard si existe, si no al index
             return redirect(url_for('index'))
         elif current_user.rol == 'sst':
             return redirect(url_for('sst_dashboard'))
@@ -320,7 +338,7 @@ def cambiar_password():
     
     return render_template('cambiar_password.html')
 
-# ===== DASHBOARD PRINCIPAL (Solo Admin) - MODIFICADO PARA EVITAR ERROR =====
+# ===== DASHBOARD PRINCIPAL (Solo Admin) =====
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -1389,7 +1407,7 @@ def sst_agregar_contenido():
 @app.route('/sst/archivo/<int:id>')
 @login_required
 def sst_descargar_archivo(id):
-    """Descargar archivo desde la base de datos"""
+    """Descargar archivo desde la base de datos - VERSIÓN CORREGIDA"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
@@ -1401,12 +1419,21 @@ def sst_descargar_archivo(id):
             flash('Archivo no encontrado', 'error')
             return redirect(url_for('sst_contenido'))
         
-        # Crear respuesta con el archivo
-        response = make_response(archivo['data'])
-        response.headers.set('Content-Type', archivo['tipo'])
-        response.headers.set('Content-Disposition', 'inline', filename=archivo['nombre'])
+        # Verificar que el archivo tenga datos
+        if not archivo.get('data'):
+            flash('El archivo está vacío', 'error')
+            return redirect(url_for('sst_contenido'))
         
-        return response
+        # Crear un objeto BytesIO con los datos
+        file_data = BytesIO(archivo['data'])
+        
+        # Usar send_file para devolver el archivo correctamente
+        return send_file(
+            file_data,
+            mimetype=archivo['tipo'],
+            as_attachment=False,
+            download_name=archivo['nombre']
+        )
         
     except Exception as e:
         flash(f'Error al descargar el archivo: {str(e)}', 'error')
@@ -1573,7 +1600,7 @@ def sst_eliminar_contenido(id):
 @app.route('/sst/video/<int:id>')
 @login_required
 def sst_ver_video(id):
-    """Ver video específico de SST"""
+    """Ver video específico de SST - VERSIÓN CORREGIDA"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
@@ -1590,6 +1617,11 @@ def sst_ver_video(id):
         
         if resultado and resultado[0]:
             video_data = resultado[0]
+            
+            # Determinar si es un video en BD o URL
+            tiene_video_bd = video_data[5] is not None and video_data[7] in ['video/mp4', 'video/avi', 'video/mov', 'video/mkv']
+            tiene_video_url = video_data[9] is not None
+            
             video = {
                 'id': video_data[0],
                 'titulo': video_data[1],
@@ -1602,7 +1634,9 @@ def sst_ver_video(id):
                 'video_url': video_data[9],
                 'categoria_nombre': video_data[15],
                 'categoria_color': video_data[16],
-                'fecha_publicacion': video_data[13]
+                'fecha_publicacion': video_data[13],
+                'es_video_en_bd': tiene_video_bd,
+                'es_video_url': tiene_video_url
             }
                 
     except Exception as e:
@@ -1614,6 +1648,42 @@ def sst_ver_video(id):
         return redirect(url_for('sst_contenido'))
     
     return render_template('sst/ver_video.html', video=video)
+
+@app.route('/sst/video/stream/<int:id>')
+@login_required
+def sst_stream_video(id):
+    """Stream de video desde la base de datos - VERSIÓN CORREGIDA"""
+    if not current_user.puede('acceder_sst'):
+        return Response('No autorizado', status=403)
+    
+    try:
+        archivo = obtener_archivo_desde_bd(id)
+        
+        if not archivo or not archivo.get('data'):
+            return Response('Video no encontrado', status=404)
+        
+        # Verificar que sea un video
+        if not archivo['tipo'].startswith('video/'):
+            return Response('El archivo no es un video', status=400)
+        
+        # Crear respuesta con el video
+        file_data = BytesIO(archivo['data'])
+        
+        return send_file(
+            file_data,
+            mimetype=archivo['tipo'],
+            as_attachment=False
+        )
+        
+    except Exception as e:
+        print(f"❌ Error en sst_stream_video: {e}")
+        return Response('Error interno del servidor', status=500)
+
+# ===== RUTAS PARA SERVIR ARCHIVOS ESTÁTICOS =====
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    """Servir archivos estáticos"""
+    return send_from_directory('static', filename)
 
 # ===== API PARA PROBLEMAS =====
 @app.route('/api/problemas/<categoria>')
