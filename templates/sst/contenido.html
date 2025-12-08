@@ -178,7 +178,13 @@
                             <!-- DESCRIPCIÓN -->
                             {% if item.descripcion %}
                             <p class="card-text text-muted mb-3" style="font-size: 0.9rem;">
-                                {{ item.descripcion|truncate(150) if item.descripcion else '' }}
+                                {% if item.descripcion %}
+                                    {% if item.descripcion|length > 150 %}
+                                        {{ item.descripcion[:150] }}...
+                                    {% else %}
+                                        {{ item.descripcion }}
+                                    {% endif %}
+                                {% endif %}
                             </p>
                             {% endif %}
                             
@@ -201,7 +207,12 @@
                                             </div>
                                             <small class="text-muted d-block mt-1">
                                                 <i class="fas fa-film"></i> 
-                                                {{ item.archivo_nombre|default('Video sin nombre')|truncate(30) if item.archivo_nombre else 'Video sin nombre' }}
+                                                {% set filename = item.archivo_nombre if item.archivo_nombre else 'Video sin nombre' %}
+                                                {% if filename|length > 30 %}
+                                                    {{ filename[:30] }}...
+                                                {% else %}
+                                                    {{ filename }}
+                                                {% endif %}
                                                 {% if item.archivo_tamano %}
                                                 <span class="badge bg-light text-dark ms-1">
                                                     {{ (item.archivo_tamano / 1024 / 1024)|round(2) }} MB
@@ -231,8 +242,12 @@
                                     <div class="document-preview p-3 bg-light rounded text-center">
                                         <i class="fas fa-file-pdf fa-3x text-danger mb-2"></i>
                                         <p class="mb-1 fw-bold">
-                                            {{ (item.archivo_nombre|default('Documento'))[:30] }}
-                                            {% if (item.archivo_nombre|default('')|length) > 30 %}...{% endif %}
+                                            {% set doc_name = item.archivo_nombre if item.archivo_nombre else 'Documento' %}
+                                            {% if doc_name|length > 30 %}
+                                                {{ doc_name[:30] }}...
+                                            {% else %}
+                                                {{ doc_name }}
+                                            {% endif %}
                                         </p>
                                         {% if item.archivo_tamano %}
                                         <small class="text-muted">
@@ -263,8 +278,12 @@
                                         </div>
                                         <small class="text-muted d-block mt-1">
                                             <i class="fas fa-image"></i> 
-                                            {{ (item.archivo_nombre|default('Imagen'))[:30] }}
-                                            {% if (item.archivo_nombre|default('')|length) > 30 %}...{% endif %}
+                                            {% set img_name = item.archivo_nombre if item.archivo_nombre else 'Imagen' %}
+                                            {% if img_name|length > 30 %}
+                                                {{ img_name[:30] }}...
+                                            {% else %}
+                                                {{ img_name }}
+                                            {% endif %}
                                         </small>
                                     </div>
                                     
@@ -274,8 +293,15 @@
                                         <i class="fas fa-link fa-3x text-info mb-2"></i>
                                         <p class="mb-1 fw-bold">Enlace Externo</p>
                                         <small class="text-muted d-block">
-                                            {{ item.archivo_url[:40] if item.archivo_url else 'Sin URL' }}
-                                            {% if item.archivo_url and item.archivo_url|length > 40 %}...{% endif %}
+                                            {% if item.archivo_url %}
+                                                {% if item.archivo_url|length > 40 %}
+                                                    {{ item.archivo_url[:40] }}...
+                                                {% else %}
+                                                    {{ item.archivo_url }}
+                                                {% endif %}
+                                            {% else %}
+                                                Sin URL
+                                            {% endif %}
                                         </small>
                                     </div>
                                 {% endif %}
