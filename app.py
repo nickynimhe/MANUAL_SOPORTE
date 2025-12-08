@@ -1407,7 +1407,7 @@ def sst_agregar_contenido():
 @app.route('/sst/archivo/<int:id>')
 @login_required
 def sst_descargar_archivo(id):
-    """Descargar archivo desde la base de datos - VERSIÓN CORREGIDA"""
+    """Servir archivo desde la base de datos - PARA VISUALIZACIÓN"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
@@ -1415,28 +1415,29 @@ def sst_descargar_archivo(id):
     try:
         archivo = obtener_archivo_desde_bd(id)
         
-        if not archivo:
+        if not archivo or not archivo.get('data'):
             flash('Archivo no encontrado', 'error')
-            return redirect(url_for('sst_contenido'))
-        
-        # Verificar que el archivo tenga datos
-        if not archivo.get('data'):
-            flash('El archivo está vacío', 'error')
             return redirect(url_for('sst_contenido'))
         
         # Crear un objeto BytesIO con los datos
         file_data = BytesIO(archivo['data'])
         
-        # Usar send_file para devolver el archivo correctamente
-        return send_file(
+        # IMPORTANTE: as_attachment=False para VISUALIZACIÓN
+        # download_name solo se usa si se descarga, no afecta la visualización
+        response = send_file(
             file_data,
             mimetype=archivo['tipo'],
-            as_attachment=False,
+            as_attachment=False,  # ¡ESTO ES LO MÁS IMPORTANTE!
             download_name=archivo['nombre']
         )
         
+        # Configurar headers para mejor visualización
+        response.headers['Cache-Control'] = 'public, max-age=3600'
+        
+        return response
+        
     except Exception as e:
-        flash(f'Error al descargar el archivo: {str(e)}', 'error')
+        flash(f'Error al cargar el archivo: {str(e)}', 'error')
         print(f"❌ Error en sst_descargar_archivo: {e}")
         return redirect(url_for('sst_contenido'))
 
