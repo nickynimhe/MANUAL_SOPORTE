@@ -70,7 +70,7 @@
                                 <option value="">Seleccionar categoría</option>
                                 {% for cat in categorias %}
                                 <option value="{{ cat.id }}" 
-                                        {% if contenido.categoria_id == cat.id|string or contenido.categoria_id == cat.id %}selected{% endif %}
+                                        {% if contenido.categoria_id|string == cat.id|string %}selected{% endif %}
                                         style="color: {{ cat.color }}">
                                     {{ cat.nombre }}
                                 </option>
@@ -108,7 +108,7 @@
                                             {% if contenido.archivo_nombre %}
                                             <br>
                                             <strong>Archivo actual:</strong> {{ contenido.archivo_nombre }}
-                                            ({{ (contenido.archivo_tamano / 1024 / 1024)|round(2) if contenido.archivo_tamano else 0 }} MB)
+                                            ({% if contenido.archivo_tamano %}{{ (contenido.archivo_tamano / 1024 / 1024)|round(2) }} MB{% else %}Tamaño desconocido{% endif %})
                                             {% endif %}
                                         </small>
                                     </div>
@@ -144,7 +144,7 @@
                                             {% if contenido.archivo_nombre %}
                                             <br>
                                             <strong>Archivo actual:</strong> {{ contenido.archivo_nombre }}
-                                            ({{ (contenido.archivo_tamano / 1024)|round(1) if contenido.archivo_tamano else 0 }} KB)
+                                            ({% if contenido.archivo_tamano %}{{ (contenido.archivo_tamano / 1024)|round(1) }} KB{% else %}Tamaño desconocido{% endif %})
                                             {% endif %}
                                         </small>
                                     </div>
@@ -258,16 +258,31 @@
                                         </p>
                                     </div>
                                     <div class="col-md-6">
-                                        {% if contenido.fecha_publicacion %}
+                                        <!-- FECHA PUBLICACIÓN - FORMATO SEGURO -->
                                         <p><strong>Publicado:</strong> 
-                                            {{ contenido.fecha_publicacion.strftime('%d/%m/%Y %H:%M') if contenido.fecha_publicacion else 'Sin fecha' }}
+                                            {% if contenido.fecha_publicacion and contenido.fecha_publicacion is not string and contenido.fecha_publicacion is not mapping %}
+                                                {% if contenido.fecha_publicacion.strftime %}
+                                                    {{ contenido.fecha_publicacion.strftime('%d/%m/%Y %H:%M') }}
+                                                {% else %}
+                                                    {{ contenido.fecha_publicacion|string|truncate(20) }}
+                                                {% endif %}
+                                            {% else %}
+                                                Sin fecha
+                                            {% endif %}
                                         </p>
-                                        {% endif %}
-                                        {% if contenido.fecha_creacion %}
+                                        
+                                        <!-- FECHA CREACIÓN - FORMATO SEGURO -->
                                         <p><strong>Creado:</strong> 
-                                            {{ contenido.fecha_creacion.strftime('%d/%m/%Y %H:%M') if contenido.fecha_creacion else 'Sin fecha' }}
+                                            {% if contenido.fecha_creacion and contenido.fecha_creacion is not string and contenido.fecha_creacion is not mapping %}
+                                                {% if contenido.fecha_creacion.strftime %}
+                                                    {{ contenido.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}
+                                                {% else %}
+                                                    {{ contenido.fecha_creacion|string|truncate(20) }}
+                                                {% endif %}
+                                            {% else %}
+                                                Sin fecha
+                                            {% endif %}
                                         </p>
-                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -324,10 +339,12 @@
                 <div class="card-body">
                     <h6>{{ contenido.titulo }}</h6>
                     <small class="text-muted d-block mb-2">
+                        {% if contenido.categoria_color and contenido.categoria_nombre %}
                         <span class="badge" style="background-color: {{ contenido.categoria_color }}; color: white;">
                             {{ contenido.categoria_nombre }}
                         </span>
-                        <span class="badge bg-secondary">{{ contenido.tipo|title }}</span>
+                        {% endif %}
+                        <span class="badge bg-secondary">{{ contenido.tipo|title if contenido.tipo else 'Desconocido' }}</span>
                     </small>
                     
                     {% if contenido.descripcion %}
@@ -344,10 +361,12 @@
                     {% endif %}
                     
                     <div class="text-center mt-3">
+                        {% if contenido.tiene_archivo %}
                         <a href="{{ url_for('sst_descargar_archivo', id=contenido.id) }}" 
                            class="btn btn-outline-primary btn-sm" download>
                             <i class="fas fa-download"></i> Descargar Actual
                         </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
