@@ -1441,6 +1441,36 @@ def sst_descargar_archivo(id):
         print(f"❌ Error en sst_descargar_archivo: {e}")
         return redirect(url_for('sst_contenido'))
 
+@app.route('/sst/archivo/descargar/<int:id>')
+@login_required
+def sst_descargar_archivo_forzado(id):
+    """Descargar archivo forzadamente - SOLO SI QUIERES DESCARGAR"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
+    try:
+        archivo = obtener_archivo_desde_bd(id)
+        
+        if not archivo or not archivo.get('data'):
+            flash('Archivo no encontrado', 'error')
+            return redirect(url_for('sst_contenido'))
+        
+        file_data = BytesIO(archivo['data'])
+        
+        # ESTA SÍ fuerza la descarga
+        return send_file(
+            file_data,
+            mimetype=archivo['tipo'],
+            as_attachment=True,  # Esto SÍ fuerza descarga
+            download_name=archivo['nombre']
+        )
+        
+    except Exception as e:
+        flash(f'Error al descargar el archivo: {str(e)}', 'error')
+        print(f"❌ Error en sst_descargar_archivo_forzado: {e}")
+        return redirect(url_for('sst_contenido'))
+
 @app.route('/sst/contenido/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
 def sst_editar_contenido(id):
