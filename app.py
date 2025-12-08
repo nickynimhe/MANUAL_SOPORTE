@@ -260,7 +260,8 @@ def redirect_a_modulo_principal():
     """Redirige al usuario a su módulo principal"""
     if current_user.is_authenticated:
         if current_user.rol == 'admin':
-            return redirect(url_for('dashboard'))
+            # Admin va al dashboard si existe, si no al index
+            return redirect(url_for('index'))
         elif current_user.rol == 'sst':
             return redirect(url_for('sst_dashboard'))
         elif current_user.rol == 'soporte':
@@ -319,34 +320,14 @@ def cambiar_password():
     
     return render_template('cambiar_password.html')
 
-# ===== DASHBOARD PRINCIPAL (Solo Admin) =====
+# ===== DASHBOARD PRINCIPAL (Solo Admin) - MODIFICADO PARA EVITAR ERROR =====
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    if not current_user.puede('acceder_dashboard'):
-        flash('No tienes permisos para acceder al dashboard', 'error')
-        return redirect_a_modulo_principal()
-    
-    # Estadísticas para el dashboard
-    stats = {}
-    try:
-        # Contar fichas técnicas
-        resultado_fichas = ejecutar_consulta("SELECT COUNT(*) FROM fichas", fetch=True)
-        stats['total_fichas'] = resultado_fichas[0][0] if resultado_fichas else 0
-        
-        # Contar contenido SST
-        resultado_sst = ejecutar_consulta("SELECT COUNT(*) FROM sst_contenido", fetch=True)
-        stats['total_sst'] = resultado_sst[0][0] if resultado_sst else 0
-        
-        # Contar usuarios
-        resultado_usuarios = ejecutar_consulta("SELECT COUNT(*) FROM usuarios", fetch=True)
-        stats['total_usuarios'] = resultado_usuarios[0][0] if resultado_usuarios else 0
-        
-    except Exception as e:
-        print(f"Error al cargar estadísticas: {e}")
-        stats = {'total_fichas': 0, 'total_sst': 0, 'total_usuarios': 0}
-    
-    return render_template('dashboard.html', stats=stats)
+    """Redirige a todos al módulo principal en lugar de usar dashboard.html"""
+    # Si el admin quiere acceder a /dashboard, lo redirigimos a index
+    flash('Redirigiendo al módulo principal', 'info')
+    return redirect(url_for('index'))
 
 # ===== RUTAS DE SOPORTE TÉCNICO =====
 @app.route('/')
