@@ -86,109 +86,6 @@ def inject_permissions():
         obtener_modulo_principal=obtener_modulo_principal
     )
 
-# ===== FUNCIONES AUXILIARES PARA SST DASHBOARD =====
-
-def obtener_estadistica(query, params=None):
-    """Obtiene una estadística simple (un solo valor) de la base de datos"""
-    try:
-        resultado = ejecutar_consulta(query, params, fetch=True)
-        if resultado and resultado[0]:
-            return resultado[0][0]
-        return 0
-    except Exception as e:
-        print(f"Error obteniendo estadística: {e}")
-        return 0
-
-def obtener_contenido_reciente(limite=6):
-    """Obtiene contenido reciente ordenado por fecha"""
-    try:
-        query = """
-            SELECT c.id, c.titulo, c.descripcion, c.tipo, 
-                   c.fecha_publicacion, cat.nombre as categoria_nombre,
-                   cat.color as categoria_color
-            FROM sst_contenido c
-            LEFT JOIN sst_categorias cat ON c.categoria_id = cat.id
-            ORDER BY c.fecha_publicacion DESC
-            LIMIT %s
-        """
-        resultado = ejecutar_consulta(query, (limite,), fetch=True)
-        
-        contenido = []
-        for row in resultado:
-            contenido.append({
-                'id': row[0],
-                'titulo': row[1],
-                'descripcion': row[2],
-                'tipo': row[3],
-                'fecha_publicacion': row[4],
-                'categoria_nombre': row[5],
-                'categoria_color': row[6]
-            })
-        return contenido
-    except Exception as e:
-        print(f"Error obteniendo contenido reciente: {e}")
-        return []
-
-def obtener_contenido_obligatorio_usuario(usuario_id, limite=5):
-    """Obtiene contenido obligatorio que el usuario aún no ha visto - VERSIÓN CORREGIDA"""
-    try:
-        query = """
-            SELECT c.id, c.titulo, c.descripcion, c.tipo, 
-                   c.fecha_publicacion, cat.nombre as categoria_nombre
-            FROM sst_contenido c
-            LEFT JOIN sst_categorias cat ON c.categoria_id = cat.id
-            WHERE c.es_obligatorio = TRUE 
-            ORDER BY c.fecha_publicacion DESC
-            LIMIT %s
-        """
-        # SOLO un parámetro: limite (usuario_id no se usa en esta consulta)
-        resultado = ejecutar_consulta(query, (limite,), fetch=True)
-        
-        contenido = []
-        for row in resultado:
-            contenido.append({
-                'id': row[0],
-                'titulo': row[1],
-                'descripcion': row[2],
-                'tipo': row[3],
-                'fecha_publicacion': row[4],
-                'categoria_nombre': row[5]
-            })
-        return contenido
-    except Exception as e:
-        print(f"Error obteniendo contenido obligatorio: {e}")
-        return []
-
-def obtener_videos_destacados(limite=3):
-    """Obtiene videos destacados (con URL de video)"""
-    try:
-        query = """
-            SELECT c.id, c.titulo, c.descripcion, 
-                   COALESCE(c.video_url, c.archivo_url) as url_video,
-                   cat.nombre as categoria_nombre
-            FROM sst_contenido c
-            LEFT JOIN sst_categorias cat ON c.categoria_id = cat.id
-            WHERE c.tipo = 'video'
-            ORDER BY c.fecha_publicacion DESC
-            LIMIT %s
-        """
-        resultado = ejecutar_consulta(query, (limite,), fetch=True)
-        
-        videos = []
-        for row in resultado:
-            videos.append({
-                'id': row[0],
-                'titulo': row[1],
-                'descripcion': row[2],
-                'url_video': row[3],
-                'categoria_nombre': row[4],
-                'duracion': '5:30'  # Valor por defecto
-            })
-        return videos
-    except Exception as e:
-        print(f"Error obteniendo videos destacados: {e}")
-        return []
-
 # ===== FILTROS PERSONALIZADOS JINJA2 =====
 @app.template_filter('format_date')
 def format_date_filter(date_value, format='%d/%m/%Y'):
@@ -232,22 +129,6 @@ def file_extension_filter(filename):
     if not filename:
         return ''
     return os.path.splitext(filename)[1].lower().replace('.', '')
-
-# Filtro para formatear fechas
-@app.template_filter('fecha_corta')
-def fecha_corta(value):
-    """Formatea una fecha a formato corto (DD/MM/YYYY)"""
-    if not value:
-        return ""
-    try:
-        if isinstance(value, str):
-            try:
-                value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
-            except:
-                value = datetime.strptime(value, '%Y-%m-%d')
-        return value.strftime('%d/%m/%Y')
-    except:
-        return str(value)
 
 class User(UserMixin):
     def __init__(self, id, usuario, rol, modulo_principal, permisos=None):
@@ -1319,121 +1200,25 @@ def informacion_general():
 
 # ===== RUTAS SST MEJORADAS =====
 
-@app.route('/sst/contenido/<int:id>/ver')
-@login_required
-def ver_contenido_sst(id):
-    """Ver contenido específico SST - VERSIÓN MEJORADA CON MANEJO DE ERRORES"""
-    if not current_user.puede('acceder_sst'):
-        flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
-    
-    try:
-        resultado = ejecutar_consulta("""
-            SELECT c.*, cat.nombre as categoria_nombre, cat.color as categoria_color,
-                   u.usuario as creador_nombre
-            FROM sst_contenido c
-            LEFT JOIN sst_categorias cat ON c.categoria_id = cat.id
-            LEFT JOIN usuarios u ON c.usuario_creador = u.id
-            WHERE c.id = %s
-        """, (id,), fetch=True)
-        
-        if not resultado or not resultado[0]:
-            flash(f'❌ Contenido con ID {id} no encontrado', 'error')
-            return redirect(url_for('sst_contenido'))
-        
-        row = resultado[0]
-        contenido_data = {
-            'id': row[0],
-            'titulo': row[1],
-            'descripcion': row[2] if row[2] else '',
-            'tipo': row[3],
-            'archivo_url': row[4] if row[4] else '',
-            'tiene_archivo': row[5] is not None,
-            'archivo_nombre': row[6] if row[6] else '',
-            'archivo_tipo': row[7] if row[7] else '',
-            'archivo_tamano': row[8] if row[8] else 0,
-            'video_url': row[9] if row[9] else '',
-            'categoria_id': row[10],
-            'es_obligatorio': row[11] if row[11] else False,
-            'tags': row[12] if row[12] else '',
-            'fecha_publicacion': row[13],
-            'usuario_creador': row[14],
-            'categoria_nombre': row[15] if row[15] else 'Sin categoría',
-            'categoria_color': row[16] if row[16] else '#007bff',
-            'creador_nombre': row[17] if row[17] else 'Desconocido'
-        }
-        
-        return render_template('sst/ver_contenido.html', contenido=contenido_data)
-                
-    except Exception as e:
-        flash(f'❌ Error al cargar el contenido: {str(e)}', 'error')
-        print(f"❌ Error en ver_contenido_sst (ID: {id}): {e}")
-        return redirect(url_for('sst_contenido'))
-
-@app.route('/sst/dashboard')
+@app.route('/sst')
 @login_required
 def sst_dashboard():
-    """Dashboard principal SST con estadísticas y contenido real"""
+    """Dashboard principal de SST"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
     
-    # Obtener estadísticas
-    total_contenido = obtener_estadistica("SELECT COUNT(*) FROM sst_contenido")
-    total_videos = obtener_estadistica("SELECT COUNT(*) FROM sst_contenido WHERE tipo = 'video'")
-    total_documentos = obtener_estadistica("SELECT COUNT(*) FROM sst_contenido WHERE tipo IN ('documento', 'presentacion')")
-    total_obligatorios = obtener_estadistica("SELECT COUNT(*) FROM sst_contenido WHERE es_obligatorio = TRUE")
-    
-    # Obtener categorías con iconos
-    categorias_data = obtener_categorias_sst()
-    categorias = []
-    iconos_por_categoria = {
-        1: 'fas fa-video',
-        2: 'fas fa-file-contract',
-        3: 'fas fa-hard-hat',
-        4: 'fas fa-helmet-safety',
-        5: 'fas fa-fire-extinguisher',
-        6: 'fas fa-gavel'
-    }
-    
-    for cat in categorias_data:
-        total_cat = obtener_estadistica("SELECT COUNT(*) FROM sst_contenido WHERE categoria_id = %s", (cat[0],))
-        categorias.append({
-            'id': cat[0],
-            'nombre': cat[1],
-            'color': cat[2],
-            'icono': iconos_por_categoria.get(cat[0], 'fas fa-folder'),
-            'total': total_cat or 0
-        })
-    
-    # Obtener contenido reciente
-    contenido_reciente = obtener_contenido_reciente()
-    
-    # Obtener contenido obligatorio (para el usuario actual)
-    contenido_obligatorio = obtener_contenido_obligatorio_usuario(current_user.id)
-    
-    # Obtener videos destacados
-    videos_destacados = obtener_videos_destacados()
-    
-    return render_template('sst/dashboard.html',
-                         total_contenido=total_contenido,
-                         total_videos=total_videos,
-                         total_documentos=total_documentos,
-                         total_obligatorios=total_obligatorios,
-                         categorias=categorias,
-                         contenido_reciente=contenido_reciente,
-                         contenido_obligatorio=contenido_obligatorio,
-                         videos_destacados=videos_destacados)
+    return render_template('sst/dashboard.html')
 
 @app.route('/sst/contenido')
 @login_required
 def sst_contenido():
-    """Lista de todo el contenido SST - VERSIÓN CORREGIDA CON NOMBRE CAMBIADO"""
+    """Lista de todo el contenido SST - VERSIÓN CORREGIDA"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
     
-    contenido_lista = []  # NOMBRE CAMBIADO: contenido -> contenido_lista
+    contenido = []
     categorias = []
     
     try:
@@ -1479,20 +1264,20 @@ def sst_contenido():
                 'video_url': item[9],
                 'categoria_id': item[10],
                 'es_obligatorio': item[11],
-                'tags': tags_str,
+                'tags': tags_str,  # Ahora siempre es string
                 'fecha_publicacion': item[13],
                 'usuario_creador': item[14],
                 'categoria_nombre': item[15],
                 'categoria_color': item[16],
                 'creador_nombre': item[17]
             }
-            contenido_lista.append(contenido_dict)
+            contenido.append(contenido_dict)
                 
     except Exception as e:
         flash('Error al cargar el contenido SST', 'error')
         print(f"❌ Error en sst_contenido: {e}")
     
-    return render_template('sst/contenido.html', contenido=contenido_lista, categorias=categorias)
+    return render_template('sst/contenido.html', contenido=contenido, categorias=categorias)
 
 @app.route('/sst/agregar', methods=['GET', 'POST'])
 @login_required
@@ -1622,7 +1407,7 @@ def sst_agregar_contenido():
 @app.route('/sst/archivo/<int:id>')
 @login_required
 def sst_descargar_archivo(id):
-    """Servir archivo desde la base de datos - PARA VISUALIZACIÓN"""
+    """Descargar archivo desde la base de datos - VERSIÓN CORREGIDA"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
@@ -1630,70 +1415,35 @@ def sst_descargar_archivo(id):
     try:
         archivo = obtener_archivo_desde_bd(id)
         
-        if not archivo or not archivo.get('data'):
+        if not archivo:
             flash('Archivo no encontrado', 'error')
+            return redirect(url_for('sst_contenido'))
+        
+        # Verificar que el archivo tenga datos
+        if not archivo.get('data'):
+            flash('El archivo está vacío', 'error')
             return redirect(url_for('sst_contenido'))
         
         # Crear un objeto BytesIO con los datos
         file_data = BytesIO(archivo['data'])
         
-        # IMPORTANTE: as_attachment=False para VISUALIZACIÓN
-        response = send_file(
+        # Usar send_file para devolver el archivo correctamente
+        return send_file(
             file_data,
             mimetype=archivo['tipo'],
             as_attachment=False,
             download_name=archivo['nombre']
         )
         
-        # Configurar headers para mejor visualización
-        response.headers['Cache-Control'] = 'public, max-age=3600'
-        
-        return response
-        
-    except Exception as e:
-        flash(f'Error al cargar el archivo: {str(e)}', 'error')
-        print(f"❌ Error en sst_descargar_archivo: {e}")
-        return redirect(url_for('sst_contenido'))
-
-@app.route('/sst/archivo/descargar/<int:id>')
-@login_required
-def sst_descargar_archivo_forzado(id):
-    """Descargar archivo forzadamente - SOLO SI QUIERES DESCARGAR"""
-    if not current_user.puede('acceder_sst'):
-        flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
-    
-    try:
-        archivo = obtener_archivo_desde_bd(id)
-        
-        if not archivo or not archivo.get('data'):
-            flash('Archivo no encontrado', 'error')
-            return redirect(url_for('sst_contenido'))
-        
-        file_data = BytesIO(archivo['data'])
-        
-        # ESTA SÍ fuerza la descarga
-        return send_file(
-            file_data,
-            mimetype=archivo['tipo'],
-            as_attachment=True,
-            download_name=archivo['nombre']
-        )
-        
     except Exception as e:
         flash(f'Error al descargar el archivo: {str(e)}', 'error')
-        print(f"❌ Error en sst_descargar_archivo_forzado: {e}")
+        print(f"❌ Error en sst_descargar_archivo: {e}")
         return redirect(url_for('sst_contenido'))
 
 @app.route('/sst/contenido/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
 def sst_editar_contenido(id):
-    """Editar contenido SST - VERSIÓN COMPLETA Y ROBUSTA"""
-    print(f"=== DEBUG sst_editar_contenido ===")
-    print(f"ID recibido: {id}")
-    print(f"Usuario: {current_user.usuario if current_user.is_authenticated else 'No autenticado'}")
-    print(f"Rol: {current_user.rol if current_user.is_authenticated else 'N/A'}")
-    
+    """Editar contenido SST existente"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
@@ -1702,196 +1452,55 @@ def sst_editar_contenido(id):
         flash('No tienes permisos para editar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
     
-    # Cargar categorías
-    print(f"DEBUG: Cargando categorías...")
-    categorias_data = obtener_categorias_sst()
-    categorias = []
-    for cat in categorias_data:
-        categorias.append({
-            'id': cat[0],
-            'nombre': cat[1],
-            'color': cat[2]
-        })
-    print(f"DEBUG: {len(categorias)} categorías cargadas")
-    
     contenido = None
+    categorias = []
     
-    if request.method == 'POST':
-        print(f"DEBUG: Método POST recibido para ID {id}")
-        # Obtener datos del formulario
-        titulo = request.form.get('titulo', '').strip()
-        descripcion = request.form.get('descripcion', '').strip()
-        tipo = request.form.get('tipo', '').strip()
-        categoria_id = request.form.get('categoria_id', '').strip()
-        es_obligatorio = 'es_obligatorio' in request.form
-        tags = request.form.get('tags', '').strip()
-        video_url = request.form.get('video_url', '').strip() or None
-        archivo_url = request.form.get('archivo_url', '').strip() or None
+    try:
+        # Cargar categorías
+        categorias_data = obtener_categorias_sst()
+        for cat in categorias_data:
+            categorias.append({
+                'id': cat[0],
+                'nombre': cat[1],
+                'color': cat[2]
+            })
         
-        print(f"DEBUG: Datos del form - Título: {titulo}, Tipo: {tipo}, Categoría: {categoria_id}")
-        
-        # Validaciones
-        if not titulo or not tipo or not categoria_id:
-            flash('Todos los campos obligatorios deben ser completados', 'error')
-            print(f"DEBUG: Validación fallida - campos obligatorios faltantes")
+        if request.method == 'POST':
+            # Obtener datos del formulario
+            titulo = request.form.get('titulo', '').strip()
+            descripcion = request.form.get('descripcion', '').strip()
+            tipo = request.form.get('tipo', '').strip()
+            categoria_id = request.form.get('categoria_id', '').strip()
+            es_obligatorio = 'es_obligatorio' in request.form
+            tags = request.form.get('tags', '').strip()
+            video_url = request.form.get('video_url', '').strip() or None
+            archivo_url = request.form.get('archivo_url', '').strip() or None
             
-            # Recargar contenido para mostrar en el form
-            resultado = ejecutar_consulta(
-                "SELECT id, titulo, descripcion, tipo, categoria_id, tags, archivo_nombre, archivo_tamano, archivo_url, video_url, es_obligatorio FROM sst_contenido WHERE id = %s",
-                (id,),
-                fetch=True
-            )
-            
-            if resultado and resultado[0]:
-                contenido_data = resultado[0]
-                contenido = {
-                    'id': contenido_data[0],
-                    'titulo': contenido_data[1],
-                    'descripcion': contenido_data[2],
-                    'tipo': contenido_data[3],
-                    'categoria_id': contenido_data[4],
-                    'tags': contenido_data[5] if contenido_data[5] else '',
-                    'archivo_nombre': contenido_data[6] if contenido_data[6] else 'Sin archivo',
-                    'archivo_tamano': contenido_data[7] if contenido_data[7] else 0,
-                    'archivo_url': contenido_data[8],
-                    'video_url': contenido_data[9],
-                    'es_obligatorio': contenido_data[10] if len(contenido_data) > 10 else False,
-                    'tiene_archivo': contenido_data[6] is not None
-                }
-            else:
-                contenido = None
-                flash('No se pudo cargar el contenido para editar', 'error')
-            
-            return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
-        
-        # Procesar archivo subido
-        archivo_data = None
-        file = request.files.get('archivo_local')
-        if file and file.filename != '':
-            print(f"DEBUG: Archivo recibido: {file.filename}")
-            if allowed_file(file.filename):
-                archivo_data = guardar_archivo_en_bd(file)
-                if not archivo_data:
-                    flash('Error al procesar el archivo', 'error')
-                    print(f"DEBUG: Error al procesar archivo")
-                    
-                    # Recargar contenido
-                    resultado = ejecutar_consulta(
-                        "SELECT id, titulo, descripcion, tipo, categoria_id, tags, archivo_nombre, archivo_tamano, archivo_url, video_url, es_obligatorio FROM sst_contenido WHERE id = %s",
-                        (id,),
-                        fetch=True
-                    )
-                    
-                    if resultado and resultado[0]:
-                        contenido_data = resultado[0]
-                        contenido = {
-                            'id': contenido_data[0],
-                            'titulo': contenido_data[1],
-                            'descripcion': contenido_data[2],
-                            'tipo': contenido_data[3],
-                            'categoria_id': contenido_data[4],
-                            'tags': contenido_data[5] if contenido_data[5] else '',
-                            'archivo_nombre': contenido_data[6] if contenido_data[6] else 'Sin archivo',
-                            'archivo_tamano': contenido_data[7] if contenido_data[7] else 0,
-                            'archivo_url': contenido_data[8],
-                            'video_url': contenido_data[9],
-                            'es_obligatorio': contenido_data[10] if len(contenido_data) > 10 else False,
-                            'tiene_archivo': contenido_data[6] is not None
-                        }
-                    else:
-                        contenido = None
-                    
-                    return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
-                
-                # Si se subió nuevo archivo, limpiar URLs
-                video_url = None
-                archivo_url = None
-                print(f"DEBUG: Archivo procesado exitosamente, tamaño: {archivo_data['tamano']} bytes")
-            else:
-                extensiones_permitidas = ', '.join(app.config['ALLOWED_EXTENSIONS'])
-                flash(f'Tipo de archivo no permitido. Extensiones válidas: {extensiones_permitidas}', 'error')
-                print(f"DEBUG: Tipo de archivo no permitido: {file.filename}")
-                
-                # Recargar contenido
-                resultado = ejecutar_consulta(
-                    "SELECT id, titulo, descripcion, tipo, categoria_id, tags, archivo_nombre, archivo_tamano, archivo_url, video_url, es_obligatorio FROM sst_contenido WHERE id = %s",
-                    (id,),
-                    fetch=True
-                )
-                
-                if resultado and resultado[0]:
-                    contenido_data = resultado[0]
-                    contenido = {
-                        'id': contenido_data[0],
-                        'titulo': contenido_data[1],
-                        'descripcion': contenido_data[2],
-                        'tipo': contenido_data[3],
-                        'categoria_id': contenido_data[4],
-                        'tags': contenido_data[5] if contenido_data[5] else '',
-                        'archivo_nombre': contenido_data[6] if contenido_data[6] else 'Sin archivo',
-                        'archivo_tamano': contenido_data[7] if contenido_data[7] else 0,
-                        'archivo_url': contenido_data[8],
-                        'video_url': contenido_data[9],
-                        'es_obligatorio': contenido_data[10] if len(contenido_data) > 10 else False,
-                        'tiene_archivo': contenido_data[6] is not None
-                    }
-                else:
-                    contenido = None
-                
+            # Validaciones
+            if not titulo or not tipo or not categoria_id:
+                flash('Todos los campos obligatorios deben ser completados', 'error')
                 return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
-        
-        # Validaciones específicas por tipo
-        validation_error = None
-        if tipo == 'video':
-            if not video_url and not archivo_data:
-                validation_error = 'Para video debe proporcionar una URL de video o subir un archivo'
-        elif tipo in ['documento', 'imagen']:
-            if not archivo_url and not archivo_data:
-                validation_error = 'Debe proporcionar una URL o subir un archivo'
-        elif tipo == 'enlace':
-            if not archivo_url:
-                validation_error = 'Debe proporcionar una URL para enlaces'
-            # Para enlaces, no permitir archivos locales
+            
+            # Procesar archivo subido
             archivo_data = None
-            video_url = None
-        
-        if validation_error:
-            flash(f'❌ {validation_error}', 'error')
-            print(f"DEBUG: Validación específica fallida: {validation_error}")
+            file = request.files.get('archivo_local')
+            if file and file.filename != '':
+                if allowed_file(file.filename):
+                    archivo_data = guardar_archivo_en_bd(file)
+                    if not archivo_data:
+                        flash('Error al procesar el archivo', 'error')
+                        return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
+                    
+                    # Si se subió nuevo archivo, limpiar URLs
+                    video_url = None
+                    archivo_url = None
+                else:
+                    flash('Tipo de archivo no permitido', 'error')
+                    return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
             
-            # Recargar contenido
-            resultado = ejecutar_consulta(
-                "SELECT id, titulo, descripcion, tipo, categoria_id, tags, archivo_nombre, archivo_tamano, archivo_url, video_url, es_obligatorio FROM sst_contenido WHERE id = %s",
-                (id,),
-                fetch=True
-            )
-            
-            if resultado and resultado[0]:
-                contenido_data = resultado[0]
-                contenido = {
-                    'id': contenido_data[0],
-                    'titulo': contenido_data[1],
-                    'descripcion': contenido_data[2],
-                    'tipo': contenido_data[3],
-                    'categoria_id': contenido_data[4],
-                    'tags': contenido_data[5] if contenido_data[5] else '',
-                    'archivo_nombre': contenido_data[6] if contenido_data[6] else 'Sin archivo',
-                    'archivo_tamano': contenido_data[7] if contenido_data[7] else 0,
-                    'archivo_url': contenido_data[8],
-                    'video_url': contenido_data[9],
-                    'es_obligatorio': contenido_data[10] if len(contenido_data) > 10 else False,
-                    'tiene_archivo': contenido_data[6] is not None
-                }
-            else:
-                contenido = None
-            
-            return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
-        
-        # Actualizar en base de datos
-        try:
+            # Actualizar en base de datos
             if archivo_data:
                 # Si se subió nuevo archivo, actualizar con archivo
-                print(f"DEBUG: Actualizando con nuevo archivo")
                 ejecutar_consulta("""
                     UPDATE sst_contenido 
                     SET titulo=%s, descripcion=%s, tipo=%s, archivo_url=%s, 
@@ -1907,7 +1516,6 @@ def sst_editar_contenido(id):
                 ), commit=True)
             else:
                 # Mantener el archivo existente, solo actualizar otros campos
-                print(f"DEBUG: Actualizando sin nuevo archivo")
                 ejecutar_consulta("""
                     UPDATE sst_contenido 
                     SET titulo=%s, descripcion=%s, tipo=%s, archivo_url=%s, 
@@ -1920,77 +1528,51 @@ def sst_editar_contenido(id):
                 ), commit=True)
             
             flash('✅ Contenido actualizado correctamente', 'success')
-            print(f"DEBUG: Contenido ID {id} actualizado exitosamente")
             return redirect(url_for('sst_contenido'))
-            
-        except Exception as db_error:
-            flash(f'❌ Error de base de datos: {str(db_error)}', 'error')
-            print(f"DEBUG: Error de BD al actualizar: {db_error}")
-            
-            # Recargar contenido
-            resultado = ejecutar_consulta(
-                "SELECT id, titulo, descripcion, tipo, categoria_id, tags, archivo_nombre, archivo_tamano, archivo_url, video_url, es_obligatorio FROM sst_contenido WHERE id = %s",
-                (id,),
-                fetch=True
-            )
-            
-            if resultado and resultado[0]:
-                contenido_data = resultado[0]
-                contenido = {
-                    'id': contenido_data[0],
-                    'titulo': contenido_data[1],
-                    'descripcion': contenido_data[2],
-                    'tipo': contenido_data[3],
-                    'categoria_id': contenido_data[4],
-                    'tags': contenido_data[5] if contenido_data[5] else '',
-                    'archivo_nombre': contenido_data[6] if contenido_data[6] else 'Sin archivo',
-                    'archivo_tamano': contenido_data[7] if contenido_data[7] else 0,
-                    'archivo_url': contenido_data[8],
-                    'video_url': contenido_data[9],
-                    'es_obligatorio': contenido_data[10] if len(contenido_data) > 10 else False,
-                    'tiene_archivo': contenido_data[6] is not None
-                }
-            else:
-                contenido = None
-            
-            return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
+        
+        # GET: Cargar datos del contenido
+        resultado = ejecutar_consulta("""
+            SELECT sc.*, cat.nombre as categoria_nombre, cat.color as categoria_color,
+                   u.usuario as creador_nombre
+            FROM sst_contenido sc
+            LEFT JOIN sst_categorias cat ON sc.categoria_id = cat.id
+            LEFT JOIN usuarios u ON sc.usuario_creador = u.id
+            WHERE sc.id = %s
+        """, (id,), fetch=True)
+        
+        if resultado and resultado[0]:
+            contenido_data = resultado[0]
+            contenido = {
+                'id': contenido_data[0],
+                'titulo': contenido_data[1],
+                'descripcion': contenido_data[2],
+                'tipo': contenido_data[3],
+                'archivo_url': contenido_data[4],
+                'tiene_archivo': contenido_data[5] is not None,
+                'archivo_nombre': contenido_data[6],
+                'archivo_tipo': contenido_data[7],
+                'archivo_tamano': contenido_data[8],
+                'video_url': contenido_data[9],
+                'categoria_id': contenido_data[10],
+                'es_obligatorio': contenido_data[11],
+                'tags': str(contenido_data[12]) if contenido_data[12] is not None else '',
+                'fecha_publicacion': contenido_data[13],
+                'usuario_creador': contenido_data[14],
+                'categoria_nombre': contenido_data[15],
+                'categoria_color': contenido_data[16],
+                'creador_nombre': contenido_data[17]
+            }
+                
+    except Exception as e:
+        flash(f'Error al editar contenido SST: {str(e)}', 'error')
+        print(f"❌ Error en sst_editar_contenido: {e}")
     
-    # GET: Cargar datos del contenido
-    print(f"DEBUG: Método GET para ID {id}")
-    resultado = ejecutar_consulta(
-        "SELECT id, titulo, descripcion, tipo, categoria_id, tags, archivo_nombre, archivo_tamano, archivo_url, video_url, es_obligatorio FROM sst_contenido WHERE id = %s",
-        (id,),
-        fetch=True
-    )
-    
-    print(f"DEBUG: Resultado de consulta: {resultado}")
-    
-    if not resultado or not resultado[0]:
+    if not contenido:
         flash('Contenido no encontrado', 'error')
-        print(f"DEBUG: No se encontró contenido con ID {id}")
         return redirect(url_for('sst_contenido'))
     
-    contenido_data = resultado[0]
-    print(f"DEBUG: Contenido encontrado - Título: {contenido_data[1]}")
-    
-    contenido = {
-        'id': contenido_data[0],
-        'titulo': contenido_data[1],
-        'descripcion': contenido_data[2],
-        'tipo': contenido_data[3],
-        'categoria_id': contenido_data[4],
-        'tags': contenido_data[5] if contenido_data[5] else '',
-        'archivo_nombre': contenido_data[6] if contenido_data[6] else 'Sin archivo',
-        'archivo_tamano': contenido_data[7] if contenido_data[7] else 0,
-        'archivo_url': contenido_data[8],
-        'video_url': contenido_data[9],
-        'es_obligatorio': contenido_data[10] if len(contenido_data) > 10 else False,
-        'tiene_archivo': contenido_data[6] is not None
-    }
-    
-    print(f"DEBUG: Renderizando template con contenido ID: {contenido['id']}")
     return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
-    
+
 @app.route('/sst/contenido/<int:id>/eliminar', methods=['POST'])
 @login_required
 def sst_eliminar_contenido(id):
@@ -2139,97 +1721,8 @@ def obtener_problemas(categoria):
     problemas = problemas_por_categoria.get(categoria, [])
     return jsonify(problemas)
 
-@app.route('/debug/tablas')
-def debug_tablas():
-    """Debug: Verificar tablas existentes"""
-    try:
-        resultado = ejecutar_consulta("""
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = 'public'
-            ORDER BY table_name
-        """, fetch=True)
-        
-        tablas = [tabla[0] for tabla in resultado]
-        return f"<h2>Tablas existentes:</h2><ul>{''.join([f'<li>{tabla}</li>' for tabla in tablas])}</ul>"
-    except Exception as e:
-        return f"<h2>Error:</h2><pre>{str(e)}</pre>"
-
-@app.route('/debug/contenido/<int:id>')
-def debug_contenido(id):
-    """Debug: Ver contenido específico"""
-    try:
-        resultado = ejecutar_consulta(
-            "SELECT * FROM sst_contenido WHERE id = %s",
-            (id,),
-            fetch=True
-        )
-        
-        if resultado:
-            contenido = resultado[0]
-            info = f"""
-            <h2>Contenido ID: {id}</h2>
-            <pre>
-            ID: {contenido[0]}
-            Título: {contenido[1]}
-            Descripción: {contenido[2]}
-            Tipo: {contenido[3]}
-            Archivo URL: {contenido[4]}
-            Tiene archivo: {'Sí' if contenido[5] else 'No'}
-            Nombre archivo: {contenido[6]}
-            Tipo archivo: {contenido[7]}
-            Tamaño archivo: {contenido[8]}
-            Video URL: {contenido[9]}
-            Categoría ID: {contenido[10]}
-            Obligatorio: {contenido[11]}
-            Tags: {contenido[12]}
-            Fecha publicación: {contenido[13]}
-            Usuario creador: {contenido[14]}
-            </pre>
-            """
-            return info
-        else:
-            return f"<h2>No se encontró contenido con ID: {id}</h2>"
-    except Exception as e:
-        return f"<h2>Error:</h2><pre>{str(e)}</pre>"
-
-@app.route('/debug/test-db/<int:id>')
-def test_db(id):
-    """Ruta de prueba para verificar la base de datos"""
-    try:
-        resultado = ejecutar_consulta(
-            "SELECT id, titulo FROM sst_contenido WHERE id = %s",
-            (id,),
-            fetch=True
-        )
-        
-        if resultado:
-            return f"""
-            <div style="background: #d4edda; padding: 20px; border-radius: 10px;">
-                <h2 style="color: #155724;">✅ CONTENIDO ENCONTRADO</h2>
-                <p><strong>ID:</strong> {resultado[0][0]}</p>
-                <p><strong>Título:</strong> {resultado[0][1]}</p>
-                <p><a href="/sst/contenido/{id}/editar">Intentar editar este contenido</a></p>
-            </div>
-            """
-        else:
-            return f"""
-            <div style="background: #f8d7da; padding: 20px; border-radius: 10px;">
-                <h2 style="color: #721c24;">❌ NO SE ENCONTRÓ CONTENIDO</h2>
-                <p>No existe contenido con ID: {id}</p>
-                <p><a href="/sst/contenido">Ver todos los contenidos</a></p>
-            </div>
-            """
-    except Exception as e:
-        return f"""
-        <div style="background: #fff3cd; padding: 20px; border-radius: 10px;">
-            <h2 style="color: #856404;">⚠️ ERROR DE BASE DE DATOS</h2>
-            <pre>{str(e)}</pre>
-        </div>
-        """
-
 if __name__ == '__main__':
     with app.app_context():
         print("🚀 Iniciando la aplicación Flask...")
         crear_tablas()
-    app.run(host='0.0.0.0', port=5000, debug=False)  # debug=False para producción
+    app.run(host='0.0.0.0', port=5000, debug=True)
