@@ -1,182 +1,98 @@
 {% extends "base.html" %}
 
-{% block title %}SST - Dashboard{% endblock %}
+{% block title %}Dashboard SST - Seguridad y Salud{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h2 mb-2 fw-bold">
-                        <i class="fas fa-shield-alt me-2 text-primary"></i>
-                        Seguridad y Salud en el Trabajo
-                    </h1>
-                    <p class="text-muted mb-0">Sistema de gestión de contenido de capacitación</p>
+<div class="container-fluid px-4">
+    <!-- Header Principal -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1 fw-bold text-dark">
+                <i class="fas fa-shield-alt me-2 text-primary"></i>
+                Seguridad y Salud en el Trabajo
+            </h1>
+            <p class="text-muted mb-0">Sistema de gestión de capacitación y contenido preventivo</p>
+        </div>
+        {% if current_user.rol == 'admin' %}
+        <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-primary btn-lg shadow-sm">
+            <i class="fas fa-plus me-2"></i>Nuevo Contenido
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Tarjetas de Estadísticas -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm card-hover">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-folder fa-2x text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Total Contenido</h6>
+                            <h3 class="fw-bold mb-0">{{ total_contenido }}</h3>
+                        </div>
+                    </div>
                 </div>
-                {% if current_user.rol == 'admin' %}
-                <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-primary btn-lg shadow-hover">
-                    <i class="fas fa-plus me-2"></i>Nuevo Contenido
-                </a>
-                {% endif %}
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm card-hover">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-video fa-2x text-success"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Videos</h6>
+                            <h3 class="fw-bold mb-0">{{ total_videos }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm card-hover">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-file-alt fa-2x text-warning"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Documentos</h6>
+                            <h3 class="fw-bold mb-0">{{ total_documentos }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm card-hover">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-danger bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-exclamation-circle fa-2x text-danger"></i>
+                        </div>
+                        <div>
+                            <h6 class="text-muted mb-1">Obligatorios</h6>
+                            <h3 class="fw-bold mb-0">{{ total_obligatorios }}</h3>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Estadísticas -->
-    <div class="row mb-4">
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card border-0 bg-primary bg-gradient text-white shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-subtitle mb-2">Total Contenido</h6>
-                            <h3 class="card-title mb-0">{{ total_contenido }}</h3>
-                        </div>
-                        <i class="fas fa-folder fa-2x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card border-0 bg-success bg-gradient text-white shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-subtitle mb-2">Videos</h6>
-                            <h3 class="card-title mb-0">{{ total_videos }}</h3>
-                        </div>
-                        <i class="fas fa-video fa-2x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card border-0 bg-warning bg-gradient text-white shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-subtitle mb-2">Documentos</h6>
-                            <h3 class="card-title mb-0">{{ total_documentos }}</h3>
-                        </div>
-                        <i class="fas fa-file-alt fa-2x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card border-0 bg-info bg-gradient text-white shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="card-subtitle mb-2">Obligatorios</h6>
-                            <h3 class="card-title mb-0">{{ total_obligatorios }}</h3>
-                        </div>
-                        <i class="fas fa-exclamation-circle fa-2x opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Contenido Principal -->
-    <div class="row">
-        <!-- Sidebar -->
-        <div class="col-lg-4 mb-4">
-            <!-- Acciones Rápidas -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0 pb-3">
-                    <h5 class="card-title mb-0 fw-bold text-dark">
-                        <i class="fas fa-bolt me-2 text-warning"></i>
-                        Acciones Rápidas
-                    </h5>
-                </div>
-                <div class="card-body p-3">
-                    <div class="d-grid gap-3">
-                        <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-primary btn-hover py-3">
-                            <i class="fas fa-list me-2"></i>Explorar Contenido
-                        </a>
-                        {% if current_user.rol == 'admin' %}
-                        <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-outline-success btn-hover py-3">
-                            <i class="fas fa-plus me-2"></i>Agregar Contenido
-                        </a>
-                        <a href="{{ url_for('sst_contenido') }}?tipo=obligatorio" class="btn btn-outline-danger btn-hover py-3">
-                            <i class="fas fa-exclamation-circle me-2"></i>Ver Obligatorios
-                        </a>
-                        {% endif %}
-                        <a href="{{ url_for('sst_contenido') }}?tipo=video" class="btn btn-outline-info btn-hover py-3">
-                            <i class="fas fa-video me-2"></i>Ver Videos
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Categorías -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0 pb-3">
-                    <h5 class="card-title mb-0 fw-bold text-dark">
-                        <i class="fas fa-tags me-2 text-primary"></i>
-                        Categorías
-                    </h5>
-                </div>
-                <div class="card-body p-3">
-                    <div class="d-grid gap-2">
-                        {% for categoria in categorias %}
-                        <a href="{{ url_for('sst_contenido') }}?categoria={{ categoria.id }}" 
-                           class="btn btn-category text-start py-2" 
-                           style="border-left: 4px solid {{ categoria.color }};">
-                            <i class="{{ categoria.icono }} me-2" style="color: {{ categoria.color }};"></i>
-                            <span class="flex-grow-1">{{ categoria.nombre }}</span>
-                            <span class="badge bg-light text-dark">{{ categoria.total }}</span>
-                        </a>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Contenido Obligatorio -->
-            {% if contenido_obligatorio %}
-            <div class="card border-0 shadow-sm mt-4 border-warning">
-                <div class="card-header bg-warning bg-opacity-10 border-0">
-                    <h5 class="card-title mb-0 fw-bold text-dark">
-                        <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
-                        Pendiente por Ver
-                    </h5>
-                </div>
-                <div class="card-body p-3">
-                    <div class="list-group list-group-flush">
-                        {% for contenido in contenido_obligatorio[:3] %}
-                        <a href="{{ url_for('ver_contenido_sst', id=contenido.id) }}" 
-                           class="list-group-item list-group-item-action border-0 py-2">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">{{ contenido.titulo[:50] }}{% if contenido.titulo|length > 50 %}...{% endif %}</h6>
-                                <small class="text-muted">{{ contenido.tipo }}</small>
-                            </div>
-                            <small class="text-muted">{{ contenido.categoria_nombre }}</small>
-                        </a>
-                        {% endfor %}
-                    </div>
-                    {% if contenido_obligatorio|length > 3 %}
-                    <div class="text-center mt-3">
-                        <a href="{{ url_for('sst_contenido') }}?tipo=obligatorio" class="btn btn-sm btn-warning">
-                            Ver todos ({{ contenido_obligatorio|length }})
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- Contenido Destacado -->
+    <div class="row g-4">
+        <!-- Columna Izquierda - Contenido Reciente -->
         <div class="col-lg-8">
             <!-- Contenido Reciente -->
             <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0 pb-3">
+                <div class="card-header bg-white border-0 py-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0 fw-bold text-dark">
-                            <i class="fas fa-star me-2 text-warning"></i>
+                        <h5 class="fw-bold mb-0 text-dark">
+                            <i class="fas fa-clock me-2 text-primary"></i>
                             Contenido Reciente
                         </h5>
                         <a href="{{ url_for('sst_contenido') }}" class="btn btn-sm btn-outline-primary">
@@ -184,31 +100,35 @@
                         </a>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     {% if contenido_reciente %}
-                    <div class="row">
-                        {% for contenido in contenido_reciente[:6] %}
-                        <div class="col-lg-4 col-md-6 mb-4">
-                            <div class="card h-100 border-0 shadow-sm hover-shadow">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <span class="badge" 
-                                              style="background-color: {{ contenido.categoria_color }};">
+                    <div class="row g-4">
+                        {% for contenido in contenido_reciente[:4] %}
+                        <div class="col-lg-6">
+                            <div class="card border-0 shadow-sm h-100 card-hover">
+                                <div class="card-body p-4">
+                                    <div class="d-flex justify-content-between align-items-start mb-3">
+                                        <span class="badge rounded-pill" 
+                                              style="background-color: {{ contenido.categoria_color }}; color: white;">
                                             {{ contenido.categoria_nombre }}
                                         </span>
-                                        <small class="text-muted">
-                                            <i class="fas fa-{{ 'video' if contenido.tipo == 'video' else 'file' }}"></i>
-                                        </small>
+                                        <div class="text-muted">
+                                            <i class="fas fa-{{ 'video' if contenido.tipo == 'video' else 'file' }} me-1"></i>
+                                            <small class="text-uppercase">{{ contenido.tipo }}</small>
+                                        </div>
                                     </div>
-                                    <h6 class="card-title">{{ contenido.titulo[:60] }}{% if contenido.titulo|length > 60 %}...{% endif %}</h6>
-                                    <p class="card-text text-muted small">{{ contenido.descripcion[:80] or 'Sin descripción' }}{% if contenido.descripcion and contenido.descripcion|length > 80 %}...{% endif %}</p>
-                                    <div class="d-flex justify-content-between align-items-center mt-3">
-                                        <small class="text-muted">
-                                            {{ contenido.fecha_publicacion|fecha_corta if contenido.fecha_publicacion else 'Reciente' }}
-                                        </small>
+                                    <h6 class="card-title fw-bold text-dark mb-3">{{ contenido.titulo[:50] }}{% if contenido.titulo|length > 50 %}...{% endif %}</h6>
+                                    <p class="card-text text-muted mb-4">{{ contenido.descripcion[:80] or 'Sin descripción' }}{% if contenido.descripcion and contenido.descripcion|length > 80 %}...{% endif %}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                {{ contenido.fecha_publicacion|fecha_corta if contenido.fecha_publicacion else 'Reciente' }}
+                                            </small>
+                                        </div>
                                         <a href="{{ url_for('ver_contenido_sst', id=contenido.id) }}" 
-                                           class="btn btn-sm btn-outline-primary">
-                                            Ver
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye me-1"></i> Ver
                                         </a>
                                     </div>
                                 </div>
@@ -216,11 +136,25 @@
                         </div>
                         {% endfor %}
                     </div>
+                    
+                    {% if contenido_reciente|length > 4 %}
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-list me-2"></i>Ver más contenido
+                        </a>
+                    </div>
+                    {% endif %}
+                    
                     {% else %}
                     <div class="text-center py-5">
-                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">No hay contenido disponible</h5>
-                        <p class="text-muted">Agrega contenido para empezar</p>
+                        <div class="mb-4">
+                            <i class="fas fa-inbox fa-3x text-light"></i>
+                            <div class="position-absolute top-50 start-50 translate-middle">
+                                <i class="fas fa-inbox fa-2x text-muted opacity-25"></i>
+                            </div>
+                        </div>
+                        <h5 class="text-muted mb-2">No hay contenido disponible</h5>
+                        <p class="text-muted mb-4">Agrega contenido para empezar con las capacitaciones</p>
                         {% if current_user.rol == 'admin' %}
                         <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>Agregar Primer Contenido
@@ -234,34 +168,39 @@
             <!-- Videos Destacados -->
             {% if videos_destacados %}
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0 pb-3">
-                    <h5 class="card-title mb-0 fw-bold text-dark">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="fw-bold mb-0 text-dark">
                         <i class="fas fa-play-circle me-2 text-danger"></i>
                         Videos Destacados
                     </h5>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        {% for video in videos_destacados[:3] %}
-                        <div class="col-md-4 mb-3">
-                            <div class="card h-100 border-0">
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        {% for video in videos_destacados %}
+                        <div class="col-lg-4">
+                            <div class="card border-0 shadow-sm card-hover">
                                 <div class="position-relative">
-                                    <div class="card-img-top bg-dark" style="height: 120px; border-radius: 8px 8px 0 0;">
+                                    <div class="card-img-top bg-dark bg-gradient" style="height: 140px; border-radius: 8px 8px 0 0;">
                                         <div class="d-flex align-items-center justify-content-center h-100">
-                                            <i class="fas fa-play-circle fa-3x text-white opacity-50"></i>
+                                            <div class="rounded-circle bg-danger bg-opacity-75 p-3">
+                                                <i class="fas fa-play fa-2x text-white"></i>
+                                            </div>
                                         </div>
                                     </div>
-                                    <span class="position-absolute top-0 start-0 m-2 badge bg-danger">
-                                        Video
+                                    <span class="position-absolute top-0 start-0 m-3 badge bg-danger rounded-pill">
+                                        <i class="fas fa-video me-1"></i> Video
                                     </span>
                                 </div>
-                                <div class="card-body">
-                                    <h6 class="card-title">{{ video.titulo[:50] }}{% if video.titulo|length > 50 %}...{% endif %}</h6>
+                                <div class="card-body p-3">
+                                    <h6 class="card-title fw-bold mb-2">{{ video.titulo[:40] }}{% if video.titulo|length > 40 %}...{% endif %}</h6>
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <small class="text-muted">{{ video.duracion if video.duracion else '--:--' }}</small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            {{ video.duracion if video.duracion else '--:--' }}
+                                        </small>
                                         <a href="{{ url_for('ver_contenido_sst', id=video.id) }}" 
-                                           class="btn btn-sm btn-danger">
-                                            <i class="fas fa-play"></i> Ver
+                                           class="btn btn-sm btn-danger rounded-pill">
+                                            <i class="fas fa-play me-1"></i> Ver
                                         </a>
                                     </div>
                                 </div>
@@ -273,69 +212,333 @@
             </div>
             {% endif %}
         </div>
+
+        <!-- Columna Derecha - Sidebar -->
+        <div class="col-lg-4">
+            <!-- Acciones Rápidas -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="fas fa-bolt me-2 text-warning"></i>
+                        Acciones Rápidas
+                    </h5>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-primary btn-hover py-3 text-start">
+                            <i class="fas fa-list me-2"></i>
+                            <span class="fw-medium">Explorar Contenido</span>
+                        </a>
+                        
+                        {% if current_user.rol == 'admin' %}
+                        <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-outline-success btn-hover py-3 text-start">
+                            <i class="fas fa-plus me-2"></i>
+                            <span class="fw-medium">Agregar Contenido</span>
+                        </a>
+                        <a href="{{ url_for('sst_contenido') }}?tipo=obligatorio" class="btn btn-outline-danger btn-hover py-3 text-start">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <span class="fw-medium">Ver Obligatorios</span>
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('sst_contenido') }}?tipo=video" class="btn btn-outline-info btn-hover py-3 text-start">
+                            <i class="fas fa-video me-2"></i>
+                            <span class="fw-medium">Ver Videos</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categorías -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="fas fa-tags me-2 text-primary"></i>
+                        Categorías
+                    </h5>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-grid gap-2">
+                        {% for categoria in categorias %}
+                        <a href="{{ url_for('sst_contenido') }}?categoria={{ categoria.id }}" 
+                           class="btn btn-category py-2 px-3 text-start d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <i class="{{ categoria.icono }} me-3" style="color: {{ categoria.color }}; font-size: 1.1rem;"></i>
+                                <span class="fw-medium">{{ categoria.nombre }}</span>
+                            </div>
+                            <span class="badge rounded-pill bg-light text-dark">{{ categoria.total }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contenido Obligatorio Pendiente -->
+            {% if contenido_obligatorio %}
+            <div class="card border-0 shadow-sm border-warning">
+                <div class="card-header bg-warning bg-opacity-10 border-0 py-3">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                        Pendiente por Ver
+                    </h5>
+                </div>
+                <div class="card-body p-3">
+                    <div class="list-group list-group-flush">
+                        {% for contenido in contenido_obligatorio[:3] %}
+                        <a href="{{ url_for('ver_contenido_sst', id=contenido.id) }}" 
+                           class="list-group-item list-group-item-action border-0 py-2 px-0 bg-transparent">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-warning bg-opacity-10 p-2 me-3">
+                                    <i class="fas fa-exclamation text-warning"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-medium">{{ contenido.titulo[:45] }}{% if contenido.titulo|length > 45 %}...{% endif %}</h6>
+                                    <small class="text-muted d-flex align-items-center">
+                                        <i class="fas fa-{{ 'video' if contenido.tipo == 'video' else 'file' }} me-1"></i>
+                                        {{ contenido.categoria_nombre }}
+                                    </small>
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if contenido_obligatorio|length > 3 %}
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('sst_contenido') }}?tipo=obligatorio" class="btn btn-warning btn-sm">
+                            Ver todos ({{ contenido_obligatorio|length }} pendientes)
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Estadísticas de Uso -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="fas fa-chart-line me-2 text-info"></i>
+                        Resumen del Sistema
+                    </h5>
+                </div>
+                <div class="card-body p-3">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="p-2">
+                                <div class="text-primary fw-bold fs-4">{{ total_contenido }}</div>
+                                <small class="text-muted">Contenidos</small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="p-2">
+                                <div class="text-success fw-bold fs-4">{{ total_videos }}</div>
+                                <small class="text-muted">Videos</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2">
+                                <div class="text-warning fw-bold fs-4">{{ total_documentos }}</div>
+                                <small class="text-muted">Documentos</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2">
+                                <div class="text-danger fw-bold fs-4">{{ total_obligatorios }}</div>
+                                <small class="text-muted">Obligatorios</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <style>
+/* Estilos personalizados */
+:root {
+    --primary-color: #4361ee;
+    --secondary-color: #3a0ca3;
+    --success-color: #06d6a0;
+    --warning-color: #ffd166;
+    --danger-color: #ef476f;
+    --info-color: #118ab2;
+    --light-bg: #f8f9fa;
+    --dark-bg: #212529;
+}
+
+/* Tarjetas con hover */
+.card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+    border-color: var(--primary-color);
+}
+
+/* Botones de categorías */
 .btn-category {
-    border: 1px solid #e9ecef;
-    padding: 12px 15px;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-    color: #212529;
     background: white;
-    margin-bottom: 8px;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    color: #495057;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-category::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: var(--primary-color);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .btn-category:hover {
-    background: #f8f9fa;
-    border-color: #0d6efd;
+    background: var(--light-bg);
+    border-color: var(--primary-color);
     transform: translateX(5px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.btn-category:last-child {
-    margin-bottom: 0;
+.btn-category:hover::before {
+    opacity: 1;
 }
 
+/* Botones con hover */
 .btn-hover {
     transition: all 0.3s ease;
     border-radius: 10px;
-    font-weight: 500;
+    position: relative;
+    overflow: hidden;
 }
 
 .btn-hover:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
-.shadow-hover {
-    transition: all 0.3s ease;
+.btn-hover:active {
+    transform: translateY(0);
 }
 
-.shadow-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+/* Badges modernos */
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* Animación para iconos */
+.fas {
+    transition: transform 0.3s ease;
+}
+
+.card-hover:hover .fas {
+    transform: scale(1.1);
+}
+
+/* Bordes redondeados */
+.card, .btn, .badge {
+    border-radius: 10px !important;
+}
+
+/* Sombras suaves */
+.shadow-sm {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important;
+}
+
+/* Efecto de gradiente para videos */
+.bg-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1.5rem !important;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.5rem !important;
+        font-size: 1rem !important;
+    }
+}
+
+/* Animación de carga */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .card {
-    border-radius: 12px;
+    animation: fadeIn 0.5s ease-out;
 }
 
-.hover-shadow {
-    transition: all 0.3s ease;
+/* Scroll personalizado */
+::-webkit-scrollbar {
+    width: 8px;
 }
 
-.hover-shadow:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
 }
 
-.bg-gradient {
-    background: linear-gradient(135deg, var(--bs-primary), #0d6efd);
+::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color);
 }
 </style>
+
+<!-- Script para animaciones -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación para las tarjetas al cargar
+    const cards = document.querySelectorAll('.card-hover');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+    });
+    
+    // Efecto hover mejorado para botones
+    const buttons = document.querySelectorAll('.btn-hover');
+    buttons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-3px)';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Actualizar hora en tiempo real
+    function updateTime() {
+        const now = new Date();
+        const timeElement = document.getElementById('current-time');
+        if (timeElement) {
+            timeElement.textContent = now.toLocaleTimeString('es-ES', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+    }
+    
+    // Actualizar cada minuto
+    setInterval(updateTime, 60000);
+    updateTime(); // Inicializar
+});
+</script>
+
 {% endblock %}
