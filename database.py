@@ -33,33 +33,69 @@ def crear_conexion():
         return None
 
 def ejecutar_consulta(query, params=None, fetch=False, commit=False):
-    """Función helper para ejecutar consultas de forma segura"""
+    """Ejecuta una consulta SQL con manejo de errores y depuración"""
     conexion = None
     cursor = None
+    resultado = None
+    
     try:
+        # Crear conexión
         conexion = crear_conexion()
-        if conexion:
-            cursor = conexion.cursor()
-            cursor.execute(query, params or ())
+        if not conexion:
+            print("❌ ERROR SQL: No se pudo crear la conexión")
+            return None
+        
+        cursor = conexion.cursor()
+        
+        # Depuración
+        print(f"📊 DEBUG SQL [Inicio]")
+        print(f"📊 DEBUG SQL Query: {query[:200]}...")
+        print(f"📊 DEBUG SQL Params: {params}")
+        
+        # Ejecutar consulta
+        if params:
+            cursor.execute(query, params)
+        else:
+            cursor.execute(query)
+        
+        # Manejar resultado según tipo de operación
+        if commit:
+            conexion.commit()
+            resultado = True
+            print(f"📊 DEBUG SQL [Commit OK] - Filas afectadas: {cursor.rowcount}")
+        elif fetch:
+            resultado = cursor.fetchall()
+            print(f"📊 DEBUG SQL [Fetch OK] - {len(resultado) if resultado else 0} filas obtenidas")
+        else:
+            resultado = True
+            print(f"📊 DEBUG SQL [Execute OK] - Filas afectadas: {cursor.rowcount}")
             
-            if commit:
-                conexion.commit()
-                return True
-            elif fetch:
-                return cursor.fetchall()
-            else:
-                return cursor.rowcount
-                
     except Exception as e:
-        print(f"❌ Error en consulta: {e}")
-        if conexion:
-            conexion.rollback()
-        return None
+        print(f"❌ ERROR SQL: {e}")
+        print(f"❌ ERROR SQL Query: {query[:500]}")
+        print(f"❌ ERROR SQL Params: {params}")
+        
+        # Rollback en caso de error con commit
+        if commit and conexion:
+            try:
+                conexion.rollback()
+                print("📊 DEBUG SQL: Rollback realizado")
+            except:
+                pass
+        
+        # Re-lanzar la excepción para manejo superior
+        raise e
+        
     finally:
+        # Cerrar cursor y conexión
         if cursor:
             cursor.close()
+            print("📊 DEBUG SQL: Cursor cerrado")
         if conexion:
             conexion.close()
+            print("📊 DEBUG SQL: Conexión cerrada")
+    
+    return resultado
 
 def crear_tabla_usuarios():
     """Crear tabla de usuarios si no existe"""
