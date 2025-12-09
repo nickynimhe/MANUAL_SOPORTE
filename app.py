@@ -1322,12 +1322,10 @@ def informacion_general():
 @app.route('/sst/contenido/<int:id>/ver')
 @login_required
 def ver_contenido_sst(id):
-    """Ver contenido específico SST"""
+    """Ver contenido específico SST - VERSIÓN MEJORADA CON MANEJO DE ERRORES"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
-    
-    contenido_data = None
     
     try:
         resultado = ejecutar_consulta("""
@@ -1339,39 +1337,38 @@ def ver_contenido_sst(id):
             WHERE c.id = %s
         """, (id,), fetch=True)
         
-        if resultado and resultado[0]:
-            row = resultado[0]
-            contenido_data = {
-                'id': row[0],
-                'titulo': row[1],
-                'descripcion': row[2],
-                'tipo': row[3],
-                'archivo_url': row[4],
-                'tiene_archivo': row[5] is not None,
-                'archivo_nombre': row[6],
-                'archivo_tipo': row[7],
-                'archivo_tamano': row[8],
-                'video_url': row[9],
-                'categoria_id': row[10],
-                'es_obligatorio': row[11],
-                'tags': row[12],
-                'fecha_publicacion': row[13],
-                'usuario_creador': row[14],
-                'categoria_nombre': row[15],
-                'categoria_color': row[16],
-                'creador_nombre': row[17]
-            }
+        if not resultado or not resultado[0]:
+            flash(f'❌ Contenido con ID {id} no encontrado', 'error')
+            return redirect(url_for('sst_contenido'))
+        
+        row = resultado[0]
+        contenido_data = {
+            'id': row[0],
+            'titulo': row[1],
+            'descripcion': row[2] if row[2] else '',
+            'tipo': row[3],
+            'archivo_url': row[4] if row[4] else '',
+            'tiene_archivo': row[5] is not None,
+            'archivo_nombre': row[6] if row[6] else '',
+            'archivo_tipo': row[7] if row[7] else '',
+            'archivo_tamano': row[8] if row[8] else 0,
+            'video_url': row[9] if row[9] else '',
+            'categoria_id': row[10],
+            'es_obligatorio': row[11] if row[11] else False,
+            'tags': row[12] if row[12] else '',
+            'fecha_publicacion': row[13],
+            'usuario_creador': row[14],
+            'categoria_nombre': row[15] if row[15] else 'Sin categoría',
+            'categoria_color': row[16] if row[16] else '#007bff',
+            'creador_nombre': row[17] if row[17] else 'Desconocido'
+        }
+        
+        return render_template('sst/ver_contenido.html', contenido=contenido_data)
                 
     except Exception as e:
-        flash('Error al cargar el contenido', 'error')
-        print(f"❌ Error en ver_contenido_sst: {e}")
+        flash(f'❌ Error al cargar el contenido: {str(e)}', 'error')
+        print(f"❌ Error en ver_contenido_sst (ID: {id}): {e}")
         return redirect(url_for('sst_contenido'))
-    
-    if not contenido_data:
-        flash('Contenido no encontrado', 'error')
-        return redirect(url_for('sst_contenido'))
-    
-    return render_template('sst/ver_contenido.html', contenido=contenido_data)
 
 @app.route('/sst/dashboard')
 @login_required
