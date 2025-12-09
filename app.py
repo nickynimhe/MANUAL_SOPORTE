@@ -130,7 +130,7 @@ def obtener_contenido_reciente(limite=6):
         return []
 
 def obtener_contenido_obligatorio_usuario(usuario_id, limite=5):
-    """Obtiene contenido obligatorio que el usuario aún no ha visto"""
+    """Obtiene contenido obligatorio que el usuario aún no ha visto - VERSIÓN CORREGIDA"""
     try:
         query = """
             SELECT c.id, c.titulo, c.descripcion, c.tipo, 
@@ -141,7 +141,8 @@ def obtener_contenido_obligatorio_usuario(usuario_id, limite=5):
             ORDER BY c.fecha_publicacion DESC
             LIMIT %s
         """
-        resultado = ejecutar_consulta(query, (usuario_id, limite), fetch=True)
+        # SOLO un parámetro: limite (usuario_id no se usa en esta consulta)
+        resultado = ejecutar_consulta(query, (limite,), fetch=True)
         
         contenido = []
         for row in resultado:
@@ -1426,17 +1427,16 @@ def sst_dashboard():
                          contenido_reciente=contenido_reciente,
                          contenido_obligatorio=contenido_obligatorio,
                          videos_destacados=videos_destacados)
-    
 
 @app.route('/sst/contenido')
 @login_required
 def sst_contenido():
-    """Lista de todo el contenido SST - VERSIÓN CORREGIDA"""
+    """Lista de todo el contenido SST - VERSIÓN CORREGIDA CON NOMBRE CAMBIADO"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
     
-    contenido = []
+    contenido_lista = []  # NOMBRE CAMBIADO: contenido -> contenido_lista
     categorias = []
     
     try:
@@ -1482,20 +1482,20 @@ def sst_contenido():
                 'video_url': item[9],
                 'categoria_id': item[10],
                 'es_obligatorio': item[11],
-                'tags': tags_str,  # Ahora siempre es string
+                'tags': tags_str,
                 'fecha_publicacion': item[13],
                 'usuario_creador': item[14],
                 'categoria_nombre': item[15],
                 'categoria_color': item[16],
                 'creador_nombre': item[17]
             }
-            contenido.append(contenido_dict)
+            contenido_lista.append(contenido_dict)
                 
     except Exception as e:
         flash('Error al cargar el contenido SST', 'error')
         print(f"❌ Error en sst_contenido: {e}")
     
-    return render_template('sst/contenido.html', contenido=contenido, categorias=categorias)
+    return render_template('sst/contenido.html', contenido=contenido_lista, categorias=categorias)
 
 @app.route('/sst/agregar', methods=['GET', 'POST'])
 @login_required
@@ -1641,11 +1641,10 @@ def sst_descargar_archivo(id):
         file_data = BytesIO(archivo['data'])
         
         # IMPORTANTE: as_attachment=False para VISUALIZACIÓN
-        # download_name solo se usa si se descarga, no afecta la visualización
         response = send_file(
             file_data,
             mimetype=archivo['tipo'],
-            as_attachment=False,  # ¡ESTO ES LO MÁS IMPORTANTE!
+            as_attachment=False,
             download_name=archivo['nombre']
         )
         
@@ -1680,7 +1679,7 @@ def sst_descargar_archivo_forzado(id):
         return send_file(
             file_data,
             mimetype=archivo['tipo'],
-            as_attachment=True,  # Esto SÍ fuerza descarga
+            as_attachment=True,
             download_name=archivo['nombre']
         )
         
