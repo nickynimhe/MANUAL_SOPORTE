@@ -159,7 +159,7 @@
                                         <div class="d-flex align-items-center">
                                             <div class="me-3">
                                                 <span class="badge rounded-circle p-2" 
-                                                      style="background-color: {{ contenido.categoria_color }}; color: white;">
+                                                      style="background-color: {{ contenido.categoria_color or '#6c757d' }}; color: white;">
                                                     <i class="fas fa-{{ 'video' if contenido.tipo == 'video' else 'file-pdf' }} fa-sm"></i>
                                                 </span>
                                             </div>
@@ -171,11 +171,11 @@
                                     </td>
                                     <td>
                                         <span class="badge bg-{{ 'danger' if contenido.tipo == 'video' else 'warning' }}-subtle text-{{ 'danger' if contenido.tipo == 'video' else 'warning' }}">
-                                            {{ contenido.tipo|title }}
+                                            {{ contenido.tipo|title if contenido.tipo else 'Documento' }}
                                         </span>
                                     </td>
                                     <td>
-                                        <small class="text-muted">{{ contenido.categoria_nombre }}</small>
+                                        <small class="text-muted">{{ contenido.categoria_nombre or 'Sin categoría' }}</small>
                                     </td>
                                     <td class="pe-4">
                                         <small class="text-muted">
@@ -233,10 +233,10 @@
                                     <div class="d-flex justify-content-between align-items-start">
                                         <h6 class="fw-bold mb-1 text-dark">{{ contenido.titulo[:50] }}{% if contenido.titulo|length > 50 %}...{% endif %}</h6>
                                         <span class="badge bg-{{ 'danger' if contenido.tipo == 'video' else 'warning' }}-subtle text-{{ 'danger' if contenido.tipo == 'video' else 'warning' }} ms-2">
-                                            {{ contenido.tipo|title }}
+                                            {{ contenido.tipo|title if contenido.tipo else 'Documento' }}
                                         </span>
                                     </div>
-                                    <small class="text-muted d-block mb-2">{{ contenido.categoria_nombre }}</small>
+                                    <small class="text-muted d-block mb-2">{{ contenido.categoria_nombre or 'Sin categoría' }}</small>
                                     <div class="d-flex justify-content-between align-items-center">
                                         <small class="text-muted">
                                             <i class="fas fa-calendar me-1"></i>
@@ -365,6 +365,7 @@
                     <p class="text-muted small mb-0">Organizado por áreas de seguridad</p>
                 </div>
                 <div class="card-body p-4">
+                    {% if categorias %}
                     <div class="row g-3">
                         {% for categoria in categorias %}
                         <div class="col-md-4 col-6">
@@ -373,8 +374,8 @@
                                 <div class="card border-0 h-100 hover-lift">
                                     <div class="card-body p-3 text-center">
                                         <div class="sst-category-icon mb-3">
-                                            <div class="rounded-3 p-3" style="background-color: {{ categoria.color }}20;">
-                                                <i class="{{ categoria.icono }} fa-xl" style="color: {{ categoria.color }};"></i>
+                                            <div class="rounded-3 p-3" style="background-color: {{ categoria.color or '#6c757d' }}20;">
+                                                <i class="{{ categoria.icono or 'fas fa-folder' }} fa-xl" style="color: {{ categoria.color or '#6c757d' }};"></i>
                                             </div>
                                         </div>
                                         <h6 class="fw-bold mb-1 text-dark">{{ categoria.nombre }}</h6>
@@ -388,12 +389,17 @@
                         </div>
                         {% endfor %}
                     </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-folder-open fa-3x text-muted opacity-25 mb-3"></i>
+                        <p class="text-muted small">No hay categorías configuradas</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
         <!-- Videos Destacados -->
-        {% if videos_destacados %}
         <div class="col-lg-4">
             <div class="card sst-card border-0 h-100">
                 <div class="card-header bg-white border-0 py-3">
@@ -404,6 +410,7 @@
                     <p class="text-muted small mb-0">Contenido multimedia recomendado</p>
                 </div>
                 <div class="card-body p-3">
+                    {% if videos_destacados %}
                     <div class="sst-videos-list">
                         {% for video in videos_destacados[:3] %}
                         <div class="sst-video-item mb-3">
@@ -425,7 +432,7 @@
                                             <span class="badge bg-danger bg-opacity-10 text-danger small me-2">
                                                 <i class="fas fa-clock me-1"></i>5 min
                                             </span>
-                                            <small class="text-muted">{{ video.categoria_nombre }}</small>
+                                            <small class="text-muted">{{ video.categoria_nombre or 'Sin categoría' }}</small>
                                         </div>
                                     </div>
                                 </div>
@@ -442,10 +449,20 @@
                         </div>
                         {% endif %}
                     </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-video-slash fa-3x text-muted opacity-25 mb-3"></i>
+                        <p class="text-muted small">No hay videos destacados</p>
+                        {% if current_user.rol == 'admin' %}
+                        <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-plus me-1"></i>Agregar video
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
-        {% endif %}
     </div>
 
     <!-- Footer del Dashboard -->
@@ -454,7 +471,7 @@
             <div class="text-center text-muted small py-3 border-top">
                 <p class="mb-0">
                     <i class="fas fa-shield-alt me-1 text-primary"></i>
-                    Sistema SST • Actualizado: {{ now().strftime('%d/%m/%Y %H:%M') if now else 'Hoy' }}
+                    Sistema SST • Actualizado: <span id="current-time">Cargando...</span>
                     • Total elementos: {{ total_contenido }}
                 </p>
             </div>
@@ -518,6 +535,11 @@ body {
 /* Filas de tabla interactivas */
 .sst-table-row {
     transition: all 0.2s ease;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.sst-table-row:last-child {
+    border-bottom: none;
 }
 
 .sst-table-row:hover {
@@ -568,9 +590,12 @@ body {
 /* Videos destacados */
 .sst-video-item {
     transition: all 0.2s ease;
+    padding: 8px;
+    border-radius: 8px;
 }
 
 .sst-video-item:hover {
+    background-color: rgba(231, 76, 60, 0.05);
     transform: translateX(4px);
 }
 
@@ -640,6 +665,10 @@ body {
         height: 50px;
         padding: 0.75rem !important;
     }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
 }
 
 /* Animaciones */
@@ -658,41 +687,70 @@ body {
     animation: fadeIn 0.5s ease-out;
 }
 
-/* Estilo para mantener colores de navbar */
-.navbar {
+/* Efecto de carga */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Corrección para evitar conflictos con navbar */
+.navbar.bg-primary {
     background: linear-gradient(135deg, var(--sst-primary) 0%, var(--sst-secondary) 100%) !important;
 }
 
-.navbar-brand,
-.navbar-nav .nav-link {
-    color: white !important;
+.navbar-dark .navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
 }
 
-.navbar-nav .nav-link:hover {
-    color: var(--sst-light) !important;
+.navbar-dark .navbar-nav .nav-link:hover {
+    color: white !important;
     background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-}
-
-/* Corrige cualquier override de Bootstrap */
-.navbar-light .navbar-nav .nav-link,
-.navbar-light .navbar-brand {
-    color: white !important;
-}
-
-.navbar-toggler {
-    border-color: rgba(255, 255, 255, 0.5) !important;
-}
-
-.navbar-toggler-icon {
-    filter: invert(1);
 }
 </style>
 
-<!-- Script para interacciones -->
+<!-- Script para funcionalidades -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Efecto hover en todas las tarjetas interactivas
+    // Actualizar hora actual en tiempo real
+    function updateCurrentTime() {
+        const now = new Date();
+        const options = { 
+            day: '2-digit', 
+            month: '2-digit', 
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        const formattedTime = now.toLocaleDateString('es-ES', options);
+        document.getElementById('current-time').textContent = formattedTime;
+    }
+    
+    // Actualizar cada segundo
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
+    
+    // Hacer filas de tabla clicleables
+    const tableRows = document.querySelectorAll('.sst-table-row');
+    tableRows.forEach(row => {
+        row.addEventListener('click', function() {
+            const onclickAttr = this.getAttribute('onclick');
+            if (onclickAttr) {
+                const urlMatch = onclickAttr.match(/window\.location='([^']+)'/);
+                if (urlMatch && urlMatch[1]) {
+                    window.location.href = urlMatch[1];
+                }
+            }
+        });
+    });
+    
+    // Agregar efectos hover a tarjetas
     const cards = document.querySelectorAll('.sst-card, .sst-action-card, .sst-category-card');
     cards.forEach(card => {
         card.addEventListener('mouseenter', function() {
@@ -700,38 +758,69 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Manejo de clics en filas de tabla
-    const tableRows = document.querySelectorAll('.sst-table-row');
-    tableRows.forEach(row => {
-        row.addEventListener('click', function() {
-            const link = this.getAttribute('onclick').replace("window.location='", "").replace("'", "");
-            window.location.href = link;
+    // Tooltips para elementos truncados
+    const truncatedElements = document.querySelectorAll('[title]');
+    truncatedElements.forEach(el => {
+        el.addEventListener('mouseenter', function() {
+            if (this.scrollWidth > this.clientWidth) {
+                this.setAttribute('data-bs-toggle', 'tooltip');
+                this.setAttribute('data-bs-title', this.textContent);
+                new bootstrap.Tooltip(this);
+            }
         });
     });
     
-    // Actualizar hora de actualización
-    function updateTimestamp() {
-        const now = new Date();
-        const options = { 
-            day: '2-digit', 
-            month: '2-digit', 
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        };
-        const timestampElements = document.querySelectorAll('[data-timestamp]');
-        timestampElements.forEach(el => {
-            el.textContent = now.toLocaleDateString('es-ES', options);
-        });
+    // Mostrar notificación si hay contenido obligatorio pendiente
+    const obligatoriosCount = {{ contenido_obligatorio|length }};
+    if (obligatoriosCount > 0) {
+        // Crear notificación visual
+        const notification = document.createElement('div');
+        notification.className = 'position-fixed bottom-0 end-0 m-3 alert alert-warning alert-dismissible fade show';
+        notification.style.zIndex = '1050';
+        notification.innerHTML = `
+            <strong><i class="fas fa-exclamation-triangle me-2"></i>Atención</strong>
+            <p class="mb-1 small">Tienes ${obligatoriosCount} contenido(s) obligatorio(s) pendiente(s)</p>
+            <a href="{{ url_for('sst_contenido') }}?tipo=obligatorio" class="btn btn-sm btn-warning">
+                Revisar ahora
+            </a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(notification);
+        
+        // Auto cerrar después de 10 segundos
+        setTimeout(() => {
+            if (notification.parentNode) {
+                const bsAlert = new bootstrap.Alert(notification);
+                bsAlert.close();
+            }
+        }, 10000);
     }
     
-    // Actualizar cada minuto
-    setInterval(updateTimestamp, 60000);
+    // Animación de carga para estadísticas
+    const statNumbers = document.querySelectorAll('.display-6');
+    statNumbers.forEach(stat => {
+        const originalValue = stat.textContent;
+        stat.textContent = '0';
+        
+        let counter = 0;
+        const target = parseInt(originalValue);
+        const increment = target / 50;
+        const timer = setInterval(() => {
+            counter += increment;
+            if (counter >= target) {
+                counter = target;
+                clearInterval(timer);
+            }
+            stat.textContent = Math.floor(counter).toLocaleString();
+        }, 30);
+    });
     
-    // Inicializar tooltips de Bootstrap
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
+    // Efecto de parpadeo para elementos críticos
+    const criticalItems = document.querySelectorAll('.sst-obligatorio-item');
+    criticalItems.forEach(item => {
+        setInterval(() => {
+            item.classList.toggle('border-danger');
+        }, 1000);
     });
 });
 </script>
