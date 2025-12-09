@@ -1925,6 +1925,95 @@ def obtener_problemas(categoria):
     problemas = problemas_por_categoria.get(categoria, [])
     return jsonify(problemas)
 
+@app.route('/debug/tablas')
+def debug_tablas():
+    """Debug: Verificar tablas existentes"""
+    try:
+        resultado = ejecutar_consulta("""
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public'
+            ORDER BY table_name
+        """, fetch=True)
+        
+        tablas = [tabla[0] for tabla in resultado]
+        return f"<h2>Tablas existentes:</h2><ul>{''.join([f'<li>{tabla}</li>' for tabla in tablas])}</ul>"
+    except Exception as e:
+        return f"<h2>Error:</h2><pre>{str(e)}</pre>"
+
+@app.route('/debug/contenido/<int:id>')
+def debug_contenido(id):
+    """Debug: Ver contenido específico"""
+    try:
+        resultado = ejecutar_consulta(
+            "SELECT * FROM sst_contenido WHERE id = %s",
+            (id,),
+            fetch=True
+        )
+        
+        if resultado:
+            contenido = resultado[0]
+            info = f"""
+            <h2>Contenido ID: {id}</h2>
+            <pre>
+            ID: {contenido[0]}
+            Título: {contenido[1]}
+            Descripción: {contenido[2]}
+            Tipo: {contenido[3]}
+            Archivo URL: {contenido[4]}
+            Tiene archivo: {'Sí' if contenido[5] else 'No'}
+            Nombre archivo: {contenido[6]}
+            Tipo archivo: {contenido[7]}
+            Tamaño archivo: {contenido[8]}
+            Video URL: {contenido[9]}
+            Categoría ID: {contenido[10]}
+            Obligatorio: {contenido[11]}
+            Tags: {contenido[12]}
+            Fecha publicación: {contenido[13]}
+            Usuario creador: {contenido[14]}
+            </pre>
+            """
+            return info
+        else:
+            return f"<h2>No se encontró contenido con ID: {id}</h2>"
+    except Exception as e:
+        return f"<h2>Error:</h2><pre>{str(e)}</pre>"
+
+@app.route('/debug/test-db/<int:id>')
+def test_db(id):
+    """Ruta de prueba para verificar la base de datos"""
+    try:
+        resultado = ejecutar_consulta(
+            "SELECT id, titulo FROM sst_contenido WHERE id = %s",
+            (id,),
+            fetch=True
+        )
+        
+        if resultado:
+            return f"""
+            <div style="background: #d4edda; padding: 20px; border-radius: 10px;">
+                <h2 style="color: #155724;">✅ CONTENIDO ENCONTRADO</h2>
+                <p><strong>ID:</strong> {resultado[0][0]}</p>
+                <p><strong>Título:</strong> {resultado[0][1]}</p>
+                <p><a href="/sst/contenido/{id}/editar">Intentar editar este contenido</a></p>
+            </div>
+            """
+        else:
+            return f"""
+            <div style="background: #f8d7da; padding: 20px; border-radius: 10px;">
+                <h2 style="color: #721c24;">❌ NO SE ENCONTRÓ CONTENIDO</h2>
+                <p>No existe contenido con ID: {id}</p>
+                <p><a href="/sst/contenido">Ver todos los contenidos</a></p>
+            </div>
+            """
+    except Exception as e:
+        return f"""
+        <div style="background: #fff3cd; padding: 20px; border-radius: 10px;">
+            <h2 style="color: #856404;">⚠️ ERROR DE BASE DE DATOS</h2>
+            <pre>{str(e)}</pre>
+        </div>
+        """
+
 if __name__ == '__main__':
     with app.app_context():
         print("🚀 Iniciando la aplicación Flask...")
