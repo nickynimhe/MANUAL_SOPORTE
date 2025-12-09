@@ -1,35 +1,23 @@
 import psycopg2
 import os
+from werkzeug.utils import secure_filename
+from datetime import datetime
 from config import Config
+import mimetypes
 
 def crear_conexion():
-    """Crear conexión a la base de datos PostgreSQL en Render"""
+    """Crear conexión a la base de datos PostgreSQL"""
     try:
-        # Usar DATABASE_URL de Render
-        database_url = os.environ.get('DATABASE_URL')
-        
-        if database_url:
-            # Render usa formato postgresql://, pero psycopg2 necesita postgresql://
-            if database_url.startswith('postgres://'):
-                database_url = database_url.replace('postgres://', 'postgresql://', 1)
-            
-            conexion = psycopg2.connect(database_url)
-            print(f"🔗 Conectado a la base de datos PostgreSQL de Render")
-            return conexion
-        else:
-            # Fallback a configuración local
-            conexion = psycopg2.connect(
-                host=Config.DB_HOST,
-                database=Config.DB_NAME,
-                user=Config.DB_USER,
-                password=Config.DB_PASSWORD,
-                port=Config.DB_PORT
-            )
-            print(f"🔗 Conectado a: {Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME}")
-            return conexion
-            
+        conexion = psycopg2.connect(
+            host=Config.DB_HOST,
+            database=Config.DB_NAME,
+            user=Config.DB_USER,
+            password=Config.DB_PASSWORD,
+            port=Config.DB_PORT
+        )
+        return conexion
     except Exception as e:
-        print(f"❌ Error de conexión: {e}")
+        print(f"❌ Error al conectar a la base de datos: {e}")
         return None
 
 def ejecutar_consulta(query, params=None, fetch=False, commit=False):
@@ -97,159 +85,160 @@ def ejecutar_consulta(query, params=None, fetch=False, commit=False):
     
     return resultado
 
-def crear_tabla_usuarios():
-    """Crear tabla de usuarios si no existe"""
+def crear_tablas():
+    """Crear todas las tablas necesarias si no existen"""
+    print("🔧 Creando/verificando tablas...")
+    
+    # Tabla de usuarios
+    query_usuarios = """
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id SERIAL PRIMARY KEY,
+            usuario VARCHAR(50) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            rol VARCHAR(20) NOT NULL DEFAULT 'soporte',
+            modulo_principal VARCHAR(20) DEFAULT 'soporte',
+            permisos TEXT,
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """
+    
+    # Tabla de fichas (soporte técnico)
+    query_fichas = """
+        CREATE TABLE IF NOT EXISTS fichas (
+            id SERIAL PRIMARY KEY,
+            categoria VARCHAR(50) NOT NULL,
+            problema VARCHAR(255) NOT NULL,
+            descripcion TEXT,
+            causas TEXT,
+            solucion TEXT NOT NULL,
+            palabras_clave TEXT,
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """
+    
     try:
-        # Crear tabla
-        ejecutar_consulta('''
-            CREATE TABLE IF NOT EXISTS usuarios (
-                id SERIAL PRIMARY KEY,
-                usuario VARCHAR(50) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                rol VARCHAR(20) DEFAULT 'usuario',
-                permisos TEXT,
-                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''', commit=True)
+        # Crear tabla de usuarios
+        ejecutar_consulta(query_usuarios, commit=True)
+        print("✅ Tabla de usuarios creada/existe correctamente")
         
-        # Insertar usuario admin por defecto si no existe
-        from werkzeug.security import generate_password_hash
+        # Verificar si existe usuario admin
         resultado = ejecutar_consulta(
-            "SELECT COUNT(*) FROM usuarios WHERE usuario = 'admin'",
+            "SELECT COUNT(*) FROM usuarios WHERE usuario = 'admin'", 
             fetch=True
         )
         
         if resultado and resultado[0][0] == 0:
-            password_hash = generate_password_hash('admin123')
+            # Crear usuario admin por defecto
+            from werkzeug.security import generate_password_hash
+            hash_password = generate_password_hash('admin123')
             ejecutar_consulta(
-                "INSERT INTO usuarios (usuario, password, rol) VALUES (%s, %s, %s)",
-                ('admin', password_hash, 'admin'),
+                "INSERT INTO usuarios (usuario, password, rol, modulo_principal) VALUES (%s, %s, %s, %s)",
+                ('admin', hash_password, 'admin', 'soporte'),
                 commit=True
             )
-            print("✅ Usuario admin creado: admin / admin123")
+            print("✅ Usuario admin creado por defecto")
         
-        print("✅ Tabla de usuarios creada/existe correctamente")
-        
-    except Exception as e:
-        print(f"❌ Error al crear tabla usuarios: {e}")
-
-def crear_tabla_fichas():
-    """Crear tabla de fichas técnicas si no existe"""
-    try:
-        ejecutar_consulta('''
-            CREATE TABLE IF NOT EXISTS fichas (
-                id SERIAL PRIMARY KEY,
-                categoria VARCHAR(50) NOT NULL,
-                problema VARCHAR(255) NOT NULL,
-                descripcion TEXT,
-                causas TEXT,
-                solucion TEXT NOT NULL,
-                palabras_clave TEXT,
-                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''', commit=True)
-        
+        # Crear tabla de fichas
+        ejecutar_consulta(query_fichas, commit=True)
         print("✅ Tabla de fichas creada/existe correctamente")
         
+        # Crear tablas SST MEJORADAS
+        crear_tablas_sst_mejoradas()
+        
+        print("✅ Todas las tablas creadas/verificadas")
+        return True
+        
     except Exception as e:
-        print(f"❌ Error al crear tabla fichas: {e}")
+        print(f"❌ Error al crear tablas: {e}")
+        return False
 
-def crear_tablas_sst():
-    """Crear tablas para el módulo SST - VERSIÓN MEJORADA"""
+def crear_tablas_sst_mejoradas():
+    """Crear tablas SST con estructura MEJORADA (archivos en base de datos)"""
+    print("🔧 Creando/verificando tablas SST...")
+    
+    # Tabla de categorías SST
+    query_categorias = """
+        CREATE TABLE IF NOT EXISTS sst_categorias (
+            id SERIAL PRIMARY KEY,
+            nombre VARCHAR(100) NOT NULL UNIQUE,
+            color VARCHAR(7) DEFAULT '#007bff',
+            icono VARCHAR(50) DEFAULT 'fas fa-folder',
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """
+    
+    # Tabla de contenido SST MEJORADA (con archivos en base de datos)
+    query_contenido = """
+        CREATE TABLE IF NOT EXISTS sst_contenido (
+            id SERIAL PRIMARY KEY,
+            titulo VARCHAR(255) NOT NULL,
+            descripcion TEXT,
+            tipo VARCHAR(50) NOT NULL,
+            archivo_url TEXT,
+            archivo_data BYTEA,
+            archivo_nombre VARCHAR(255),
+            archivo_tipo VARCHAR(100),
+            archivo_tamano INTEGER,
+            video_url TEXT,
+            categoria_id INTEGER REFERENCES sst_categorias(id) ON DELETE SET NULL,
+            es_obligatorio BOOLEAN DEFAULT FALSE,
+            tags TEXT,
+            fecha_publicacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            usuario_creador INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """
+    
     try:
-        print("🔧 Creando/verificando tablas SST...")
+        # Crear tabla de categorías SST
+        ejecutar_consulta(query_categorias, commit=True)
+        print("✅ Tabla sst_categorias creada")
         
-        # Tabla de categorías SST
-        ejecutar_consulta("""
-            CREATE TABLE IF NOT EXISTS sst_categorias (
-                id SERIAL PRIMARY KEY,
-                nombre VARCHAR(100) NOT NULL UNIQUE,
-                color VARCHAR(7) DEFAULT '#007bff',
-                icono VARCHAR(50) DEFAULT 'fa-folder',
-                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """, commit=True)
+        # Crear tabla de contenido SST MEJORADA
+        ejecutar_consulta(query_contenido, commit=True)
+        print("✅ Tabla sst_contenido MEJORADA creada")
         
-        # Tabla de contenido SST - AHORA CON ALMACENAMIENTO EN BD
-        ejecutar_consulta("""
-            CREATE TABLE IF NOT EXISTS sst_contenido (
-                id SERIAL PRIMARY KEY,
-                titulo VARCHAR(255) NOT NULL,
-                descripcion TEXT,
-                tipo VARCHAR(20) NOT NULL CHECK (tipo IN ('video', 'documento', 'imagen', 'enlace')),
-                archivo_url VARCHAR(500),
-                archivo_data BYTEA,  -- Almacena el archivo directamente en la BD
-                archivo_nombre VARCHAR(255),  -- Nombre original del archivo
-                archivo_tipo VARCHAR(100),  -- MIME type
-                archivo_tamano INTEGER,  -- Tamaño en bytes
-                video_url VARCHAR(500),
-                categoria_id INTEGER REFERENCES sst_categorias(id),
-                es_obligatorio BOOLEAN DEFAULT FALSE,
-                tags VARCHAR(500),
-                fecha_publicacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                usuario_creador INTEGER REFERENCES usuarios(id),
-                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """, commit=True)
+        # Verificar y crear categorías por defecto
+        verificar_y_crear_categorias_sst()
         
         print("✅ Tablas SST MEJORADAS creadas correctamente")
+        return True
         
     except Exception as e:
         print(f"❌ Error al crear tablas SST: {e}")
+        return False
 
 def verificar_y_crear_categorias_sst():
-    """Verificar y crear categorías SST si no existen"""
+    """Verificar y crear categorías SST por defecto"""
     try:
         resultado = ejecutar_consulta("SELECT COUNT(*) FROM sst_categorias", fetch=True)
-        count = resultado[0][0] if resultado else 0
         
-        print(f"📊 Categorías SST existentes: {count}")
-        
-        if count == 0:
-            print("🔧 No hay categorías SST, creando categorías básicas...")
-            
+        if resultado and resultado[0][0] == 0:
             categorias = [
-                ('Videos de Capacitación', '#007bff', 'fa-video'),
-                ('Procedimientos de Seguridad', '#28a745', 'fa-clipboard-list'),
-                ('Primeros Auxilios', '#dc3545', 'fa-first-aid'),
-                ('Equipos de Protección', '#ffc107', 'fa-hard-hat'),
-                ('Emergencias', '#17a2b8', 'fa-exclamation-triangle'),
-                ('Normativa Legal', '#6c757d', 'fa-gavel')
+                ('Videos de Capacitación', '#FF6B6B', 'fas fa-video'),
+                ('Procedimientos de Seguridad', '#4ECDC4', 'fas fa-file-contract'),
+                ('Equipos de Protección Personal', '#FFD166', 'fas fa-hard-hat'),
+                ('Seguridad Industrial', '#06D6A0', 'fas fa-helmet-safety'),
+                ('Prevención de Incendios', '#EF476F', 'fas fa-fire-extinguisher'),
+                ('Normativa Legal', '#118AB2', 'fas fa-gavel')
             ]
             
-            categorias_insertadas = 0
             for nombre, color, icono in categorias:
-                try:
-                    ejecutar_consulta(
-                        "INSERT INTO sst_categorias (nombre, color, icono) VALUES (%s, %s, %s)",
-                        (nombre, color, icono),
-                        commit=True
-                    )
-                    categorias_insertadas += 1
-                    print(f"✅ Categoría '{nombre}' creada")
-                except Exception as e:
-                    print(f"⚠ Error al crear categoría '{nombre}': {e}")
-                    continue
+                ejecutar_consulta(
+                    "INSERT INTO sst_categorias (nombre, color, icono) VALUES (%s, %s, %s)",
+                    (nombre, color, icono),
+                    commit=True
+                )
             
-            print(f"✅ {categorias_insertadas} categorías SST creadas correctamente")
+            print(f"✅ {len(categorias)} categorías SST creadas por defecto")
         else:
-            print(f"✅ Ya existen {count} categorías SST")
+            print(f"📊 Categorías SST existentes: {resultado[0][0]}")
             
     except Exception as e:
-        print(f"❌ Error al verificar categorías SST: {e}")
-
-def crear_tablas():
-    """Función principal para crear todas las tablas"""
-    print("🔧 Creando/verificando tablas...")
-    
-    crear_tabla_usuarios()
-    crear_tabla_fichas() 
-    crear_tablas_sst()
-    verificar_y_crear_categorias_sst()
-    
-    print("✅ Todas las tablas creadas/verificadas")
+        print(f"❌ Error al verificar/crear categorías SST: {e}")
 
 def obtener_categorias_sst():
     """Obtener todas las categorías SST"""
@@ -264,15 +253,13 @@ def obtener_categorias_sst():
         return []
 
 def obtener_contenido_sst(filtros=None):
-    """Obtener contenido SST con filtros opcionales - VERSIÓN CORREGIDA"""
+    """Obtener contenido SST con filtros opcionales"""
     try:
         query = """
             SELECT sc.id, sc.titulo, sc.descripcion, sc.tipo, sc.archivo_url, 
                    sc.archivo_data, sc.archivo_nombre, sc.archivo_tipo, sc.archivo_tamano,
                    sc.video_url, sc.categoria_id, sc.es_obligatorio, sc.tags,
-                   -- CONVERTIR EXPLÍCITAMENTE LA FECHA
-                   sc.fecha_publicacion::text as fecha_publicacion_str,
-                   sc.usuario_creador,
+                   sc.fecha_publicacion, sc.usuario_creador,
                    cat.nombre as categoria_nombre, cat.color as categoria_color,
                    u.usuario as creador_nombre
             FROM sst_contenido sc
@@ -280,138 +267,123 @@ def obtener_contenido_sst(filtros=None):
             LEFT JOIN usuarios u ON sc.usuario_creador = u.id
             WHERE 1=1
         """
+        
         params = []
         
         if filtros:
             if filtros.get('query'):
                 query += " AND (sc.titulo ILIKE %s OR sc.descripcion ILIKE %s OR sc.tags ILIKE %s)"
-                params.extend([f'%{filtros["query"]}%', f'%{filtros["query"]}%', f'%{filtros["query"]}%'])
+                search_term = f"%{filtros['query']}%"
+                params.extend([search_term, search_term, search_term])
             
             if filtros.get('categoria'):
                 query += " AND sc.categoria_id = %s"
-                params.append(int(filtros['categoria']))
+                params.append(filtros['categoria'])
             
             if filtros.get('tipo'):
-                query += " AND sc.tipo = %s"
-                params.append(filtros['tipo'])
+                if filtros['tipo'] == 'obligatorio':
+                    query += " AND sc.es_obligatorio = TRUE"
+                elif filtros['tipo'] == 'video':
+                    query += " AND sc.tipo = 'video'"
+                elif filtros['tipo'] == 'documento':
+                    query += " AND sc.tipo IN ('documento', 'presentacion')"
         
         query += " ORDER BY sc.fecha_publicacion DESC"
         
         resultado = ejecutar_consulta(query, params, fetch=True)
-        
-        contenido = []
-        for item in resultado or []:
-            # Convertir fecha string a datetime
-            fecha_str = item[13]  # fecha_publicacion_str
-            try:
-                from datetime import datetime
-                fecha_publicacion = datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S')
-            except:
-                fecha_publicacion = None
-            
-            # Reconstruir tupla con datetime
-            item_list = list(item)
-            item_list[13] = fecha_publicacion  # Reemplazar string con datetime
-            contenido.append(tuple(item_list))
-        
-        return contenido
+        return resultado or []
         
     except Exception as e:
         print(f"❌ Error al obtener contenido SST: {e}")
         return []
 
-def guardar_archivo_en_bd(archivo_file):
-    """Guardar archivo en la base de datos y retornar datos"""
+def guardar_archivo_en_bd(file):
+    """Guardar archivo en la base de datos"""
     try:
-        if not archivo_file or archivo_file.filename == '':
-            return None
+        # Leer el archivo
+        file_data = file.read()
+        file_name = secure_filename(file.filename)
+        file_type = mimetypes.guess_type(file_name)[0] or 'application/octet-stream'
+        file_size = len(file_data)
         
-        # Leer datos del archivo
-        archivo_data = archivo_file.read()
-        archivo_nombre = archivo_file.filename
-        archivo_tipo = archivo_file.content_type
-        archivo_tamano = len(archivo_data)
-        
-        return {
-            'data': archivo_data,
-            'nombre': archivo_nombre,
-            'tipo': archivo_tipo,
-            'tamano': archivo_tamano
+        archivo_data = {
+            'data': file_data,
+            'nombre': file_name,
+            'tipo': file_type,
+            'tamano': file_size
         }
+        
+        print(f"✅ Archivo preparado para BD: {file_name} ({file_size} bytes)")
+        return archivo_data
         
     except Exception as e:
         print(f"❌ Error al guardar archivo en BD: {e}")
         return None
 
 def insertar_contenido_con_archivo(titulo, descripcion, tipo, categoria_id, es_obligatorio, 
-                                  tags, usuario_creador, archivo_data=None, video_url=None, archivo_url=None):
-    """Insertar contenido SST con archivo en la base de datos"""
+                                   tags, usuario_creador, archivo_data=None, video_url=None, archivo_url=None):
+    """Insertar contenido SST con archivo en base de datos"""
     try:
-        conexion = crear_conexion()
-        if not conexion:
-            return False
-            
-        cursor = conexion.cursor()
-        
         if archivo_data:
-            # Insertar con archivo
-            cursor.execute("""
+            # Insertar con archivo en base de datos
+            query = """
                 INSERT INTO sst_contenido 
                 (titulo, descripcion, tipo, archivo_url, archivo_data, archivo_nombre, 
                  archivo_tipo, archivo_tamano, video_url, categoria_id, es_obligatorio, 
                  tags, usuario_creador)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
+            """
+            params = (
                 titulo, descripcion, tipo, archivo_url,
-                psycopg2.Binary(archivo_data['data']),  # Archivo como binario
-                archivo_data['nombre'], archivo_data['tipo'], archivo_data['tamano'],
+                psycopg2.Binary(archivo_data['data']), archivo_data['nombre'],
+                archivo_data['tipo'], archivo_data['tamano'],
                 video_url, categoria_id, es_obligatorio, tags, usuario_creador
-            ))
+            )
         else:
-            # Insertar sin archivo
-            cursor.execute("""
+            # Insertar sin archivo (solo URLs)
+            query = """
                 INSERT INTO sst_contenido 
-                (titulo, descripcion, tipo, archivo_url, video_url, 
-                 categoria_id, es_obligatorio, tags, usuario_creador)
+                (titulo, descripcion, tipo, archivo_url, video_url, categoria_id, 
+                 es_obligatorio, tags, usuario_creador)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
+            """
+            params = (
                 titulo, descripcion, tipo, archivo_url, video_url,
                 categoria_id, es_obligatorio, tags, usuario_creador
-            ))
+            )
         
-        conexion.commit()
-        cursor.close()
-        conexion.close()
+        ejecutar_consulta(query, params, commit=True)
+        print(f"✅ Contenido SST insertado correctamente: {titulo}")
         return True
         
     except Exception as e:
-        print(f"❌ Error al insertar contenido con archivo: {e}")
-        if conexion:
-            conexion.rollback()
+        print(f"❌ Error al insertar contenido SST: {e}")
         return False
 
 def obtener_archivo_desde_bd(contenido_id):
     """Obtener archivo desde la base de datos"""
     try:
-        resultado = ejecutar_consulta(
-            "SELECT archivo_data, archivo_nombre, archivo_tipo FROM sst_contenido WHERE id = %s",
-            (contenido_id,),
-            fetch=True
-        )
+        query = """
+            SELECT archivo_data, archivo_nombre, archivo_tipo, archivo_tamano
+            FROM sst_contenido
+            WHERE id = %s AND archivo_data IS NOT NULL
+        """
         
-        if resultado and resultado[0] and resultado[0][0]:
-            return {
+        resultado = ejecutar_consulta(query, (contenido_id,), fetch=True)
+        
+        if resultado and resultado[0]:
+            archivo = {
                 'data': resultado[0][0],
                 'nombre': resultado[0][1],
-                'tipo': resultado[0][2]
+                'tipo': resultado[0][2],
+                'tamano': resultado[0][3]
             }
+            print(f"✅ Archivo obtenido de BD: {archivo['nombre']} ({archivo['tamano']} bytes)")
+            return archivo
+        
+        print(f"⚠️ No se encontró archivo para contenido ID: {contenido_id}")
         return None
         
     except Exception as e:
         print(f"❌ Error al obtener archivo desde BD: {e}")
         return None
-
-# Si se ejecuta este archivo directamente
-if __name__ == '__main__':
-    print("🔧 Ejecutando configuración de base de datos...")
-    crear_tablas()
