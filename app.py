@@ -1600,52 +1600,30 @@ def sst_eliminar_contenido(id):
 @app.route('/sst/video/<int:id>')
 @login_required
 def sst_ver_video(id):
-    """Ver video específico de SST - VERSIÓN CORREGIDA"""
-    if not current_user.puede('acceder_sst'):
-        flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+    # Obtener datos básicos del video
+    resultado = ejecutar_consulta("""
+        SELECT sc.*, cat.nombre as categoria_nombre, cat.color as categoria_color
+        FROM sst_contenido sc
+        LEFT JOIN sst_categorias cat ON sc.categoria_id = cat.id
+        WHERE sc.id = %s
+    """, (id,), fetch=True)
     
-    video = None
-    
-    try:
-        resultado = ejecutar_consulta("""
-            SELECT sc.*, cat.nombre as categoria_nombre, cat.color as categoria_color
-            FROM sst_contenido sc
-            LEFT JOIN sst_categorias cat ON sc.categoria_id = cat.id
-            WHERE sc.id = %s
-        """, (id,), fetch=True)
-        
-        if resultado and resultado[0]:
-            video_data = resultado[0]
-            
-            # Determinar si es un video en BD o URL
-            tiene_video_bd = video_data[5] is not None and video_data[7] in ['video/mp4', 'video/avi', 'video/mov', 'video/mkv']
-            tiene_video_url = video_data[9] is not None
-            
-            video = {
-                'id': video_data[0],
-                'titulo': video_data[1],
-                'descripcion': video_data[2],
-                'tipo': video_data[3],
-                'archivo_url': video_data[4],
-                'tiene_archivo': video_data[5] is not None,
-                'archivo_nombre': video_data[6],
-                'archivo_tipo': video_data[7],
-                'video_url': video_data[9],
-                'categoria_nombre': video_data[15],
-                'categoria_color': video_data[16],
-                'fecha_publicacion': video_data[13],
-                'es_video_en_bd': tiene_video_bd,
-                'es_video_url': tiene_video_url
-            }
-                
-    except Exception as e:
-        flash('Error al cargar el contenido', 'error')
-        print(f"❌ Error en sst_ver_video: {e}")
-    
-    if not video:
-        flash('Contenido no encontrado', 'error')
-        return redirect(url_for('sst_contenido'))
+    if resultado and resultado[0]:
+        video_data = resultado[0]
+        video = {
+            'id': video_data[0],
+            'titulo': video_data[1],
+            'descripcion': video_data[2],
+            'tipo': video_data[3],  # 'video', 'documento', 'imagen', 'enlace'
+            'archivo_nombre': video_data[6],
+            'archivo_tipo': video_data[7],
+            'archivo_tamano': video_data[8],
+            'categoria_nombre': video_data[15],
+            'categoria_color': video_data[16],
+            'fecha_publicacion': video_data[13],
+            'tiene_archivo': video_data[5] is not None,
+            'es_obligatorio': video_data[11]
+        }
     
     return render_template('sst/ver_video.html', video=video)
 
