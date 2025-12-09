@@ -1200,15 +1200,61 @@ def informacion_general():
 
 # ===== RUTAS SST MEJORADAS =====
 
-@app.route('/sst')
+@app.route('/sst/dashboard')
 @login_required
 def sst_dashboard():
-    """Dashboard principal de SST"""
+    """Dashboard principal SST con estadísticas y contenido real"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
     
-    return render_template('sst/dashboard.html')
+    # Obtener estadísticas
+    total_contenido = obtener_estadistica("SELECT COUNT(*) FROM sst_contenido")
+    total_videos = obtener_estadistica("SELECT COUNT(*) FROM sst_contenido WHERE tipo = 'video'")
+    total_documentos = obtener_estadistica("SELECT COUNT(*) FROM sst_contenido WHERE tipo IN ('documento', 'presentacion')")
+    total_obligatorios = obtener_estadistica("SELECT COUNT(*) FROM sst_contenido WHERE es_obligatorio = TRUE")
+    
+    # Obtener categorías con iconos
+    categorias_data = obtener_categorias_sst()
+    categorias = []
+    iconos_por_categoria = {
+        1: 'fas fa-video',
+        2: 'fas fa-file-contract',
+        3: 'fas fa-hard-hat',
+        4: 'fas fa-helmet-safety',
+        5: 'fas fa-fire-extinguisher',
+        6: 'fas fa-gavel'
+    }
+    
+    for cat in categorias_data:
+        total_cat = obtener_estadistica("SELECT COUNT(*) FROM sst_contenido WHERE categoria_id = %s", (cat[0],))
+        categorias.append({
+            'id': cat[0],
+            'nombre': cat[1],
+            'color': cat[2],
+            'icono': iconos_por_categoria.get(cat[0], 'fas fa-folder'),
+            'total': total_cat or 0
+        })
+    
+    # Obtener contenido reciente
+    contenido_reciente = obtener_contenido_reciente()
+    
+    # Obtener contenido obligatorio (para el usuario actual)
+    contenido_obligatorio = obtener_contenido_obligatorio_usuario(current_user.id)
+    
+    # Obtener videos destacados
+    videos_destacados = obtener_videos_destacados()
+    
+    return render_template('sst/dashboard.html',
+                         total_contenido=total_contenido,
+                         total_videos=total_videos,
+                         total_documentos=total_documentos,
+                         total_obligatorios=total_obligatorios,
+                         categorias=categorias,
+                         contenido_reciente=contenido_reciente,
+                         contenido_obligatorio=contenido_obligatorio,
+                         videos_destacados=videos_destacados)
+    
 
 @app.route('/sst/contenido')
 @login_required
