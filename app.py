@@ -86,6 +86,108 @@ def inject_permissions():
         obtener_modulo_principal=obtener_modulo_principal
     )
 
+# ===== FUNCIONES AUXILIARES PARA SST DASHBOARD =====
+
+def obtener_estadistica(query, params=None):
+    """Obtiene una estadística simple (un solo valor) de la base de datos"""
+    try:
+        resultado = ejecutar_consulta(query, params, fetch=True)
+        if resultado and resultado[0]:
+            return resultado[0][0]
+        return 0
+    except Exception as e:
+        print(f"Error obteniendo estadística: {e}")
+        return 0
+
+def obtener_contenido_reciente(limite=6):
+    """Obtiene contenido reciente ordenado por fecha"""
+    try:
+        query = """
+            SELECT c.id, c.titulo, c.descripcion, c.tipo, 
+                   c.fecha_publicacion, cat.nombre as categoria_nombre,
+                   cat.color as categoria_color
+            FROM sst_contenido c
+            LEFT JOIN sst_categorias cat ON c.categoria_id = cat.id
+            ORDER BY c.fecha_publicacion DESC
+            LIMIT %s
+        """
+        resultado = ejecutar_consulta(query, (limite,), fetch=True)
+        
+        contenido = []
+        for row in resultado:
+            contenido.append({
+                'id': row[0],
+                'titulo': row[1],
+                'descripcion': row[2],
+                'tipo': row[3],
+                'fecha_publicacion': row[4],
+                'categoria_nombre': row[5],
+                'categoria_color': row[6]
+            })
+        return contenido
+    except Exception as e:
+        print(f"Error obteniendo contenido reciente: {e}")
+        return []
+
+def obtener_contenido_obligatorio_usuario(usuario_id, limite=5):
+    """Obtiene contenido obligatorio que el usuario aún no ha visto"""
+    try:
+        query = """
+            SELECT c.id, c.titulo, c.descripcion, c.tipo, 
+                   c.fecha_publicacion, cat.nombre as categoria_nombre
+            FROM sst_contenido c
+            LEFT JOIN sst_categorias cat ON c.categoria_id = cat.id
+            WHERE c.es_obligatorio = TRUE 
+            ORDER BY c.fecha_publicacion DESC
+            LIMIT %s
+        """
+        resultado = ejecutar_consulta(query, (usuario_id, limite), fetch=True)
+        
+        contenido = []
+        for row in resultado:
+            contenido.append({
+                'id': row[0],
+                'titulo': row[1],
+                'descripcion': row[2],
+                'tipo': row[3],
+                'fecha_publicacion': row[4],
+                'categoria_nombre': row[5]
+            })
+        return contenido
+    except Exception as e:
+        print(f"Error obteniendo contenido obligatorio: {e}")
+        return []
+
+def obtener_videos_destacados(limite=3):
+    """Obtiene videos destacados (con URL de video)"""
+    try:
+        query = """
+            SELECT c.id, c.titulo, c.descripcion, 
+                   COALESCE(c.video_url, c.archivo_url) as url_video,
+                   cat.nombre as categoria_nombre
+            FROM sst_contenido c
+            LEFT JOIN sst_categorias cat ON c.categoria_id = cat.id
+            WHERE c.tipo = 'video'
+            ORDER BY c.fecha_publicacion DESC
+            LIMIT %s
+        """
+        resultado = ejecutar_consulta(query, (limite,), fetch=True)
+        
+        videos = []
+        for row in resultado:
+            videos.append({
+                'id': row[0],
+                'titulo': row[1],
+                'descripcion': row[2],
+                'url_video': row[3],
+                'categoria_nombre': row[4],
+                'duracion': '5:30'  # Valor por defecto
+            })
+        return videos
+    except Exception as e:
+        print(f"Error obteniendo videos destacados: {e}")
+        return []
+
 # ===== FILTROS PERSONALIZADOS JINJA2 =====
 @app.template_filter('format_date')
 def format_date_filter(date_value, format='%d/%m/%Y'):
@@ -129,6 +231,22 @@ def file_extension_filter(filename):
     if not filename:
         return ''
     return os.path.splitext(filename)[1].lower().replace('.', '')
+
+# Filtro para formatear fechas
+@app.template_filter('fecha_corta')
+def fecha_corta(value):
+    """Formatea una fecha a formato corto (DD/MM/YYYY)"""
+    if not value:
+        return ""
+    try:
+        if isinstance(value, str):
+            try:
+                value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+            except:
+                value = datetime.strptime(value, '%Y-%m-%d')
+        return value.strftime('%d/%m/%Y')
+    except:
+        return str(value)
 
 class User(UserMixin):
     def __init__(self, id, usuario, rol, modulo_principal, permisos=None):
@@ -1199,6 +1317,60 @@ def informacion_general():
     return render_template('informacion_general.html', informacion=informacion)
 
 # ===== RUTAS SST MEJORADAS =====
+
+@app.route('/sst/contenido/<int:id>/ver')
+@login_required
+def ver_contenido_sst(id):
+    """Ver contenido específico SST"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
+    contenido_data = None
+    
+    try:
+        resultado = ejecutar_consulta("""
+            SELECT c.*, cat.nombre as categoria_nombre, cat.color as categoria_color,
+                   u.usuario as creador_nombre
+            FROM sst_contenido c
+            LEFT JOIN sst_categorias cat ON c.categoria_id = cat.id
+            LEFT JOIN usuarios u ON c.usuario_creador = u.id
+            WHERE c.id = %s
+        """, (id,), fetch=True)
+        
+        if resultado and resultado[0]:
+            row = resultado[0]
+            contenido_data = {
+                'id': row[0],
+                'titulo': row[1],
+                'descripcion': row[2],
+                'tipo': row[3],
+                'archivo_url': row[4],
+                'tiene_archivo': row[5] is not None,
+                'archivo_nombre': row[6],
+                'archivo_tipo': row[7],
+                'archivo_tamano': row[8],
+                'video_url': row[9],
+                'categoria_id': row[10],
+                'es_obligatorio': row[11],
+                'tags': row[12],
+                'fecha_publicacion': row[13],
+                'usuario_creador': row[14],
+                'categoria_nombre': row[15],
+                'categoria_color': row[16],
+                'creador_nombre': row[17]
+            }
+                
+    except Exception as e:
+        flash('Error al cargar el contenido', 'error')
+        print(f"❌ Error en ver_contenido_sst: {e}")
+        return redirect(url_for('sst_contenido'))
+    
+    if not contenido_data:
+        flash('Contenido no encontrado', 'error')
+        return redirect(url_for('sst_contenido'))
+    
+    return render_template('sst/ver_contenido.html', contenido=contenido_data)
 
 @app.route('/sst/dashboard')
 @login_required
