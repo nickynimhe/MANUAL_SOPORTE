@@ -1,376 +1,217 @@
 {% extends "base.html" %}
 
-{% block title %}{{ contenido.titulo }} - SST{% endblock %}
+{% block title %}Contenido SST - Seguridad y Salud{% endblock %}
 
 {% block content %}
 <div class="container-fluid px-3 px-md-4 py-4">
-    <!-- Botón de volver arriba -->
-    <div class="mb-4">
-        <a href="{{ url_for('sst_dashboard') }}" class="btn btn-sm btn-outline-primary">
-            <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
-        </a>
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+        <div class="mb-3 mb-md-0">
+            <h1 class="h3 mb-1 fw-bold text-dark">
+                <i class="fas fa-folder me-2 text-primary"></i>
+                Contenido SST
+            </h1>
+            <p class="text-muted small mb-0">Gestión de capacitación y recursos de seguridad</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('sst_dashboard') }}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-arrow-left me-1"></i>Dashboard
+            </a>
+            {% if current_user.rol == 'admin' %}
+            <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus me-1"></i>Nuevo
+            </a>
+            {% endif %}
+        </div>
     </div>
 
-    <!-- Contenido Principal -->
-    <div class="row">
-        <div class="col-lg-8">
-            <!-- Tarjeta de Contenido -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0 py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h4 class="fw-bold text-dark mb-1">{{ contenido.titulo }}</h4>
-                            <div class="d-flex align-items-center flex-wrap gap-2">
-                                <span class="badge" style="background-color: {{ contenido.categoria_color }}; color: white;">
-                                    {{ contenido.categoria_nombre }}
-                                </span>
-                                <span class="badge bg-{{ 'danger' if contenido.es_obligatorio else 'success' }}">
-                                    <i class="fas fa-{{ 'exclamation-circle' if contenido.es_obligatorio else 'check-circle' }} me-1"></i>
-                                    {{ 'Obligatorio' if contenido.es_obligatorio else 'Opcional' }}
-                                </span>
-                                <span class="badge bg-info">
-                                    <i class="fas fa-{{ 'video' if contenido.tipo == 'video' else 'file' }} me-1"></i>
-                                    {{ contenido.tipo|title }}
-                                </span>
-                            </div>
-                        </div>
-                        {% if current_user.rol == 'admin' %}
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-cog"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <a class="dropdown-item" href="{{ url_for('sst_editar_contenido', id=contenido.id) }}">
-                                        <i class="fas fa-edit me-2"></i>Editar
-                                    </a>
-                                </li>
-                                <li>
-                                    <form method="POST" action="{{ url_for('sst_eliminar_contenido', id=contenido.id) }}" 
-                                          onsubmit="return confirm('¿Estás seguro de eliminar este contenido?');">
-                                        <button type="submit" class="dropdown-item text-danger">
-                                            <i class="fas fa-trash me-2"></i>Eliminar
-                                        </button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
-                        {% endif %}
-                    </div>
+    <!-- Filtros -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small fw-medium">Buscar</label>
+                    <input type="text" class="form-control form-control-sm" name="q" 
+                           value="{{ request.args.get('q', '') }}" placeholder="Título, descripción o etiquetas...">
                 </div>
-                
-                <div class="card-body p-4">
-                    <!-- Descripción -->
-                    {% if contenido.descripcion %}
-                    <div class="mb-4">
-                        <h6 class="fw-bold text-dark mb-2">
-                            <i class="fas fa-align-left me-2 text-primary"></i>Descripción
-                        </h6>
-                        <p class="text-dark">{{ contenido.descripcion }}</p>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- Archivo o Video -->
-                    <div class="mb-4">
-                        <h6 class="fw-bold text-dark mb-2">
-                            <i class="fas fa-{{ 'video' if contenido.tipo == 'video' else 'file' }} me-2 text-primary"></i>
-                            {{ 'Video' if contenido.tipo == 'video' else 'Archivo' }}
-                        </h6>
-                        
-                        {% if contenido.tipo == 'video' and contenido.video_url %}
-                        <!-- Video externo -->
-                        <div class="ratio ratio-16x9 mb-3">
-                            {% if 'youtube.com' in contenido.video_url or 'youtu.be' in contenido.video_url %}
-                                {% set video_id = contenido.video_url.split('v=')[1].split('&')[0] if 'v=' in contenido.video_url else contenido.video_url.split('/')[-1] %}
-                                <iframe src="https://www.youtube.com/embed/{{ video_id }}" 
-                                        frameborder="0" 
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                        allowfullscreen>
-                                </iframe>
-                            {% elif 'vimeo.com' in contenido.video_url %}
-                                {% set video_id = contenido.video_url.split('/')[-1] %}
-                                <iframe src="https://player.vimeo.com/video/{{ video_id }}" 
-                                        frameborder="0" 
-                                        allow="autoplay; fullscreen; picture-in-picture" 
-                                        allowfullscreen>
-                                </iframe>
-                            {% else %}
-                                <video controls class="w-100 rounded">
-                                    <source src="{{ contenido.video_url }}" type="video/mp4">
-                                    Tu navegador no soporta el elemento de video.
-                                </video>
-                            {% endif %}
-                        </div>
-                        
-                        {% elif contenido.tiene_archivo and contenido.archivo_tipo.startswith('video/') %}
-                        <!-- Video desde BD -->
-                        <div class="ratio ratio-16x9 mb-3">
-                            <video controls class="w-100 rounded">
-                                <source src="{{ url_for('sst_descargar_archivo', id=contenido.id) }}" type="{{ contenido.archivo_tipo }}">
-                                Tu navegador no soporta el elemento de video.
-                            </video>
-                        </div>
-                        
-                        {% elif contenido.tiene_archivo %}
-                        <!-- Archivo descargable -->
-                        <div class="card border-0 bg-light">
-                            <div class="card-body p-3">
-                                <div class="d-flex align-items-center">
-                                    <div class="me-3">
-                                        <i class="fas fa-file fa-2x text-primary"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-1">{{ contenido.archivo_nombre }}</h6>
-                                        <small class="text-muted">
-                                            {{ (contenido.archivo_tamano / 1024 / 1024)|round(2) if contenido.archivo_tamano > 1048576 else (contenido.archivo_tamano / 1024)|round(1) }} 
-                                            {{ 'MB' if contenido.archivo_tamano > 1048576 else 'KB' }}
-                                        </small>
-                                    </div>
-                                    <div class="ms-3">
-                                        <a href="{{ url_for('sst_descargar_archivo', id=contenido.id) }}" 
-                                           class="btn btn-sm btn-primary" target="_blank">
-                                            <i class="fas fa-eye me-1"></i>Ver
-                                        </a>
-                                        <a href="{{ url_for('sst_descargar_archivo_forzado', id=contenido.id) }}" 
-                                           class="btn btn-sm btn-outline-primary ms-1">
-                                            <i class="fas fa-download"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        {% elif contenido.archivo_url %}
-                        <!-- Enlace externo -->
-                        <div class="card border-0 bg-light">
-                            <div class="card-body p-3">
-                                <div class="d-flex align-items-center">
-                                    <div class="me-3">
-                                        <i class="fas fa-link fa-2x text-primary"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-1">Enlace Externo</h6>
-                                        <small class="text-muted">{{ contenido.archivo_url[:50] }}...</small>
-                                    </div>
-                                    <div class="ms-3">
-                                        <a href="{{ contenido.archivo_url }}" 
-                                           class="btn btn-sm btn-primary" target="_blank">
-                                            <i class="fas fa-external-link-alt me-1"></i>Abrir
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Información Adicional -->
-                    <div class="row">
-                        {% if contenido.tags %}
-                        <div class="col-md-6 mb-3">
-                            <h6 class="fw-bold text-dark mb-2">
-                                <i class="fas fa-tags me-2 text-primary"></i>Etiquetas
-                            </h6>
-                            <div class="d-flex flex-wrap gap-1">
-                                {% for tag in contenido.tags.split(',') %}
-                                <span class="badge bg-light text-dark border">{{ tag.strip() }}</span>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {% endif %}
-                        
-                        <div class="col-md-6 mb-3">
-                            <h6 class="fw-bold text-dark mb-2">
-                                <i class="fas fa-info-circle me-2 text-primary"></i>Información
-                            </h6>
-                            <ul class="list-unstyled small text-muted">
-                                <li class="mb-1">
-                                    <i class="fas fa-calendar me-2"></i>
-                                    Publicado: {{ contenido.fecha_publicacion|fecha_corta if contenido.fecha_publicacion else 'No especificada' }}
-                                </li>
-                                <li class="mb-1">
-                                    <i class="fas fa-user me-2"></i>
-                                    Creador: {{ contenido.creador_nombre }}
-                                </li>
-                                <li>
-                                    <i class="fas fa-file me-2"></i>
-                                    Tipo: {{ contenido.tipo|title }}
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-medium">Categoría</label>
+                    <select class="form-select form-select-sm" name="categoria">
+                        <option value="">Todas las categorías</option>
+                        {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}" {% if request.args.get('categoria')|int == categoria.id %}selected{% endif %}>
+                            {{ categoria.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-medium">Tipo</label>
+                    <select class="form-select form-select-sm" name="tipo">
+                        <option value="">Todos los tipos</option>
+                        <option value="video" {% if request.args.get('tipo') == 'video' %}selected{% endif %}>Videos</option>
+                        <option value="documento" {% if request.args.get('tipo') == 'documento' %}selected{% endif %}>Documentos</option>
+                        <option value="obligatorio" {% if request.args.get('tipo') == 'obligatorio' %}selected{% endif %}>Obligatorios</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-sm btn-primary w-100">
+                        <i class="fas fa-search me-1"></i>Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Contenido -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0 text-dark">
+                    <i class="fas fa-list me-2"></i>
+                    Lista de Contenido
+                    <span class="badge bg-primary ms-2">{{ contenido|length }}</span>
+                </h6>
             </div>
         </div>
         
-        <!-- Sidebar Derecha -->
-        <div class="col-lg-4">
-            <!-- Acciones Rápidas -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0 py-3">
-                    <h6 class="fw-bold mb-0 text-dark">
-                        <i class="fas fa-bolt me-2 text-primary"></i>Acciones
-                    </h6>
-                </div>
-                <div class="card-body p-3">
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('sst_dashboard') }}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-home me-2"></i>Dashboard
-                        </a>
-                        <a href="{{ url_for('sst_contenido') }}" class="btn btn-sm btn-outline-secondary">
-                            <i class="fas fa-list me-2"></i>Todo el Contenido
-                        </a>
-                        
-                        {% if contenido.tiene_archivo %}
-                        <a href="{{ url_for('sst_descargar_archivo_forzado', id=contenido.id) }}" 
-                           class="btn btn-sm btn-outline-success">
-                            <i class="fas fa-download me-2"></i>Descargar
-                        </a>
-                        {% endif %}
-                        
-                        {% if current_user.rol == 'admin' %}
-                        <a href="{{ url_for('sst_editar_contenido', id=contenido.id) }}" 
-                           class="btn btn-sm btn-warning">
-                            <i class="fas fa-edit me-2"></i>Editar
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Contenido Similar -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0 py-3">
-                    <h6 class="fw-bold mb-0 text-dark">
-                        <i class="fas fa-layer-group me-2 text-primary"></i>Contenido Similar
-                    </h6>
-                </div>
-                <div class="card-body p-3">
-                    <div class="list-group list-group-flush">
-                        {% for cat in categorias %}
-                        {% if cat.id == contenido.categoria_id %}
-                        <a href="{{ url_for('sst_contenido') }}?categoria={{ cat.id }}" 
-                           class="list-group-item list-group-item-action border-0 py-2 px-0">
-                            <div class="d-flex align-items-center">
-                                <span class="badge me-2" style="background-color: {{ cat.color }}; color: white;">
-                                    <i class="{{ cat.icono }}"></i>
+        <div class="card-body p-0">
+            {% if contenido %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="py-3 ps-4" style="width: 40%;">Título</th>
+                            <th class="py-3">Categoría</th>
+                            <th class="py-3">Tipo</th>
+                            <th class="py-3">Fecha</th>
+                            <th class="py-3 pe-4 text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in contenido %}
+                        <tr>
+                            <td class="py-3 ps-4">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3">
+                                        {% if item.tipo == 'video' %}
+                                        <i class="fas fa-video text-danger"></i>
+                                        {% elif item.tipo == 'documento' %}
+                                        <i class="fas fa-file-pdf text-warning"></i>
+                                        {% elif item.tipo == 'imagen' %}
+                                        <i class="fas fa-image text-success"></i>
+                                        {% else %}
+                                        <i class="fas fa-link text-info"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-medium mb-1 text-dark">{{ item.titulo }}</h6>
+                                        {% if item.descripcion %}
+                                        <small class="text-muted d-block">{{ item.descripcion[:60] }}{% if item.descripcion|length > 60 %}...{% endif %}</small>
+                                        {% endif %}
+                                        {% if item.es_obligatorio %}
+                                        <span class="badge bg-danger mt-1">Obligatorio</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3">
+                                <span class="badge" style="background-color: {{ item.categoria_color }}; color: white;">
+                                    {{ item.categoria_nombre }}
                                 </span>
-                                <span class="fw-medium">{{ cat.nombre }}</span>
-                                <small class="text-muted ms-auto">{{ cat.total }} items</small>
-                            </div>
-                        </a>
-                        {% endif %}
+                            </td>
+                            <td class="py-3">
+                                <small class="text-muted">{{ item.tipo|title }}</small>
+                            </td>
+                            <td class="py-3">
+                                <small class="text-muted">{{ item.fecha_publicacion|fecha_corta if item.fecha_publicacion else 'Sin fecha' }}</small>
+                            </td>
+                            <td class="py-3 pe-4 text-end">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            <a class="dropdown-item" href="{{ url_for('ver_contenido_sst', id=item.id) }}">
+                                                <i class="fas fa-eye me-2"></i>Ver
+                                            </a>
+                                        </li>
+                                        {% if current_user.rol == 'admin' %}
+                                        <li>
+                                            <a class="dropdown-item" href="{{ url_for('sst_editar_contenido', id=item.id) }}">
+                                                <i class="fas fa-edit me-2"></i>Editar
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <form method="POST" action="{{ url_for('sst_eliminar_contenido', id=item.id) }}" 
+                                                  onsubmit="return confirm('¿Estás seguro de eliminar este contenido?');">
+                                                <button type="submit" class="dropdown-item text-danger">
+                                                    <i class="fas fa-trash me-2"></i>Eliminar
+                                                </button>
+                                            </form>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
                         {% endfor %}
-                        
-                        <a href="{{ url_for('sst_contenido') }}?tipo={{ contenido.tipo }}" 
-                           class="list-group-item list-group-item-action border-0 py-2 px-0">
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-info me-2">
-                                    <i class="fas fa-{{ 'video' if contenido.tipo == 'video' else 'file' }}"></i>
-                                </span>
-                                <span class="fw-medium">Más {{ contenido.tipo }}s</span>
-                            </div>
-                        </a>
-                    </div>
-                </div>
+                    </tbody>
+                </table>
             </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-3x text-muted opacity-25 mb-3"></i>
+                <h5 class="text-muted mb-2">No hay contenido disponible</h5>
+                <p class="text-muted mb-4">No se encontraron resultados con los filtros aplicados</p>
+                <a href="{{ url_for('sst_contenido') }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-redo me-1"></i>Limpiar filtros
+                </a>
+                {% if current_user.rol == 'admin' %}
+                <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-sm btn-primary ms-2">
+                    <i class="fas fa-plus me-1"></i>Agregar contenido
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
 <style>
-/* Estilos para ver contenido */
-:root {
-    --primary: #4a6cf7;
-    --primary-light: rgba(74, 108, 247, 0.1);
+/* Estilos para la tabla */
+.table {
+    margin-bottom: 0;
 }
 
-.card {
-    border-radius: 12px !important;
-    border: none;
+.table-hover tbody tr:hover {
+    background-color: rgba(74, 108, 247, 0.05);
 }
 
-.badge {
-    border-radius: 50px;
-    font-weight: 500;
-    padding: 0.35em 0.75em;
-}
-
-.btn-sm {
-    padding: 0.375rem 0.75rem;
+.table thead th {
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
     font-size: 0.875rem;
-    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.ratio-16x9 {
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-video, iframe {
-    border-radius: 12px;
-}
-
-/* Listas personalizadas */
-.list-group-item {
-    border: none;
-    padding: 0.75rem 0;
-    background: transparent;
-}
-
-.list-group-item:hover {
-    background-color: var(--primary-light);
-}
-
-/* Scroll suave */
-html {
-    scroll-behavior: smooth;
+.table tbody td {
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f1f1;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-    .container-fluid {
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
+    .table-responsive {
+        font-size: 0.875rem;
     }
     
-    .card-body {
-        padding: 1.5rem !important;
+    .dropdown-menu {
+        font-size: 0.875rem;
     }
-}
-
-/* Animaciones */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.card {
-    animation: fadeIn 0.5s ease-out;
 }
 </style>
-
-<script>
-// Marcar como visto
-document.addEventListener('DOMContentLoaded', function() {
-    // Animar elementos al cargar
-    const cards = document.querySelectorAll('.card');
-    cards.forEach((card, index) => {
-        card.style.animationDelay = `${index * 0.1}s`;
-    });
-    
-    // Copiar enlace
-    document.getElementById('copy-link')?.addEventListener('click', function() {
-        const url = window.location.href;
-        navigator.clipboard.writeText(url).then(() => {
-            const originalText = this.innerHTML;
-            this.innerHTML = '<i class="fas fa-check me-2"></i>Copiado!';
-            setTimeout(() => {
-                this.innerHTML = originalText;
-            }, 2000);
-        });
-    });
-});
-</script>
 {% endblock %}
