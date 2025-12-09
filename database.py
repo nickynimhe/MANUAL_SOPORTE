@@ -4,41 +4,88 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 from config import Config
 import mimetypes
+import time
+import logging
+
+# Configurar logging
+logger = logging.getLogger(__name__)
 
 def crear_conexion():
-    """Crear conexión a la base de datos PostgreSQL"""
-    try:
-        conexion = psycopg2.connect(
-            host=Config.DB_HOST,
-            database=Config.DB_NAME,
-            user=Config.DB_USER,
-            password=Config.DB_PASSWORD,
-            port=Config.DB_PORT
-        )
-        return conexion
-    except Exception as e:
-        print(f"❌ Error al conectar a la base de datos: {e}")
-        return None
+    """Crear conexión a la base de datos PostgreSQL con reintentos y SSL mejorado"""
+    max_retries = 3
+    retry_delay = 2
+    
+    for attempt in range(max_retries):
+        try:
+            # Configuración mejorada para Render PostgreSQL
+            conexion = psycopg2.connect(
+                host=Config.DB_HOST,
+                database=Config.DB_NAME,
+                user=Config.DB_USER,
+                password=Config.DB_PASSWORD,
+                port=Config.DB_PORT,
+                sslmode='require',  # Forzar SSL para Render
+                connect_timeout=30,  # Timeout de conexión aumentado
+                keepalives=1,
+                keepalives_idle=60,  # Mantener conexión activa
+                keepalives_interval=10,
+                keepalives_count=5,
+                options='-c statement_timeout=60000'  # Timeout de consulta de 60 segundos
+            )
+            
+            # Configurar para manejar archivos grandes
+            conexion.autocommit = False
+            
+            logger.info(f"✅ Conexión a BD establecida (intento {attempt + 1})")
+            return conexion
+            
+        except psycopg2.OperationalError as e:
+            logger.warning(f"⚠️  Error de conexión (intento {attempt + 1}): {e}")
+            
+            # Verificar si es error SSL
+            error_str = str(e).lower()
+            is_ssl_error = any(keyword in error_str for keyword in ['ssl', 'connection', 'closed'])
+            
+            if is_ssl_error and attempt < max_retries - 1:
+                logger.info(f"🔄 Reintentando conexión SSL en {retry_delay} segundos...")
+                time.sleep(retry_delay * (attempt + 1))  # Retry exponencial
+                continue
+            else:
+                logger.error(f"❌ Error al conectar a la base de datos después de {max_retries} intentos: {e}")
+                raise
+                
+        except Exception as e:
+            logger.error(f"❌ Error inesperado al conectar: {e}")
+            raise
 
 def ejecutar_consulta(query, params=None, fetch=False, commit=False):
-    """Ejecuta una consulta SQL con manejo de errores y depuración"""
+    """Ejecuta una consulta SQL con manejo de errores y depuración - VERSIÓN MEJORADA"""
     conexion = None
     cursor = None
     resultado = None
     
     try:
-        # Crear conexión
+        # Crear conexión con reintentos
         conexion = crear_conexion()
         if not conexion:
-            print("❌ ERROR SQL: No se pudo crear la conexión")
+            logger.error("❌ ERROR SQL: No se pudo crear la conexión")
             return None
         
         cursor = conexion.cursor()
         
         # Depuración
-        print(f"📊 DEBUG SQL [Inicio]")
-        print(f"📊 DEBUG SQL Query: {query[:200]}...")
-        print(f"📊 DEBUG SQL Params: {params}")
+        logger.debug(f"📊 DEBUG SQL [Inicio]")
+        logger.debug(f"📊 DEBUG SQL Query: {query[:200]}...")
+        logger.debug(f"📊 DEBUG SQL Params: {params}")
+        
+        # Verificar si es una operación con archivos grandes
+        is_large_operation = False
+        if params:
+            for param in params:
+                if isinstance(param, bytes) and len(param) > 5 * 1024 * 1024:  # >5MB
+                    is_large_operation = True
+                    logger.info(f"📦 Operación con archivo grande detectada: {len(param)} bytes")
+                    break
         
         # Ejecutar consulta
         if params:
@@ -48,46 +95,83 @@ def ejecutar_consulta(query, params=None, fetch=False, commit=False):
         
         # Manejar resultado según tipo de operación
         if commit:
+            # Para operaciones con archivos grandes, commit inmediato
+            if is_large_operation:
+                logger.info("🔄 Realizando commit inmediato para archivo grande...")
+            
             conexion.commit()
             resultado = True
-            print(f"📊 DEBUG SQL [Commit OK] - Filas afectadas: {cursor.rowcount}")
+            logger.debug(f"📊 DEBUG SQL [Commit OK] - Filas afectadas: {cursor.rowcount}")
         elif fetch:
             resultado = cursor.fetchall()
-            print(f"📊 DEBUG SQL [Fetch OK] - {len(resultado) if resultado else 0} filas obtenidas")
+            logger.debug(f"📊 DEBUG SQL [Fetch OK] - {len(resultado) if resultado else 0} filas obtenidas")
         else:
             resultado = True
-            print(f"📊 DEBUG SQL [Execute OK] - Filas afectadas: {cursor.rowcount}")
+            logger.debug(f"📊 DEBUG SQL [Execute OK] - Filas afectadas: {cursor.rowcount}")
             
-    except Exception as e:
-        print(f"❌ ERROR SQL: {e}")
-        print(f"❌ ERROR SQL Query: {query[:500]}")
-        print(f"❌ ERROR SQL Params: {params}")
+    except psycopg2.OperationalError as e:
+        logger.error(f"❌ ERROR SQL (Operacional): {e}")
+        logger.error(f"❌ ERROR SQL Query: {query[:500]}")
+        logger.error(f"❌ ERROR SQL Params: {'[DATOS BINARIOS OMITIDOS]' if any(isinstance(p, bytes) for p in params or []) else params}")
         
         # Rollback en caso de error con commit
         if commit and conexion:
             try:
                 conexion.rollback()
-                print("📊 DEBUG SQL: Rollback realizado")
-            except:
-                pass
+                logger.debug("📊 DEBUG SQL: Rollback realizado")
+            except Exception as rollback_error:
+                logger.error(f"❌ Error en rollback: {rollback_error}")
         
         # Re-lanzar la excepción para manejo superior
         raise e
         
+    except psycopg2.DatabaseError as e:
+        logger.error(f"❌ ERROR SQL (Database): {e}")
+        logger.error(f"❌ ERROR SQL Query: {query[:500]}")
+        
+        if commit and conexion:
+            try:
+                conexion.rollback()
+                logger.debug("📊 DEBUG SQL: Rollback realizado")
+            except:
+                pass
+        
+        raise e
+        
+    except Exception as e:
+        logger.error(f"❌ ERROR SQL (General): {e}")
+        logger.error(f"❌ ERROR SQL Query: {query[:500]}")
+        
+        if commit and conexion:
+            try:
+                conexion.rollback()
+                logger.debug("📊 DEBUG SQL: Rollback realizado")
+            except:
+                pass
+        
+        raise e
+        
     finally:
         # Cerrar cursor y conexión
-        if cursor:
-            cursor.close()
-            print("📊 DEBUG SQL: Cursor cerrado")
-        if conexion:
-            conexion.close()
-            print("📊 DEBUG SQL: Conexión cerrada")
+        try:
+            if cursor:
+                cursor.close()
+                logger.debug("📊 DEBUG SQL: Cursor cerrado")
+        except Exception as e:
+            logger.warning(f"⚠️  Error al cerrar cursor: {e}")
+            
+        try:
+            if conexion:
+                conexion.close()
+                logger.debug("📊 DEBUG SQL: Conexión cerrada")
+        except Exception as e:
+            logger.warning(f"⚠️  Error al cerrar conexión: {e}")
     
     return resultado
 
 def crear_tablas():
     """Crear todas las tablas necesarias si no existen"""
-    print("🔧 Creando/verificando tablas...")
+    logger.info("🔧 Creando/verificando tablas...")
     
     # Tabla de usuarios
     query_usuarios = """
@@ -121,7 +205,7 @@ def crear_tablas():
     try:
         # Crear tabla de usuarios
         ejecutar_consulta(query_usuarios, commit=True)
-        print("✅ Tabla de usuarios creada/existe correctamente")
+        logger.info("✅ Tabla de usuarios creada/existe correctamente")
         
         # Verificar si existe usuario admin
         resultado = ejecutar_consulta(
@@ -138,25 +222,25 @@ def crear_tablas():
                 ('admin', hash_password, 'admin', 'soporte'),
                 commit=True
             )
-            print("✅ Usuario admin creado por defecto")
+            logger.info("✅ Usuario admin creado por defecto")
         
         # Crear tabla de fichas
         ejecutar_consulta(query_fichas, commit=True)
-        print("✅ Tabla de fichas creada/existe correctamente")
+        logger.info("✅ Tabla de fichas creada/existe correctamente")
         
         # Crear tablas SST MEJORADAS
         crear_tablas_sst_mejoradas()
         
-        print("✅ Todas las tablas creadas/verificadas")
+        logger.info("✅ Todas las tablas creadas/verificadas")
         return True
         
     except Exception as e:
-        print(f"❌ Error al crear tablas: {e}")
+        logger.error(f"❌ Error al crear tablas: {e}")
         return False
 
 def crear_tablas_sst_mejoradas():
     """Crear tablas SST con estructura MEJORADA (archivos en base de datos)"""
-    print("🔧 Creando/verificando tablas SST...")
+    logger.info("🔧 Creando/verificando tablas SST...")
     
     # Tabla de categorías SST
     query_categorias = """
@@ -195,20 +279,20 @@ def crear_tablas_sst_mejoradas():
     try:
         # Crear tabla de categorías SST
         ejecutar_consulta(query_categorias, commit=True)
-        print("✅ Tabla sst_categorias creada")
+        logger.info("✅ Tabla sst_categorias creada")
         
         # Crear tabla de contenido SST MEJORADA
         ejecutar_consulta(query_contenido, commit=True)
-        print("✅ Tabla sst_contenido MEJORADA creada")
+        logger.info("✅ Tabla sst_contenido MEJORADA creada")
         
         # Verificar y crear categorías por defecto
         verificar_y_crear_categorias_sst()
         
-        print("✅ Tablas SST MEJORADAS creadas correctamente")
+        logger.info("✅ Tablas SST MEJORADAS creadas correctamente")
         return True
         
     except Exception as e:
-        print(f"❌ Error al crear tablas SST: {e}")
+        logger.error(f"❌ Error al crear tablas SST: {e}")
         return False
 
 def verificar_y_crear_categorias_sst():
@@ -233,12 +317,12 @@ def verificar_y_crear_categorias_sst():
                     commit=True
                 )
             
-            print(f"✅ {len(categorias)} categorías SST creadas por defecto")
+            logger.info(f"✅ {len(categorias)} categorías SST creadas por defecto")
         else:
-            print(f"📊 Categorías SST existentes: {resultado[0][0]}")
+            logger.info(f"📊 Categorías SST existentes: {resultado[0][0]}")
             
     except Exception as e:
-        print(f"❌ Error al verificar/crear categorías SST: {e}")
+        logger.error(f"❌ Error al verificar/crear categorías SST: {e}")
 
 def obtener_categorias_sst():
     """Obtener todas las categorías SST"""
@@ -249,7 +333,7 @@ def obtener_categorias_sst():
         )
         return resultado or []
     except Exception as e:
-        print(f"❌ Error al obtener categorías SST: {e}")
+        logger.error(f"❌ Error al obtener categorías SST: {e}")
         return []
 
 def obtener_contenido_sst(filtros=None):
@@ -294,51 +378,100 @@ def obtener_contenido_sst(filtros=None):
         return resultado or []
         
     except Exception as e:
-        print(f"❌ Error al obtener contenido SST: {e}")
+        logger.error(f"❌ Error al obtener contenido SST: {e}")
         return []
 
 def guardar_archivo_en_bd(file):
-    """Guardar archivo en la base de datos"""
+    """Guardar archivo en la base de datos - VERSIÓN OPTIMIZADA"""
     try:
-        # Leer el archivo
-        file_data = file.read()
+        # Leer el archivo en chunks para archivos grandes
+        file.seek(0, 2)  # Ir al final
+        file_size = file.tell()
+        file.seek(0)  # Volver al inicio
+        
+        logger.info(f"📦 Procesando archivo: {file.filename} ({file_size} bytes)")
+        
+        # Estrategia diferente según tamaño
+        if file_size > 10 * 1024 * 1024:  # >10MB
+            logger.info("📦 Archivo grande detectado, leyendo en chunks...")
+            
+            # Leer en chunks para evitar sobrecargar memoria
+            chunks = []
+            while True:
+                chunk = file.read(8192)  # Chunks de 8KB
+                if not chunk:
+                    break
+                chunks.append(chunk)
+            
+            file_data = b''.join(chunks)
+        else:
+            # Para archivos pequeños, lectura normal
+            file_data = file.read()
+        
         file_name = secure_filename(file.filename)
         file_type = mimetypes.guess_type(file_name)[0] or 'application/octet-stream'
-        file_size = len(file_data)
         
         archivo_data = {
             'data': file_data,
             'nombre': file_name,
             'tipo': file_type,
-            'tamano': file_size
+            'tamano': len(file_data)
         }
         
-        print(f"✅ Archivo preparado para BD: {file_name} ({file_size} bytes)")
+        logger.info(f"✅ Archivo preparado para BD: {file_name} ({len(file_data)} bytes)")
         return archivo_data
         
     except Exception as e:
-        print(f"❌ Error al guardar archivo en BD: {e}")
+        logger.error(f"❌ Error al guardar archivo en BD: {e}")
         return None
 
 def insertar_contenido_con_archivo(titulo, descripcion, tipo, categoria_id, es_obligatorio, 
                                    tags, usuario_creador, archivo_data=None, video_url=None, archivo_url=None):
-    """Insertar contenido SST con archivo en base de datos"""
+    """Insertar contenido SST con archivo en base de datos - VERSIÓN MEJORADA"""
     try:
         if archivo_data:
-            # Insertar con archivo en base de datos
-            query = """
-                INSERT INTO sst_contenido 
-                (titulo, descripcion, tipo, archivo_url, archivo_data, archivo_nombre, 
-                 archivo_tipo, archivo_tamano, video_url, categoria_id, es_obligatorio, 
-                 tags, usuario_creador)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """
-            params = (
-                titulo, descripcion, tipo, archivo_url,
-                psycopg2.Binary(archivo_data['data']), archivo_data['nombre'],
-                archivo_data['tipo'], archivo_data['tamano'],
-                video_url, categoria_id, es_obligatorio, tags, usuario_creador
-            )
+            # Verificar tamaño del archivo
+            file_size = archivo_data['tamano']
+            
+            if file_size > 5 * 1024 * 1024:  # >5MB
+                logger.info(f"📦 Insertando archivo grande: {archivo_data['nombre']} ({file_size} bytes)")
+                
+                # Para archivos grandes, usar transacción explícita
+                query = """
+                    INSERT INTO sst_contenido 
+                    (titulo, descripcion, tipo, archivo_url, archivo_data, archivo_nombre, 
+                     archivo_tipo, archivo_tamano, video_url, categoria_id, es_obligatorio, 
+                     tags, usuario_creador)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                params = (
+                    titulo, descripcion, tipo, archivo_url,
+                    psycopg2.Binary(archivo_data['data']), archivo_data['nombre'],
+                    archivo_data['tipo'], archivo_data['tamano'],
+                    video_url, categoria_id, es_obligatorio, tags, usuario_creador
+                )
+                
+                # Ejecutar con commit inmediato
+                ejecutar_consulta(query, params, commit=True)
+                
+            else:
+                # Para archivos pequeños, procedimiento normal
+                query = """
+                    INSERT INTO sst_contenido 
+                    (titulo, descripcion, tipo, archivo_url, archivo_data, archivo_nombre, 
+                     archivo_tipo, archivo_tamano, video_url, categoria_id, es_obligatorio, 
+                     tags, usuario_creador)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                params = (
+                    titulo, descripcion, tipo, archivo_url,
+                    psycopg2.Binary(archivo_data['data']), archivo_data['nombre'],
+                    archivo_data['tipo'], archivo_data['tamano'],
+                    video_url, categoria_id, es_obligatorio, tags, usuario_creador
+                )
+                
+                ejecutar_consulta(query, params, commit=True)
+                
         else:
             # Insertar sin archivo (solo URLs)
             query = """
@@ -351,17 +484,81 @@ def insertar_contenido_con_archivo(titulo, descripcion, tipo, categoria_id, es_o
                 titulo, descripcion, tipo, archivo_url, video_url,
                 categoria_id, es_obligatorio, tags, usuario_creador
             )
+            
+            ejecutar_consulta(query, params, commit=True)
         
-        ejecutar_consulta(query, params, commit=True)
-        print(f"✅ Contenido SST insertado correctamente: {titulo}")
+        logger.info(f"✅ Contenido SST insertado correctamente: {titulo}")
+        return True
+        
+    except psycopg2.OperationalError as e:
+        logger.error(f"❌ Error SSL/operacional al insertar contenido SST: {e}")
+        # Intentar estrategia alternativa para archivos grandes
+        if archivo_data and archivo_data['tamano'] > 5 * 1024 * 1024:
+            logger.info("🔄 Intentando estrategia alternativa para archivo grande...")
+            return insertar_contenido_sin_archivo_primero(titulo, descripcion, tipo, categoria_id, 
+                                                         es_obligatorio, tags, usuario_creador, 
+                                                         video_url, archivo_url, archivo_data)
+        return False
+        
+    except Exception as e:
+        logger.error(f"❌ Error al insertar contenido SST: {e}")
+        return False
+
+def insertar_contenido_sin_archivo_primero(titulo, descripcion, tipo, categoria_id, es_obligatorio, 
+                                          tags, usuario_creador, video_url, archivo_url, archivo_data):
+    """Estrategia alternativa: Insertar primero sin archivo, luego actualizar"""
+    try:
+        # Paso 1: Insertar sin archivo
+        query1 = """
+            INSERT INTO sst_contenido 
+            (titulo, descripcion, tipo, archivo_url, video_url, categoria_id, 
+             es_obligatorio, tags, usuario_creador)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """
+        params1 = (
+            titulo, descripcion, tipo, archivo_url, video_url,
+            categoria_id, es_obligatorio, tags, usuario_creador
+        )
+        
+        resultado = ejecutar_consulta(query1, params1, fetch=True, commit=True)
+        
+        if not resultado:
+            return False
+        
+        contenido_id = resultado[0][0]
+        logger.info(f"✅ Contenido creado (sin archivo) con ID: {contenido_id}")
+        
+        # Paso 2: Actualizar con archivo (opcional, si es necesario)
+        if archivo_data:
+            # Intentar actualizar en un paso separado
+            time.sleep(1)  # Pequeña pausa
+            
+            query2 = """
+                UPDATE sst_contenido 
+                SET archivo_data = %s, archivo_nombre = %s, 
+                    archivo_tipo = %s, archivo_tamano = %s,
+                    fecha_actualizacion = CURRENT_TIMESTAMP
+                WHERE id = %s
+            """
+            params2 = (
+                psycopg2.Binary(archivo_data['data']), archivo_data['nombre'],
+                archivo_data['tipo'], archivo_data['tamano'],
+                contenido_id
+            )
+            
+            ejecutar_consulta(query2, params2, commit=True)
+            logger.info(f"✅ Archivo actualizado para contenido ID: {contenido_id}")
+        
+        logger.info(f"✅ Contenido SST insertado (estrategia alternativa): {titulo}")
         return True
         
     except Exception as e:
-        print(f"❌ Error al insertar contenido SST: {e}")
+        logger.error(f"❌ Error en estrategia alternativa: {e}")
         return False
 
 def obtener_archivo_desde_bd(contenido_id):
-    """Obtener archivo desde la base de datos"""
+    """Obtener archivo desde la base de datos - VERSIÓN MEJORADA"""
     try:
         query = """
             SELECT archivo_data, archivo_nombre, archivo_tipo, archivo_tamano
@@ -378,12 +575,12 @@ def obtener_archivo_desde_bd(contenido_id):
                 'tipo': resultado[0][2],
                 'tamano': resultado[0][3]
             }
-            print(f"✅ Archivo obtenido de BD: {archivo['nombre']} ({archivo['tamano']} bytes)")
+            logger.info(f"✅ Archivo obtenido de BD: {archivo['nombre']} ({archivo['tamano']} bytes)")
             return archivo
         
-        print(f"⚠️ No se encontró archivo para contenido ID: {contenido_id}")
+        logger.warning(f"⚠️ No se encontró archivo para contenido ID: {contenido_id}")
         return None
         
     except Exception as e:
-        print(f"❌ Error al obtener archivo desde BD: {e}")
+        logger.error(f"❌ Error al obtener archivo desde BD: {e}")
         return None
