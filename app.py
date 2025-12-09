@@ -11,8 +11,41 @@ import os
 import urllib.parse
 import mimetypes
 from io import BytesIO
+import time
+import logging
+from functools import wraps
 
-# Crear la instancia de Flask PRIMERO
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# ===== DECORADOR DE REINTENTO PARA ERRORES SSL =====
+def retry_on_ssl_error(max_retries=2, delay=3):
+    """Decorador para reintentar operaciones con errores SSL"""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_retries):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    error_str = str(e).lower()
+                    # Verificar si es error SSL o de conexión
+                    is_ssl_error = any(keyword in error_str for keyword in ['ssl', 'connection', 'closed'])
+                    
+                    if is_ssl_error and attempt < max_retries - 1:
+                        logger.warning(f"⚠️  Error SSL en {func.__name__} (intento {attempt + 1}), reintentando en {delay} segundos...")
+                        time.sleep(delay * (attempt + 1))  # Retry exponencial
+                        continue
+                    else:
+                        # Si es otro error o ya agotamos reintentos, relanzar
+                        logger.error(f"❌ Error en {func.__name__} después de {attempt + 1} intentos: {e}")
+                        raise
+            return None
+        return wrapper
+    return decorator
+
+# ===== CONFIGURACIÓN DE LA APLICACIÓN =====
 app = Flask(__name__)
 app.config.from_object(Config)
 
@@ -21,10 +54,10 @@ app.config['UPLOAD_FOLDER_SST'] = 'static/uploads/sst'
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB máximo
 app.config['ALLOWED_EXTENSIONS'] = {
     'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx',
-    'jpg', 'jpeg', 'png', 'gif', 'mp4', 'avi', 'mov', 'mkv'
+    'jpg', 'jpeg', 'png', 'gif', 'mp4', 'avi', 'mov', 'mkv', 'webm'
 }
 
-# Crear directorio de uploads si no existe (para compatibilidad temporal)
+# Crear directorio de uploads si no existe
 upload_path = app.config['UPLOAD_FOLDER_SST']
 os.makedirs(upload_path, exist_ok=True)
 print(f"📁 Directorio de uploads: {upload_path}")
@@ -38,21 +71,20 @@ def generar_nombre_seguro(filename):
     """Generar nombre seguro para archivo con timestamp"""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     name, ext = os.path.splitext(secure_filename(filename))
-    # Reemplazar espacios y caracteres especiales
     name = name.replace(' ', '_').replace('-', '_')
     return f"{timestamp}_{name}{ext}"
 
-# Configurar Flask-Login
+# ===== CONFIGURACIÓN FLASK-LOGIN =====
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Por favor inicia sesión para acceder a esta página.'
 
+# ===== CONTEXT PROCESSORS =====
 @app.context_processor
 def inject_now():
     return {'now': datetime.now()}
 
-# Inyectar función de permisos a todos los templates
 @app.context_processor
 def inject_permissions():
     def tiene_permiso(permiso):
@@ -86,10 +118,10 @@ def inject_permissions():
         obtener_modulo_principal=obtener_modulo_principal
     )
 
-# ===== FILTROS PERSONALIZADOS JINJA2 =====
+# ===== FILTROS TEMPLATE =====
 @app.template_filter('format_date')
 def format_date_filter(date_value, format='%d/%m/%Y'):
-    """Filtro para formatear fechas manejando valores None"""
+    """Filtro para formatear fechas"""
     if date_value is None:
         return 'Sin fecha'
     try:
@@ -104,16 +136,12 @@ def safe_tags_filter(tags_value):
         return []
     
     if isinstance(tags_value, str):
-        # Si es string, separar por comas
         return [tag.strip() for tag in tags_value.split(',') if tag.strip()]
     elif isinstance(tags_value, (int, float)):
-        # Si es número, convertirlo a string
         return [str(tags_value)]
     else:
-        # Para cualquier otro tipo
         return []
 
-# Filtro para verificar si una URL es de video
 @app.template_filter('is_video_url')
 def is_video_url_filter(url):
     """Verificar si una URL es de video"""
@@ -122,7 +150,6 @@ def is_video_url_filter(url):
     video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.webm']
     return any(url.lower().endswith(ext) for ext in video_extensions)
 
-# Filtro para obtener la extensión del archivo
 @app.template_filter('file_extension')
 def file_extension_filter(filename):
     """Obtener extensión del archivo"""
@@ -130,6 +157,7 @@ def file_extension_filter(filename):
         return ''
     return os.path.splitext(filename)[1].lower().replace('.', '')
 
+# ===== MODELO DE USUARIO =====
 class User(UserMixin):
     def __init__(self, id, usuario, rol, modulo_principal, permisos=None):
         self.id = id
@@ -215,7 +243,7 @@ def load_user(user_id):
                 permisos
             )
     except Exception as e:
-        print(f"Error en load_user: {e}")
+        logger.error(f"Error en load_user: {e}")
     return None
 
 # ===== RUTAS DE AUTENTICACIÓN =====
@@ -271,7 +299,7 @@ def login():
                 
         except Exception as e:
             flash('Error de base de datos', 'error')
-            print(f"Error en login: {e}")
+            logger.error(f"Error en login: {e}")
     
     return render_template('login.html')
 
@@ -334,18 +362,9 @@ def cambiar_password():
                     
         except Exception as e:
             flash('Error al cambiar la contraseña', 'error')
-            print(f"Error en cambiar_password: {e}")
+            logger.error(f"Error en cambiar_password: {e}")
     
     return render_template('cambiar_password.html')
-
-# ===== DASHBOARD PRINCIPAL (Solo Admin) =====
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    """Redirige a todos al módulo principal en lugar de usar dashboard.html"""
-    # Si el admin quiere acceder a /dashboard, lo redirigimos a index
-    flash('Redirigiendo al módulo principal', 'info')
-    return redirect(url_for('index'))
 
 # ===== RUTAS DE SOPORTE TÉCNICO =====
 @app.route('/')
@@ -381,7 +400,7 @@ def index():
                 
     except Exception as e:
         flash('Error al cargar las fichas', 'error')
-        print(f"Error en index: {e}")
+        logger.error(f"Error en index: {e}")
     
     return render_template('index.html', fichas=fichas, user=current_user)
 
@@ -491,7 +510,7 @@ def editar_ficha(id):
             
     except Exception as e:
         flash('Error al cargar/editar la ficha', 'error')
-        print(f"Error en editar_ficha: {e}")
+        logger.error(f"Error en editar_ficha: {e}")
     
     if not ficha:
         flash('Ficha no encontrada', 'error')
@@ -515,7 +534,7 @@ def eliminar_ficha(id):
         flash('Ficha eliminada correctamente', 'success')
     except Exception as e:
         flash('Error al eliminar la ficha', 'error')
-        print(f"Error en eliminar_ficha: {e}")
+        logger.error(f"Error en eliminar_ficha: {e}")
     
     return redirect(url_for('index'))
 
@@ -575,7 +594,7 @@ def buscar():
                 
     except Exception as e:
         flash('Error en la búsqueda', 'error')
-        print(f"Error en buscar: {e}")
+        logger.error(f"Error en buscar: {e}")
     
     return render_template('buscar.html', fichas=fichas, query=query, categoria=categoria)
 
@@ -610,7 +629,7 @@ def ver_ficha(id):
                 
     except Exception as e:
         flash('Error al cargar la ficha', 'error')
-        print(f"Error en ver_ficha: {e}")
+        logger.error(f"Error en ver_ficha: {e}")
     
     if not ficha:
         flash('Ficha no encontrada', 'error')
@@ -655,7 +674,7 @@ def gestion_usuarios():
                     
     except Exception as e:
         flash('Error al cargar los usuarios', 'error')
-        print(f"Error en gestion_usuarios: {e}")
+        logger.error(f"Error en gestion_usuarios: {e}")
     
     return render_template('gestion_usuarios.html', usuarios=usuarios)
 
@@ -729,7 +748,7 @@ def editar_usuario(id):
         flash('El usuario ya existe', 'error')
     except Exception as e:
         flash('Error al editar el usuario', 'error')
-        print(f"Error en editar_usuario: {e}")
+        logger.error(f"Error en editar_usuario: {e}")
     
     if not usuario_data:
         flash('Usuario no encontrado', 'error')
@@ -777,7 +796,7 @@ def agregar_usuario():
             flash('El usuario ya existe', 'error')
         except Exception as e:
             flash('Error al agregar el usuario', 'error')
-            print(f"Error en agregar_usuario: {e}")
+            logger.error(f"Error en agregar_usuario: {e}")
     
     return render_template('agregar_usuario.html')
 
@@ -797,7 +816,7 @@ def eliminar_usuario(id):
         flash('Usuario eliminado correctamente', 'success')
     except Exception as e:
         flash('Error al eliminar el usuario', 'error')
-        print(f"Error en eliminar_usuario: {e}")
+        logger.error(f"Error en eliminar_usuario: {e}")
     
     return redirect(url_for('gestion_usuarios'))
 
@@ -1213,7 +1232,7 @@ def sst_dashboard():
 @app.route('/sst/contenido')
 @login_required
 def sst_contenido():
-    """Lista de todo el contenido SST - VERSIÓN CORREGIDA"""
+    """Lista de todo el contenido SST"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
@@ -1264,7 +1283,7 @@ def sst_contenido():
                 'video_url': item[9],
                 'categoria_id': item[10],
                 'es_obligatorio': item[11],
-                'tags': tags_str,  # Ahora siempre es string
+                'tags': tags_str,
                 'fecha_publicacion': item[13],
                 'usuario_creador': item[14],
                 'categoria_nombre': item[15],
@@ -1275,12 +1294,13 @@ def sst_contenido():
                 
     except Exception as e:
         flash('Error al cargar el contenido SST', 'error')
-        print(f"❌ Error en sst_contenido: {e}")
+        logger.error(f"❌ Error en sst_contenido: {e}")
     
     return render_template('sst/contenido.html', contenido=contenido, categorias=categorias)
 
 @app.route('/sst/agregar', methods=['GET', 'POST'])
 @login_required
+@retry_on_ssl_error(max_retries=2, delay=3)
 def sst_agregar_contenido():
     """Agregar nuevo contenido SST - VERSIÓN MEJORADA CON BD"""
     if not current_user.puede('acceder_sst'):
@@ -1326,19 +1346,51 @@ def sst_agregar_contenido():
                 flash('❌ Categoría inválida', 'error')
                 return render_template('sst/agregar_contenido.html', categorias=categorias)
             
-            # Procesar archivo subido - AHORA SE GUARDA EN BD
+            # Procesar archivo subido - CON MANEJO DE ARCHIVOS GRANDES
             archivo_data = None
             file = request.files.get('archivo_local')
             
             if file and file.filename != '':
                 if allowed_file(file.filename):
-                    # Guardar archivo en la base de datos
-                    archivo_data = guardar_archivo_en_bd(file)
+                    # Verificar tamaño para estrategia diferente
+                    file.seek(0, 2)  # Ir al final
+                    file_size = file.tell()
+                    file.seek(0)  # Volver al inicio
+                    
+                    logger.info(f"📦 Procesando archivo: {file.filename} ({file_size} bytes)")
+                    
+                    if file_size > 5 * 1024 * 1024:  # Si es mayor a 5MB
+                        logger.info(f"📦 Archivo grande detectado, procesando por chunks...")
+                        
+                        # Leer en chunks para evitar sobrecargar la memoria
+                        chunks = []
+                        while True:
+                            chunk = file.read(8192)  # Leer en chunks de 8KB
+                            if not chunk:
+                                break
+                            chunks.append(chunk)
+                        
+                        file_data = b''.join(chunks)
+                        file_name = generar_nombre_seguro(file.filename)
+                        file_type = mimetypes.guess_type(file_name)[0] or 'application/octet-stream'
+                        
+                        archivo_data = {
+                            'data': file_data,
+                            'nombre': file_name,
+                            'tipo': file_type,
+                            'tamano': len(file_data)
+                        }
+                        
+                        logger.info(f"✅ Archivo grande procesado: {file_name} ({len(file_data)} bytes)")
+                    else:
+                        # Para archivos pequeños, procesamiento normal
+                        archivo_data = guardar_archivo_en_bd(file)
+                    
                     if not archivo_data:
                         flash('❌ Error al procesar el archivo', 'error')
                         return render_template('sst/agregar_contenido.html', categorias=categorias)
                     
-                    print(f"✅ Archivo guardado en BD: {archivo_data['nombre']} ({archivo_data['tamano']} bytes)")
+                    logger.info(f"✅ Archivo preparado para BD: {archivo_data['nombre']} ({archivo_data['tamano']} bytes)")
                     
                     # Si se subió archivo local, limpiar URLs
                     video_url = None
@@ -1400,14 +1452,15 @@ def sst_agregar_contenido():
             
     except Exception as e:
         flash(f'❌ Error al agregar contenido SST: {str(e)}', 'error')
-        print(f"❌ ERROR GENERAL EN SST_AGREGAR_CONTENIDO: {e}")
+        logger.error(f"❌ ERROR GENERAL EN SST_AGREGAR_CONTENIDO: {e}")
     
     return render_template('sst/agregar_contenido.html', categorias=categorias)
 
 @app.route('/sst/archivo/<int:id>')
 @login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
 def sst_descargar_archivo(id):
-    """Descargar archivo desde la base de datos - VERSIÓN CORREGIDA"""
+    """Descargar archivo desde la base de datos"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
@@ -1437,11 +1490,12 @@ def sst_descargar_archivo(id):
         
     except Exception as e:
         flash(f'Error al descargar el archivo: {str(e)}', 'error')
-        print(f"❌ Error en sst_descargar_archivo: {e}")
+        logger.error(f"❌ Error en sst_descargar_archivo: {e}")
         return redirect(url_for('sst_contenido'))
 
 @app.route('/sst/archivo/descargar/<int:id>')
 @login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
 def sst_descargar_archivo_forzado(id):
     """Descargar archivo forzadamente - SOLO SI QUIERES DESCARGAR"""
     if not current_user.puede('acceder_sst'):
@@ -1467,11 +1521,12 @@ def sst_descargar_archivo_forzado(id):
         
     except Exception as e:
         flash(f'Error al descargar el archivo: {str(e)}', 'error')
-        print(f"❌ Error en sst_descargar_archivo_forzado: {e}")
+        logger.error(f"❌ Error en sst_descargar_archivo_forzado: {e}")
         return redirect(url_for('sst_contenido'))
 
 @app.route('/sst/contenido/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
 def sst_editar_contenido(id):
     """Editar contenido SST existente"""
     if not current_user.puede('acceder_sst'):
@@ -1595,7 +1650,7 @@ def sst_editar_contenido(id):
                 
     except Exception as e:
         flash(f'Error al editar contenido SST: {str(e)}', 'error')
-        print(f"❌ Error en sst_editar_contenido: {e}")
+        logger.error(f"❌ Error en sst_editar_contenido: {e}")
     
     if not contenido:
         flash('Contenido no encontrado', 'error')
@@ -1623,44 +1678,67 @@ def sst_eliminar_contenido(id):
         
     except Exception as e:
         flash(f'Error al eliminar contenido SST: {str(e)}', 'error')
-        print(f"❌ Error en sst_eliminar_contenido: {e}")
+        logger.error(f"❌ Error en sst_eliminar_contenido: {e}")
     
     return redirect(url_for('sst_contenido'))
 
 @app.route('/sst/video/<int:id>')
 @login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
 def sst_ver_video(id):
-    # Obtener datos básicos del video
-    resultado = ejecutar_consulta("""
-        SELECT sc.*, cat.nombre as categoria_nombre, cat.color as categoria_color
-        FROM sst_contenido sc
-        LEFT JOIN sst_categorias cat ON sc.categoria_id = cat.id
-        WHERE sc.id = %s
-    """, (id,), fetch=True)
+    """Ver detalles de un video - VERSIÓN CORREGIDA"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
     
-    if resultado and resultado[0]:
-        video_data = resultado[0]
-        video = {
-            'id': video_data[0],
-            'titulo': video_data[1],
-            'descripcion': video_data[2],
-            'tipo': video_data[3],  # 'video', 'documento', 'imagen', 'enlace'
-            'archivo_nombre': video_data[6],
-            'archivo_tipo': video_data[7],
-            'archivo_tamano': video_data[8],
-            'categoria_nombre': video_data[15],
-            'categoria_color': video_data[16],
-            'fecha_publicacion': video_data[13],
-            'tiene_archivo': video_data[5] is not None,
-            'es_obligatorio': video_data[11]
-        }
+    video = None
+    
+    try:
+        # Obtener datos básicos del video
+        resultado = ejecutar_consulta("""
+            SELECT sc.*, cat.nombre as categoria_nombre, cat.color as categoria_color
+            FROM sst_contenido sc
+            LEFT JOIN sst_categorias cat ON sc.categoria_id = cat.id
+            WHERE sc.id = %s
+        """, (id,), fetch=True)
+        
+        if resultado and resultado[0]:
+            video_data = resultado[0]
+            video = {
+                'id': video_data[0],
+                'titulo': video_data[1],
+                'descripcion': video_data[2],
+                'tipo': video_data[3],
+                'archivo_nombre': video_data[6],
+                'archivo_tipo': video_data[7],
+                'archivo_tamano': video_data[8],
+                'video_url': video_data[9],
+                'tiene_archivo': video_data[5] is not None,
+                'categoria_nombre': video_data[15] if len(video_data) > 15 else '',
+                'categoria_color': video_data[16] if len(video_data) > 16 else '#007bff',
+                'fecha_publicacion': video_data[13],
+                'es_obligatorio': video_data[11]
+            }
+        else:
+            flash('Video no encontrado', 'error')
+            return redirect(url_for('sst_contenido'))
+    
+    except Exception as e:
+        flash(f'Error al cargar el video: {str(e)}', 'error')
+        logger.error(f"❌ Error en sst_ver_video: {e}")
+        return redirect(url_for('sst_contenido'))
+    
+    if not video:
+        flash('Video no encontrado', 'error')
+        return redirect(url_for('sst_contenido'))
     
     return render_template('sst/ver_video.html', video=video)
 
 @app.route('/sst/video/stream/<int:id>')
 @login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
 def sst_stream_video(id):
-    """Stream de video desde la base de datos - VERSIÓN CORREGIDA"""
+    """Stream de video desde la base de datos"""
     if not current_user.puede('acceder_sst'):
         return Response('No autorizado', status=403)
     
@@ -1684,7 +1762,7 @@ def sst_stream_video(id):
         )
         
     except Exception as e:
-        print(f"❌ Error en sst_stream_video: {e}")
+        logger.error(f"❌ Error en sst_stream_video: {e}")
         return Response('Error interno del servidor', status=500)
 
 # ===== RUTAS PARA SERVIR ARCHIVOS ESTÁTICOS =====
@@ -1729,6 +1807,7 @@ def obtener_problemas(categoria):
     problemas = problemas_por_categoria.get(categoria, [])
     return jsonify(problemas)
 
+# ===== INICIALIZACIÓN =====
 if __name__ == '__main__':
     with app.app_context():
         print("🚀 Iniciando la aplicación Flask...")
