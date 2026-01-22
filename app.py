@@ -58,7 +58,6 @@ app.config['ALLOWED_EXTENSIONS'] = {
 # Crear directorio de uploads si no existe
 upload_path = app.config['UPLOAD_FOLDER_SST']
 os.makedirs(upload_path, exist_ok=True)
-print(f"📁 Directorio de uploads: {upload_path}")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
@@ -91,28 +90,23 @@ def inject_permissions():
                 return current_user.permisos.get(permiso, False)
         return False
     
-    def puede_acceder_modulo(modulo):
-        if current_user.is_authenticated:
-            if current_user.rol == 'admin':
-                return True
-            if modulo == 'sst' and current_user.rol in ['admin', 'sst']:
-                return True
-            if modulo == 'soporte' and current_user.rol in ['admin', 'soporte']:
-                return True
-            if modulo == 'dashboard' and current_user.rol == 'admin':
-                return True
-        return False
+    def obtener_template_base():
+        """Determina qué template base usar según el rol del usuario"""
+        if not current_user.is_authenticated:
+            return 'base_soporte.html'
+        
+        rol = current_user.rol.lower()
+        
+        if rol == 'admin':
+            return 'base_admin.html'
+        elif rol == 'sst':
+            return 'base_sst.html'
+        elif rol == 'soporte':
+            return 'base_soporte.html'
+        else:
+            return 'base_soporte.html'
     
-    def obtener_modulo_principal():
-        if current_user.is_authenticated:
-            return getattr(current_user, 'modulo_principal', 'soporte')
-        return 'soporte'
-    
-    return dict(
-        tiene_permiso=tiene_permiso,
-        puede_acceder_modulo=puede_acceder_modulo,
-        obtener_modulo_principal=obtener_modulo_principal
-    )
+    return dict(tiene_permiso=tiene_permiso, obtener_template_base=obtener_template_base)
 
 # ===== FILTROS TEMPLATE =====
 @app.template_filter('format_date')
@@ -124,33 +118,6 @@ def format_date_filter(date_value, format='%d/%m/%Y'):
         return date_value.strftime(format)
     except:
         return 'Fecha inválida'
-
-@app.template_filter('safe_tags')
-def safe_tags_filter(tags_value):
-    """Filtro seguro para manejar tags"""
-    if tags_value is None:
-        return []
-    if isinstance(tags_value, str):
-        return [tag.strip() for tag in tags_value.split(',') if tag.strip()]
-    elif isinstance(tags_value, (int, float)):
-        return [str(tags_value)]
-    else:
-        return []
-
-@app.template_filter('is_video_url')
-def is_video_url_filter(url):
-    """Verificar si una URL es de video"""
-    if not url:
-        return False
-    video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.webm']
-    return any(url.lower().endswith(ext) for ext in video_extensions)
-
-@app.template_filter('file_extension')
-def file_extension_filter(filename):
-    """Obtener extensión del archivo"""
-    if not filename:
-        return ''
-    return os.path.splitext(filename)[1].lower().replace('.', '')
 
 # ===== MODELO DE USUARIO =====
 class User(UserMixin):
@@ -171,7 +138,6 @@ class User(UserMixin):
                 'gestion_usuarios': True,
                 'acceder_sst': True,
                 'acceder_soporte': True,
-                'acceder_dashboard': True,
                 'gestionar_contenido_sst': True
             }
         elif rol == 'sst':
@@ -184,7 +150,6 @@ class User(UserMixin):
                 'gestion_usuarios': False,
                 'acceder_sst': True,
                 'acceder_soporte': False,
-                'acceder_dashboard': False,
                 'gestionar_contenido_sst': False
             }
         elif rol == 'soporte':
@@ -197,7 +162,6 @@ class User(UserMixin):
                 'gestion_usuarios': False,
                 'acceder_sst': False,
                 'acceder_soporte': True,
-                'acceder_dashboard': False,
                 'gestionar_contenido_sst': False
             }
 
@@ -215,27 +179,18 @@ def load_user(user_id):
         
         if resultado and resultado[0]:
             user_data = resultado[0]
-            user_dict = {
-                'id': user_data[0],
-                'usuario': user_data[1],
-                'password': user_data[2],
-                'rol': user_data[3],
-                'modulo_principal': user_data[4] if user_data[4] else 'soporte',
-                'permisos': user_data[5]
-            }
-            
             permisos = {}
-            if user_dict.get('permisos'):
+            if user_data[5]:
                 try:
-                    permisos = json.loads(user_dict['permisos'])
+                    permisos = json.loads(user_data[5])
                 except:
                     permisos = {}
             
             return User(
-                user_dict['id'], 
-                user_dict['usuario'], 
-                user_dict['rol'],
-                user_dict['modulo_principal'],
+                user_data[0], 
+                user_data[1], 
+                user_data[3],
+                user_data[4] if user_data[4] else 'soporte',
                 permisos
             )
     except Exception as e:
@@ -259,30 +214,22 @@ def login():
                 fetch=True
             )
             
-            if resultado and resultado[0] and resultado[0][2] and resultado[0][2].strip():
+            if resultado and resultado[0] and resultado[0][2]:
                 user_data = resultado[0]
-                user_dict = {
-                    'id': user_data[0],
-                    'usuario': user_data[1],
-                    'password': user_data[2],
-                    'rol': user_data[3],
-                    'modulo_principal': user_data[4] if user_data[4] else 'soporte',
-                    'permisos': user_data[5]
-                }
                 
-                if check_password_hash(user_dict['password'], password):
+                if check_password_hash(user_data[2], password):
                     permisos = {}
-                    if user_dict.get('permisos'):
+                    if user_data[5]:
                         try:
-                            permisos = json.loads(user_dict['permisos'])
+                            permisos = json.loads(user_data[5])
                         except:
                             permisos = {}
                     
                     user = User(
-                        user_dict['id'], 
-                        user_dict['usuario'], 
-                        user_dict['rol'],
-                        user_dict['modulo_principal'],
+                        user_data[0], 
+                        user_data[1], 
+                        user_data[3],
+                        user_data[4] if user_data[4] else 'soporte',
                         permisos
                     )
                     login_user(user)
@@ -362,17 +309,77 @@ def cambiar_password():
     
     return render_template('cambiar_password.html')
 
+# ===== DASHBOARD ADMINISTRATIVO =====
+@app.route('/admin/dashboard')
+@login_required
+def dashboard_admin():
+    """Dashboard exclusivo para administradores"""
+    if not current_user.puede('gestion_usuarios'):
+        flash('No tienes permisos para acceder al dashboard administrativo', 'error')
+        return redirect_a_modulo_principal()
+    
+    stats = {}
+    
+    try:
+        # Contar usuarios totales
+        resultado = ejecutar_consulta("SELECT COUNT(*) FROM usuarios", fetch=True)
+        stats['total_usuarios'] = resultado[0][0] if resultado else 0
+        
+        # Contar por rol
+        resultado = ejecutar_consulta("SELECT rol, COUNT(*) FROM usuarios GROUP BY rol", fetch=True)
+        stats['usuarios_por_rol'] = {row[0]: row[1] for row in resultado} if resultado else {}
+        
+        # Contar fichas de soporte
+        resultado = ejecutar_consulta("SELECT COUNT(*) FROM fichas", fetch=True)
+        stats['total_fichas'] = resultado[0][0] if resultado else 0
+        
+        # Contar contenido SST
+        resultado = ejecutar_consulta("SELECT COUNT(*) FROM sst_contenido", fetch=True)
+        stats['total_contenido_sst'] = resultado[0][0] if resultado else 0
+        
+        # Últimos usuarios registrados
+        resultado = ejecutar_consulta(
+            "SELECT id, usuario, rol, fecha_creacion FROM usuarios ORDER BY fecha_creacion DESC LIMIT 5", 
+            fetch=True
+        )
+        stats['ultimos_usuarios'] = [
+            {
+                'id': row[0],
+                'usuario': row[1],
+                'rol': row[2],
+                'fecha_creacion': row[3]
+            }
+            for row in resultado
+        ] if resultado else []
+        
+        # Últimas fichas creadas
+        resultado = ejecutar_consulta(
+            "SELECT id, categoria, problema, fecha_creacion FROM fichas ORDER BY fecha_creacion DESC LIMIT 5",
+            fetch=True
+        )
+        stats['ultimas_fichas'] = [
+            {
+                'id': row[0],
+                'categoria': row[1],
+                'problema': row[2],
+                'fecha_creacion': row[3]
+            }
+            for row in resultado
+        ] if resultado else []
+        
+    except Exception as e:
+        flash('Error al cargar estadísticas', 'error')
+        logger.error(f"Error en dashboard_admin: {e}")
+        stats = {}
+    
+    return render_template('admin/dashboard.html', stats=stats)
+
 # ===== RUTAS DE SOPORTE TÉCNICO =====
 @app.route('/')
-@app.route('/soporte')
 @login_required
 def index():
     if not current_user.puede('acceder_soporte'):
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
-        return redirect_a_modulo_principal()
-    
-    if not current_user.puede('ver_fichas'):
-        flash('No tienes permisos para ver las fichas', 'error')
         return redirect_a_modulo_principal()
     
     fichas = []
@@ -399,15 +406,11 @@ def index():
         flash('Error al cargar las fichas', 'error')
         logger.error(f"Error en index: {e}")
     
-    return render_template('soporte/index.html', fichas=fichas, user=current_user)
+    return render_template('soporte/index.html', fichas=fichas)
 
-@app.route('/soporte/agregar', methods=['GET', 'POST'])
+@app.route('/agregar', methods=['GET', 'POST'])
 @login_required
 def agregar_ficha():
-    if not current_user.puede('acceder_soporte'):
-        flash('No tienes permisos para acceder al módulo de soporte', 'error')
-        return redirect_a_modulo_principal()
-    
     if not current_user.puede('agregar_fichas'):
         flash('No tienes permisos para realizar esta acción', 'error')
         return redirect(url_for('index'))
@@ -420,16 +423,7 @@ def agregar_ficha():
         solucion = request.form.get('solucion', '')
         palabras_clave = request.form.get('palabras_clave', '')
         
-        campos_requeridos = {
-            'categoria': categoria,
-            'problema': problema, 
-            'causas': causas,
-            'solucion': solucion
-        }
-        
-        campos_faltantes = [campo for campo, valor in campos_requeridos.items() if not valor]
-        
-        if campos_faltantes:
+        if not categoria or not problema or not causas or not solucion:
             flash('Por favor, complete todos los campos requeridos', 'error')
             return render_template('soporte/agregar_ficha.html')
         
@@ -447,13 +441,9 @@ def agregar_ficha():
     
     return render_template('soporte/agregar_ficha.html')
 
-@app.route('/soporte/editar/<int:id>', methods=['GET', 'POST'])
+@app.route('/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
 def editar_ficha(id):
-    if not current_user.puede('acceder_soporte'):
-        flash('No tienes permisos para acceder al módulo de soporte', 'error')
-        return redirect_a_modulo_principal()
-    
     if not current_user.puede('editar_fichas'):
         flash('No tienes permisos para realizar esta acción', 'error')
         return redirect(url_for('index'))
@@ -511,13 +501,9 @@ def editar_ficha(id):
     
     return render_template('soporte/editar_ficha.html', ficha=ficha)
 
-@app.route('/soporte/eliminar/<int:id>')
+@app.route('/eliminar/<int:id>')
 @login_required
 def eliminar_ficha(id):
-    if not current_user.puede('acceder_soporte'):
-        flash('No tienes permisos para acceder al módulo de soporte', 'error')
-        return redirect_a_modulo_principal()
-    
     if not current_user.puede('eliminar_fichas'):
         flash('No tienes permisos para realizar esta acción', 'error')
         return redirect(url_for('index'))
@@ -531,13 +517,9 @@ def eliminar_ficha(id):
     
     return redirect(url_for('index'))
 
-@app.route('/soporte/buscar')
+@app.route('/buscar')
 @login_required
 def buscar():
-    if not current_user.puede('acceder_soporte'):
-        flash('No tienes permisos para acceder al módulo de soporte', 'error')
-        return redirect_a_modulo_principal()
-    
     if not current_user.puede('ver_fichas'):
         flash('No tienes permisos para ver las fichas', 'error')
         return redirect(url_for('index'))
@@ -590,13 +572,9 @@ def buscar():
     
     return render_template('soporte/buscar.html', fichas=fichas, query=query, categoria=categoria)
 
-@app.route('/soporte/ficha/<int:id>')
+@app.route('/ficha/<int:id>')
 @login_required
 def ver_ficha(id):
-    if not current_user.puede('acceder_soporte'):
-        flash('No tienes permisos para acceder al módulo de soporte', 'error')
-        return redirect_a_modulo_principal()
-    
     if not current_user.puede('ver_fichas'):
         flash('No tienes permisos para ver las fichas', 'error')
         return redirect(url_for('index'))
@@ -629,8 +607,8 @@ def ver_ficha(id):
     
     return render_template('soporte/ver_ficha.html', ficha=ficha)
 
-# ===== RUTAS DE GESTIÓN DE USUARIOS (Solo Admin) =====
-@app.route('/admin/usuarios')
+# ===== RUTAS DE GESTIÓN DE USUARIOS =====
+@app.route('/usuarios')
 @login_required
 def gestion_usuarios():
     if not current_user.puede('gestion_usuarios'):
@@ -646,7 +624,6 @@ def gestion_usuarios():
             usuario_dict = {
                 'id': usuario[0],
                 'usuario': usuario[1],
-                'password': usuario[2],
                 'rol': usuario[3],
                 'modulo_principal': usuario[4] if usuario[4] else 'soporte',
                 'permisos': usuario[5],
@@ -670,17 +647,7 @@ def gestion_usuarios():
     
     return render_template('admin/gestion_usuarios.html', usuarios=usuarios)
 
-@app.route('/admin/dashboard')
-@login_required
-def dashboard_admin():
-    """Dashboard administrativo - NUEVA RUTA"""
-    if not current_user.puede('gestion_usuarios'):
-        flash('No tienes permisos para acceder al dashboard', 'error')
-        return redirect_a_modulo_principal()
-    
-    return render_template('admin/dashboard.html')
-
-@app.route('/admin/usuario/editar/<int:id>', methods=['GET', 'POST'])
+@app.route('/editar_usuario/<int:id>', methods=['GET', 'POST'])
 @login_required
 def editar_usuario(id):
     if not current_user.puede('gestion_usuarios'):
@@ -692,9 +659,9 @@ def editar_usuario(id):
     try:
         if request.method == 'POST':
             usuario = request.form['usuario']
-            password = request.form['password']
+            password = request.form.get('password', '')
             rol = request.form['rol']
-            modulo_principal = request.form['modulo_principal']
+            modulo_principal = request.form.get('modulo_principal', 'soporte')
             
             permisos = {
                 'ver_fichas': 'ver_fichas' in request.form,
@@ -732,7 +699,6 @@ def editar_usuario(id):
             usuario_data = {
                 'id': usuario[0],
                 'usuario': usuario[1],
-                'password': usuario[2],
                 'rol': usuario[3],
                 'modulo_principal': usuario[4] if usuario[4] else 'soporte',
                 'permisos': usuario[5],
@@ -748,8 +714,6 @@ def editar_usuario(id):
             else:
                 usuario_data['permisos_parsed'] = {}
             
-    except psycopg2.IntegrityError:
-        flash('El usuario ya existe', 'error')
     except Exception as e:
         flash('Error al editar el usuario', 'error')
         logger.error(f"Error en editar_usuario: {e}")
@@ -760,7 +724,7 @@ def editar_usuario(id):
     
     return render_template('admin/editar_usuario.html', usuario=usuario_data)
 
-@app.route('/admin/usuario/agregar', methods=['GET', 'POST'])
+@app.route('/agregar_usuario', methods=['GET', 'POST'])
 @login_required
 def agregar_usuario():
     if not current_user.puede('gestion_usuarios'):
@@ -771,7 +735,7 @@ def agregar_usuario():
         usuario = request.form['usuario']
         password = request.form['password']
         rol = request.form['rol']
-        modulo_principal = request.form['modulo_principal']
+        modulo_principal = request.form.get('modulo_principal', 'soporte')
         
         if not usuario or not password:
             flash('Usuario y contraseña son obligatorios', 'error')
@@ -806,7 +770,7 @@ def agregar_usuario():
     
     return render_template('admin/agregar_usuario.html')
 
-@app.route('/admin/usuario/eliminar/<int:id>')
+@app.route('/eliminar_usuario/<int:id>')
 @login_required
 def eliminar_usuario(id):
     if not current_user.puede('gestion_usuarios'):
@@ -827,7 +791,7 @@ def eliminar_usuario(id):
     return redirect(url_for('gestion_usuarios'))
 
 # ===== RUTAS DE INFORMACIÓN =====
-@app.route('/informacion/soluciones-visuales')
+@app.route('/soluciones_visuales')
 @login_required
 def soluciones_visuales():
     soluciones = [
@@ -939,12 +903,12 @@ def soluciones_visuales():
     ]
     return render_template('informacion/soluciones_visuales.html', soluciones=soluciones)
 
-@app.route('/informacion/atencion-telefonica')
+@app.route('/atencion_telefonica')
 @login_required
 def atencion_telefonica():
     return render_template('informacion/atencion_telefonica.html')
 
-@app.route('/informacion/general')
+@app.route('/informacion-general')
 @login_required
 def informacion_general():
     informacion = {
@@ -1223,10 +1187,8 @@ def informacion_general():
     
     return render_template('informacion/general.html', informacion=informacion)
 
-# ===== RUTAS SST MEJORADAS =====
-
+# ===== RUTAS SST =====
 @app.route('/sst')
-@app.route('/sst/dashboard')
 @login_required
 def sst_dashboard():
     """Dashboard principal de SST"""
@@ -1234,7 +1196,57 @@ def sst_dashboard():
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
     
-    return render_template('sst/dashboard.html')
+    stats = {}
+    
+    try:
+        # Contar contenido por tipo
+        resultado = ejecutar_consulta(
+            "SELECT tipo, COUNT(*) FROM sst_contenido GROUP BY tipo",
+            fetch=True
+        )
+        stats['contenido_por_tipo'] = {row[0]: row[1] for row in resultado} if resultado else {}
+        
+        # Contar contenido obligatorio vs opcional
+        resultado = ejecutar_consulta(
+            "SELECT es_obligatorio, COUNT(*) FROM sst_contenido GROUP BY es_obligatorio",
+            fetch=True
+        )
+        stats['obligatorios_vs_opcionales'] = {
+            'Obligatorio': 0,
+            'Opcional': 0
+        }
+        if resultado:
+            for row in resultado:
+                if row[0]:
+                    stats['obligatorios_vs_opcionales']['Obligatorio'] = row[1]
+                else:
+                    stats['obligatorios_vs_opcionales']['Opcional'] = row[1]
+        
+        # Último contenido agregado
+        resultado = ejecutar_consulta(
+            """SELECT sc.id, sc.titulo, sc.tipo, sc.fecha_publicacion, cat.nombre 
+               FROM sst_contenido sc 
+               LEFT JOIN sst_categorias cat ON sc.categoria_id = cat.id 
+               ORDER BY sc.fecha_publicacion DESC LIMIT 5""",
+            fetch=True
+        )
+        stats['ultimo_contenido'] = [
+            {
+                'id': row[0],
+                'titulo': row[1],
+                'tipo': row[2],
+                'fecha': row[3],
+                'categoria': row[4]
+            }
+            for row in resultado
+        ] if resultado else []
+        
+    except Exception as e:
+        flash('Error al cargar estadísticas SST', 'error')
+        logger.error(f"Error en sst_dashboard: {e}")
+        stats = {}
+    
+    return render_template('sst/dashboard.html', stats=stats)
 
 @app.route('/sst/contenido')
 @login_required
@@ -1306,10 +1318,6 @@ def sst_contenido():
 @retry_on_ssl_error(max_retries=2, delay=3)
 def sst_agregar_contenido():
     """Agregar nuevo contenido SST"""
-    if not current_user.puede('acceder_sst'):
-        flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
-    
     if not current_user.puede('gestionar_contenido_sst'):
         flash('No tienes permisos para agregar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
@@ -1354,10 +1362,7 @@ def sst_agregar_contenido():
                     file_size = file.tell()
                     file.seek(0)
                     
-                    logger.info(f"📦 Procesando archivo: {file.filename} ({file_size} bytes)")
-                    
                     if file_size > 5 * 1024 * 1024:
-                        logger.info(f"📦 Archivo grande detectado, procesando por chunks...")
                         chunks = []
                         while True:
                             chunk = file.read(8192)
@@ -1375,8 +1380,6 @@ def sst_agregar_contenido():
                             'tipo': file_type,
                             'tamano': len(file_data)
                         }
-                        
-                        logger.info(f"✅ Archivo grande procesado: {file_name} ({len(file_data)} bytes)")
                     else:
                         archivo_data = guardar_archivo_en_bd(file)
                     
@@ -1387,8 +1390,7 @@ def sst_agregar_contenido():
                     video_url = None
                     archivo_url = None
                 else:
-                    extensiones_permitidas = ', '.join(app.config['ALLOWED_EXTENSIONS'])
-                    flash(f'❌ Tipo de archivo no permitido. Extensiones válidas: {extensiones_permitidas}', 'error')
+                    flash('❌ Tipo de archivo no permitido', 'error')
                     return render_template('sst/agregar_contenido.html', categorias=categorias)
             
             validation_error = None
@@ -1439,7 +1441,7 @@ def sst_agregar_contenido():
             
     except Exception as e:
         flash(f'❌ Error al agregar contenido SST: {str(e)}', 'error')
-        logger.error(f"❌ ERROR GENERAL EN SST_AGREGAR_CONTENIDO: {e}")
+        logger.error(f"❌ ERROR EN SST_AGREGAR_CONTENIDO: {e}")
     
     return render_template('sst/agregar_contenido.html', categorias=categorias)
 
@@ -1449,18 +1451,14 @@ def sst_agregar_contenido():
 def sst_descargar_archivo(id):
     """Descargar archivo desde la base de datos"""
     if not current_user.puede('acceder_sst'):
-        flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+        flash('No tienes permisos', 'error')
+        return redirect(url_for('sst_contenido'))
     
     try:
         archivo = obtener_archivo_desde_bd(id)
         
-        if not archivo:
+        if not archivo or not archivo.get('data'):
             flash('Archivo no encontrado', 'error')
-            return redirect(url_for('sst_contenido'))
-        
-        if not archivo.get('data'):
-            flash('El archivo está vacío', 'error')
             return redirect(url_for('sst_contenido'))
         
         file_data = BytesIO(archivo['data'])
@@ -1473,7 +1471,7 @@ def sst_descargar_archivo(id):
         )
         
     except Exception as e:
-        flash(f'Error al descargar el archivo: {str(e)}', 'error')
+        flash(f'Error al descargar: {str(e)}', 'error')
         logger.error(f"❌ Error en sst_descargar_archivo: {e}")
         return redirect(url_for('sst_contenido'))
 
@@ -1481,13 +1479,9 @@ def sst_descargar_archivo(id):
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
 def sst_editar_contenido(id):
-    """Editar contenido SST existente"""
-    if not current_user.puede('acceder_sst'):
-        flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
-    
+    """Editar contenido SST"""
     if not current_user.puede('gestionar_contenido_sst'):
-        flash('No tienes permisos para editar contenido SST', 'error')
+        flash('No tienes permisos', 'error')
         return redirect(url_for('sst_dashboard'))
     
     contenido = None
@@ -1524,7 +1518,6 @@ def sst_editar_contenido(id):
                     if not archivo_data:
                         flash('Error al procesar el archivo', 'error')
                         return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
-                    
                     video_url = None
                     archivo_url = None
                 else:
@@ -1593,7 +1586,7 @@ def sst_editar_contenido(id):
             }
                 
     except Exception as e:
-        flash(f'Error al editar contenido SST: {str(e)}', 'error')
+        flash(f'Error: {str(e)}', 'error')
         logger.error(f"❌ Error en sst_editar_contenido: {e}")
     
     if not contenido:
@@ -1606,19 +1599,15 @@ def sst_editar_contenido(id):
 @login_required
 def sst_eliminar_contenido(id):
     """Eliminar contenido SST"""
-    if not current_user.puede('acceder_sst'):
-        flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
-    
     if not current_user.puede('gestionar_contenido_sst'):
-        flash('No tienes permisos para eliminar contenido SST', 'error')
+        flash('No tienes permisos', 'error')
         return redirect(url_for('sst_dashboard'))
     
     try:
         ejecutar_consulta("DELETE FROM sst_contenido WHERE id = %s", (id,), commit=True)
         flash('✅ Contenido eliminado correctamente', 'success')
     except Exception as e:
-        flash(f'Error al eliminar contenido SST: {str(e)}', 'error')
+        flash(f'Error: {str(e)}', 'error')
         logger.error(f"❌ Error en sst_eliminar_contenido: {e}")
     
     return redirect(url_for('sst_contenido'))
@@ -1629,8 +1618,8 @@ def sst_eliminar_contenido(id):
 def sst_ver_video(id):
     """Ver detalles de un video"""
     if not current_user.puede('acceder_sst'):
-        flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+        flash('No tienes permisos', 'error')
+        return redirect(url_for('sst_contenido'))
     
     contenido = None
     
@@ -1664,7 +1653,7 @@ def sst_ver_video(id):
             return redirect(url_for('sst_contenido'))
     
     except Exception as e:
-        flash(f'Error al cargar el video: {str(e)}', 'error')
+        flash(f'Error: {str(e)}', 'error')
         logger.error(f"❌ Error en sst_ver_video: {e}")
         return redirect(url_for('sst_contenido'))
     
@@ -1674,19 +1663,16 @@ def sst_ver_video(id):
     
     return render_template('sst/ver_video.html', contenido=contenido)
 
-# ===== RUTAS PARA SERVIR ARCHIVOS ESTÁTICOS =====
+# ===== RUTAS PARA ARCHIVOS ESTÁTICOS =====
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     """Servir archivos estáticos"""
     return send_from_directory('static', filename)
 
-# ===== API PARA PROBLEMAS =====
+# ===== API =====
 @app.route('/api/problemas/<categoria>')
 @login_required
 def obtener_problemas(categoria):
-    if not current_user.puede('acceder_soporte'):
-        return jsonify([])
-    
     problemas_por_categoria = {
         'TV': [
             'No hay señal en el televisor',
@@ -1713,12 +1699,15 @@ def obtener_problemas(categoria):
         ]
     }
     
-    problemas = problemas_por_categoria.get(categoria, [])
-    return jsonify(problemas)
+    return jsonify(problemas_por_categoria.get(categoria, []))
 
 # ===== INICIALIZACIÓN =====
 if __name__ == '__main__':
     with app.app_context():
         print("🚀 Iniciando la aplicación Flask...")
+        print("📊 Creando tablas de la base de datos...")
         crear_tablas()
-    app.run(host='0.0.0.0', port=5000, debug=True)
+        print("✅ Tablas creadas correctamente")
+        print("🎨 Configurando categorías SST...")
+        verificar_y_crear_categorias_sst()
+        print("✅ Configuración completada")
