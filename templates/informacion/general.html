@@ -1,102 +1,66 @@
-{% extends obtener_template_base() %}
-
-{% block title %}Información General - M@STV Producciones{% endblock %}
-
+{% extends "base_soporte.html" %}
+{% block title %}Información General - M@STV{% endblock %}
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gradient">
-            <i class="fas fa-info-circle me-2"></i>Información General
-        </h1>
-        <div>
-            <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left me-2"></i>Volver
-            </a>
-        </div>
-    </div>
-    
-    <!-- Navegación rápida -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <a href="#planes" class="btn btn-outline-primary w-100">
-                                <i class="fas fa-tv me-2"></i>Planes
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card mb-4">
+                <div class="card-header" style="background: linear-gradient(135deg, #052398 0%, #7b87f5 100%); color: white;">
+                    <h3 class="mb-0"><i class="fas fa-info-circle me-2"></i>Información General - M@STV Producciones</h3>
+                </div>
+                <div class="card-body p-4">
+                    <h4 class="mb-3"><i class="fas fa-building me-2 text-primary"></i>Acerca de M@STV</h4>
+                    <p>M@STV Producciones es una empresa dedicada a proporcionar servicios de televisión e internet de alta calidad a nuestros clientes.</p>
+                    
+                    <hr class="my-4">
+                    
+                    <h4 class="mb-3"><i class="fas fa-phone me-2 text-success"></i>Contacto</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="p-3 bg-light rounded">
+                                <h6><i class="fas fa-headset me-2"></i>Soporte Técnico</h6>
+                                <p class="mb-0">Teléfono: <strong>(123) 456-7890</strong></p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="p-3 bg-light rounded">
+                                <h6><i class="fas fa-envelope me-2"></i>Email</h6>
+                                <p class="mb-0"><strong>soporte@mastv.com</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h4 class="mb-3"><i class="fas fa-clock me-2 text-warning"></i>Horarios de Atención</h4>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-calendar-day me-2"></i><strong>Lunes a Viernes:</strong> 8:00 AM - 6:00 PM</li>
+                        <li class="mb-2"><i class="fas fa-calendar-week me-2"></i><strong>Sábados:</strong> 9:00 AM - 2:00 PM</li>
+                        <li class="mb-2"><i class="fas fa-calendar-times me-2"></i><strong>Domingos:</strong> Cerrado</li>
+                    </ul>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('soluciones_visuales') }}" class="btn btn-primary w-100">
+                                <i class="fas fa-images me-2"></i>Soluciones Visuales
                             </a>
                         </div>
-                        <div class="col-md-4">
-                            <a href="#afiliaciones" class="btn btn-outline-success w-100">
-                                <i class="fas fa-user-plus me-2"></i>Afiliaciones
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('atencion_telefonica') }}" class="btn btn-success w-100">
+                                <i class="fas fa-headset me-2"></i>Atención Telefónica
                             </a>
                         </div>
-                        <div class="col-md-4">
-                            <a href="#oficinas" class="btn btn-outline-info w-100">
-                                <i class="fas fa-building me-2"></i>Oficinas
+                        <div class="col-md-4 mb-3">
+                            <a href="{{ url_for('sst_dashboard') }}" class="btn btn-warning w-100">
+                                <i class="fas fa-hard-hat me-2"></i>SST
                             </a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <!-- Contenido -->
-    <div class="row">
-        {% for key, seccion in informacion.items() %}
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-{{ 'primary' if key == 'planes' else 'success' if key == 'afiliaciones' else 'warning' if key == 'win_sports' else 'info' if key == 'oficinas' else 'secondary' }}">
-                    <h5 class="mb-0 text-white">
-                        <i class="fas {{ seccion.icono }} me-2"></i>{{ seccion.titulo }}
-                    </h5>
-                </div>
-                
-                <div class="card-body">
-                    <div id="{{ key }}" class="informacion-contenido">
-                        {% for item in seccion.contenido %}
-                        {% if item.subtitulo %}
-                        <h6 class="text-primary mt-3 mb-2">
-                            <i class="fas fa-chevron-right me-2"></i>{{ item.subtitulo }}
-                        </h6>
-                        {% endif %}
-                        
-                        {% if item.contenido_items %}
-                        <div class="ms-3">
-                            {% for linea in item.contenido_items %}
-                            {% if '*' in linea %}
-                            <p class="mb-1"><strong>{{ linea.replace('*', '') }}</strong></p>
-                            {% elif '•' in linea %}
-                            <p class="mb-1 ms-3">{{ linea }}</p>
-                            {% else %}
-                            <p class="mb-1">{{ linea }}</p>
-                            {% endif %}
-                            {% endfor %}
-                        </div>
-                        {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
     </div>
 </div>
-
-<style>
-.informacion-contenido {
-    font-size: 0.9rem;
-}
-
-.informacion-contenido h6 {
-    border-bottom: 2px solid #e9ecef;
-    padding-bottom: 5px;
-}
-
-.informacion-contenido p {
-    line-height: 1.4;
-}
-</style>
 {% endblock %}
