@@ -1,1 +1,223 @@
+{% extends obtener_template_base() %}
 
+{% block title %}Dashboard Administrativo - Sistema M@STV{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header del Dashboard -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gradient">
+            <i class="fas fa-crown me-2"></i>Dashboard Administrativo
+        </h1>
+        <div>
+            <span class="badge bg-dark fs-6">
+                <i class="fas fa-calendar-alt me-2"></i>{{ now.strftime('%d/%m/%Y') }}
+            </span>
+        </div>
+    </div>
+    
+    <!-- Tarjetas de Estadísticas -->
+    <div class="row mb-4">
+        <!-- Usuarios -->
+        <div class="col-md-3 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3 class="stat-number">{{ stats.total_usuarios }}</h3>
+                <p class="stat-label">Usuarios Totales</p>
+            </div>
+        </div>
+        
+        <!-- Fichas -->
+        <div class="col-md-3 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-success">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h3 class="stat-number">{{ stats.total_fichas }}</h3>
+                <p class="stat-label">Fichas de Soporte</p>
+            </div>
+        </div>
+        
+        <!-- Contenido SST -->
+        <div class="col-md-3 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning">
+                    <i class="fas fa-hard-hat"></i>
+                </div>
+                <h3 class="stat-number">{{ stats.total_contenido_sst }}</h3>
+                <p class="stat-label">Contenido SST</p>
+            </div>
+        </div>
+        
+        <!-- Administradores -->
+        <div class="col-md-3 mb-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-danger">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <h3 class="stat-number">{{ stats.usuarios_por_rol.get('admin', 0) }}</h3>
+                <p class="stat-label">Administradores</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dos columnas -->
+    <div class="row">
+        <!-- Últimos Usuarios -->
+        <div class="col-lg-6 mb-4">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-clock me-2"></i>Últimos Usuarios Registrados
+                    </h5>
+                </div>
+                <div class="admin-card-body">
+                    {% if stats.ultimos_usuarios %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Rol</th>
+                                    <th>Fecha Registro</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for usuario in stats.ultimos_usuarios %}
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-user me-2"></i>
+                                        <strong>{{ usuario.usuario }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ usuario.rol|badge_color_rol }}">
+                                            {{ usuario.rol|upper }}
+                                        </span>
+                                    </td>
+                                    <td>{{ usuario.fecha_creacion|format_date }}</td>
+                                    <td>
+                                        <a href="{{ url_for('editar_usuario', id=usuario.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-users fs-1 text-muted mb-3"></i>
+                        <p class="text-muted">No hay usuarios registrados</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('gestion_usuarios') }}" class="btn btn-admin">
+                            <i class="fas fa-users-cog me-2"></i>Gestionar Usuarios
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Últimas Fichas -->
+        <div class="col-lg-6 mb-4">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-medical me-2"></i>Últimas Fichas Creadas
+                    </h5>
+                </div>
+                <div class="admin-card-body">
+                    {% if stats.ultimas_fichas %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Categoría</th>
+                                    <th>Problema</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ficha in stats.ultimas_fichas %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-info">{{ ficha.categoria }}</span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ ficha.problema[:50] }}{% if ficha.problema|length > 50 %}...{% endif %}</strong>
+                                    </td>
+                                    <td>{{ ficha.fecha_creacion|format_date }}</td>
+                                    <td>
+                                        <a href="{{ url_for('ver_ficha', id=ficha.id) }}" 
+                                           class="btn btn-sm btn-outline-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-file-alt fs-1 text-muted mb-3"></i>
+                        <p class="text-muted">No hay fichas creadas</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('index') }}" class="btn btn-admin">
+                            <i class="fas fa-headset me-2"></i>Ir a Soporte
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Acciones Rápidas -->
+    <div class="row">
+        <div class="col-12">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Acciones Rápidas
+                    </h5>
+                </div>
+                <div class="admin-card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('agregar_usuario') }}" class="btn btn-admin w-100">
+                                <i class="fas fa-user-plus me-2"></i>Nuevo Usuario
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('sst_contenido') }}" class="btn btn-admin-outline w-100">
+                                <i class="fas fa-hard-hat me-2"></i>Gestionar SST
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('agregar_ficha') }}" class="btn btn-admin-outline w-100">
+                                <i class="fas fa-plus-circle me-2"></i>Nueva Ficha
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('informacion_general') }}" class="btn btn-admin-outline w-100">
+                                <i class="fas fa-info-circle me-2"></i>Información
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
