@@ -97,121 +97,25 @@
         </span>
     </div>
     
-    <!-- Tarjetas de Estadísticas -->
+    <!-- Mensaje de bienvenida -->
     <div class="row mb-4">
-        <!-- Contenido Total -->
-        <div class="col-md-3 mb-4">
-            <div class="stat-card">
-                <div class="stat-icon bg-success">
-                    <i class="fas fa-file-alt"></i>
-                </div>
-                <h3 class="stat-number">{{ stats.total_contenido or 0 }}</h3>
-                <p class="stat-label">Contenido Total</p>
-            </div>
-        </div>
-        
-        <!-- Videos -->
-        <div class="col-md-3 mb-4">
-            <div class="stat-card">
-                <div class="stat-icon bg-primary">
-                    <i class="fas fa-video"></i>
-                </div>
-                <h3 class="stat-number">{{ stats.videos or 0 }}</h3>
-                <p class="stat-label">Videos</p>
-            </div>
-        </div>
-        
-        <!-- Documentos -->
-        <div class="col-md-3 mb-4">
-            <div class="stat-card">
-                <div class="stat-icon bg-warning">
-                    <i class="fas fa-file-pdf"></i>
-                </div>
-                <h3 class="stat-number">{{ stats.documentos or 0 }}</h3>
-                <p class="stat-label">Documentos</p>
-            </div>
-        </div>
-        
-        <!-- Obligatorios -->
-        <div class="col-md-3 mb-4">
-            <div class="stat-card">
-                <div class="stat-icon bg-danger">
-                    <i class="fas fa-exclamation-circle"></i>
-                </div>
-                <h3 class="stat-number">{{ stats.obligatorios or 0 }}</h3>
-                <p class="stat-label">Obligatorios</p>
+        <div class="col-12">
+            <div class="alert alert-success">
+                <h5 class="alert-heading">
+                    <i class="fas fa-user-shield me-2"></i>¡Bienvenido al módulo de SST!
+                </h5>
+                <p class="mb-0">
+                    Aquí encontrarás contenido importante sobre Seguridad y Salud en el Trabajo.
+                    Recuerda revisar el contenido marcado como obligatorio.
+                </p>
             </div>
         </div>
     </div>
     
-    <!-- Dos columnas -->
+    <!-- Acciones principales -->
     <div class="row">
-        <!-- Último Contenido -->
-        <div class="col-lg-8 mb-4">
-            <div class="sst-card">
-                <div class="sst-card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-history me-2"></i>Último Contenido Agregado
-                    </h5>
-                </div>
-                <div class="sst-card-body">
-                    {% if stats.ultimo_contenido %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Título</th>
-                                    <th>Tipo</th>
-                                    <th>Categoría</th>
-                                    <th>Fecha</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for contenido in stats.ultimo_contenido %}
-                                <tr>
-                                    <td>
-                                        <i class="fas fa-{{ 'video' if contenido.tipo == 'video' else 'file-pdf' }} me-2"></i>
-                                        <strong>{{ contenido.titulo[:50] }}{% if contenido.titulo|length > 50 %}...{% endif %}</strong>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-{{ 'primary' if contenido.tipo == 'video' else 'warning' }}">
-                                            {{ contenido.tipo|title }}
-                                        </span>
-                                    </td>
-                                    <td>{{ contenido.categoria or 'General' }}</td>
-                                    <td>{{ contenido.fecha.strftime('%d/%m/%Y') if contenido.fecha else 'Sin fecha' }}</td>
-                                    <td>
-                                        {% if contenido.tipo == 'video' %}
-                                        <a href="{{ url_for('sst_ver_video', id=contenido.id) }}" 
-                                           class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-play"></i>
-                                        </a>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-folder-open fs-1 text-muted mb-3"></i>
-                        <p class="text-muted">No hay contenido disponible</p>
-                    </div>
-                    {% endif %}
-                    
-                    <div class="text-center mt-3">
-                        <a href="{{ url_for('sst_contenido') }}" class="btn btn-sst">
-                            <i class="fas fa-folder-open me-2"></i>Ver Todo el Contenido
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
         <!-- Acciones Rápidas -->
-        <div class="col-lg-4 mb-4">
+        <div class="col-lg-6 mb-4">
             <div class="sst-card">
                 <div class="sst-card-header">
                     <h5 class="mb-0">
@@ -220,7 +124,7 @@
                 </div>
                 <div class="sst-card-body">
                     <div class="d-grid gap-3">
-                        {% if tiene_permiso('gestionar_contenido_sst') %}
+                        {% if current_user.rol == 'admin' %}
                         <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-sst">
                             <i class="fas fa-plus-circle me-2"></i>Agregar Contenido
                         </a>
@@ -240,16 +144,74 @@
                         </a>
                         {% endif %}
                     </div>
-                    
-                    <!-- Recordatorio -->
-                    <div class="alert alert-warning mt-4 mb-0">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recordatorios -->
+        <div class="col-lg-6 mb-4">
+            <div class="sst-card">
+                <div class="sst-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Recordatorios
+                    </h5>
+                </div>
+                <div class="sst-card-body">
+                    <div class="alert alert-warning mb-3">
                         <h6 class="alert-heading">
-                            <i class="fas fa-exclamation-triangle me-2"></i>Importante
+                            <i class="fas fa-hard-hat me-2"></i>Contenido Obligatorio
                         </h6>
                         <p class="mb-0 small">
                             Recuerda revisar el contenido marcado como <strong>obligatorio</strong>.
-                            Es esencial para tu seguridad.
+                            Es esencial para tu seguridad y la de tus compañeros.
                         </p>
+                    </div>
+                    
+                    <div class="alert alert-info mb-0">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-clock me-2"></i>Actualización Continua
+                        </h6>
+                        <p class="mb-0 small">
+                            El contenido SST se actualiza regularmente. Visita esta sección con frecuencia.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Información útil -->
+    <div class="row">
+        <div class="col-12">
+            <div class="sst-card">
+                <div class="sst-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-book me-2"></i>Categorías de Contenido SST
+                    </h5>
+                </div>
+                <div class="sst-card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="p-3 bg-light rounded text-center">
+                                <i class="fas fa-video fs-1 text-primary mb-2"></i>
+                                <h6>Videos</h6>
+                                <p class="small text-muted mb-0">Material audiovisual educativo</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="p-3 bg-light rounded text-center">
+                                <i class="fas fa-file-pdf fs-1 text-danger mb-2"></i>
+                                <h6>Documentos</h6>
+                                <p class="small text-muted mb-0">Manuales y guías en PDF</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="p-3 bg-light rounded text-center">
+                                <i class="fas fa-link fs-1 text-success mb-2"></i>
+                                <h6>Enlaces</h6>
+                                <p class="small text-muted mb-0">Recursos externos útiles</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
