@@ -1,63 +1,100 @@
 {% extends "base_soporte.html" %}
+
 {% block title %}Información General - M@STV{% endblock %}
+
+{% block extra_css %}
+<style>
+    .info-section {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+    
+    .info-section h4 {
+        color: #052398;
+        border-bottom: 3px solid #052398;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .info-subsection {
+        background: #f8f9fa;
+        border-left: 4px solid #052398;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+    }
+    
+    .info-subsection h5 {
+        color: #052398;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+    
+    .info-item {
+        padding: 8px 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .info-item strong {
+        color: #052398;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="card mb-4">
-                <div class="card-header" style="background: linear-gradient(135deg, #052398 0%, #7b87f5 100%); color: white;">
-                    <h3 class="mb-0"><i class="fas fa-info-circle me-2"></i>Información General - M@STV Producciones</h3>
+<div class="container-fluid mt-4">
+    <div class="card mb-4" style="border: none; border-radius: 12px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);">
+        <div class="card-header" style="background: linear-gradient(135deg, #052398 0%, #7b87f5 100%); color: white; border-radius: 12px 12px 0 0;">
+            <h3 class="mb-0">
+                <i class="fas fa-info-circle me-2"></i>Información General - M@STV Producciones
+            </h3>
+        </div>
+        <div class="card-body p-4">
+            <!-- Iterar sobre cada sección de información -->
+            {% for key, seccion in informacion.items() %}
+            <div class="info-section">
+                <h4>
+                    <i class="{{ seccion.icono }} me-2"></i>{{ seccion.titulo }}
+                </h4>
+                
+                {% for subseccion in seccion.contenido %}
+                <div class="info-subsection">
+                    <h5>{{ subseccion.subtitulo }}</h5>
+                    <div>
+                        {% for item in subseccion.contenido_items %}
+                        <div class="info-item">
+                            {{ item|replace('*', '<strong>')|replace('*', '</strong>')|safe }}
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
-                <div class="card-body p-4">
-                    <h4 class="mb-3"><i class="fas fa-building me-2 text-primary"></i>Acerca de M@STV</h4>
-                    <p>M@STV Producciones es una empresa dedicada a proporcionar servicios de televisión e internet de alta calidad a nuestros clientes.</p>
-                    
-                    <hr class="my-4">
-                    
-                    <h4 class="mb-3"><i class="fas fa-phone me-2 text-success"></i>Contacto</h4>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="p-3 bg-light rounded">
-                                <h6><i class="fas fa-headset me-2"></i>Soporte Técnico</h6>
-                                <p class="mb-0">Teléfono: <strong>(123) 456-7890</strong></p>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="p-3 bg-light rounded">
-                                <h6><i class="fas fa-envelope me-2"></i>Email</h6>
-                                <p class="mb-0"><strong>soporte@mastv.com</strong></p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <hr class="my-4">
-                    
-                    <h4 class="mb-3"><i class="fas fa-clock me-2 text-warning"></i>Horarios de Atención</h4>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><i class="fas fa-calendar-day me-2"></i><strong>Lunes a Viernes:</strong> 8:00 AM - 6:00 PM</li>
-                        <li class="mb-2"><i class="fas fa-calendar-week me-2"></i><strong>Sábados:</strong> 9:00 AM - 2:00 PM</li>
-                        <li class="mb-2"><i class="fas fa-calendar-times me-2"></i><strong>Domingos:</strong> Cerrado</li>
-                    </ul>
-                    
-                    <hr class="my-4">
-                    
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <a href="{{ url_for('soluciones_visuales') }}" class="btn btn-primary w-100">
-                                <i class="fas fa-images me-2"></i>Soluciones Visuales
-                            </a>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <a href="{{ url_for('atencion_telefonica') }}" class="btn btn-success w-100">
-                                <i class="fas fa-headset me-2"></i>Atención Telefónica
-                            </a>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <a href="{{ url_for('sst_dashboard') }}" class="btn btn-warning w-100">
-                                <i class="fas fa-hard-hat me-2"></i>SST
-                            </a>
-                        </div>
-                    </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            
+            <!-- Accesos rápidos -->
+            <div class="row mt-4">
+                <div class="col-md-4 mb-3">
+                    <a href="{{ url_for('soluciones_visuales') }}" class="btn btn-primary w-100">
+                        <i class="fas fa-images me-2"></i>Soluciones Visuales
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="{{ url_for('atencion_telefonica') }}" class="btn btn-success w-100">
+                        <i class="fas fa-headset me-2"></i>Atención Telefónica
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="{{ url_for('sst_dashboard') }}" class="btn btn-warning w-100">
+                        <i class="fas fa-hard-hat me-2"></i>SST
+                    </a>
                 </div>
             </div>
         </div>
