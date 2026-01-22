@@ -1,6 +1,133 @@
-{% extends obtener_template_base() %}
+{% extends "base_admin.html" %}
 
 {% block title %}Dashboard Administrativo - Sistema M@STV{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== ESTILOS DASHBOARD ADMIN ===== */
+    .text-gradient {
+        background: linear-gradient(135deg, #052398 0%, #7b87f5 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        margin-bottom: 15px;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 10px 0;
+        color: #1f2937;
+    }
+    
+    .stat-label {
+        color: #6b7280;
+        font-size: 14px;
+        margin: 0;
+        font-weight: 500;
+    }
+    
+    .admin-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+    
+    .admin-card-header {
+        background: linear-gradient(135deg, #052398 0%, #7b87f5 100%);
+        color: white;
+        padding: 15px 20px;
+        border: none;
+    }
+    
+    .admin-card-body {
+        padding: 20px;
+    }
+    
+    .btn-admin {
+        background: linear-gradient(135deg, #052398 0%, #7b87f5 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-admin:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(5, 35, 152, 0.3);
+        color: white;
+    }
+    
+    .btn-admin-outline {
+        border: 2px solid #052398;
+        color: #052398;
+        background: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-admin-outline:hover {
+        background: #052398;
+        color: white;
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        font-size: 13px;
+        color: #495057;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        font-size: 14px;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .badge {
+        padding: 5px 10px;
+        font-weight: 500;
+        font-size: 11px;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -93,11 +220,11 @@
                                         <strong>{{ usuario.usuario }}</strong>
                                     </td>
                                     <td>
-                                        <span class="badge bg-{{ usuario.rol|badge_color_rol }}">
+                                        <span class="badge bg-{{ 'danger' if usuario.rol == 'admin' else 'success' if usuario.rol == 'sst' else 'warning' }}">
                                             {{ usuario.rol|upper }}
                                         </span>
                                     </td>
-                                    <td>{{ usuario.fecha_creacion|format_date }}</td>
+                                    <td>{{ usuario.fecha_creacion.strftime('%d/%m/%Y') if usuario.fecha_creacion else 'Sin fecha' }}</td>
                                     <td>
                                         <a href="{{ url_for('editar_usuario', id=usuario.id) }}" 
                                            class="btn btn-sm btn-outline-primary">
@@ -154,7 +281,7 @@
                                     <td>
                                         <strong>{{ ficha.problema[:50] }}{% if ficha.problema|length > 50 %}...{% endif %}</strong>
                                     </td>
-                                    <td>{{ ficha.fecha_creacion|format_date }}</td>
+                                    <td>{{ ficha.fecha_creacion.strftime('%d/%m/%Y') if ficha.fecha_creacion else 'Sin fecha' }}</td>
                                     <td>
                                         <a href="{{ url_for('ver_ficha', id=ficha.id) }}" 
                                            class="btn btn-sm btn-outline-info">
