@@ -1,105 +1,237 @@
-{% extends obtener_template_base() %}
+{% extends "base.html" %}
 
-{% block title %}Gestión de Usuarios - Sistema M@STV{% endblock %}
+{% block title %}Gestión de Usuarios - Soporte Técnico{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gradient">
-            <i class="fas fa-users-cog me-2"></i>Gestión de Usuarios
-        </h1>
-        <a href="{{ url_for('agregar_usuario') }}" class="btn btn-admin">
-            <i class="fas fa-user-plus me-2"></i>Nuevo Usuario
-        </a>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="d-flex align-items-center gap-2 fs-4 fw-bold">
+        <i class="fas fa-users" style="color:#6f42c1; font-size: 1.3rem;"></i> Gestión de Usuarios
+    </h1>
+    <a href="{{ url_for('agregar_usuario') }}" class="btn btn-primary btn-sm d-flex align-items-center gap-2 shadow-sm">
+        <i class="fas fa-user-plus"></i> Agregar Usuario
+    </a>
+</div>
+
+<div class="card shadow-sm rounded-4 border-0">
+    <div class="card-header bg-light rounded-top-4">
+        <h5 class="mb-0 fw-bold text-secondary">Lista de Usuarios</h5>
     </div>
-    
-    <!-- Tabla de Usuarios -->
-    <div class="admin-card">
-        <div class="admin-card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-                <i class="fas fa-list me-2"></i>Lista de Usuarios
-            </h5>
-            <span class="badge bg-primary fs-6">
-                Total: {{ usuarios|length }}
-            </span>
-        </div>
-        
-        <div class="admin-card-body">
-            {% if usuarios %}
-            <div class="table-responsive">
-                <table class="table admin-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Usuario</th>
-                            <th>Rol</th>
-                            <th>Módulo Principal</th>
-                            <th>Fecha Registro</th>
-                            <th>Última Actualización</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for usuario in usuarios %}
-                        <tr>
-                            <td>#{{ usuario.id }}</td>
-                            <td>
-                                <i class="fas fa-user me-2"></i>
-                                <strong>{{ usuario.usuario }}</strong>
-                                {% if usuario.id == current_user.id %}
-                                <span class="badge bg-info ms-2">Tú</span>
+    <div class="card-body p-0">
+        {% if usuarios %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-primary text-primary">
+                    <tr>
+                        <th scope="col" class="text-center">ID</th>
+                        <th scope="col" class="fw-semibold">Usuario</th>
+                        <th scope="col" class="fw-semibold">Rol</th>
+                        <th scope="col" class="fw-semibold">Permisos</th>
+                        <th scope="col" class="fw-semibold">Fecha Creación</th>
+                        <th scope="col" class="fw-semibold">Última Actualización</th>
+                        <th scope="col" class="text-center fw-semibold">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                    <tr class="align-middle">
+                        <td class="text-center">{{ usuario.id }}</td>
+                        <td>
+                            {{ usuario.usuario }}
+                            {% if usuario.id == current_user.id %}
+                            <span class="badge bg-info text-white ms-2" style="font-weight: 600; font-size: 0.75rem; border-radius: 0.4rem;" title="Este es tu usuario">Tú</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge 
+                                {% if usuario.rol == 'admin' %}bg-danger
+                                {% elif usuario.rol == 'asesor' %}bg-secondary
+                                {% else %}bg-secondary
+                                {% endif %} text-uppercase px-3 py-1 fs-7 fw-semibold" 
+                                style="border-radius: 1rem;">
+                                {{ usuario.rol }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% if usuario.permisos_parsed.agregar_fichas %}
+                                <span class="badge bg-success fs-8" title="Puede agregar fichas">Fichas+</span>
                                 {% endif %}
-                            </td>
-                            <td>
-                                <span class="badge bg-{{ usuario.rol|badge_color_rol }}">
-                                    {{ usuario.rol|upper }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge bg-secondary">
-                                    {{ usuario.modulo_principal|upper }}
-                                </span>
-                            </td>
-                            <td>{{ usuario.fecha_creacion|format_date }}</td>
-                            <td>{{ usuario.fecha_actualizacion|format_date }}</td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <a href="{{ url_for('editar_usuario', id=usuario.id) }}" 
-                                       class="btn btn-sm btn-outline-primary" title="Editar">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    
-                                    {% if usuario.id != current_user.id %}
-                                    <a href="{{ url_for('eliminar_usuario', id=usuario.id) }}" 
-                                       class="btn btn-sm btn-outline-danger" 
-                                       onclick="return confirm('¿Está seguro de eliminar este usuario?')"
-                                       title="Eliminar">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                    {% else %}
-                                    <button class="btn btn-sm btn-outline-secondary" disabled title="No puedes eliminarte a ti mismo">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="text-center py-5">
-                <i class="fas fa-users fs-1 text-muted mb-3"></i>
-                <h5 class="text-muted">No hay usuarios registrados</h5>
-                <p class="text-muted">Comienza agregando un nuevo usuario</p>
-                <a href="{{ url_for('agregar_usuario') }}" class="btn btn-admin mt-3">
-                    <i class="fas fa-user-plus me-2"></i>Agregar Primer Usuario
-                </a>
-            </div>
-            {% endif %}
+                                {% if usuario.permisos_parsed.editar_fichas %}
+                                <span class="badge bg-warning text-dark fs-8" title="Puede editar fichas">Fichas✏️</span>
+                                {% endif %}
+                                {% if usuario.permisos_parsed.eliminar_fichas %}
+                                <span class="badge bg-danger fs-8" title="Puede eliminar fichas">Fichas🗑️</span>
+                                {% endif %}
+                                {% if usuario.permisos_parsed.gestion_soluciones_visuales %}
+                                <span class="badge bg-primary fs-8" title="Puede gestionar soluciones visuales">Soluciones📊</span>
+                                {% endif %}
+                                {% if not usuario.permisos_parsed.agregar_fichas and not usuario.permisos_parsed.editar_fichas and not usuario.permisos_parsed.eliminar_fichas and not usuario.permisos_parsed.gestion_soluciones_visuales %}
+                                <span class="badge bg-secondary fs-8" title="Solo permisos básicos">Básico</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="text-nowrap">{{ usuario.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td class="text-nowrap">{{ usuario.fecha_actualizacion.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td class="text-center">
+                            {% if usuario.id != current_user.id %}
+                            <div class="btn-group" role="group" aria-label="Acciones usuario {{ usuario.usuario }}">
+                                <a href="{{ url_for('editar_usuario', id=usuario.id) }}" 
+                                   class="btn btn-outline-warning btn-sm rounded-circle shadow-sm" 
+                                   data-bs-toggle="tooltip" data-bs-placement="top" title="Editar usuario">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                
+                                <!-- Botón que abre el modal -->
+                                <button type="button"
+                                        class="btn btn-outline-danger btn-sm rounded-circle shadow-sm"
+                                        data-bs-toggle="modal" data-bs-target="#confirmDeleteModal{{ usuario.id }}"
+                                        data-bs-placement="top" title="Eliminar usuario">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                            {% else %}
+                            <span class="text-muted fst-italic" title="No puedes editar ni eliminar tu propio usuario">No disponible</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+        {% else %}
+        <div class="text-center py-5">
+            <h4 class="mb-3 text-secondary">No hay usuarios registrados</h4>
+            <p class="text-muted fs-6">Comienza agregando el primer usuario</p>
+            <a href="{{ url_for('agregar_usuario') }}" class="btn btn-primary btn-lg d-inline-flex align-items-center gap-2 shadow-sm">
+                <i class="fas fa-user-plus"></i> Agregar Usuario
+            </a>
+        </div>
+        {% endif %}
     </div>
 </div>
+
+<!-- MOVER LOS MODALES FUERA DE LA TABLA - SOLUCIÓN DEL PROBLEMA -->
+{% for usuario in usuarios %}
+    {% if usuario.id != current_user.id %}
+    <!-- Modal de confirmación - FUERA de la tabla -->
+    <div class="modal fade" id="confirmDeleteModal{{ usuario.id }}" tabindex="-1" aria-labelledby="confirmDeleteLabel{{ usuario.id }}" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title" id="confirmDeleteLabel{{ usuario.id }}">
+              <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body text-center py-4">
+            <i class="fas fa-user-slash text-danger mb-3" style="font-size: 3rem;"></i>
+            <h6 class="fw-bold mb-3">¿Estás seguro que deseas eliminar al usuario?</h6>
+            <div class="alert alert-warning">
+              <strong>{{ usuario.usuario }}</strong> - {{ usuario.rol|upper }}
+            </div>
+            
+            <!-- Mostrar permisos del usuario en el modal -->
+            <div class="mb-3">
+                <small class="text-muted d-block mb-2">Permisos actuales:</small>
+                <div class="d-flex flex-wrap gap-1 justify-content-center">
+                    {% if usuario.permisos_parsed.agregar_fichas %}
+                    <span class="badge bg-success fs-8">Fichas+</span>
+                    {% endif %}
+                    {% if usuario.permisos_parsed.editar_fichas %}
+                    <span class="badge bg-warning text-dark fs-8">Fichas✏️</span>
+                    {% endif %}
+                    {% if usuario.permisos_parsed.eliminar_fichas %}
+                    <span class="badge bg-danger fs-8">Fichas🗑️</span>
+                    {% endif %}
+                    {% if usuario.permisos_parsed.gestion_soluciones_visuales %}
+                    <span class="badge bg-primary fs-8">Soluciones📊</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <p class="text-muted small">
+              <i class="fas fa-info-circle me-1"></i>
+              Esta acción no se puede deshacer
+            </p>
+          </div>
+          <div class="modal-footer justify-content-center">
+            <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
+              <i class="fas fa-times me-1"></i>Cancelar
+            </button>
+            <a href="{{ url_for('eliminar_usuario', id=usuario.id) }}" class="btn btn-danger px-4">
+              <i class="fas fa-trash-alt me-1"></i>Eliminar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+{% endfor %}
+
+<div class="mt-4">
+    <a href="{{ url_for('index') }}" class="btn btn-secondary d-inline-flex align-items-center gap-2 shadow-sm">
+        <i class="fas fa-arrow-left"></i> Volver al Inicio
+    </a>
+</div>
+
+<style>
+/* Asegurar que los modales tengan el z-index correcto */
+.modal {
+    z-index: 1060 !important;
+}
+
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+
+/* Mejorar la visibilidad del modal */
+.modal-content {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    border: none;
+    border-radius: 12px;
+}
+
+.modal-header {
+    border-radius: 12px 12px 0 0;
+}
+
+/* Estilos para los badges de permisos */
+.badge.fs-8 {
+    font-size: 0.7rem !important;
+    padding: 0.25em 0.5em;
+}
+
+/* Tooltip personalizado */
+.tooltip {
+    z-index: 1070;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Debug: Verificar que los modales se cargan
+    console.log('Modales cargados:', document.querySelectorAll('.modal').length);
+    
+    // Forzar el cierre de cualquier modal abierto previamente
+    var existingModals = document.querySelectorAll('.modal.show');
+    existingModals.forEach(function(modal) {
+        var bsModal = bootstrap.Modal.getInstance(modal);
+        if (bsModal) {
+            bsModal.hide();
+        }
+    });
+    
+    // Agregar tooltips a los badges de permisos
+    var permissionBadges = document.querySelectorAll('.badge[title]');
+    permissionBadges.forEach(function(badge) {
+        new bootstrap.Tooltip(badge);
+    });
+});
+</script>
 {% endblock %}
