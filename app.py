@@ -527,6 +527,8 @@ def dashboard_admin():
 
 # ===== RUTAS DE SOPORTE TÉCNICO =====
 @app.route('/')
+@app.route('/soporte')
+@app.route('/soporte/index')
 @login_required
 @requiere_permiso('acceder_soporte')
 def index():
@@ -558,7 +560,7 @@ def index():
     
     return render_template('soporte/index.html', fichas=fichas)
 
-@app.route('/agregar', methods=['GET', 'POST'])
+@app.route('/soporte/agregar', methods=['GET', 'POST'])
 @login_required
 @requiere_permiso('agregar_fichas')
 def agregar_ficha():
@@ -597,7 +599,7 @@ def agregar_ficha():
     
     return render_template('soporte/agregar_ficha.html')
 
-@app.route('/editar/<int:id>', methods=['GET', 'POST'])
+@app.route('/soporte/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
 @requiere_permiso('editar_fichas')
 def editar_ficha(id):
@@ -655,7 +657,7 @@ def editar_ficha(id):
     
     return render_template('soporte/editar_ficha.html', ficha=ficha)
 
-@app.route('/eliminar/<int:id>')
+@app.route('/soporte/eliminar/<int:id>')
 @login_required
 @requiere_permiso('eliminar_fichas')
 def eliminar_ficha(id):
@@ -668,7 +670,7 @@ def eliminar_ficha(id):
     
     return redirect(url_for('index'))
 
-@app.route('/buscar')
+@app.route('/soporte/buscar')
 @login_required
 @requiere_permiso('ver_fichas')
 def buscar():
@@ -720,7 +722,7 @@ def buscar():
     
     return render_template('soporte/buscar.html', fichas=fichas, query=query, categoria=categoria)
 
-@app.route('/ficha/<int:id>')
+@app.route('/soporte/ficha/<int:id>')
 @login_required
 @requiere_permiso('ver_fichas')
 def ver_ficha(id):
@@ -945,7 +947,7 @@ def soluciones_visuales():
             'imagenes': ['softv/softv1.png', 'softv/softv2.png', 'softv/softv3.png', 'softv/softv4.png'],
             'descripcion': 'Busqueda del cliente paso a paso'
         },
-        # ... (el resto de las soluciones, igual que antes)
+        # Agrega aquí el resto de soluciones visuales
     ]
     return render_template('informacion/soluciones_visuales.html', soluciones=soluciones)
 
@@ -961,17 +963,13 @@ def informacion_general():
         'planes': {
             'titulo': '📡 Planes de Servicio',
             'icono': 'fa-tv',
-            'contenido': [
-                # ... (igual que antes)
-            ]
+            'contenido': []
         },
-        # ... (el resto de la información, igual que antes)
     }
     
     return render_template('informacion/general.html', informacion=informacion)
 
 # ===== RUTAS SST MEJORADAS =====
-
 @app.route('/sst/dashboard')
 @login_required
 @requiere_permiso('acceder_sst')
