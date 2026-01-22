@@ -1,1 +1,124 @@
+{% extends "base_soporte.html" %}
 
+{% block title %}Soluciones Visuales - M@STV{% endblock %}
+
+{% block extra_css %}
+<style>
+    .solucion-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .solucion-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
+    }
+    
+    .solucion-header {
+        background: linear-gradient(135deg, #052398 0%, #7b87f5 100%);
+        color: white;
+        padding: 15px;
+    }
+    
+    .solucion-body {
+        padding: 20px;
+    }
+    
+    .imagen-container {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 15px;
+        text-align: center;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .imagen-container img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+    }
+    
+    .badge-categoria {
+        background: #052398;
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="card mb-4" style="border: none; border-radius: 12px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);">
+        <div class="card-header" style="background: linear-gradient(135deg, #052398 0%, #7b87f5 100%); color: white; border-radius: 12px 12px 0 0;">
+            <h3 class="mb-0">
+                <i class="fas fa-images me-2"></i>Soluciones Visuales
+            </h3>
+        </div>
+        <div class="card-body p-4">
+            <p class="lead mb-4">Guías visuales paso a paso para resolver problemas comunes.</p>
+            
+            <div class="row">
+                {% for solucion in soluciones %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="solucion-card h-100">
+                        <div class="solucion-header">
+                            <span class="badge-categoria">{{ solucion.categoria }}</span>
+                            <h5 class="mt-2 mb-0">{{ solucion.titulo }}</h5>
+                        </div>
+                        
+                        <div class="solucion-body">
+                            <p class="small text-muted mb-3">{{ solucion.descripcion }}</p>
+                            
+                            <!-- Mostrar imágenes -->
+                            <div class="accordion" id="accordion{{ solucion.id }}">
+                                {% for imagen in solucion.imagenes %}
+                                <div class="accordion-item mb-2">
+                                    <h2 class="accordion-header" id="heading{{ solucion.id }}_{{ loop.index }}">
+                                        <button class="accordion-button collapsed" type="button" 
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#collapse{{ solucion.id }}_{{ loop.index }}" 
+                                                aria-expanded="false">
+                                            Paso {{ loop.index }}
+                                        </button>
+                                    </h2>
+                                    <div id="collapse{{ solucion.id }}_{{ loop.index }}" 
+                                         class="accordion-collapse collapse" 
+                                         data-bs-parent="#accordion{{ solucion.id }}">
+                                        <div class="accordion-body">
+                                            <div class="imagen-container">
+                                                <img src="{{ url_for('static', filename='images/' + imagen) }}" 
+                                                     alt="{{ solucion.titulo }} - Paso {{ loop.index }}"
+                                                     loading="lazy"
+                                                     onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/placeholder.png') }}';">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Botón para volver -->
+            <div class="text-center mt-4">
+                <a href="{{ url_for('informacion_general') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver a Información General
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
