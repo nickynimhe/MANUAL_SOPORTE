@@ -1537,7 +1537,7 @@ if __name__ == '__main__':
         except:
             print("   - No se pudo contar usuarios")
     
-    print("\n🌐 Servidor iniciado en: http://localhost:5000")
+    print("\n🌐 Servidor iniciado en: postgresql://soporte_tecnico_bujd_user:4O43zJ3NiE5NrvdeMYD3hxsXgIOWVonw@dpg-d4g6i23e5dus739l1c80-a.oregon-postgres.render.com/soporte_tecnico_bujd")
     print("📁 Directorio de uploads: static/uploads/sst")
     print("🔐 Sistema de autenticación activado")
     print("🎭 Templates base por rol: Admin, SST, Soporte")
