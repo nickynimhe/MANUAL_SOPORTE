@@ -1,1 +1,129 @@
+{% extends obtener_template_base() %}
 
+{% block title %}Fichas Técnicas - Soporte M@STV{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gradient">
+            <i class="fas fa-headset me-2"></i>Fichas Técnicas de Soporte
+        </h1>
+        <div>
+            <a href="{{ url_for('agregar_ficha') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i>Nueva Ficha
+            </a>
+        </div>
+    </div>
+    
+    <!-- Barra de búsqueda -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form action="{{ url_for('buscar') }}" method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" 
+                           name="q" placeholder="Buscar por problema o palabras clave..."
+                           value="{{ request.args.get('q', '') }}">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" name="categoria">
+                        <option value="">Todas las categorías</option>
+                        <option value="TV" {% if request.args.get('categoria') == 'TV' %}selected{% endif %}>TV</option>
+                        <option value="Internet" {% if request.args.get('categoria') == 'Internet' %}selected{% endif %}>Internet</option>
+                        <option value="Equipo" {% if request.args.get('categoria') == 'Equipo' %}selected{% endif %}>Equipo</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>Buscar
+                    </button>
+                </div>
+                <div class="col-md-3 text-end">
+                    <span class="badge bg-primary fs-6">
+                        <i class="fas fa-file-alt me-2"></i>{{ fichas|length }} fichas
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Lista de fichas -->
+    {% if fichas %}
+    <div class="row">
+        {% for ficha in fichas %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-{{ obtener_color_por_rol() }} text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="fas fa-{{ 'tv' if ficha.categoria == 'TV' else 'wifi' if ficha.categoria == 'Internet' else 'desktop' }} me-2"></i>
+                            {{ ficha.categoria }}
+                        </h6>
+                        <span class="badge bg-light text-dark">
+                            #{{ ficha.id }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <h5 class="card-title">{{ ficha.problema }}</h5>
+                    
+                    {% if ficha.descripcion %}
+                    <p class="card-text text-muted">
+                        {{ ficha.descripcion[:100] }}{% if ficha.descripcion|length > 100 %}...{% endif %}
+                    </p>
+                    {% endif %}
+                    
+                    {% if ficha.palabras_clave %}
+                    <div class="mb-3">
+                        {% for tag in ficha.palabras_clave.split(',') %}
+                        <span class="badge bg-secondary me-1">{{ tag.strip() }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="small text-muted mb-3">
+                        <i class="fas fa-calendar me-1"></i>
+                        Actualizada: {{ ficha.fecha_actualizacion|format_date }}
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('ver_ficha', id=ficha.id) }}" 
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>Ver
+                        </a>
+                        
+                        {% if tiene_permiso('editar_fichas') %}
+                        <a href="{{ url_for('editar_ficha', id=ficha.id) }}" 
+                           class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-edit me-1"></i>Editar
+                        </a>
+                        {% endif %}
+                        
+                        {% if tiene_permiso('eliminar_fichas') %}
+                        <a href="{{ url_for('eliminar_ficha', id=ficha.id) }}" 
+                           class="btn btn-sm btn-outline-danger"
+                           onclick="return confirm('¿Está seguro de eliminar esta ficha?')">
+                            <i class="fas fa-trash me-1"></i>Eliminar
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-file-alt fs-1 text-muted mb-3"></i>
+        <h4 class="text-muted">No hay fichas técnicas</h4>
+        <p class="text-muted">Comienza agregando una nueva ficha técnica</p>
+        <a href="{{ url_for('agregar_ficha') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i>Agregar Primera Ficha
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
