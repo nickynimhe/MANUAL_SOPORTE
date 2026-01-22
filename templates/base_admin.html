@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Panel Administrativo - M@STV Producciones{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+    /* ===== VARIABLES CSS PARA ADMIN ===== */
+    :root {
+      --admin-primary: #052398;
+      --admin-secondary: #7b87f5;
+      --admin-accent: #ff6b6b;
+      --admin-bg: #f8f9fa;
+      --admin-card: #ffffff;
+      --admin-text: #1a1a1a;
+      --admin-muted: #6c757d;
+      --admin-success: #198754;
+      --admin-warning: #ffc107;
+      --admin-danger: #dc3545;
+      --admin-border: #dee2e6;
+      --admin-radius: 10px;
+      --admin-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    /* ===== ESTILOS BASE ===== */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--admin-bg);
+      color: var(--admin-text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ===== NAVBAR ADMINISTRATIVO ===== */
+    .admin-navbar {
+      background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+      padding: 0.75rem 0;
+      box-shadow: 0 2px 15px rgba(5, 35, 152, 0.2);
+      flex-shrink: 0;
+    }
+
+    .admin-navbar .navbar-brand {
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: white;
+      text-decoration: none;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .admin-navbar .navbar-brand i {
+      font-size: 1.4rem;
+    }
+
+    .admin-navbar .nav-link {
+      color: rgba(255, 255, 255, 0.9) !important;
+      font-weight: 500;
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .admin-navbar .nav-link:hover,
+    .admin-navbar .nav-link.active {
+      background-color: rgba(255, 255, 255, 0.15);
+      color: white !important;
+    }
+
+    .admin-navbar .nav-link i {
+      font-size: 1rem;
+    }
+
+    .admin-navbar .dropdown-toggle::after {
+      margin-left: 4px;
+    }
+
+    .admin-navbar .dropdown-menu {
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      margin-top: 8px;
+    }
+
+    .admin-navbar .dropdown-item {
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .admin-navbar .dropdown-item:hover {
+      background-color: #f8f9fa;
+    }
+
+    .admin-navbar .dropdown-divider {
+      margin: 0.5rem 0;
+    }
+
+    /* ===== CONTENIDO PRINCIPAL ===== */
+    main.admin-main {
+      flex: 1 0 auto;
+      padding: 2rem 0;
+      background-color: var(--admin-bg);
+    }
+
+    .admin-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ===== TARJETAS ADMIN ===== */
+    .admin-card {
+      background: var(--admin-card);
+      border-radius: var(--admin-radius);
+      border: 1px solid var(--admin-border);
+      box-shadow: var(--admin-shadow);
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .admin-card:hover {
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .admin-card-header {
+      background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-bottom: none;
+    }
+
+    .admin-card-header h5 {
+      margin: 0;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .admin-card-body {
+      padding: 1.5rem;
+    }
+
+    /* ===== ESTADÍSTICAS ===== */
+    .stat-card {
+      text-align: center;
+      padding: 1.5rem;
+      border-radius: var(--admin-radius);
+      background: white;
+      box-shadow: var(--admin-shadow);
+      transition: all 0.3s ease;
+      height: 100%;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      font-size: 1.5rem;
+      color: white;
+    }
+
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+      color: var(--admin-primary);
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: var(--admin-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    /* ===== TABLAS ADMIN ===== */
+    .admin-table {
+      background: white;
+      border-radius: var(--admin-radius);
+      overflow: hidden;
+      box-shadow: var(--admin-shadow);
+    }
+
+    .admin-table thead {
+      background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+      color: white;
+    }
+
+    .admin-table th {
+      border: none;
+      font-weight: 600;
+      padding: 1rem;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 0.5px;
+    }
+
+    .admin-table td {
+      padding: 1rem;
+      vertical-align: middle;
+      border-color: var(--admin-border);
+    }
+
+    .admin-table tbody tr:hover {
+      background-color: rgba(5, 35, 152, 0.03);
+    }
+
+    /* ===== BADGES ===== */
+    .badge-admin {
+      background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+      color: white;
+      font-weight: 600;
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+    }
+
+    .badge-role-admin {
+      background-color: var(--admin-danger);
+      color: white;
+    }
+
+    .badge-role-sst {
+      background-color: var(--admin-success);
+      color: white;
+    }
+
+    .badge-role-soporte {
+      background-color: var(--admin-warning);
+      color: #000;
+    }
+
+    /* ===== BOTONES ADMIN ===== */
+    .btn-admin {
+      background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+      color: white;
+      border: none;
+      padding: 0.5rem 1.5rem;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-admin:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(5, 35, 152, 0.3);
+      color: white;
+    }
+
+    .btn-admin-outline {
+      background: transparent;
+      color: var(--admin-primary);
+      border: 2px solid var(--admin-primary);
+    }
+
+    .btn-admin-outline:hover {
+      background: var(--admin-primary);
+      color: white;
+    }
+
+    /* ===== ALERTAS ===== */
+    .alert-admin {
+      border-radius: var(--admin-radius);
+      border: none;
+      padding: 1rem 1.5rem;
+      box-shadow: var(--admin-shadow);
+    }
+
+    /* ===== RESPONSIVIDAD ===== */
+    @media (max-width: 992px) {
+      .admin-navbar .nav-link span:not(.fa) {
+        display: none;
+      }
+      
+      .admin-navbar .nav-link {
+        padding: 0.5rem;
+        justify-content: center;
+      }
+      
+      .stat-number {
+        font-size: 2rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .admin-container {
+        padding: 0 1rem;
+      }
+      
+      .admin-card-body {
+        padding: 1rem;
+      }
+      
+      .stat-card {
+        padding: 1rem;
+      }
+    }
+
+    /* ===== PIE DE PÁGINA ===== */
+    .admin-footer {
+      background: var(--admin-primary);
+      color: white;
+      padding: 1rem 0;
+      margin-top: auto;
+      flex-shrink: 0;
+    }
+
+    .admin-footer p {
+      margin: 0;
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    /* ===== UTILIDADES ===== */
+    .text-gradient {
+      background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- ===== NAVBAR ADMINISTRATIVO ===== -->
+    <nav class="navbar navbar-expand-lg admin-navbar">
+        <div class="admin-container">
+            <!-- Logo y marca -->
+            <a class="navbar-brand" href="{{ url_for('dashboard_admin') }}">
+                <i class="fas fa-crown"></i>
+                <span>Panel Administrativo</span>
+            </a>
+            
+            <!-- Botón para móviles -->
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
+                <i class="fas fa-bars text-white"></i>
+            </button>
+            
+            <!-- Contenido del navbar -->
+            <div class="collapse navbar-collapse" id="adminNavbar">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <!-- Dashboard -->
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'dashboard_admin' %}active{% endif %}" 
+                           href="{{ url_for('dashboard_admin') }}">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Gestión de Usuarios -->
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint in ['gestion_usuarios', 'agregar_usuario', 'editar_usuario'] %}active{% endif %}" 
+                           href="{{ url_for('gestion_usuarios') }}">
+                            <i class="fas fa-users-cog"></i>
+                            <span>Usuarios</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Módulo SST -->
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'sst' in request.endpoint %}active{% endif %}" 
+                           href="{{ url_for('sst_contenido') }}">
+                            <i class="fas fa-hard-hat"></i>
+                            <span>SST</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Módulo Soporte -->
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint in ['index', 'buscar', 'ver_ficha', 'agregar_ficha', 'editar_ficha'] %}active{% endif %}" 
+                           href="{{ url_for('index') }}">
+                            <i class="fas fa-headset"></i>
+                            <span>Soporte</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Menú de usuario -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-shield"></i>
+                            <span>{{ current_user.usuario }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <span class="dropdown-item-text">
+                                    <small class="text-muted">Conectado como</small><br>
+                                    <strong>{{ current_user.usuario }}</strong>
+                                    <span class="badge badge-role-{{ current_user.rol }} ms-2">{{ current_user.rol|upper }}</span>
+                                </span>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('cambiar_password') }}">
+                                    <i class="fas fa-key me-2"></i>Cambiar Contraseña
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    <main class="admin-main">
+        <div class="admin-container">
+            <!-- Mensajes flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-admin alert-dismissible fade show" role="alert">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2 fs-5"></i>
+                                        <div>
+                                            <strong class="d-block">{{ 'Error' if category == 'error' else 'Éxito' }}</strong>
+                                            <span class="d-block">{{ message }}</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <!-- Contenido específico de cada página -->
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- ===== PIE DE PÁGINA ===== -->
+    <footer class="admin-footer">
+        <div class="admin-container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0">
+                        <i class="fas fa-copyright me-1"></i>
+                        {{ now.year }} M@STV Producciones - Sistema de Gestión
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">
+                        <i class="fas fa-user-shield me-1"></i>
+                        {{ current_user.usuario }} • {{ current_user.rol|upper }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ===== SCRIPTS ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-cierre de alertas después de 5 segundos
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+        
+        // Activar tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Activar popovers
+        var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+        var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+            return new bootstrap.Popover(popoverTriggerEl);
+        });
+    });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
