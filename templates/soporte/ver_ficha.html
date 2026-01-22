@@ -1,1 +1,152 @@
+{% extends obtener_template_base() %}
 
+{% block title %}{{ ficha.problema }} - Soporte M@STV{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('index') }}">
+                            <i class="fas fa-home"></i> Inicio
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ url_for('index') }}">Fichas Técnicas</a>
+                    </li>
+                    <li class="breadcrumb-item active">{{ ficha.problema[:30] }}...</li>
+                </ol>
+            </nav>
+        </div>
+        
+        <div class="btn-group">
+            {% if tiene_permiso('editar_fichas') %}
+            <a href="{{ url_for('editar_ficha', id=ficha.id) }}" 
+               class="btn btn-warning">
+                <i class="fas fa-edit me-2"></i>Editar
+            </a>
+            {% endif %}
+            
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Volver
+            </a>
+        </div>
+    </div>
+    
+    <!-- Información principal -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-{{ 'tv' if ficha.categoria == 'TV' else 'wifi' if ficha.categoria == 'Internet' else 'desktop' }} me-2"></i>
+                    {{ ficha.problema }}
+                </h4>
+                <span class="badge bg-light text-dark fs-6">
+                    #{{ ficha.id }}
+                </span>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <!-- Metadatos -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-tag me-3 text-primary"></i>
+                        <div>
+                            <small class="text-muted d-block">Categoría</small>
+                            <strong>{{ ficha.categoria }}</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-calendar me-3 text-primary"></i>
+                        <div>
+                            <small class="text-muted d-block">Última actualización</small>
+                            <strong>{{ ficha.fecha_actualizacion|format_date }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Palabras clave -->
+            {% if ficha.palabras_clave %}
+            <div class="mb-4">
+                <h6><i class="fas fa-tags me-2"></i>Palabras Clave</h6>
+                <div>
+                    {% for tag in ficha.palabras_clave.split(',') %}
+                    <span class="badge bg-secondary me-1 mb-1">{{ tag.strip() }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Descripción -->
+            {% if ficha.descripcion %}
+            <div class="mb-4">
+                <h6><i class="fas fa-info-circle me-2"></i>Descripción</h6>
+                <div class="card bg-light">
+                    <div class="card-body">
+                        {{ ficha.descripcion|replace('\n', '<br>')|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Causas -->
+            <div class="mb-4">
+                <h6 class="text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Causas Identificadas
+                </h6>
+                <div class="card border-danger">
+                    <div class="card-body">
+                        {% if ficha.causas %}
+                        <ul class="mb-0">
+                            {% for causa in ficha.causas.split('|') %}
+                            <li>{{ causa }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="text-muted mb-0">No se especificaron causas</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Solución -->
+            <div class="mb-4">
+                <h6 class="text-success">
+                    <i class="fas fa-check-circle me-2"></i>Solución
+                </h6>
+                <div class="card border-success">
+                    <div class="card-body">
+                        {{ ficha.solucion|replace('\n', '<br>')|safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-footer text-muted">
+            <div class="row">
+                <div class="col-md-6">
+                    <small>
+                        <i class="fas fa-calendar-plus me-2"></i>
+                        Creada: {{ ficha.fecha_creacion|format_date }}
+                    </small>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small>
+                        <i class="fas fa-user me-2"></i>
+                        ID: {{ ficha.id }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
