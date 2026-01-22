@@ -4,13 +4,6 @@
 
 {% block extra_css %}
 <style>
-    .text-gradient {
-        background: linear-gradient(135deg, #052398 0%, #7b87f5 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    
     .card {
         border: none;
         border-radius: 12px;
@@ -28,48 +21,28 @@
         border-radius: 12px 12px 0 0 !important;
         background: linear-gradient(135deg, #052398 0%, #7b87f5 100%);
     }
-    
-    .badge {
-        padding: 5px 10px;
-        font-weight: 500;
-        border-radius: 6px;
-    }
-    
-    .btn {
-        border-radius: 8px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }
-    
-    .btn:hover {
-        transform: translateY(-2px);
-    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gradient">
+        <h1 class="h3 mb-0">
             <i class="fas fa-headset me-2"></i>Fichas Técnicas de Soporte
         </h1>
         {% if tiene_permiso('agregar_fichas') %}
-        <div>
-            <a href="{{ url_for('agregar_ficha') }}" class="btn btn-primary">
-                <i class="fas fa-plus-circle me-2"></i>Nueva Ficha
-            </a>
-        </div>
+        <a href="{{ url_for('agregar_ficha') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i>Nueva Ficha
+        </a>
         {% endif %}
     </div>
     
-    <!-- Barra de búsqueda -->
     <div class="card mb-4">
         <div class="card-body">
             <form action="{{ url_for('buscar') }}" method="GET" class="row g-3">
                 <div class="col-md-4">
-                    <input type="text" class="form-control" 
-                           name="q" placeholder="Buscar por problema o palabras clave..."
+                    <input type="text" class="form-control" name="q" 
+                           placeholder="Buscar por problema o palabras clave..." 
                            value="{{ request.args.get('q', '') }}">
                 </div>
                 <div class="col-md-3">
@@ -94,7 +67,6 @@
         </div>
     </div>
     
-    <!-- Lista de fichas -->
     {% if fichas %}
     <div class="row">
         {% for ficha in fichas %}
@@ -106,9 +78,7 @@
                             <i class="fas fa-{{ 'tv' if ficha.categoria == 'TV' else 'wifi' if ficha.categoria == 'Internet' else 'desktop' }} me-2"></i>
                             {{ ficha.categoria }}
                         </h6>
-                        <span class="badge bg-light text-dark">
-                            #{{ ficha.id }}
-                        </span>
+                        <span class="badge bg-light text-dark">#{{ ficha.id }}</span>
                     </div>
                 </div>
                 
@@ -131,24 +101,20 @@
                     
                     <div class="small text-muted">
                         <i class="fas fa-calendar me-1"></i>
-                        Actualizada: {{ ficha.fecha_actualizacion.strftime('%d/%m/%Y') if ficha.fecha_actualizacion else 'Sin fecha' }}
+                        {{ ficha.fecha_actualizacion.strftime('%d/%m/%Y') if ficha.fecha_actualizacion else ficha.fecha_creacion.strftime('%d/%m/%Y') if ficha.fecha_creacion else 'Sin fecha' }}
                     </div>
                 </div>
                 
                 <div class="card-footer bg-transparent border-top-0">
-                    <div class="d-flex gap-2 justify-content-between">
-                        <a href="{{ url_for('ver_ficha', id=ficha.id) }}" 
-                           class="btn btn-sm btn-outline-primary flex-fill">
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('ver_ficha', id=ficha.id) }}" class="btn btn-sm btn-outline-primary flex-fill">
                             <i class="fas fa-eye me-1"></i>Ver
                         </a>
-                        
                         {% if tiene_permiso('editar_fichas') %}
-                        <a href="{{ url_for('editar_ficha', id=ficha.id) }}" 
-                           class="btn btn-sm btn-outline-warning flex-fill">
+                        <a href="{{ url_for('editar_ficha', id=ficha.id) }}" class="btn btn-sm btn-outline-warning flex-fill">
                             <i class="fas fa-edit me-1"></i>Editar
                         </a>
                         {% endif %}
-                        
                         {% if tiene_permiso('eliminar_fichas') %}
                         <a href="{{ url_for('eliminar_ficha', id=ficha.id) }}" 
                            class="btn btn-sm btn-outline-danger"
