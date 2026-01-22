@@ -1,1 +1,129 @@
+{% extends obtener_template_base() %}
 
+{% block title %}Agregar Ficha - Soporte M@STV{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus-circle me-2"></i>Agregar Nueva Ficha Técnica
+                    </h4>
+                </div>
+                
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('agregar_ficha') }}">
+                        <div class="row">
+                            <!-- Categoría -->
+                            <div class="col-md-6 mb-3">
+                                <label for="categoria" class="form-label">Categoría *</label>
+                                <select class="form-select" id="categoria" name="categoria" required>
+                                    <option value="">Seleccionar categoría...</option>
+                                    <option value="TV">TV</option>
+                                    <option value="Internet">Internet</option>
+                                    <option value="Equipo">Equipo</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Problema -->
+                            <div class="col-md-6 mb-3">
+                                <label for="problema" class="form-label">Problema *</label>
+                                <input type="text" class="form-control" 
+                                       id="problema" name="problema" 
+                                       placeholder="Ej: Internet lento, TV sin señal..."
+                                       required>
+                            </div>
+                        </div>
+                        
+                        <!-- Descripción -->
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" 
+                                      name="descripcion" rows="3"
+                                      placeholder="Descripción detallada del problema..."></textarea>
+                        </div>
+                        
+                        <!-- Causas -->
+                        <div class="mb-3">
+                            <label for="causas" class="form-label">Causas *</label>
+                            <textarea class="form-control" id="causas" 
+                                      name="causas" rows="4"
+                                      placeholder="Una causa por línea&#10;Ejemplo:&#10;Router sobrecalentado&#10;Cable de red dañado"
+                                      required></textarea>
+                            <div class="form-text">Ingrese una causa por línea</div>
+                        </div>
+                        
+                        <!-- Solución -->
+                        <div class="mb-3">
+                            <label for="solucion" class="form-label">Solución *</label>
+                            <textarea class="form-control" id="solucion" 
+                                      name="solucion" rows="4"
+                                      placeholder="Pasos detallados para solucionar el problema..."
+                                      required></textarea>
+                        </div>
+                        
+                        <!-- Palabras clave -->
+                        <div class="mb-4">
+                            <label for="palabras_clave" class="form-label">Palabras Clave</label>
+                            <input type="text" class="form-control" 
+                                   id="palabras_clave" name="palabras_clave"
+                                   placeholder="lento, señal, router, wifi (separadas por coma)">
+                            <div class="form-text">Términos relacionados para facilitar la búsqueda</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Guardar Ficha
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Cargar problemas según categoría
+    const categoriaSelect = document.getElementById('categoria');
+    const problemaInput = document.getElementById('problema');
+    
+    categoriaSelect.addEventListener('change', function() {
+        const categoria = this.value;
+        if (categoria) {
+            fetch(`/api/problemas/${categoria}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        // Crear datalist
+                        let datalist = document.getElementById('problemas-list');
+                        if (!datalist) {
+                            datalist = document.createElement('datalist');
+                            datalist.id = 'problemas-list';
+                            document.body.appendChild(datalist);
+                            problemaInput.setAttribute('list', 'problemas-list');
+                        }
+                        
+                        // Limpiar opciones anteriores
+                        datalist.innerHTML = '';
+                        
+                        // Agregar nuevas opciones
+                        data.forEach(problema => {
+                            const option = document.createElement('option');
+                            option.value = problema;
+                            datalist.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    });
+});
+</script>
+{% endblock %}
