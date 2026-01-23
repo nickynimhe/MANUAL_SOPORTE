@@ -213,6 +213,8 @@ class User(UserMixin):
                 'cambiar_password': True,
                 'gestion_usuarios': True,
                 'acceder_sst': True,
+                'gestionar_plan_anual': True,
+                'agregar_evidencias': True,
                 'acceder_soporte': True,
                 'acceder_dashboard': True
             }
@@ -225,8 +227,8 @@ class User(UserMixin):
                 'cambiar_password': True,
                 'gestion_usuarios': False,
                 'acceder_sst': True,
-                'gestionar_plan_anual': True,  # ← NUEVO
-                'agregar_evidencias': True,    # ← NUEVO
+                'gestionar_plan_anual': True,
+                'agregar_evidencias': True,
                 'acceder_soporte': False,
                 'acceder_dashboard': False
             }
@@ -239,6 +241,8 @@ class User(UserMixin):
                 'cambiar_password': True,
                 'gestion_usuarios': False,
                 'acceder_sst': False,
+                'gestionar_plan_anual': False,
+                'agregar_evidencias': False,
                 'acceder_soporte': True,
                 'acceder_dashboard': False
             }
@@ -299,14 +303,36 @@ def load_user(user_id):
     
     return None
 
+# ===== FUNCIÓN DE REDIRECCIÓN MEJORADA =====
+def redirect_a_modulo_principal():
+    """Redirige al usuario a su módulo principal - VERSIÓN SEGURA"""
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+    
+    # Verificar si hay que redirigir a SST automáticamente
+    if hasattr(current_user, 'redireccionar_sst') and current_user.redireccionar_sst:
+        logger.info(f"Redirigiendo usuario {current_user.usuario} a SST por configuración automática")
+        return redirect(url_for('sst_dashboard'))
+    
+    # Redirección normal según rol y módulo principal
+    if current_user.rol == 'admin':
+        return redirect(url_for('index'))
+    elif current_user.rol == 'sst':
+        return redirect(url_for('sst_dashboard'))
+    elif current_user.rol == 'soporte':
+        return redirect(url_for('index'))
+    
+    # Por defecto, al dashboard principal
+    logger.warning(f"Usuario {current_user.usuario} con rol desconocido, redirigiendo a index")
+    return redirect(url_for('index'))
+
 # ===== RUTAS DE AUTENTICACIÓN =====
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """Login de usuarios con redirección automática según rol"""
+    # Si ya está autenticado, redirigir según su perfil
     if current_user.is_authenticated:
-        # Si ya está autenticado, redirigir según su perfil
-        if hasattr(current_user, 'redireccionar_sst') and current_user.redireccionar_sst:
-            return redirect(url_for('sst_dashboard'))
+        logger.info(f"Usuario {current_user.usuario} ya autenticado, redirigiendo a módulo principal")
         return redirect_a_modulo_principal()
     
     if request.method == 'POST':
@@ -359,12 +385,16 @@ def login():
                     login_user(user)
                     flash(f'¡Bienvenido {user.usuario}!', 'success')
                     
-                    # REDIRECCIÓN AUTOMÁTICA SEGÚN PERFIL
+                    # REDIRECCIÓN SEGURA - Evitar bucles
+                    logger.info(f"Usuario {user.usuario} autenticado exitosamente, rol: {user.rol}")
+                    
                     if user.redireccionar_sst:
-                        logger.info(f"Usuario {user.usuario} redirigido automáticamente a SST")
-                        return redirect(url_for('sst_dashboard'))
-                    else:
-                        return redirect_a_modulo_principal()
+                        logger.info(f"Redirección automática a SST activada para {user.usuario}")
+                        # Verificación adicional para evitar bucles
+                        if user.puede('acceder_sst'):
+                            return redirect(url_for('sst_dashboard'))
+                    
+                    return redirect_a_modulo_principal()
                 else:
                     flash('Usuario o contraseña incorrectos', 'error')
             else:
@@ -375,17 +405,6 @@ def login():
             logger.error(f"Error en login: {e}")
     
     return render_template('login.html')
-
-def redirect_a_modulo_principal():
-    """Redirige al usuario a su módulo principal"""
-    if current_user.is_authenticated:
-        if current_user.rol == 'admin':
-            return redirect(url_for('index'))
-        elif current_user.rol == 'sst':
-            return redirect(url_for('sst_dashboard'))
-        elif current_user.rol == 'soporte':
-            return redirect(url_for('index'))
-    return redirect(url_for('login'))
 
 @app.route('/logout')
 @login_required
@@ -445,7 +464,9 @@ def cambiar_password():
 def index():
     if not current_user.puede('acceder_soporte'):
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
-        return redirect_a_modulo_principal()
+        if current_user.rol == 'sst':
+            return redirect(url_for('sst_dashboard'))
+        return redirect(url_for('login'))
     
     if not current_user.puede('ver_fichas'):
         flash('No tienes permisos para ver las fichas', 'error')
@@ -1307,14 +1328,17 @@ def informacion_general():
     return render_template('informacion_general.html', informacion=informacion)
 
 # ===== RUTAS SST MEJORADAS =====
-
 @app.route('/sst')
 @login_required
 def sst_dashboard():
     """Dashboard principal de SST"""
+    # Verificación adicional para evitar bucles
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+    
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+        return redirect(url_for('index'))
     
     return render_template('sst/dashboard.html')
 
@@ -1324,7 +1348,7 @@ def sst_contenido():
     """Lista de todo el contenido SST"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+        return redirect(url_for('index'))
     
     contenido = []
     categorias = []
@@ -1394,7 +1418,7 @@ def sst_agregar_contenido():
     """Agregar nuevo contenido SST - VERSIÓN MEJORADA CON BD"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+        return redirect(url_for('index'))
     
     if current_user.rol != 'admin':
         flash('No tienes permisos para agregar contenido SST', 'error')
@@ -1552,7 +1576,7 @@ def sst_descargar_archivo(id):
     """Descargar archivo desde la base de datos"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+        return redirect(url_for('index'))
     
     try:
         archivo = obtener_archivo_desde_bd(id)
@@ -1589,7 +1613,7 @@ def sst_descargar_archivo_forzado(id):
     """Descargar archivo forzadamente - SOLO SI QUIERES DESCARGAR"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+        return redirect(url_for('index'))
     
     try:
         archivo = obtener_archivo_desde_bd(id)
@@ -1620,7 +1644,7 @@ def sst_editar_contenido(id):
     """Editar contenido SST existente"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+        return redirect(url_for('index'))
     
     if current_user.rol != 'admin':
         flash('No tienes permisos para editar contenido SST', 'error')
@@ -1753,7 +1777,7 @@ def sst_eliminar_contenido(id):
     """Eliminar contenido SST"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+        return redirect(url_for('index'))
     
     if current_user.rol != 'admin':
         flash('No tienes permisos para eliminar contenido SST', 'error')
@@ -1778,7 +1802,7 @@ def sst_ver_video(id):
     """Ver detalles de un video - VERSIÓN CORREGIDA"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+        return redirect(url_for('index'))
     
     video = None
     
@@ -1897,7 +1921,6 @@ def obtener_problemas(categoria):
     return jsonify(problemas)
 
 # ===== RUTAS PARA GESTIÓN DEL PLAN ANUAL DE TRABAJO PESV =====
-
 @app.route('/sst/plan-anual')
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
@@ -1905,7 +1928,7 @@ def sst_plan_anual():
     """Dashboard principal del Plan Anual de Trabajo"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+        return redirect(url_for('index'))
     
     try:
         conn = crear_conexion()
@@ -1968,7 +1991,6 @@ def sst_plan_anual():
         logger.error(f"Error en sst_plan_anual: {e}")
         return redirect(url_for('sst_dashboard'))
 
-
 @app.route('/sst/plan-anual/actividades')
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
@@ -1976,7 +1998,7 @@ def sst_plan_anual_actividades():
     """Listar todas las actividades del plan anual"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+        return redirect(url_for('index'))
     
     # Filtros
     ciclo = request.args.get('ciclo', '')
@@ -2057,7 +2079,6 @@ def sst_plan_anual_actividades():
         logger.error(f"Error en sst_plan_anual_actividades: {e}")
         return redirect(url_for('sst_plan_anual'))
 
-
 @app.route('/sst/plan-anual/actividad/<int:id>')
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
@@ -2065,7 +2086,7 @@ def sst_plan_anual_actividad_detalle(id):
     """Ver detalle de una actividad específica"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+        return redirect(url_for('index'))
     
     try:
         conn = crear_conexion()
@@ -2131,7 +2152,6 @@ def sst_plan_anual_actividad_detalle(id):
         flash(f'Error al cargar el detalle: {str(e)}', 'error')
         logger.error(f"Error en sst_plan_anual_actividad_detalle: {e}")
         return redirect(url_for('sst_plan_anual_actividades'))
-
 
 @app.route('/sst/plan-anual/actividad/<int:id>/actualizar', methods=['POST'])
 @login_required
@@ -2234,7 +2254,6 @@ def sst_plan_anual_actualizar_actividad(id):
     
     return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
 
-
 @app.route('/sst/plan-anual/actividad/<int:id>/evidencia', methods=['POST'])
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
@@ -2294,7 +2313,6 @@ def sst_plan_anual_agregar_evidencia(id):
     
     return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
 
-
 @app.route('/sst/plan-anual/cronograma')
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
@@ -2302,7 +2320,7 @@ def sst_plan_anual_cronograma():
     """Vista de cronograma completo tipo Gantt"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+        return redirect(url_for('index'))
     
     try:
         conn = crear_conexion()
@@ -2357,5 +2375,17 @@ def sst_plan_anual_cronograma():
 if __name__ == '__main__':
     with app.app_context():
         print("🚀 Iniciando la aplicación Flask...")
+        print("📊 Creando tablas en la base de datos...")
         crear_tablas()
+        print("✅ Tablas creadas/verificadas correctamente")
+        
+        # Verificar y crear categorías SST
+        print("📋 Verificando categorías SST...")
+        try:
+            verificar_y_crear_categorias_sst()
+            print("✅ Categorías SST verificadas correctamente")
+        except Exception as e:
+            print(f"⚠️  Advertencia al crear categorías SST: {e}")
+    
+    print("🌐 Aplicación lista en http://0.0.0.0:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)
