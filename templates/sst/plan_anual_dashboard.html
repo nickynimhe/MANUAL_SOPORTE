@@ -128,7 +128,7 @@
     </div>
 
     <!-- Actividades Recientes -->
-    <div class="row">
+   <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header bg-dark text-white">
@@ -199,6 +199,54 @@
         </div>
     </div>
 </div>
+
+<!-- Agregar estas secciones después de "Actividades Recientes" -->
+
+<!-- Sección para agregar nueva actividad (solo mostrar si no hay datos) -->
+<div class="row mt-4" id="seccion-agregar-actividad">
+    <div class="col-12">
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-plus-circle"></i> Agregar Nueva Actividad</h5>
+            </div>
+            <div class="card-body">
+                <p>¿Quieres comenzar a gestionar tus actividades del PESV? Agrega tu primera actividad:</p>
+                <a href="{{ url_for('sst_plan_anual_nueva') }}" class="btn btn-success btn-lg">
+                    <i class="fas fa-plus"></i> Nueva Actividad
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/pesv_data.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar datos de ejemplo si es primera vez
+    if (typeof inicializarDatosEjemplo === 'function') {
+        inicializarDatosEjemplo();
+    }
+    
+    // Ocultar sección de agregar si ya hay actividades
+    const stats = {{ stats|tojson|safe if stats else 'null' }};
+    if (stats && stats[0] > 0) {
+        document.getElementById('seccion-agregar-actividad').style.display = 'none';
+    }
+    
+    // Cargar estadísticas desde localStorage si no hay datos del servidor
+    if (!stats || stats[0] === 0) {
+        if (typeof obtenerEstadisticas === 'function') {
+            const statsLocal = obtenerEstadisticas();
+            
+            // Actualizar los números en el dashboard
+            document.querySelectorAll('.card-body h3')[0].textContent = statsLocal.total;
+            document.querySelectorAll('.card-body h3')[1].textContent = statsLocal.completadas;
+            document.querySelectorAll('.card-body h3')[2].textContent = statsLocal.enProceso;
+            document.querySelectorAll('.card-body h3')[3].textContent = statsLocal.avancePromedio + '%';
+        }
+    }
+});
+</script>
 
 <style>
 .border-left-primary {
