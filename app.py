@@ -125,6 +125,19 @@ def format_date_filter(date_value, format='%d/%m/%Y'):
     if date_value is None:
         return 'Sin fecha'
     try:
+        # Si es string, convertirlo a datetime primero
+        if isinstance(date_value, str):
+            try:
+                # Intentar diferentes formatos
+                for fmt in ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d']:
+                    try:
+                        date_value = datetime.strptime(date_value, fmt)
+                        break
+                    except:
+                        continue
+            except:
+                return date_value[:16]  # Si no se puede parsear, devolver los primeros caracteres
+        
         return date_value.strftime(format)
     except:
         return 'Fecha inválida'
