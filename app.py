@@ -3359,6 +3359,202 @@ def actualizar_porcentaje_avance(id):
         print(f"Error al actualizar porcentaje: {e}")
         return 0, 'pendiente'
 
+# ===== RUTAS NUEVAS PARA INICIALIZAR EL PLAN ANUAL =====
+
+@app.route('/sst/plan-anual/inicializar-datos-simple')
+@login_required
+def sst_inicializar_datos_simple():
+    """Inicializar datos básicos del plan anual - VERSIÓN SIMPLE"""
+    if current_user.rol != 'admin':
+        flash('No tienes permisos', 'error')
+        return redirect(url_for('sst_dashboard'))
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Verificar si ya hay datos
+        cursor.execute("SELECT COUNT(*) FROM plan_anual_trabajo")
+        count = cursor.fetchone()[0]
+        
+        if count > 0:
+            flash(f'⚠️ Ya existen {count} actividades. No se insertarán duplicados.', 'warning')
+            cursor.close()
+            conn.close()
+            return redirect(url_for('sst_plan_anual'))
+        
+        # Datos de ejemplo simplificados
+        actividades = [
+            {
+                'actividad': 'Responsable del Sistema de Gestión de Seguridad y Salud en el Trabajo SG-SST',
+                'evidencia': 'Documento en el que consta la asignación',
+                'ciclo_phva': 'Planear',
+                'articulos': '2.2.4.6.8',
+                'nivel_pesv': 'N/A',
+                'responsables': 'SST - COPASST - GERENCIA',
+                'recursos': 'Tecnologicos, Infraestructura, Humanos',
+                'estado': 'completado',
+                'enero_s1_p': True, 'enero_s1_e': True
+            },
+            {
+                'actividad': 'Lider del diseño e implementacion del PESV',
+                'evidencia': 'Documento de asignación del líder',
+                'ciclo_phva': 'Planear',
+                'articulos': 'N/A',
+                'nivel_pesv': 'Paso 1',
+                'responsables': 'SST - GERENCIA',
+                'recursos': 'Humanos, Financieros',
+                'estado': 'en_proceso',
+                'enero_s1_p': True, 'enero_s1_e': True,
+                'enero_s2_p': True, 'enero_s2_e': False
+            },
+            {
+                'actividad': 'Politica de SST y PESV',
+                'evidencia': 'Política firmada y comunicada',
+                'ciclo_phva': 'Planear',
+                'articulos': '2.2.4.6.5, 2.2.4.6.6',
+                'nivel_pesv': 'Paso 3',
+                'responsables': 'SST - COPASST',
+                'recursos': 'Humanos',
+                'estado': 'pendiente',
+                'enero_s1_p': True, 'enero_s2_p': True, 'enero_s3_p': True
+            },
+            {
+                'actividad': 'Reuniones mensuales COPASST',
+                'evidencia': 'Actas de reunión',
+                'ciclo_phva': 'Hacer',
+                'articulos': '2.2.4.6.12',
+                'nivel_pesv': 'N/A',
+                'responsables': 'SST - COPASST',
+                'recursos': 'Humanos',
+                'estado': 'en_proceso',
+                'enero_s1_p': True, 'febrero_s1_p': True, 'marzo_s1_p': True,
+                'abril_s1_p': True, 'mayo_s1_p': True, 'junio_s1_p': True
+            },
+            {
+                'actividad': 'Revisión trimestral del PESV',
+                'evidencia': 'Actas de revisión',
+                'ciclo_phva': 'Verificar',
+                'articulos': 'N/A',
+                'nivel_pesv': 'Paso 2',
+                'responsables': 'Comité de seguridad vial',
+                'recursos': 'Humanos',
+                'estado': 'pendiente',
+                'marzo_s4_p': True, 'junio_s4_p': True,
+                'septiembre_s4_p': True, 'diciembre_s4_p': True
+            },
+            {
+                'actividad': 'Auditoria interna al PESV',
+                'evidencia': 'Informe de auditoría',
+                'ciclo_phva': 'Verificar',
+                'articulos': 'N/A',
+                'nivel_pesv': 'Paso 22',
+                'responsables': 'Líder PESV',
+                'recursos': 'Humanos, Financieros',
+                'estado': 'pendiente',
+                'noviembre_s1_p': True, 'noviembre_s2_p': True,
+                'noviembre_s3_p': True, 'noviembre_s4_p': True
+            },
+            {
+                'actividad': 'Acciones preventivas y correctivas',
+                'evidencia': 'Plan de acción de mejora',
+                'ciclo_phva': 'Actuar',
+                'articulos': 'N/A',
+                'nivel_pesv': 'Paso 23',
+                'responsables': 'Líder PESV',
+                'recursos': 'Todos',
+                'estado': 'pendiente',
+                'febrero_s1_p': True, 'abril_s1_p': True,
+                'julio_s1_p': True, 'octubre_s1_p': True
+            }
+        ]
+        
+        # Insertar cada actividad
+        meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+        
+        for act in actividades:
+            # Construir columnas y valores dinámicamente
+            columnas = ['actividad', 'evidencia', 'ciclo_phva', 'articulos_decreto',
+                       'nivel_pesv', 'responsables', 'recursos', 'estado']
+            valores = [
+                act['actividad'], act['evidencia'], act['ciclo_phva'],
+                act['articulos'], act['nivel_pesv'], act['responsables'],
+                act['recursos'], act['estado']
+            ]
+            
+            # Agregar programación mensual
+            for mes in meses:
+                for semana in [1, 2, 3, 4]:
+                    key_p = f'{mes}_s{semana}_p'
+                    key_e = f'{mes}_s{semana}_e'
+                    
+                    columnas.append(f'{mes}_semana{semana}_p')
+                    valores.append(act.get(key_p, False))
+                    
+                    columnas.append(f'{mes}_semana{semana}_e')
+                    valores.append(act.get(key_e, False))
+            
+            # Crear query
+            query = f"""
+                INSERT INTO plan_anual_trabajo ({', '.join(columnas)})
+                VALUES ({', '.join(['%s'] * len(valores))})
+            """
+            
+            cursor.execute(query, valores)
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        flash(f'✅ {len(actividades)} actividades del plan anual insertadas correctamente', 'success')
+        logger.info(f"✅ Plan anual inicializado con {len(actividades)} actividades")
+        
+    except Exception as e:
+        flash(f'❌ Error al inicializar: {str(e)}', 'error')
+        logger.error(f"❌ Error en sst_inicializar_datos_simple: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    return redirect(url_for('sst_plan_anual'))
+
+
+@app.route('/sst/plan-anual/verificar-tablas')
+@login_required
+def sst_verificar_tablas():
+    """Verificar que las tablas del plan anual existan - DEBUG"""
+    if current_user.rol != 'admin':
+        flash('No tienes permisos', 'error')
+        return redirect(url_for('sst_dashboard'))
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Verificar tabla principal
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'plan_anual_trabajo'
+            )
+        """)
+        tabla_existe = cursor.fetchone()[0]
+        
+        if tabla_existe:
+            cursor.execute("SELECT COUNT(*) FROM plan_anual_trabajo")
+            count = cursor.fetchone()[0]
+            flash(f'✅ Tabla plan_anual_trabajo existe con {count} registros', 'success')
+        else:
+            flash('❌ Tabla plan_anual_trabajo NO existe. Crear tablas primero.', 'error')
+        
+        cursor.close()
+        conn.close()
+        
+    except Exception as e:
+        flash(f'❌ Error: {str(e)}', 'error')
+        logger.error(f"Error en verificar_tablas: {e}")
+    
+
 # EN LA SECCIÓN DE INICIALIZACIÓN DEL APP
 if __name__ == '__main__':
     with app.app_context():
