@@ -20,6 +20,18 @@
             </div>
         </div>
     </div>
+    <!-- Botón para nueva actividad -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div></div>
+    <div>
+        <a href="{{ url_for('sst_plan_anual_nueva') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Nueva Actividad
+        </a>
+        <button onclick="cargarDesdeLocalStorage()" class="btn btn-outline-info">
+            <i class="fas fa-sync"></i> Recargar
+        </button>
+    </div>
+</div>
 
     <!-- Filtros -->
     <div class="card mb-4">
