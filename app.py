@@ -3553,6 +3553,174 @@ def sst_verificar_tablas():
     except Exception as e:
         flash(f'❌ Error: {str(e)}', 'error')
         logger.error(f"Error en verificar_tablas: {e}")
+
+# ===== AGREGAR ESTA RUTA A TU app.py =====
+# Pégala junto con las otras 2 rutas que ya agregaste
+
+@app.route('/sst/plan-anual/importar-desde-excel')
+@login_required
+def sst_importar_desde_excel():
+    """Importar TODAS las actividades del Excel completo"""
+    if current_user.rol != 'admin':
+        flash('No tienes permisos', 'error')
+        return redirect(url_for('sst_dashboard'))
+    
+    try:
+        import openpyxl
+        
+        # Ruta del Excel
+        excel_path = '/mnt/user-data/uploads/Plan_Anual_de_Trabajo_2026.xlsx'
+        
+        # Verificar que existe
+        if not os.path.exists(excel_path):
+            flash('❌ Archivo Excel no encontrado. Súbelo primero.', 'error')
+            return redirect(url_for('sst_plan_anual'))
+        
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Verificar si ya hay datos
+        cursor.execute("SELECT COUNT(*) FROM plan_anual_trabajo")
+        count = cursor.fetchone()[0]
+        
+        if count > 10:  # Si hay más de 10 actividades
+            flash(f'⚠️ Ya existen {count} actividades. Primero elimínalas desde la base de datos.', 'warning')
+            cursor.close()
+            conn.close()
+            return redirect(url_for('sst_plan_anual'))
+        
+        # Cargar Excel
+        wb = openpyxl.load_workbook(excel_path)
+        ws = wb.active
+        
+        # Extraer actividades
+        actividades = []
+        fila_actual = 13  # Los datos empiezan en fila 13
+        
+        logger.info("📥 Extrayendo actividades del Excel...")
+        
+        while fila_actual <= ws.max_row:
+            # Leer columnas básicas
+            actividad = ws.cell(fila_actual, 2).value
+            evidencia = ws.cell(fila_actual, 3).value
+            ciclo_phva = ws.cell(fila_actual, 4).value
+            articulos = ws.cell(fila_actual, 5).value
+            nivel_pesv = ws.cell(fila_actual, 6).value
+            responsables = ws.cell(fila_actual, 7).value
+            recursos = ws.cell(fila_actual, 8).value
+            
+            # Saltar filas vacías o separadores
+            if not actividad or isinstance(actividad, str) and (
+                'PLANEAR' in actividad.upper() or 
+                'HACER' in actividad.upper() or 
+                'VERIFICAR' in actividad.upper() or 
+                'ACTUAR' in actividad.upper() or
+                'DISEÑO' in actividad.upper()
+            ):
+                fila_actual += 1
+                continue
+            
+            # Leer programación mensual
+            programacion = {}
+            meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+            
+            col_inicio = 9
+            
+            for idx, mes in enumerate(meses):
+                programacion[mes] = []
+                mes_col_inicio = col_inicio + (idx * 8)
+                
+                for semana in range(4):
+                    col_p = mes_col_inicio + (semana * 2)
+                    col_e = col_p + 1
+                    
+                    val_p = ws.cell(fila_actual, col_p).value
+                    val_e = ws.cell(fila_actual, col_e).value
+                    
+                    planificado = val_p in ['x', 'X', True, 1, '1'] if val_p else False
+                    ejecutado = val_e in ['x', 'X', True, 1, '1'] if val_e else False
+                    
+                    programacion[mes].append({
+                        'planificado': planificado,
+                        'ejecutado': ejecutado
+                    })
+            
+            actividades.append({
+                'actividad': str(actividad).strip() if actividad else '',
+                'evidencia': str(evidencia).strip() if evidencia else '',
+                'ciclo_phva': str(ciclo_phva).strip() if ciclo_phva else '',
+                'articulos': str(articulos).strip() if articulos else '',
+                'nivel_pesv': str(nivel_pesv).strip() if nivel_pesv else '',
+                'responsables': str(responsables).strip() if responsables else '',
+                'recursos': str(recursos).strip() if recursos else '',
+                'programacion': programacion
+            })
+            
+            fila_actual += 1
+        
+        logger.info(f"✅ {len(actividades)} actividades extraídas")
+        
+        # Insertar en BD
+        insertadas = 0
+        
+        for act in actividades:
+            try:
+                columnas = ['actividad', 'evidencia', 'ciclo_phva', 'articulos_decreto',
+                           'nivel_pesv', 'responsables', 'recursos', 'estado']
+                valores = [
+                    act['actividad'][:500] if act['actividad'] else None,
+                    act['evidencia'][:500] if act['evidencia'] else None,
+                    act['ciclo_phva'][:50] if act['ciclo_phva'] else None,
+                    act['articulos'][:200] if act['articulos'] else None,
+                    act['nivel_pesv'][:100] if act['nivel_pesv'] else None,
+                    act['responsables'][:200] if act['responsables'] else None,
+                    act['recursos'][:200] if act['recursos'] else None,
+                    'pendiente'
+                ]
+                
+                # Agregar programación
+                for mes in meses:
+                    if mes in act['programacion']:
+                        semanas = act['programacion'][mes]
+                        for semana_idx, semana in enumerate(semanas, 1):
+                            columnas.append(f'{mes}_semana{semana_idx}_p')
+                            valores.append(semana['planificado'])
+                            columnas.append(f'{mes}_semana{semana_idx}_e')
+                            valores.append(semana['ejecutado'])
+                    else:
+                        for semana in range(1, 5):
+                            columnas.append(f'{mes}_semana{semana}_p')
+                            valores.append(False)
+                            columnas.append(f'{mes}_semana{semana}_e')
+                            valores.append(False)
+                
+                placeholders = ', '.join(['%s'] * len(valores))
+                query = f"""
+                    INSERT INTO plan_anual_trabajo ({', '.join(columnas)})
+                    VALUES ({placeholders})
+                """
+                
+                cursor.execute(query, valores)
+                insertadas += 1
+                
+            except Exception as e:
+                logger.error(f"Error insertando: {e}")
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        flash(f'✅ {insertadas} actividades importadas correctamente desde el Excel', 'success')
+        logger.info(f"✅ {insertadas} actividades importadas")
+        
+    except Exception as e:
+        flash(f'❌ Error al importar: {str(e)}', 'error')
+        logger.error(f"❌ Error en importar_desde_excel: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    return redirect(url_for('sst_plan_anual'))
     
 
 # EN LA SECCIÓN DE INICIALIZACIÓN DEL APP
