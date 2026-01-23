@@ -172,8 +172,6 @@ def ejecutar_consulta(query, params=None, fetch=False, commit=False):
 def crear_tablas():
     """Crear todas las tablas necesarias si no existen"""
     logger.info("🔧 Creando/verificando tablas...")
-
-    
     
     # Tabla de usuarios
     query_usuarios = """
@@ -204,43 +202,8 @@ def crear_tablas():
         )
     """
     
-    try:
-        # Crear tabla de usuarios
-        ejecutar_consulta(query_usuarios, commit=True)
-        logger.info("✅ Tabla de usuarios creada/existe correctamente")
-        
-        # Verificar si existe usuario admin
-        resultado = ejecutar_consulta(
-            "SELECT COUNT(*) FROM usuarios WHERE usuario = 'admin'", 
-            fetch=True
-        )
-        
-        if resultado and resultado[0][0] == 0:
-            # Crear usuario admin por defecto
-            from werkzeug.security import generate_password_hash
-            hash_password = generate_password_hash('admin123')
-            ejecutar_consulta(
-                "INSERT INTO usuarios (usuario, password, rol, modulo_principal) VALUES (%s, %s, %s, %s)",
-                ('admin', hash_password, 'admin', 'soporte'),
-                commit=True
-            )
-            logger.info("✅ Usuario admin creado por defecto")
-        
-        # Crear tabla de fichas
-        ejecutar_consulta(query_fichas, commit=True)
-        logger.info("✅ Tabla de fichas creada/existe correctamente")
-        
-        # Crear tablas SST MEJORADAS
-        crear_tablas_sst_mejoradas()
-        
-        logger.info("✅ Todas las tablas creadas/verificadas")
-        return True
-        
-    except Exception as e:
-        logger.error(f"❌ Error al crear tablas: {e}")
-        return False
-
-query_plan_anual = """
+    # Tabla de plan anual de trabajo PESV
+    query_plan_anual = """
         CREATE TABLE IF NOT EXISTS plan_anual_trabajo (
             id SERIAL PRIMARY KEY,
             actividad VARCHAR(500) NOT NULL,
@@ -355,10 +318,44 @@ query_plan_anual = """
     """
     
     try:
+        # Crear tabla de usuarios
+        ejecutar_consulta(query_usuarios, commit=True)
+        logger.info("✅ Tabla de usuarios creada/existe correctamente")
+        
+        # Verificar si existe usuario admin
+        resultado = ejecutar_consulta(
+            "SELECT COUNT(*) FROM usuarios WHERE usuario = 'admin'", 
+            fetch=True
+        )
+        
+        if resultado and resultado[0][0] == 0:
+            # Crear usuario admin por defecto
+            from werkzeug.security import generate_password_hash
+            hash_password = generate_password_hash('admin123')
+            ejecutar_consulta(
+                "INSERT INTO usuarios (usuario, password, rol, modulo_principal) VALUES (%s, %s, %s, %s)",
+                ('admin', hash_password, 'admin', 'soporte'),
+                commit=True
+            )
+            logger.info("✅ Usuario admin creado por defecto")
+        
+        # Crear tabla de fichas
+        ejecutar_consulta(query_fichas, commit=True)
+        logger.info("✅ Tabla de fichas creada/existe correctamente")
+        
+        # Crear tabla de plan anual
         ejecutar_consulta(query_plan_anual, commit=True)
         logger.info("✅ Tabla plan_anual_trabajo creada/existe correctamente")
+        
+        # Crear tablas SST MEJORADAS
+        crear_tablas_sst_mejoradas()
+        
+        logger.info("✅ Todas las tablas creadas/verificadas")
+        return True
+        
     except Exception as e:
-        logger.error(f"❌ Error al crear tabla plan_anual: {e}")
+        logger.error(f"❌ Error al crear tablas: {e}")
+        return False
 
 def crear_tablas_sst_mejoradas():
     """Crear tablas SST con estructura MEJORADA (archivos en base de datos)"""
