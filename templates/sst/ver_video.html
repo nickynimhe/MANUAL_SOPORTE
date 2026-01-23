@@ -1,37 +1,540 @@
-{% extends "base_sst.html" %}
-{% block title %}{{ contenido.titulo }} - SST{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}{{ video.titulo }} - SST{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="card">
-                <div class="card-header" style="background: linear-gradient(135deg, #198754 0%, #20c997 100%); color: white;">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0"><i class="fas fa-video me-2"></i>{{ contenido.titulo }}</h4>
-                        {% if contenido.obligatorio %}<span class="badge bg-danger">Obligatorio</span>{% endif %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('sst_dashboard') }}">SST</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('sst_contenido') }}">Contenido</a></li>
+            <li class="breadcrumb-item active">{{ video.titulo }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white">
+                    <div>
+                        <h4 class="mb-0">{{ video.titulo }}</h4>
+                        <small>
+                            <span class="badge bg-light text-dark">
+                                {{ video.categoria_nombre }}
+                            </span>
+                            • {{ video.fecha_publicacion|format_date('%d/%m/%Y') }}
+                        </small>
                     </div>
+                    {% if current_user.rol == 'admin' %}
+                    <div class="btn-group">
+                        <a href="{{ url_for('sst_editar_contenido', id=video.id) }}" 
+                           class="btn btn-sm btn-light">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="card-body">
+                    {% if video.descripcion %}
+                    <div class="mb-4">
+                        <h6>Descripción:</h6>
+                        <p class="card-text">{{ video.descripcion }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- REPRODUCTOR DE VIDEO PRINCIPAL - VERSIÓN SIMPLIFICADA -->
+                    <div class="video-player-container mb-4">
+                        {% if video.tipo == 'video' %}
+                            <!-- SIEMPRE tratar como video local desde BD -->
+                            <div class="alert alert-info mb-3">
+                                <i class="fas fa-video"></i> 
+                                Video almacenado en la base de datos
+                            </div>
+                            
+                            <div class="video-wrapper">
+                                <video id="mainVideoPlayer" 
+                                       controls 
+                                       class="w-100 rounded shadow"
+                                       style="background: #000; max-height: 70vh;"
+                                       preload="auto">
+                                    <!-- SIEMPRE usar sst_descargar_archivo para videos locales -->
+                                    <source src="{{ url_for('sst_descargar_archivo', id=video.id) }}" 
+                                            type="video/mp4">
+                                    Tu navegador no soporta videos HTML5.
+                                    <br>
+                                    <a href="{{ url_for('sst_descargar_archivo', id=video.id) }}" download>
+                                        Descargar video
+                                    </a>
+                                </video>
+                            </div>
+                            
+                            <!-- CONTROLES DEL VIDEO -->
+                            <div class="video-controls mt-3 p-3 bg-light rounded">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <h6 class="mb-0"><i class="fas fa-info-circle"></i> Información:</h6>
+                                        <small class="text-muted">
+                                            {% if video.archivo_nombre %}
+                                                {{ video.archivo_nombre }} • 
+                                            {% endif %}
+                                            {% if video.archivo_tamano %}
+                                                {{ (video.archivo_tamano / 1024 / 1024)|round(2) }} MB • 
+                                            {% endif %}
+                                            Video local
+                                        </small>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <div class="btn-group">
+                                            <button class="btn btn-outline-primary btn-sm" onclick="toggleFullScreen()">
+                                                <i class="fas fa-expand"></i> Pantalla completa
+                                            </button>
+                                            <a href="{{ url_for('sst_descargar_archivo', id=video.id) }}" 
+                                               class="btn btn-outline-success btn-sm" download>
+                                                <i class="fas fa-download"></i> Descargar
+                                            </a>
+                                            <button class="btn btn-outline-info btn-sm" onclick="restartVideo()">
+                                                <i class="fas fa-redo"></i> Reiniciar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        
+                        {% else %}
+                            <!-- Para otros tipos de contenido -->
+                            <div class="alert alert-warning text-center py-5">
+                                <i class="fas fa-video-slash fa-3x mb-3"></i>
+                                <h4>Este contenido no es un video</h4>
+                                <p class="mb-3">Tipo: {{ video.tipo|title }}</p>
+                                
+                                {% if video.tipo == 'imagen' and video.tiene_archivo %}
+                                <div class="mt-3">
+                                    <img src="{{ url_for('sst_descargar_archivo', id=video.id) }}" 
+                                         alt="{{ video.titulo }}"
+                                         class="img-fluid rounded" style="max-height: 400px;">
+                                </div>
+                                {% elif video.tipo == 'documento' and video.tiene_archivo %}
+                                <div class="mt-3">
+                                    <a href="{{ url_for('sst_descargar_archivo', id=video.id) }}" 
+                                       class="btn btn-primary" download>
+                                        <i class="fas fa-download"></i> Descargar Documento
+                                    </a>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="mt-3">
+                                    <a href="{{ url_for('sst_contenido') }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left"></i> Volver al listado
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- INFORMACIÓN DEL ARCHIVO -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-info-circle"></i> Detalles del Archivo</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        <li class="mb-2">
+                                            <strong><i class="fas fa-tag"></i> Tipo de contenido:</strong>
+                                            <span class="badge bg-info">{{ video.tipo|title }}</span>
+                                        </li>
+                                        <li class="mb-2">
+                                            <strong><i class="fas fa-folder"></i> Categoría:</strong>
+                                            {{ video.categoria_nombre }}
+                                        </li>
+                                        <li class="mb-2">
+                                            <strong><i class="fas fa-calendar"></i> Publicado:</strong>
+                                            {{ video.fecha_publicacion|format_date('%d/%m/%Y %H:%M') }}
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="list-unstyled">
+                                        <li class="mb-2">
+                                            <strong><i class="fas fa-database"></i> Almacenamiento:</strong>
+                                            Base de Datos
+                                        </li>
+                                        {% if video.archivo_nombre %}
+                                        <li class="mb-2">
+                                            <strong><i class="fas fa-file"></i> Nombre del archivo:</strong>
+                                            {{ video.archivo_nombre }}
+                                        </li>
+                                        {% endif %}
+                                        {% if video.archivo_tamano %}
+                                        <li class="mb-2">
+                                            <strong><i class="fas fa-weight-hanging"></i> Tamaño:</strong>
+                                            {{ (video.archivo_tamano / 1024 / 1024)|round(2) }} MB
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- BOTONES DE ACCIÓN -->
+                    <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                        <div>
+                            <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Volver al Listado
+                            </a>
+                        </div>
+                        <div class="btn-group">
+                            <a href="{{ url_for('sst_descargar_archivo', id=video.id) }}" 
+                               class="btn btn-outline-success" download>
+                                <i class="fas fa-download"></i> Descargar Video
+                            </a>
+                            
+                            {% if current_user.rol == 'admin' %}
+                            <a href="{{ url_for('sst_editar_contenido', id=video.id) }}" 
+                               class="btn btn-outline-warning">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                            <button type="button" class="btn btn-outline-danger" 
+                                    data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIDEBAR DERECHA -->
+        <div class="col-lg-4">
+            <!-- ESTADO DE VISUALIZACIÓN -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="fas fa-play-circle"></i> Reproduciendo Video</h6>
                 </div>
                 <div class="card-body">
-                    {% if contenido.url %}
-                    <div class="ratio ratio-16x9 mb-4">
-                        <iframe src="{{ contenido.url }}" allowfullscreen></iframe>
+                    <div class="text-center mb-3">
+                        <i class="fas fa-video fa-3x text-primary mb-3"></i>
+                        <h5>Video Local</h5>
+                        <p class="text-muted">Reproduciendo desde la base de datos</p>
+                    </div>
+                    
+                    {% if video.es_obligatorio %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Contenido Obligatorio</strong>
+                        <br>
+                        <small>Este video es de visualización obligatoria</small>
                     </div>
                     {% endif %}
-                    {% if contenido.descripcion %}
-                    <div class="mb-3"><h5>Descripción</h5><p>{{ contenido.descripcion }}</p></div>
-                    {% endif %}
-                    {% if contenido.categoria %}
-                    <div class="mb-3"><strong>Categoría:</strong> <span class="badge bg-success">{{ contenido.categoria }}</span></div>
-                    {% endif %}
+                    
+                    <div class="mt-3">
+                        <h6>Controles rápidos:</h6>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" onclick="togglePlayPause()">
+                                <i class="fas fa-play"></i> Play/Pause
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="skipBackward()">
+                                <i class="fas fa-backward"></i> -10 segundos
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="skipForward()">
+                                <i class="fas fa-forward"></i> +10 segundos
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-footer">
-                    <a href="{{ url_for('sst_contenido') }}" class="btn btn-secondary"><i class="fas fa-arrow-left me-1"></i>Volver</a>
-                    {% if tiene_permiso('gestionar_contenido_sst') %}
-                    <a href="{{ url_for('sst_editar_contenido', id=contenido.id) }}" class="btn btn-warning"><i class="fas fa-edit me-1"></i>Editar</a>
-                    {% endif %}
+            </div>
+
+            <!-- INFORMACIÓN ADICIONAL -->
+            <div class="card mb-3 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Información Adicional</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <strong><i class="fas fa-id-card"></i> ID:</strong>
+                            <span class="badge bg-secondary">{{ video.id }}</span>
+                        </li>
+                        <li class="mb-2">
+                            <strong><i class="fas fa-user"></i> Creador:</strong>
+                            {{ video.creador_nombre|default('Administrador') }}
+                        </li>
+                        <li class="mb-2">
+                            <strong><i class="fas fa-clock"></i> Duración:</strong>
+                            <span id="videoDuration">Cargando...</span>
+                        </li>
+                        <li class="mb-2">
+                            <strong><i class="fas fa-code"></i> URL del video:</strong>
+                            <small class="d-block text-truncate" style="max-width: 100%;">
+                                {{ url_for('sst_descargar_archivo', id=video.id, _external=True) }}
+                            </small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- TECLAS DE ACCESO RÁPIDO -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0"><i class="fas fa-keyboard"></i> Teclas de Acceso Rápido</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="border rounded p-2 text-center">
+                                <kbd>Espacio</kbd>
+                                <small class="d-block">Play/Pause</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-2 text-center">
+                                <kbd>F</kbd>
+                                <small class="d-block">Pantalla completa</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-2 text-center">
+                                <kbd>←</kbd>
+                                <small class="d-block">-10 segundos</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-2 text-center">
+                                <kbd>→</kbd>
+                                <small class="d-block">+10 segundos</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-2 text-center">
+                                <kbd>M</kbd>
+                                <small class="d-block">Silenciar</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-2 text-center">
+                                <kbd>0</kbd>
+                                <small class="d-block">Reiniciar</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- MODAL DE ELIMINACIÓN -->
+{% if current_user.rol == 'admin' %}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Eliminar Video</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>¡Advertencia!</strong> Esta acción no se puede deshacer.
+                </div>
+                <p>¿Estás seguro de eliminar el video <strong>"{{ video.titulo }}"</strong>?</p>
+                <p class="text-muted">
+                    <small>
+                        <i class="fas fa-info-circle"></i>
+                        El video será eliminado permanentemente de la base de datos.
+                    </small>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{{ url_for('sst_eliminar_contenido', id=video.id) }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Eliminar Permanentemente
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+.video-player-container {
+    background: #000;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+}
+
+.video-wrapper {
+    position: relative;
+    padding-top: 56.25%; /* 16:9 aspect ratio */
+    background: #000;
+}
+
+.video-wrapper video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.video-controls {
+    background: #f8f9fa;
+    border-top: 3px solid #007bff;
+}
+
+kbd {
+    background-color: #6c757d;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.875em;
+    font-family: monospace;
+}
+
+/* Estilos para el reproductor */
+#mainVideoPlayer {
+    outline: none;
+}
+
+#mainVideoPlayer::-webkit-media-controls-panel {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+#mainVideoPlayer::-webkit-media-controls-play-button,
+#mainVideoPlayer::-webkit-media-controls-volume-slider,
+#mainVideoPlayer::-webkit-media-controls-mute-button {
+    filter: invert(1);
+}
+</style>
+
+<script>
+// Variables
+let video = document.getElementById('mainVideoPlayer');
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    if (video) {
+        // Actualizar duración cuando se cargue
+        video.addEventListener('loadedmetadata', function() {
+            document.getElementById('videoDuration').textContent = formatTime(video.duration);
+        });
+        
+        // Manejar errores
+        video.addEventListener('error', function(e) {
+            console.error('Error al cargar video:', e);
+            showError('Error al cargar el video. Intenta descargarlo.');
+        });
+    }
+});
+
+// Funciones de control
+function togglePlayPause() {
+    if (video) {
+        if (video.paused) {
+            video.play();
+        } else {
+            video.pause();
+        }
+    }
+}
+
+function toggleFullScreen() {
+    if (!video) return;
+    
+    if (!document.fullscreenElement) {
+        if (video.requestFullscreen) {
+            video.requestFullscreen();
+        } else if (video.mozRequestFullScreen) {
+            video.mozRequestFullScreen();
+        } else if (video.webkitRequestFullscreen) {
+            video.webkitRequestFullscreen();
+        } else if (video.msRequestFullscreen) {
+            video.msRequestFullscreen();
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+function restartVideo() {
+    if (video) {
+        video.currentTime = 0;
+        video.play();
+    }
+}
+
+function skipBackward() {
+    if (video) {
+        video.currentTime = Math.max(0, video.currentTime - 10);
+    }
+}
+
+function skipForward() {
+    if (video) {
+        video.currentTime = Math.min(video.duration, video.currentTime + 10);
+    }
+}
+
+// Formatear tiempo
+function formatTime(seconds) {
+    if (isNaN(seconds)) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+// Mostrar error
+function showError(message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+    alertDiv.innerHTML = `
+        <i class="fas fa-exclamation-circle"></i>
+        <strong>Error:</strong> ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.video-player-container').appendChild(alertDiv);
+}
+
+// Teclas de acceso rápido
+document.addEventListener('keydown', function(e) {
+    if (!video) return;
+    
+    // Ignorar si se está escribiendo en un input
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return;
+    }
+    
+    switch(e.key.toLowerCase()) {
+        case ' ':
+            e.preventDefault();
+            togglePlayPause();
+            break;
+        case 'f':
+            toggleFullScreen();
+            break;
+        case 'm':
+            if (video) video.muted = !video.muted;
+            break;
+        case 'arrowleft':
+            skipBackward();
+            break;
+        case 'arrowright':
+            skipForward();
+            break;
+        case '0':
+            restartVideo();
+            break;
+    }
+});
+</script>
 {% endblock %}
