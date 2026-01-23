@@ -172,6 +172,8 @@ def ejecutar_consulta(query, params=None, fetch=False, commit=False):
 def crear_tablas():
     """Crear todas las tablas necesarias si no existen"""
     logger.info("🔧 Creando/verificando tablas...")
+
+    
     
     # Tabla de usuarios
     query_usuarios = """
@@ -237,6 +239,126 @@ def crear_tablas():
     except Exception as e:
         logger.error(f"❌ Error al crear tablas: {e}")
         return False
+
+query_plan_anual = """
+        CREATE TABLE IF NOT EXISTS plan_anual_trabajo (
+            id SERIAL PRIMARY KEY,
+            actividad VARCHAR(500) NOT NULL,
+            evidencia VARCHAR(500),
+            ciclo_phva VARCHAR(50),
+            articulos_decreto VARCHAR(200),
+            nivel_pesv VARCHAR(100),
+            responsables VARCHAR(200),
+            recursos VARCHAR(200),
+            enero_semana1_p BOOLEAN DEFAULT FALSE,
+            enero_semana1_e BOOLEAN DEFAULT FALSE,
+            enero_semana2_p BOOLEAN DEFAULT FALSE,
+            enero_semana2_e BOOLEAN DEFAULT FALSE,
+            enero_semana3_p BOOLEAN DEFAULT FALSE,
+            enero_semana3_e BOOLEAN DEFAULT FALSE,
+            enero_semana4_p BOOLEAN DEFAULT FALSE,
+            enero_semana4_e BOOLEAN DEFAULT FALSE,
+            febrero_semana1_p BOOLEAN DEFAULT FALSE,
+            febrero_semana1_e BOOLEAN DEFAULT FALSE,
+            febrero_semana2_p BOOLEAN DEFAULT FALSE,
+            febrero_semana2_e BOOLEAN DEFAULT FALSE,
+            febrero_semana3_p BOOLEAN DEFAULT FALSE,
+            febrero_semana3_e BOOLEAN DEFAULT FALSE,
+            febrero_semana4_p BOOLEAN DEFAULT FALSE,
+            febrero_semana4_e BOOLEAN DEFAULT FALSE,
+            marzo_semana1_p BOOLEAN DEFAULT FALSE,
+            marzo_semana1_e BOOLEAN DEFAULT FALSE,
+            marzo_semana2_p BOOLEAN DEFAULT FALSE,
+            marzo_semana2_e BOOLEAN DEFAULT FALSE,
+            marzo_semana3_p BOOLEAN DEFAULT FALSE,
+            marzo_semana3_e BOOLEAN DEFAULT FALSE,
+            marzo_semana4_p BOOLEAN DEFAULT FALSE,
+            marzo_semana4_e BOOLEAN DEFAULT FALSE,
+            abril_semana1_p BOOLEAN DEFAULT FALSE,
+            abril_semana1_e BOOLEAN DEFAULT FALSE,
+            abril_semana2_p BOOLEAN DEFAULT FALSE,
+            abril_semana2_e BOOLEAN DEFAULT FALSE,
+            abril_semana3_p BOOLEAN DEFAULT FALSE,
+            abril_semana3_e BOOLEAN DEFAULT FALSE,
+            abril_semana4_p BOOLEAN DEFAULT FALSE,
+            abril_semana4_e BOOLEAN DEFAULT FALSE,
+            mayo_semana1_p BOOLEAN DEFAULT FALSE,
+            mayo_semana1_e BOOLEAN DEFAULT FALSE,
+            mayo_semana2_p BOOLEAN DEFAULT FALSE,
+            mayo_semana2_e BOOLEAN DEFAULT FALSE,
+            mayo_semana3_p BOOLEAN DEFAULT FALSE,
+            mayo_semana3_e BOOLEAN DEFAULT FALSE,
+            mayo_semana4_p BOOLEAN DEFAULT FALSE,
+            mayo_semana4_e BOOLEAN DEFAULT FALSE,
+            junio_semana1_p BOOLEAN DEFAULT FALSE,
+            junio_semana1_e BOOLEAN DEFAULT FALSE,
+            junio_semana2_p BOOLEAN DEFAULT FALSE,
+            junio_semana2_e BOOLEAN DEFAULT FALSE,
+            junio_semana3_p BOOLEAN DEFAULT FALSE,
+            junio_semana3_e BOOLEAN DEFAULT FALSE,
+            junio_semana4_p BOOLEAN DEFAULT FALSE,
+            junio_semana4_e BOOLEAN DEFAULT FALSE,
+            julio_semana1_p BOOLEAN DEFAULT FALSE,
+            julio_semana1_e BOOLEAN DEFAULT FALSE,
+            julio_semana2_p BOOLEAN DEFAULT FALSE,
+            julio_semana2_e BOOLEAN DEFAULT FALSE,
+            julio_semana3_p BOOLEAN DEFAULT FALSE,
+            julio_semana3_e BOOLEAN DEFAULT FALSE,
+            julio_semana4_p BOOLEAN DEFAULT FALSE,
+            julio_semana4_e BOOLEAN DEFAULT FALSE,
+            agosto_semana1_p BOOLEAN DEFAULT FALSE,
+            agosto_semana1_e BOOLEAN DEFAULT FALSE,
+            agosto_semana2_p BOOLEAN DEFAULT FALSE,
+            agosto_semana2_e BOOLEAN DEFAULT FALSE,
+            agosto_semana3_p BOOLEAN DEFAULT FALSE,
+            agosto_semana3_e BOOLEAN DEFAULT FALSE,
+            agosto_semana4_p BOOLEAN DEFAULT FALSE,
+            agosto_semana4_e BOOLEAN DEFAULT FALSE,
+            septiembre_semana1_p BOOLEAN DEFAULT FALSE,
+            septiembre_semana1_e BOOLEAN DEFAULT FALSE,
+            septiembre_semana2_p BOOLEAN DEFAULT FALSE,
+            septiembre_semana2_e BOOLEAN DEFAULT FALSE,
+            septiembre_semana3_p BOOLEAN DEFAULT FALSE,
+            septiembre_semana3_e BOOLEAN DEFAULT FALSE,
+            septiembre_semana4_p BOOLEAN DEFAULT FALSE,
+            septiembre_semana4_e BOOLEAN DEFAULT FALSE,
+            octubre_semana1_p BOOLEAN DEFAULT FALSE,
+            octubre_semana1_e BOOLEAN DEFAULT FALSE,
+            octubre_semana2_p BOOLEAN DEFAULT FALSE,
+            octubre_semana2_e BOOLEAN DEFAULT FALSE,
+            octubre_semana3_p BOOLEAN DEFAULT FALSE,
+            octubre_semana3_e BOOLEAN DEFAULT FALSE,
+            octubre_semana4_p BOOLEAN DEFAULT FALSE,
+            octubre_semana4_e BOOLEAN DEFAULT FALSE,
+            noviembre_semana1_p BOOLEAN DEFAULT FALSE,
+            noviembre_semana1_e BOOLEAN DEFAULT FALSE,
+            noviembre_semana2_p BOOLEAN DEFAULT FALSE,
+            noviembre_semana2_e BOOLEAN DEFAULT FALSE,
+            noviembre_semana3_p BOOLEAN DEFAULT FALSE,
+            noviembre_semana3_e BOOLEAN DEFAULT FALSE,
+            noviembre_semana4_p BOOLEAN DEFAULT FALSE,
+            noviembre_semana4_e BOOLEAN DEFAULT FALSE,
+            diciembre_semana1_p BOOLEAN DEFAULT FALSE,
+            diciembre_semana1_e BOOLEAN DEFAULT FALSE,
+            diciembre_semana2_p BOOLEAN DEFAULT FALSE,
+            diciembre_semana2_e BOOLEAN DEFAULT FALSE,
+            diciembre_semana3_p BOOLEAN DEFAULT FALSE,
+            diciembre_semana3_e BOOLEAN DEFAULT FALSE,
+            diciembre_semana4_p BOOLEAN DEFAULT FALSE,
+            diciembre_semana4_e BOOLEAN DEFAULT FALSE,
+            estado VARCHAR(20) DEFAULT 'pendiente',
+            porcentaje_avance DECIMAL(5,2) DEFAULT 0.00,
+            fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            usuario_actualizacion INTEGER,
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """
+    
+    try:
+        ejecutar_consulta(query_plan_anual, commit=True)
+        logger.info("✅ Tabla plan_anual_trabajo creada/existe correctamente")
+    except Exception as e:
+        logger.error(f"❌ Error al crear tabla plan_anual: {e}")
 
 def crear_tablas_sst_mejoradas():
     """Crear tablas SST con estructura MEJORADA (archivos en base de datos)"""
