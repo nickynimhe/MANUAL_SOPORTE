@@ -699,6 +699,25 @@ def gestion_usuarios():
                 'fecha_actualizacion': usuario[7]
             }
             
+            # Convertir fechas string a datetime si es necesario
+            try:
+                if usuario_dict['fecha_creacion'] and isinstance(usuario_dict['fecha_creacion'], str):
+                    usuario_dict['fecha_creacion'] = datetime.strptime(
+                        usuario_dict['fecha_creacion'].split('.')[0],  # Quitar microsegundos
+                        '%Y-%m-%d %H:%M:%S'
+                    )
+            except:
+                usuario_dict['fecha_creacion'] = None
+                
+            try:
+                if usuario_dict['fecha_actualizacion'] and isinstance(usuario_dict['fecha_actualizacion'], str):
+                    usuario_dict['fecha_actualizacion'] = datetime.strptime(
+                        usuario_dict['fecha_actualizacion'].split('.')[0],  # Quitar microsegundos
+                        '%Y-%m-%d %H:%M:%S'
+                    )
+            except:
+                usuario_dict['fecha_actualizacion'] = None
+            
             if usuario_dict.get('permisos'):
                 try:
                     usuario_dict['permisos_parsed'] = json.loads(usuario_dict['permisos'])
@@ -712,6 +731,8 @@ def gestion_usuarios():
     except Exception as e:
         flash('Error al cargar los usuarios', 'error')
         logger.error(f"Error en gestion_usuarios: {e}")
+        import traceback
+        traceback.print_exc()
     
     return render_template('gestion_usuarios.html', usuarios=usuarios)
 
