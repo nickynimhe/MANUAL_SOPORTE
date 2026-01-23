@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block title %}Actividades - Plan Anual PESV{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-tasks"></i> Actividades del Plan Anual</h2>
+                    <p class="text-muted">Gestión de actividades PESV 2026</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('sst_plan_anual') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-filter"></i> Filtros de Búsqueda</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('sst_plan_anual_actividades') }}">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Ciclo PHVA</label>
+                            <select name="ciclo" class="form-control">
+                                <option value="">Todos</option>
+                                {% for ciclo in ciclos %}
+                                <option value="{{ ciclo }}" {% if filtro_ciclo == ciclo %}selected{% endif %}>
+                                    {{ ciclo }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Estado</label>
+                            <select name="estado" class="form-control">
+                                <option value="">Todos</option>
+                                <option value="pendiente" {% if filtro_estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                                <option value="en_proceso" {% if filtro_estado == 'en_proceso' %}selected{% endif %}>En Proceso</option>
+                                <option value="completado" {% if filtro_estado == 'completado' %}selected{% endif %}>Completado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Responsable</label>
+                            <select name="responsable" class="form-control">
+                                <option value="">Todos</option>
+                                {% for resp in responsables_list %}
+                                <option value="{{ resp }}" {% if filtro_responsable == resp %}selected{% endif %}>
+                                    {{ resp }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Mes</label>
+                            <select name="mes" class="form-control">
+                                <option value="">Todos</option>
+                                <option value="enero" {% if filtro_mes == 'enero' %}selected{% endif %}>Enero</option>
+                                <option value="febrero" {% if filtro_mes == 'febrero' %}selected{% endif %}>Febrero</option>
+                                <option value="marzo" {% if filtro_mes == 'marzo' %}selected{% endif %}>Marzo</option>
+                                <option value="abril" {% if filtro_mes == 'abril' %}selected{% endif %}>Abril</option>
+                                <option value="mayo" {% if filtro_mes == 'mayo' %}selected{% endif %}>Mayo</option>
+                                <option value="junio" {% if filtro_mes == 'junio' %}selected{% endif %}>Junio</option>
+                                <option value="julio" {% if filtro_mes == 'julio' %}selected{% endif %}>Julio</option>
+                                <option value="agosto" {% if filtro_mes == 'agosto' %}selected{% endif %}>Agosto</option>
+                                <option value="septiembre" {% if filtro_mes == 'septiembre' %}selected{% endif %}>Septiembre</option>
+                                <option value="octubre" {% if filtro_mes == 'octubre' %}selected{% endif %}>Octubre</option>
+                                <option value="noviembre" {% if filtro_mes == 'noviembre' %}selected{% endif %}>Noviembre</option>
+                                <option value="diciembre" {% if filtro_mes == 'diciembre' %}selected{% endif %}>Diciembre</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                        <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Limpiar Filtros
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de Actividades -->
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i> 
+                Listado de Actividades 
+                <span class="badge badge-light">{{ actividades|length }} resultados</span>
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if actividades %}
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th style="width: 5%">#</th>
+                            <th style="width: 40%">Actividad</th>
+                            <th style="width: 10%">Ciclo PHVA</th>
+                            <th style="width: 15%">Responsables</th>
+                            <th style="width: 10%">Nivel</th>
+                            <th style="width: 10%">Estado</th>
+                            <th style="width: 10%">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for act in actividades %}
+                        <tr>
+                            <td>{{ act[0] }}</td>
+                            <td>
+                                <strong>{{ act[1][:100] }}</strong>
+                                {% if act[1]|length > 100 %}...{% endif %}
+                                {% if act[2] %}
+                                <br><small class="text-muted"><i class="fas fa-file-alt"></i> {{ act[2][:80] }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if act[3] == 'Planear' %}
+                                <span class="badge badge-primary badge-pill">{{ act[3] }}</span>
+                                {% elif act[3] == 'Hacer' %}
+                                <span class="badge badge-success badge-pill">{{ act[3] }}</span>
+                                {% elif act[3] == 'Verificar' %}
+                                <span class="badge badge-warning badge-pill">{{ act[3] }}</span>
+                                {% elif act[3] == 'Actuar' %}
+                                <span class="badge badge-danger badge-pill">{{ act[3] }}</span>
+                                {% else %}
+                                <span class="badge badge-secondary badge-pill">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small>{{ act[4][:30] if act[4] else 'N/A' }}</small>
+                            </td>
+                            <td>
+                                <small>{{ act[7][:20] if act[7] else 'N/A' }}</small>
+                            </td>
+                            <td>
+                                {% if act[5] == 'completado' %}
+                                <span class="badge badge-success">
+                                    <i class="fas fa-check-circle"></i> Completado
+                                </span>
+                                {% elif act[5] == 'en_proceso' %}
+                                <span class="badge badge-warning">
+                                    <i class="fas fa-spinner"></i> En Proceso
+                                </span>
+                                {% else %}
+                                <span class="badge badge-secondary">
+                                    <i class="fas fa-clock"></i> Pendiente
+                                </span>
+                                {% endif %}
+                                <br>
+                                <small class="text-muted">Avance: {{ act[6] }}%</small>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('sst_plan_anual_actividad_detalle', id=act[0]) }}" 
+                                   class="btn btn-sm btn-info" 
+                                   title="Ver detalle">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle fa-3x mb-3"></i>
+                <h5>No se encontraron actividades</h5>
+                <p>Intenta ajustar los filtros de búsqueda</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.badge-pill {
+    padding: 0.4em 0.8em;
+    font-size: 0.9em;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,363 @@
+{% extends 'base.html' %}
+
+{% block title %}Cronograma Gantt - Plan Anual PESV{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-calendar-week"></i> Cronograma Gantt 2026</h2>
+                    <p class="text-muted">Vista general del Plan Anual de Trabajo PESV</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('sst_plan_anual') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leyenda -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-auto">
+                    <span class="badge badge-primary">P</span> = Planificado
+                </div>
+                <div class="col-auto">
+                    <span class="badge badge-success">E</span> = Ejecutado
+                </div>
+                <div class="col-auto">
+                    <span class="text-muted">-</span> = Sin actividad
+                </div>
+                <div class="col-auto ml-auto">
+                    <button onclick="toggleTodos()" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-compress-arrows-alt"></i> Colapsar/Expandir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cronograma -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div style="overflow-x: auto;">
+                <table class="table table-bordered table-sm mb-0" style="font-size: 0.85em;">
+                    <thead class="thead-dark" style="position: sticky; top: 0; z-index: 10;">
+                        <tr>
+                            <th style="width: 30%; position: sticky; left: 0; background: #343a40; z-index: 11;">
+                                Actividad
+                            </th>
+                            <th class="text-center" style="width: 5%">Ciclo</th>
+                            {% for mes in ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'] %}
+                            <th colspan="4" class="text-center" style="width: 5%">{{ mes }}</th>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th style="position: sticky; left: 0; background: #343a40; z-index: 11;"></th>
+                            <th></th>
+                            {% for mes in range(12) %}
+                            <th class="text-center p-1" style="font-size: 0.75em;">1</th>
+                            <th class="text-center p-1" style="font-size: 0.75em;">2</th>
+                            <th class="text-center p-1" style="font-size: 0.75em;">3</th>
+                            <th class="text-center p-1" style="font-size: 0.75em;">4</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if actividades %}
+                        {% for act in actividades %}
+                        <tr class="actividad-row">
+                            <td style="position: sticky; left: 0; background: white; z-index: 5;">
+                                <a href="{{ url_for('sst_plan_anual_actividad_detalle', id=act[0]) }}" 
+                                   class="text-dark" 
+                                   title="{{ act[1] }}">
+                                    <small>
+                                        <strong>{{ loop.index }}.</strong> 
+                                        {{ act[1][:60] }}{% if act[1]|length > 60 %}...{% endif %}
+                                    </small>
+                                </a>
+                                <br>
+                                <small class="text-muted">{{ act[3] if act[3] else 'N/A' }}</small>
+                            </td>
+                            <td class="text-center align-middle">
+                                {% if act[2] == 'Planear' %}
+                                <span class="badge badge-primary badge-sm">P</span>
+                                {% elif act[2] == 'Hacer' %}
+                                <span class="badge badge-success badge-sm">H</span>
+                                {% elif act[2] == 'Verificar' %}
+                                <span class="badge badge-warning badge-sm">V</span>
+                                {% elif act[2] == 'Actuar' %}
+                                <span class="badge badge-danger badge-sm">A</span>
+                                {% endif %}
+                            </td>
+                            
+                            {# Enero: columnas 5-12 #}
+                            {% for i in range(5, 13, 2) %}
+                            <td class="text-center p-1 align-middle cell-semana" 
+                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
+                                {% if act[i] %}
+                                    {% if act[i+1] %}
+                                    <span class="badge badge-success badge-sm">E</span>
+                                    {% else %}
+                                    <span class="badge badge-primary badge-sm">P</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                            
+                            {# Febrero: columnas 13-20 #}
+                            {% for i in range(13, 21, 2) %}
+                            <td class="text-center p-1 align-middle cell-semana" 
+                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
+                                {% if act[i] %}
+                                    {% if act[i+1] %}
+                                    <span class="badge badge-success badge-sm">E</span>
+                                    {% else %}
+                                    <span class="badge badge-primary badge-sm">P</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                            
+                            {# Marzo: columnas 21-28 #}
+                            {% for i in range(21, 29, 2) %}
+                            <td class="text-center p-1 align-middle cell-semana" 
+                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
+                                {% if act[i] %}
+                                    {% if act[i+1] %}
+                                    <span class="badge badge-success badge-sm">E</span>
+                                    {% else %}
+                                    <span class="badge badge-primary badge-sm">P</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                            
+                            {# Abril: columnas 29-36 #}
+                            {% for i in range(29, 37, 2) %}
+                            <td class="text-center p-1 align-middle cell-semana" 
+                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
+                                {% if act[i] %}
+                                    {% if act[i+1] %}
+                                    <span class="badge badge-success badge-sm">E</span>
+                                    {% else %}
+                                    <span class="badge badge-primary badge-sm">P</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                            
+                            {# Mayo: columnas 37-44 #}
+                            {% for i in range(37, 45, 2) %}
+                            <td class="text-center p-1 align-middle cell-semana" 
+                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
+                                {% if act[i] %}
+                                    {% if act[i+1] %}
+                                    <span class="badge badge-success badge-sm">E</span>
+                                    {% else %}
+                                    <span class="badge badge-primary badge-sm">P</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                            
+                            {# Junio: columnas 45-52 #}
+                            {% for i in range(45, 53, 2) %}
+                            <td class="text-center p-1 align-middle cell-semana" 
+                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
+                                {% if act[i] %}
+                                    {% if act[i+1] %}
+                                    <span class="badge badge-success badge-sm">E</span>
+                                    {% else %}
+                                    <span class="badge badge-primary badge-sm">P</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                            
+                            {# Julio: columnas 53-60 #}
+                            {% for i in range(53, 61, 2) %}
+                            <td class="text-center p-1 align-middle cell-semana" 
+                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
+                                {% if act[i] %}
+                                    {% if act[i+1] %}
+                                    <span class="badge badge-success badge-sm">E</span>
+                                    {% else %}
+                                    <span class="badge badge-primary badge-sm">P</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                            
+                            {# Agosto: columnas 61-68 #}
+                            {% for i in range(61, 69, 2) %}
+                            <td class="text-center p-1 align-middle cell-semana" 
+                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
+                                {% if act[i] %}
+                                    {% if act[i+1] %}
+                                    <span class="badge badge-success badge-sm">E</span>
+                                    {% else %}
+                                    <span class="badge badge-primary badge-sm">P</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                            
+                            {# Septiembre: columnas 69-76 #}
+                            {% for i in range(69, 77, 2) %}
+                            <td class="text-center p-1 align-middle cell-semana" 
+                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
+                                {% if act[i] %}
+                                    {% if act[i+1] %}
+                                    <span class="badge badge-success badge-sm">E</span>
+                                    {% else %}
+                                    <span class="badge badge-primary badge-sm">P</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                            
+                            {# Octubre: columnas 77-84 #}
+                            {% for i in range(77, 85, 2) %}
+                            <td class="text-center p-1 align-middle cell-semana" 
+                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
+                                {% if act[i] %}
+                                    {% if act[i+1] %}
+                                    <span class="badge badge-success badge-sm">E</span>
+                                    {% else %}
+                                    <span class="badge badge-primary badge-sm">P</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                            
+                            {# Noviembre: columnas 85-92 #}
+                            {% for i in range(85, 93, 2) %}
+                            <td class="text-center p-1 align-middle cell-semana" 
+                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
+                                {% if act[i] %}
+                                    {% if act[i+1] %}
+                                    <span class="badge badge-success badge-sm">E</span>
+                                    {% else %}
+                                    <span class="badge badge-primary badge-sm">P</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                            
+                            {# Diciembre: columnas 93-100 #}
+                            {% for i in range(93, 101, 2) %}
+                            <td class="text-center p-1 align-middle cell-semana" 
+                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
+                                {% if act[i] %}
+                                    {% if act[i+1] %}
+                                    <span class="badge badge-success badge-sm">E</span>
+                                    {% else %}
+                                    <span class="badge badge-primary badge-sm">P</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="50" class="text-center">
+                                <div class="alert alert-info">
+                                    No hay actividades para mostrar
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nota -->
+    <div class="alert alert-info mt-3">
+        <i class="fas fa-info-circle"></i> 
+        <strong>Nota:</strong> Se muestran las primeras 50 actividades. 
+        Para ver el cronograma completo de una actividad específica, accede a su detalle.
+    </div>
+</div>
+
+<script>
+let collapsed = false;
+
+function toggleTodos() {
+    const rows = document.querySelectorAll('.actividad-row');
+    collapsed = !collapsed;
+    
+    rows.forEach((row, index) => {
+        if (collapsed && index >= 10) {
+            row.style.display = 'none';
+        } else {
+            row.style.display = '';
+        }
+    });
+}
+
+// Highlight al pasar el mouse sobre celdas
+document.querySelectorAll('.cell-semana').forEach(cell => {
+    cell.addEventListener('mouseenter', function() {
+        this.style.transform = 'scale(1.1)';
+        this.style.transition = 'transform 0.2s';
+    });
+    
+    cell.addEventListener('mouseleave', function() {
+        this.style.transform = 'scale(1)';
+    });
+});
+</script>
+
+<style>
+.badge-sm {
+    font-size: 0.7em;
+    padding: 0.2em 0.4em;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+}
+
+.cell-semana {
+    cursor: pointer;
+}
+
+.actividad-row:hover {
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}

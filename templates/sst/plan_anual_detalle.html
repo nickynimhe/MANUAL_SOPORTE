@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle Actividad - Plan Anual PESV{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-clipboard-check"></i> Detalle de Actividad</h2>
+                    <p class="text-muted">Plan Anual de Trabajo PESV 2026</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver al Listado
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Columna Principal -->
+        <div class="col-lg-8">
+            <!-- Información de la Actividad -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Información General</h5>
+                </div>
+                <div class="card-body">
+                    <h4>{{ actividad[1] }}</h4>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-circle-notch"></i> Ciclo PHVA:</strong></p>
+                            {% if actividad[3] == 'Planear' %}
+                            <span class="badge badge-primary badge-lg">{{ actividad[3] }}</span>
+                            {% elif actividad[3] == 'Hacer' %}
+                            <span class="badge badge-success badge-lg">{{ actividad[3] }}</span>
+                            {% elif actividad[3] == 'Verificar' %}
+                            <span class="badge badge-warning badge-lg">{{ actividad[3] }}</span>
+                            {% elif actividad[3] == 'Actuar' %}
+                            <span class="badge badge-danger badge-lg">{{ actividad[3] }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-tasks"></i> Estado:</strong></p>
+                            {% if actividad[101] == 'completado' %}
+                            <span class="badge badge-success badge-lg">
+                                <i class="fas fa-check-circle"></i> Completado
+                            </span>
+                            {% elif actividad[101] == 'en_proceso' %}
+                            <span class="badge badge-warning badge-lg">
+                                <i class="fas fa-spinner"></i> En Proceso
+                            </span>
+                            {% else %}
+                            <span class="badge badge-secondary badge-lg">
+                                <i class="fas fa-clock"></i> Pendiente
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    {% if actividad[2] %}
+                    <div class="mb-3">
+                        <p><strong><i class="fas fa-file-alt"></i> Evidencia Requerida:</strong></p>
+                        <p class="text-muted">{{ actividad[2] }}</p>
+                    </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-book"></i> Artículos Decreto:</strong></p>
+                            <p class="text-muted">{{ actividad[4] if actividad[4] else 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-layer-group"></i> Nivel PESV:</strong></p>
+                            <p class="text-muted">{{ actividad[5] if actividad[5] else 'N/A' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-users"></i> Responsables:</strong></p>
+                            <p class="text-muted">{{ actividad[6] if actividad[6] else 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong><i class="fas fa-tools"></i> Recursos:</strong></p>
+                            <p class="text-muted">{{ actividad[7] if actividad[7] else 'N/A' }}</p>
+                        </div>
+                    </div>
+
+                    {% if actividad[100] %}
+                    <div class="mt-3">
+                        <p><strong><i class="fas fa-comment"></i> Observaciones:</strong></p>
+                        <div class="alert alert-info">
+                            {{ actividad[100] }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Cronograma Mensual -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> Cronograma de Ejecución 2026</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Mes</th>
+                                    <th class="text-center">Semana 1</th>
+                                    <th class="text-center">Semana 2</th>
+                                    <th class="text-center">Semana 3</th>
+                                    <th class="text-center">Semana 4</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for mes, semanas in cronograma.items() %}
+                                <tr>
+                                    <td><strong>{{ mes|capitalize }}</strong></td>
+                                    {% for semana_data in semanas %}
+                                    <td class="text-center">
+                                        {% if semana_data.planificado %}
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" 
+                                                   class="custom-control-input semana-checkbox" 
+                                                   id="check_{{ mes }}_{{ semana_data.semana }}"
+                                                   data-mes="{{ mes }}"
+                                                   data-semana="{{ semana_data.semana }}"
+                                                   {% if semana_data.ejecutado %}checked{% endif %}
+                                                   {% if not current_user.puede('gestionar_plan_anual') %}disabled{% endif %}>
+                                            <label class="custom-control-label" for="check_{{ mes }}_{{ semana_data.semana }}">
+                                                {% if semana_data.ejecutado %}
+                                                <span class="text-success"><i class="fas fa-check-circle"></i> E</span>
+                                                {% else %}
+                                                <span class="text-primary"><i class="far fa-circle"></i> P</span>
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>P</strong> = Planificado | <strong>E</strong> = Ejecutado
+                        {% if current_user.puede('gestionar_plan_anual') %}
+                        | Haz clic en las casillas para marcar como ejecutado
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+
+            <!-- Evidencias -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-paperclip"></i> Evidencias</h5>
+                        {% if current_user.puede('agregar_evidencias') %}
+                        <button class="btn btn-light btn-sm" data-toggle="modal" data-target="#modalAgregarEvidencia">
+                            <i class="fas fa-plus"></i> Agregar Evidencia
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if evidencias %}
+                    <div class="list-group">
+                        {% for ev in evidencias %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1"><i class="fas fa-file"></i> {{ ev[1] }}</h6>
+                                    {% if ev[2] %}
+                                    <p class="mb-1 text-muted">{{ ev[2] }}</p>
+                                    {% endif %}
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar"></i> {{ ev[4].strftime('%d/%m/%Y %H:%M') if ev[4] else 'N/A' }}
+                                        {% if ev[3] %}
+                                        | <i class="fas fa-file-alt"></i> {{ ev[3] }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                {% if ev[3] %}
+                                <a href="{{ url_for('sst_descargar_archivo', id=ev[0]) }}" 
+                                   class="btn btn-sm btn-primary" 
+                                   target="_blank">
+                                    <i class="fas fa-download"></i> Descargar
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning text-center">
+                        <i class="fas fa-exclamation-triangle"></i> No hay evidencias cargadas para esta actividad
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Lateral -->
+        <div class="col-lg-4">
+            <!-- Progreso -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Progreso</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h2 class="display-3">{{ actividad[102] }}%</h2>
+                    <div class="progress" style="height: 30px;">
+                        <div class="progress-bar bg-success" 
+                             role="progressbar" 
+                             style="width: {{ actividad[102] }}%"
+                             aria-valuenow="{{ actividad[102] }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            {{ actividad[102] }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seguimiento -->
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-comments"></i> Seguimiento</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% if seguimientos %}
+                    {% for seg in seguimientos %}
+                    <div class="media mb-3">
+                        <div class="media-body">
+                            <h6 class="mt-0">
+                                <i class="fas fa-user-circle"></i> {{ seg[4] }}
+                                <small class="text-muted float-right">{{ seg[3].strftime('%d/%m/%Y') if seg[3] else 'N/A' }}</small>
+                            </h6>
+                            <p class="mb-1">{{ seg[1] }}</p>
+                            <small>
+                                {% if seg[2] == 'alerta' %}
+                                <span class="badge badge-danger">Alerta</span>
+                                {% elif seg[2] == 'completado' %}
+                                <span class="badge badge-success">Completado</span>
+                                {% else %}
+                                <span class="badge badge-info">Seguimiento</span>
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    <hr>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-muted text-center">No hay seguimientos registrados</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Agregar Evidencia -->
+<div class="modal fade" id="modalAgregarEvidencia" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('sst_plan_anual_agregar_evidencia', id=actividad[0]) }}" enctype="multipart/form-data">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title"><i class="fas fa-paperclip"></i> Agregar Evidencia</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Título *</label>
+                        <input type="text" name="titulo" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <textarea name="descripcion" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Archivo</label>
+                        <input type="file" name="archivo" class="form-control-file">
+                        <small class="text-muted">Formatos permitidos: PDF, Word, Excel, Imágenes, Videos</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Actualizar ejecución de semanas
+document.querySelectorAll('.semana-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        const mes = this.dataset.mes;
+        const semana = this.dataset.semana;
+        const ejecutado = this.checked;
+        
+        // Enviar actualización via AJAX
+        fetch('{{ url_for("sst_plan_anual_actualizar_actividad", id=actividad[0]) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `mes=${mes}&semana=${semana}&ejecutado=${ejecutado}`
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload(); // Recargar para actualizar progreso
+            } else {
+                alert('Error al actualizar');
+                this.checked = !ejecutado; // Revertir checkbox
+            }
+        })
+        .catch(error => {
+            alert('Error de conexión');
+            this.checked = !ejecutado;
+        });
+    });
+});
+</script>
+
+<style>
+.badge-lg {
+    font-size: 1.1em;
+    padding: 0.5em 1em;
+}
+</style>
+{% endblock %}
