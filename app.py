@@ -2415,7 +2415,58 @@ def sst_plan_anual_cronograma():
         logger.error(f"Error en sst_plan_anual_cronograma: {e}")
         return redirect(url_for('sst_plan_anual'))
 
-# ===== INICIALIZACIÓN =====
+def inicializar_plan_anual():
+    """Crear tabla e importar datos del plan anual si no existen"""
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Verificar si la tabla tiene datos
+        cursor.execute("SELECT COUNT(*) FROM plan_anual_trabajo")
+        count = cursor.fetchone()[0]
+        
+        if count == 0:
+            print("📥 No hay datos en plan_anual_trabajo, importando...")
+            
+            # Crear tabla si no existe (versión simplificada)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS plan_anual_trabajo (
+                    id SERIAL PRIMARY KEY,
+                    actividad VARCHAR(500) NOT NULL,
+                    evidencia VARCHAR(500),
+                    ciclo_phva VARCHAR(50),
+                    responsables VARCHAR(200),
+                    estado VARCHAR(20) DEFAULT 'pendiente',
+                    porcentaje_avance DECIMAL(5,2) DEFAULT 0.00
+                )
+            """)
+            conn.commit()
+            
+            # Insertar datos de ejemplo
+            actividades_ejemplo = [
+                ("Capacitación en seguridad básica", "Lista de asistencia", "Planear", "Jefe SST", "pendiente", 0),
+                ("Inspección de equipos de protección", "Formato de inspección", "Hacer", "Supervisor", "en_proceso", 30),
+                ("Investigación de incidentes", "Reporte de incidente", "Verificar", "Coordinador SST", "completado", 100),
+                ("Actualización de procedimientos", "Documento firmado", "Actuar", "Gerente", "pendiente", 0),
+            ]
+            
+            for actividad in actividades_ejemplo:
+                cursor.execute("""
+                    INSERT INTO plan_anual_trabajo 
+                    (actividad, evidencia, ciclo_phva, responsables, estado, porcentaje_avance)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, actividad)
+            
+            conn.commit()
+            print(f"✅ {len(actividades_ejemplo)} actividades de ejemplo insertadas")
+            
+        cursor.close()
+        conn.close()
+        
+    except Exception as e:
+        print(f"⚠️  Error al inicializar plan anual: {e}")
+
+# EN LA SECCIÓN DE INICIALIZACIÓN DEL APP
 if __name__ == '__main__':
     with app.app_context():
         print("🚀 Iniciando la aplicación Flask...")
@@ -2429,6 +2480,10 @@ if __name__ == '__main__':
             print("✅ Categorías SST verificadas correctamente")
         except Exception as e:
             print(f"⚠️  Advertencia al crear categorías SST: {e}")
+        
+        # AÑADE ESTA LÍNEA:
+        print("📥 Inicializando datos del plan anual...")
+        inicializar_plan_anual()
     
     print("🌐 Aplicación lista en http://0.0.0.0:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)
