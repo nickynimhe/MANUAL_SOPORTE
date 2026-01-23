@@ -1978,26 +1978,7 @@ def obtener_problemas(categoria):
     return jsonify(problemas)
 
 # ===== RUTAS PARA GESTIÓN DEL PLAN ANUAL DE TRABAJO PESV =====
-@app.route('/sst/plan-anual/nueva')
-def sst_plan_anual_nueva():
-    return render_template('plan_anual_nueva.html')
 
-@app.route('/sst/plan-anual/editar')
-def sst_plan_anual_editar():
-    return render_template('plan_anual_editar.html')  # Similar a nueva.html pero para editar
-
-@app.route('/api/actividades', methods=['GET'])
-def api_actividades():
-    # Esta ruta puede devolver datos de localStorage o de tu base de datos
-    import json
-    actividades = []  # Aquí puedes cargar de tu base de datos
-    
-    return jsonify({
-        'success': True,
-        'actividades': actividades,
-        'total': len(actividades)
-    })
-    
 @app.route('/sst/plan-anual')
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
@@ -2018,23 +1999,23 @@ def sst_plan_anual():
                 SUM(CASE WHEN estado = 'completado' THEN 1 ELSE 0 END) as completadas,
                 SUM(CASE WHEN estado = 'en_proceso' THEN 1 ELSE 0 END) as en_proceso,
                 SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as pendientes,
-                ROUND(AVG(porcentaje_avance), 2) as promedio_avance
-            FROM plan_anual_trabajo
+                ROUND(AVG(avance), 2) as promedio_avance
+            FROM actividades_pesv
         """)
         stats = cursor.fetchone()
         
         # Obtener actividades por ciclo PHVA
         cursor.execute("""
             SELECT 
-                ciclo_phva,
+                ciclo,
                 COUNT(*) as total,
                 SUM(CASE WHEN estado = 'completado' THEN 1 ELSE 0 END) as completadas,
-                ROUND(AVG(porcentaje_avance), 2) as promedio
-            FROM plan_anual_trabajo
-            WHERE ciclo_phva IS NOT NULL
-            GROUP BY ciclo_phva
+                ROUND(AVG(avance), 2) as promedio
+            FROM actividades_pesv
+            WHERE ciclo IS NOT NULL
+            GROUP BY ciclo
             ORDER BY 
-                CASE ciclo_phva 
+                CASE ciclo 
                     WHEN 'Planear' THEN 1 
                     WHEN 'Hacer' THEN 2 
                     WHEN 'Verificar' THEN 3 
@@ -2047,9 +2028,9 @@ def sst_plan_anual():
         # Obtener actividades recientes
         cursor.execute("""
             SELECT 
-                id, actividad, ciclo_phva, responsables, estado, 
-                porcentaje_avance, fecha_actualizacion
-            FROM plan_anual_trabajo
+                id, actividad, ciclo, responsables, estado, 
+                avance, fecha_actualizacion
+            FROM actividades_pesv
             ORDER BY fecha_actualizacion DESC
             LIMIT 10
         """)
@@ -2058,7 +2039,7 @@ def sst_plan_anual():
         cursor.close()
         conn.close()
         
-        return render_template('sst/plan_anual_dashboard.html',
+        return render_template('plan_anual_dashboard.html',
                              stats=stats,
                              stats_phva=stats_phva,
                              actividades_recientes=actividades_recientes)
@@ -2090,15 +2071,15 @@ def sst_plan_anual_actividades():
         # Construir query con filtros
         query = """
             SELECT 
-                id, actividad, evidencia, ciclo_phva, responsables, 
-                estado, porcentaje_avance, nivel_pesv
-            FROM plan_anual_trabajo
+                id, actividad, evidencia, ciclo, responsables, 
+                estado, avance, nivel
+            FROM actividades_pesv
             WHERE 1=1
         """
         params = []
         
         if ciclo:
-            query += " AND ciclo_phva = %s"
+            query += " AND ciclo = %s"
             params.append(ciclo)
         
         if estado:
@@ -2109,32 +2090,19 @@ def sst_plan_anual_actividades():
             query += " AND responsables ILIKE %s"
             params.append(f'%{responsable}%')
         
-        # Si se filtra por mes, verificar que tenga actividad planificada ese mes
-        if mes:
-            meses = {
-                'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4,
-                'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8,
-                'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
-            }
-            mes_lower = mes.lower()
-            if mes_lower in meses:
-                # Verificar si tiene al menos una semana planificada en ese mes
-                query += f" AND ({mes_lower}_semana1_p = TRUE OR {mes_lower}_semana2_p = TRUE OR {mes_lower}_semana3_p = TRUE OR {mes_lower}_semana4_p = TRUE)"
-        
-        query += " ORDER BY ciclo_phva, actividad"
+        query += " ORDER BY ciclo, id"
         
         cursor.execute(query, params)
         actividades = cursor.fetchall()
         
         # Obtener opciones únicas para filtros
-        cursor.execute("SELECT DISTINCT ciclo_phva FROM plan_anual_trabajo WHERE ciclo_phva IS NOT NULL ORDER BY ciclo_phva")
+        cursor.execute("SELECT DISTINCT ciclo FROM actividades_pesv WHERE ciclo IS NOT NULL ORDER BY ciclo")
         ciclos_disponibles = [row[0] for row in cursor.fetchall()]
         
-        cursor.execute("SELECT DISTINCT responsables FROM plan_anual_trabajo WHERE responsables IS NOT NULL")
+        cursor.execute("SELECT DISTINCT responsables FROM actividades_pesv WHERE responsables IS NOT NULL")
         responsables_disponibles = set()
         for row in cursor.fetchall():
             if row[0]:
-                # Separar por comas y limpiar
                 for r in row[0].split('-'):
                     responsables_disponibles.add(r.strip())
         responsables_disponibles = sorted(list(responsables_disponibles))
@@ -2142,7 +2110,7 @@ def sst_plan_anual_actividades():
         cursor.close()
         conn.close()
         
-        return render_template('sst/plan_anual_actividades.html',
+        return render_template('plan_anual_actividades.html',
                              actividades=actividades,
                              ciclos=ciclos_disponibles,
                              responsables_list=responsables_disponibles,
@@ -2156,7 +2124,7 @@ def sst_plan_anual_actividades():
         logger.error(f"Error en sst_plan_anual_actividades: {e}")
         return redirect(url_for('sst_plan_anual'))
 
-@app.route('/sst/plan-anual/actividad/<int:id>')
+@app.route('/sst/plan-anual/actividades/<int:id>')
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
 def sst_plan_anual_actividad_detalle(id):
@@ -2169,154 +2137,528 @@ def sst_plan_anual_actividad_detalle(id):
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Obtener actividad completa
-        cursor.execute("""
-            SELECT * FROM plan_anual_trabajo WHERE id = %s
-        """, (id,))
-        actividad = cursor.fetchone()
+        # Obtener actividad
+        cursor.execute("SELECT * FROM actividades_pesv WHERE id = %s", (id,))
+        actividad_data = cursor.fetchone()
         
-        if not actividad:
+        if not actividad_data:
             flash('Actividad no encontrada', 'error')
             return redirect(url_for('sst_plan_anual_actividades'))
         
-        # Obtener evidencias asociadas
+        # Crear diccionario con la actividad
+        actividad = {
+            'id': actividad_data[0],
+            'actividad': actividad_data[1],
+            'evidencia': actividad_data[2],
+            'ciclo': actividad_data[3],
+            'articulo': actividad_data[4],
+            'nivel': actividad_data[5],
+            'responsables': actividad_data[6],
+            'recursos': actividad_data[7],
+            'estado': actividad_data[8],
+            'avance': actividad_data[9],
+            'observaciones': actividad_data[10],
+            'fecha_creacion': actividad_data[11],
+            'fecha_actualizacion': actividad_data[12]
+        }
+        
+        # Obtener cronograma
         cursor.execute("""
-            SELECT id, titulo, descripcion, archivo_nombre, fecha_carga
-            FROM plan_evidencias
-            WHERE plan_id = %s
-            ORDER BY fecha_carga DESC
+            SELECT * FROM cronograma_pesv 
+            WHERE actividad_id = %s 
+            ORDER BY 
+                CASE mes
+                    WHEN 'enero' THEN 1
+                    WHEN 'febrero' THEN 2
+                    WHEN 'marzo' THEN 3
+                    WHEN 'abril' THEN 4
+                    WHEN 'mayo' THEN 5
+                    WHEN 'junio' THEN 6
+                    WHEN 'julio' THEN 7
+                    WHEN 'agosto' THEN 8
+                    WHEN 'septiembre' THEN 9
+                    WHEN 'octubre' THEN 10
+                    WHEN 'noviembre' THEN 11
+                    WHEN 'diciembre' THEN 12
+                END
+        """, (id,))
+        cronograma_rows = cursor.fetchall()
+        
+        # Formatear cronograma
+        cronograma = {}
+        meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+        
+        for mes in meses:
+            cronograma[mes] = []
+            row = next((r for r in cronograma_rows if r['mes'] == mes), None)
+            
+            if row:
+                for i in range(1, 5):
+                    cronograma[mes].append({
+                        'semana': i,
+                        'planificado': bool(row[f'semana{i}_planificado']),
+                        'ejecutado': bool(row[f'semana{i}_ejecutado'])
+                    })
+            else:
+                # Si no hay registro, crear semanas vacías
+                for i in range(1, 5):
+                    cronograma[mes].append({
+                        'semana': i,
+                        'planificado': False,
+                        'ejecutado': False
+                    })
+        
+        # Obtener evidencias
+        cursor.execute("""
+            SELECT id, titulo, descripcion, archivo_nombre, archivo_ruta, fecha_subida
+            FROM evidencias_pesv
+            WHERE actividad_id = %s
+            ORDER BY fecha_subida DESC
         """, (id,))
         evidencias = cursor.fetchall()
         
         # Obtener seguimientos
         cursor.execute("""
-            SELECT s.id, s.comentario, s.tipo, s.fecha_registro, u.usuario
-            FROM plan_seguimiento s
-            JOIN usuarios u ON s.usuario_id = u.id
-            WHERE s.plan_id = %s
-            ORDER BY s.fecha_registro DESC
+            SELECT s.id, s.tipo, s.comentario, u.usuario, s.fecha
+            FROM seguimiento_pesv s
+            LEFT JOIN usuarios u ON s.usuario = u.usuario
+            WHERE s.actividad_id = %s
+            ORDER BY s.fecha DESC
         """, (id,))
         seguimientos = cursor.fetchall()
         
         cursor.close()
         conn.close()
         
-        # Estructurar cronograma por meses
-        meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-                'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-        
-        cronograma = {}
-        col_offset = 7  # Las columnas de meses empiezan después de los campos básicos
-        
-        for i, mes in enumerate(meses):
-            cronograma[mes] = []
-            for semana in range(1, 5):
-                idx_p = col_offset + (i * 8) + ((semana - 1) * 2)
-                idx_e = idx_p + 1
-                cronograma[mes].append({
-                    'semana': semana,
-                    'planificado': actividad[idx_p] if idx_p < len(actividad) else False,
-                    'ejecutado': actividad[idx_e] if idx_e < len(actividad) else False
-                })
-        
-        return render_template('sst/plan_anual_detalle.html',
+        return render_template('plan_anual_detalle.html',
                              actividad=actividad,
+                             cronograma=cronograma,
                              evidencias=evidencias,
-                             seguimientos=seguimientos,
-                             cronograma=cronograma)
+                             seguimientos=seguimientos)
         
     except Exception as e:
         flash(f'Error al cargar el detalle: {str(e)}', 'error')
         logger.error(f"Error en sst_plan_anual_actividad_detalle: {e}")
         return redirect(url_for('sst_plan_anual_actividades'))
 
-@app.route('/sst/plan-anual/actividad/<int:id>/actualizar', methods=['POST'])
+@app.route('/sst/plan-anual/nueva', methods=['GET', 'POST'])
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
-def sst_plan_anual_actualizar_actividad(id):
-    """Actualizar estado de ejecución de una actividad"""
+def sst_plan_anual_nueva():
+    """Crear nueva actividad"""
     if not current_user.puede('gestionar_plan_anual'):
-        flash('No tienes permisos para modificar el plan anual', 'error')
+        flash('No tienes permisos para gestionar el plan anual', 'error')
+        return redirect(url_for('sst_plan_anual'))
+    
+    if request.method == 'POST':
+        try:
+            conn = crear_conexion()
+            cursor = conn.cursor()
+            
+            # Obtener datos del formulario
+            datos = {
+                'actividad': request.form.get('actividad'),
+                'evidencia': request.form.get('evidencia'),
+                'ciclo': request.form.get('ciclo'),
+                'articulo': request.form.get('articulo'),
+                'nivel': request.form.get('nivel'),
+                'responsables': request.form.get('responsables'),
+                'recursos': request.form.get('recursos'),
+                'observaciones': request.form.get('observaciones'),
+                'estado': 'pendiente',
+                'avance': 0
+            }
+            
+            # Insertar actividad
+            cursor.execute("""
+                INSERT INTO actividades_pesv 
+                (actividad, evidencia, ciclo, articulo, nivel, responsables, 
+                 recursos, observaciones, estado, avance)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (
+                datos['actividad'], datos['evidencia'], datos['ciclo'], 
+                datos['articulo'], datos['nivel'], datos['responsables'],
+                datos['recursos'], datos['observaciones'], datos['estado'], 
+                datos['avance']
+            ))
+            
+            actividad_id = cursor.fetchone()[0]
+            
+            # Crear registros de cronograma para cada mes
+            meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+            
+            for mes in meses:
+                cursor.execute("""
+                    INSERT INTO cronograma_pesv (actividad_id, mes)
+                    VALUES (%s, %s)
+                """, (actividad_id, mes))
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            flash('Actividad creada exitosamente', 'success')
+            return redirect(url_for('sst_plan_anual_actividad_detalle', id=actividad_id))
+            
+        except Exception as e:
+            flash(f'Error al crear actividad: {str(e)}', 'error')
+            logger.error(f"Error en sst_plan_anual_nueva: {e}")
+    
+    # GET: Mostrar formulario
+    return render_template('plan_anual_nueva.html')
+
+@app.route('/sst/plan-anual/editar/<int:id>', methods=['GET', 'POST'])
+@login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
+def sst_plan_anual_editar(id):
+    """Editar actividad existente"""
+    if not current_user.puede('gestionar_plan_anual'):
+        flash('No tienes permisos para gestionar el plan anual', 'error')
         return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
     
     try:
-        # Obtener datos del formulario
-        mes = request.form.get('mes')
-        semana = request.form.get('semana')
-        ejecutado = request.form.get('ejecutado') == 'true'
-        
-        if not mes or not semana:
-            flash('Datos incompletos', 'error')
-            return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
-        
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Actualizar la semana específica
-        columna = f"{mes}_semana{semana}_e"
-        query = f"""
-            UPDATE plan_anual_trabajo 
-            SET {columna} = %s,
-                fecha_actualizacion = CURRENT_TIMESTAMP,
-                usuario_actualizacion = %s
-            WHERE id = %s
-        """
+        if request.method == 'POST':
+            # Actualizar actividad
+            datos = {
+                'actividad': request.form.get('actividad'),
+                'evidencia': request.form.get('evidencia'),
+                'ciclo': request.form.get('ciclo'),
+                'articulo': request.form.get('articulo'),
+                'nivel': request.form.get('nivel'),
+                'responsables': request.form.get('responsables'),
+                'recursos': request.form.get('recursos'),
+                'observaciones': request.form.get('observaciones'),
+                'estado': request.form.get('estado', 'pendiente'),
+                'id': id
+            }
+            
+            cursor.execute("""
+                UPDATE actividades_pesv 
+                SET actividad = %s, evidencia = %s, ciclo = %s, articulo = %s, 
+                    nivel = %s, responsables = %s, recursos = %s, 
+                    observaciones = %s, estado = %s, fecha_actualizacion = CURRENT_TIMESTAMP
+                WHERE id = %s
+            """, (
+                datos['actividad'], datos['evidencia'], datos['ciclo'], 
+                datos['articulo'], datos['nivel'], datos['responsables'],
+                datos['recursos'], datos['observaciones'], datos['estado'], id
+            ))
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            flash('Actividad actualizada exitosamente', 'success')
+            return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
         
-        cursor.execute(query, (ejecutado, current_user.id, id))
+        # GET: Mostrar formulario con datos actuales
+        cursor.execute("SELECT * FROM actividades_pesv WHERE id = %s", (id,))
+        actividad_data = cursor.fetchone()
+        cursor.close()
+        conn.close()
         
-        # Recalcular porcentaje y estado
-        cursor.execute("""
-            SELECT 
-                (SELECT COUNT(*) FROM (
-                    SELECT enero_semana1_p, enero_semana2_p, enero_semana3_p, enero_semana4_p,
-                           febrero_semana1_p, febrero_semana2_p, febrero_semana3_p, febrero_semana4_p,
-                           marzo_semana1_p, marzo_semana2_p, marzo_semana3_p, marzo_semana4_p,
-                           abril_semana1_p, abril_semana2_p, abril_semana3_p, abril_semana4_p,
-                           mayo_semana1_p, mayo_semana2_p, mayo_semana3_p, mayo_semana4_p,
-                           junio_semana1_p, junio_semana2_p, junio_semana3_p, junio_semana4_p,
-                           julio_semana1_p, julio_semana2_p, julio_semana3_p, julio_semana4_p,
-                           agosto_semana1_p, agosto_semana2_p, agosto_semana3_p, agosto_semana4_p,
-                           septiembre_semana1_p, septiembre_semana2_p, septiembre_semana3_p, septiembre_semana4_p,
-                           octubre_semana1_p, octubre_semana2_p, octubre_semana3_p, octubre_semana4_p,
-                           noviembre_semana1_p, noviembre_semana2_p, noviembre_semana3_p, noviembre_semana4_p,
-                           diciembre_semana1_p, diciembre_semana2_p, diciembre_semana3_p, diciembre_semana4_p
-                    FROM plan_anual_trabajo WHERE id = %s
-                ) AS p WHERE TRUE IN (
-                    enero_semana1_p, enero_semana2_p, enero_semana3_p, enero_semana4_p,
-                    febrero_semana1_p, febrero_semana2_p, febrero_semana3_p, febrero_semana4_p,
-                    marzo_semana1_p, marzo_semana2_p, marzo_semana3_p, marzo_semana4_p,
-                    abril_semana1_p, abril_semana2_p, abril_semana3_p, abril_semana4_p,
-                    mayo_semana1_p, mayo_semana2_p, mayo_semana3_p, mayo_semana4_p,
-                    junio_semana1_p, junio_semana2_p, junio_semana3_p, junio_semana4_p,
-                    julio_semana1_p, julio_semana2_p, julio_semana3_p, julio_semana4_p,
-                    agosto_semana1_p, agosto_semana2_p, agosto_semana3_p, agosto_semana4_p,
-                    septiembre_semana1_p, septiembre_semana2_p, septiembre_semana3_p, septiembre_semana4_p,
-                    octubre_semana1_p, octubre_semana2_p, octubre_semana3_p, octubre_semana4_p,
-                    noviembre_semana1_p, noviembre_semana2_p, noviembre_semana3_p, noviembre_semana4_p,
-                    diciembre_semana1_p, diciembre_semana2_p, diciembre_semana3_p, diciembre_semana4_p
-                )) as planificadas
-        """, (id,))
+        if not actividad_data:
+            flash('Actividad no encontrada', 'error')
+            return redirect(url_for('sst_plan_anual_actividades'))
         
-        # Actualizar estado basado en ejecución
-        nuevo_estado = 'en_proceso' if ejecutado else 'pendiente'
+        actividad = {
+            'id': actividad_data[0],
+            'actividad': actividad_data[1],
+            'evidencia': actividad_data[2],
+            'ciclo': actividad_data[3],
+            'articulo': actividad_data[4],
+            'nivel': actividad_data[5],
+            'responsables': actividad_data[6],
+            'recursos': actividad_data[7],
+            'estado': actividad_data[8],
+            'avance': actividad_data[9],
+            'observaciones': actividad_data[10]
+        }
         
-        cursor.execute("""
-            UPDATE plan_anual_trabajo
-            SET estado = %s
-            WHERE id = %s
-        """, (nuevo_estado, id))
+        return render_template('plan_anual_editar.html', actividad=actividad)
+        
+    except Exception as e:
+        flash(f'Error al editar actividad: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_editar: {e}")
+        return redirect(url_for('sst_plan_anual_actividades'))
+
+@app.route('/sst/plan-anual/eliminar/<int:id>', methods=['POST'])
+@login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
+def sst_plan_anual_eliminar(id):
+    """Eliminar actividad"""
+    if not current_user.puede('gestionar_plan_anual'):
+        flash('No tienes permisos para gestionar el plan anual', 'error')
+        return redirect(url_for('sst_plan_anual_actividades'))
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Verificar que existe
+        cursor.execute("SELECT id FROM actividades_pesv WHERE id = %s", (id,))
+        if not cursor.fetchone():
+            flash('Actividad no encontrada', 'error')
+            return redirect(url_for('sst_plan_anual_actividades'))
+        
+        # Eliminar registros relacionados (en el orden correcto por FK)
+        cursor.execute("DELETE FROM cronograma_pesv WHERE actividad_id = %s", (id,))
+        cursor.execute("DELETE FROM evidencias_pesv WHERE actividad_id = %s", (id,))
+        cursor.execute("DELETE FROM seguimiento_pesv WHERE actividad_id = %s", (id,))
+        
+        # Eliminar actividad
+        cursor.execute("DELETE FROM actividades_pesv WHERE id = %s", (id,))
         
         conn.commit()
         cursor.close()
         conn.close()
         
-        flash('Actividad actualizada exitosamente', 'success')
+        flash('Actividad eliminada exitosamente', 'success')
         
     except Exception as e:
-        flash(f'Error al actualizar: {str(e)}', 'error')
-        logger.error(f"Error en sst_plan_anual_actualizar_actividad: {e}")
+        flash(f'Error al eliminar actividad: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_eliminar: {e}")
     
-    return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
+    return redirect(url_for('sst_plan_anual_actividades'))
+
+@app.route('/sst/plan-anual/cronograma')
+@login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
+def sst_plan_anual_cronograma():
+    """Vista de cronograma completo tipo Gantt"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Obtener todas las actividades con su cronograma
+        cursor.execute("""
+            SELECT 
+                a.id, a.actividad, a.ciclo, a.responsables, a.estado, a.avance,
+                c.enero_semana1_p, c.enero_semana1_e, c.enero_semana2_p, c.enero_semana2_e,
+                c.enero_semana3_p, c.enero_semana3_e, c.enero_semana4_p, c.enero_semana4_e,
+                c.febrero_semana1_p, c.febrero_semana1_e, c.febrero_semana2_p, c.febrero_semana2_e,
+                c.febrero_semana3_p, c.febrero_semana3_e, c.febrero_semana4_p, c.febrero_semana4_e,
+                c.marzo_semana1_p, c.marzo_semana1_e, c.marzo_semana2_p, c.marzo_semana2_e,
+                c.marzo_semana3_p, c.marzo_semana3_e, c.marzo_semana4_p, c.marzo_semana4_e,
+                c.abril_semana1_p, c.abril_semana1_e, c.abril_semana2_p, c.abril_semana2_e,
+                c.abril_semana3_p, c.abril_semana3_e, c.abril_semana4_p, c.abril_semana4_e,
+                c.mayo_semana1_p, c.mayo_semana1_e, c.mayo_semana2_p, c.mayo_semana2_e,
+                c.mayo_semana3_p, c.mayo_semana3_e, c.mayo_semana4_p, c.mayo_semana4_e,
+                c.junio_semana1_p, c.junio_semana1_e, c.junio_semana2_p, c.junio_semana2_e,
+                c.junio_semana3_p, c.junio_semana3_e, c.junio_semana4_p, c.junio_semana4_e,
+                c.julio_semana1_p, c.julio_semana1_e, c.julio_semana2_p, c.julio_semana2_e,
+                c.julio_semana3_p, c.julio_semana3_e, c.julio_semana4_p, c.julio_semana4_e,
+                c.agosto_semana1_p, c.agosto_semana1_e, c.agosto_semana2_p, c.agosto_semana2_e,
+                c.agosto_semana3_p, c.agosto_semana3_e, c.agosto_semana4_p, c.agosto_semana4_e,
+                c.septiembre_semana1_p, c.septiembre_semana1_e, c.septiembre_semana2_p, c.septiembre_semana2_e,
+                c.septiembre_semana3_p, c.septiembre_semana3_e, c.septiembre_semana4_p, c.septiembre_semana4_e,
+                c.octubre_semana1_p, c.octubre_semana1_e, c.octubre_semana2_p, c.octubre_semana2_e,
+                c.octubre_semana3_p, c.octubre_semana3_e, c.octubre_semana4_p, c.octubre_semana4_e,
+                c.noviembre_semana1_p, c.noviembre_semana1_e, c.noviembre_semana2_p, c.noviembre_semana2_e,
+                c.noviembre_semana3_p, c.noviembre_semana3_e, c.noviembre_semana4_p, c.noviembre_semana4_e,
+                c.diciembre_semana1_p, c.diciembre_semana1_e, c.diciembre_semana2_p, c.diciembre_semana2_e,
+                c.diciembre_semana3_p, c.diciembre_semana3_e, c.diciembre_semana4_p, c.diciembre_semana4_e
+            FROM actividades_pesv a
+            LEFT JOIN (
+                SELECT actividad_id,
+                    MAX(CASE WHEN mes = 'enero' THEN semana1_planificado END) as enero_semana1_p,
+                    MAX(CASE WHEN mes = 'enero' THEN semana1_ejecutado END) as enero_semana1_e,
+                    MAX(CASE WHEN mes = 'enero' THEN semana2_planificado END) as enero_semana2_p,
+                    MAX(CASE WHEN mes = 'enero' THEN semana2_ejecutado END) as enero_semana2_e,
+                    MAX(CASE WHEN mes = 'enero' THEN semana3_planificado END) as enero_semana3_p,
+                    MAX(CASE WHEN mes = 'enero' THEN semana3_ejecutado END) as enero_semana3_e,
+                    MAX(CASE WHEN mes = 'enero' THEN semana4_planificado END) as enero_semana4_p,
+                    MAX(CASE WHEN mes = 'enero' THEN semana4_ejecutado END) as enero_semana4_e,
+                    MAX(CASE WHEN mes = 'febrero' THEN semana1_planificado END) as febrero_semana1_p,
+                    MAX(CASE WHEN mes = 'febrero' THEN semana1_ejecutado END) as febrero_semana1_e,
+                    MAX(CASE WHEN mes = 'febrero' THEN semana2_planificado END) as febrero_semana2_p,
+                    MAX(CASE WHEN mes = 'febrero' THEN semana2_ejecutado END) as febrero_semana2_e,
+                    MAX(CASE WHEN mes = 'febrero' THEN semana3_planificado END) as febrero_semana3_p,
+                    MAX(CASE WHEN mes = 'febrero' THEN semana3_ejecutado END) as febrero_semana3_e,
+                    MAX(CASE WHEN mes = 'febrero' THEN semana4_planificado END) as febrero_semana4_p,
+                    MAX(CASE WHEN mes = 'febrero' THEN semana4_ejecutado END) as febrero_semana4_e,
+                    MAX(CASE WHEN mes = 'marzo' THEN semana1_planificado END) as marzo_semana1_p,
+                    MAX(CASE WHEN mes = 'marzo' THEN semana1_ejecutado END) as marzo_semana1_e,
+                    MAX(CASE WHEN mes = 'marzo' THEN semana2_planificado END) as marzo_semana2_p,
+                    MAX(CASE WHEN mes = 'marzo' THEN semana2_ejecutado END) as marzo_semana2_e,
+                    MAX(CASE WHEN mes = 'marzo' THEN semana3_planificado END) as marzo_semana3_p,
+                    MAX(CASE WHEN mes = 'marzo' THEN semana3_ejecutado END) as marzo_semana3_e,
+                    MAX(CASE WHEN mes = 'marzo' THEN semana4_planificado END) as marzo_semana4_p,
+                    MAX(CASE WHEN mes = 'marzo' THEN semana4_ejecutado END) as marzo_semana4_e,
+                    MAX(CASE WHEN mes = 'abril' THEN semana1_planificado END) as abril_semana1_p,
+                    MAX(CASE WHEN mes = 'abril' THEN semana1_ejecutado END) as abril_semana1_e,
+                    MAX(CASE WHEN mes = 'abril' THEN semana2_planificado END) as abril_semana2_p,
+                    MAX(CASE WHEN mes = 'abril' THEN semana2_ejecutado END) as abril_semana2_e,
+                    MAX(CASE WHEN mes = 'abril' THEN semana3_planificado END) as abril_semana3_p,
+                    MAX(CASE WHEN mes = 'abril' THEN semana3_ejecutado END) as abril_semana3_e,
+                    MAX(CASE WHEN mes = 'abril' THEN semana4_planificado END) as abril_semana4_p,
+                    MAX(CASE WHEN mes = 'abril' THEN semana4_ejecutado END) as abril_semana4_e,
+                    MAX(CASE WHEN mes = 'mayo' THEN semana1_planificado END) as mayo_semana1_p,
+                    MAX(CASE WHEN mes = 'mayo' THEN semana1_ejecutado END) as mayo_semana1_e,
+                    MAX(CASE WHEN mes = 'mayo' THEN semana2_planificado END) as mayo_semana2_p,
+                    MAX(CASE WHEN mes = 'mayo' THEN semana2_ejecutado END) as mayo_semana2_e,
+                    MAX(CASE WHEN mes = 'mayo' THEN semana3_planificado END) as mayo_semana3_p,
+                    MAX(CASE WHEN mes = 'mayo' THEN semana3_ejecutado END) as mayo_semana3_e,
+                    MAX(CASE WHEN mes = 'mayo' THEN semana4_planificado END) as mayo_semana4_p,
+                    MAX(CASE WHEN mes = 'mayo' THEN semana4_ejecutado END) as mayo_semana4_e,
+                    MAX(CASE WHEN mes = 'junio' THEN semana1_planificado END) as junio_semana1_p,
+                    MAX(CASE WHEN mes = 'junio' THEN semana1_ejecutado END) as junio_semana1_e,
+                    MAX(CASE WHEN mes = 'junio' THEN semana2_planificado END) as junio_semana2_p,
+                    MAX(CASE WHEN mes = 'junio' THEN semana2_ejecutado END) as junio_semana2_e,
+                    MAX(CASE WHEN mes = 'junio' THEN semana3_planificado END) as junio_semana3_p,
+                    MAX(CASE WHEN mes = 'junio' THEN semana3_ejecutado END) as junio_semana3_e,
+                    MAX(CASE WHEN mes = 'junio' THEN semana4_planificado END) as junio_semana4_p,
+                    MAX(CASE WHEN mes = 'junio' THEN semana4_ejecutado END) as junio_semana4_e,
+                    MAX(CASE WHEN mes = 'julio' THEN semana1_planificado END) as julio_semana1_p,
+                    MAX(CASE WHEN mes = 'julio' THEN semana1_ejecutado END) as julio_semana1_e,
+                    MAX(CASE WHEN mes = 'julio' THEN semana2_planificado END) as julio_semana2_p,
+                    MAX(CASE WHEN mes = 'julio' THEN semana2_ejecutado END) as julio_semana2_e,
+                    MAX(CASE WHEN mes = 'julio' THEN semana3_planificado END) as julio_semana3_p,
+                    MAX(CASE WHEN mes = 'julio' THEN semana3_ejecutado END) as julio_semana3_e,
+                    MAX(CASE WHEN mes = 'julio' THEN semana4_planificado END) as julio_semana4_p,
+                    MAX(CASE WHEN mes = 'julio' THEN semana4_ejecutado END) as julio_semana4_e,
+                    MAX(CASE WHEN mes = 'agosto' THEN semana1_planificado END) as agosto_semana1_p,
+                    MAX(CASE WHEN mes = 'agosto' THEN semana1_ejecutado END) as agosto_semana1_e,
+                    MAX(CASE WHEN mes = 'agosto' THEN semana2_planificado END) as agosto_semana2_p,
+                    MAX(CASE WHEN mes = 'agosto' THEN semana2_ejecutado END) as agosto_semana2_e,
+                    MAX(CASE WHEN mes = 'agosto' THEN semana3_planificado END) as agosto_semana3_p,
+                    MAX(CASE WHEN mes = 'agosto' THEN semana3_ejecutado END) as agosto_semana3_e,
+                    MAX(CASE WHEN mes = 'agosto' THEN semana4_planificado END) as agosto_semana4_p,
+                    MAX(CASE WHEN mes = 'agosto' THEN semana4_ejecutado END) as agosto_semana4_e,
+                    MAX(CASE WHEN mes = 'septiembre' THEN semana1_planificado END) as septiembre_semana1_p,
+                    MAX(CASE WHEN mes = 'septiembre' THEN semana1_ejecutado END) as septiembre_semana1_e,
+                    MAX(CASE WHEN mes = 'septiembre' THEN semana2_planificado END) as septiembre_semana2_p,
+                    MAX(CASE WHEN mes = 'septiembre' THEN semana2_ejecutado END) as septiembre_semana2_e,
+                    MAX(CASE WHEN mes = 'septiembre' THEN semana3_planificado END) as septiembre_semana3_p,
+                    MAX(CASE WHEN mes = 'septiembre' THEN semana3_ejecutado END) as septiembre_semana3_e,
+                    MAX(CASE WHEN mes = 'septiembre' THEN semana4_planificado END) as septiembre_semana4_p,
+                    MAX(CASE WHEN mes = 'septiembre' THEN semana4_ejecutado END) as septiembre_semana4_e,
+                    MAX(CASE WHEN mes = 'octubre' THEN semana1_planificado END) as octubre_semana1_p,
+                    MAX(CASE WHEN mes = 'octubre' THEN semana1_ejecutado END) as octubre_semana1_e,
+                    MAX(CASE WHEN mes = 'octubre' THEN semana2_planificado END) as octubre_semana2_p,
+                    MAX(CASE WHEN mes = 'octubre' THEN semana2_ejecutado END) as octubre_semana2_e,
+                    MAX(CASE WHEN mes = 'octubre' THEN semana3_planificado END) as octubre_semana3_p,
+                    MAX(CASE WHEN mes = 'octubre' THEN semana3_ejecutado END) as octubre_semana3_e,
+                    MAX(CASE WHEN mes = 'octubre' THEN semana4_planificado END) as octubre_semana4_p,
+                    MAX(CASE WHEN mes = 'octubre' THEN semana4_ejecutado END) as octubre_semana4_e,
+                    MAX(CASE WHEN mes = 'noviembre' THEN semana1_planificado END) as noviembre_semana1_p,
+                    MAX(CASE WHEN mes = 'noviembre' THEN semana1_ejecutado END) as noviembre_semana1_e,
+                    MAX(CASE WHEN mes = 'noviembre' THEN semana2_planificado END) as noviembre_semana2_p,
+                    MAX(CASE WHEN mes = 'noviembre' THEN semana2_ejecutado END) as noviembre_semana2_e,
+                    MAX(CASE WHEN mes = 'noviembre' THEN semana3_planificado END) as noviembre_semana3_p,
+                    MAX(CASE WHEN mes = 'noviembre' THEN semana3_ejecutado END) as noviembre_semana3_e,
+                    MAX(CASE WHEN mes = 'noviembre' THEN semana4_planificado END) as noviembre_semana4_p,
+                    MAX(CASE WHEN mes = 'noviembre' THEN semana4_ejecutado END) as noviembre_semana4_e,
+                    MAX(CASE WHEN mes = 'diciembre' THEN semana1_planificado END) as diciembre_semana1_p,
+                    MAX(CASE WHEN mes = 'diciembre' THEN semana1_ejecutado END) as diciembre_semana1_e,
+                    MAX(CASE WHEN mes = 'diciembre' THEN semana2_planificado END) as diciembre_semana2_p,
+                    MAX(CASE WHEN mes = 'diciembre' THEN semana2_ejecutado END) as diciembre_semana2_e,
+                    MAX(CASE WHEN mes = 'diciembre' THEN semana3_planificado END) as diciembre_semana3_p,
+                    MAX(CASE WHEN mes = 'diciembre' THEN semana3_ejecutado END) as diciembre_semana3_e,
+                    MAX(CASE WHEN mes = 'diciembre' THEN semana4_planificado END) as diciembre_semana4_p,
+                    MAX(CASE WHEN mes = 'diciembre' THEN semana4_ejecutado END) as diciembre_semana4_e
+                FROM cronograma_pesv
+                GROUP BY actividad_id
+            ) c ON a.id = c.actividad_id
+            ORDER BY a.ciclo, a.id
+        """)
+        actividades = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return render_template('plan_anual_cronograma.html',
+                             actividades=actividades)
+        
+    except Exception as e:
+        flash(f'Error al cargar cronograma: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_cronograma: {e}")
+        return redirect(url_for('sst_plan_anual'))
+
+@app.route('/sst/plan-anual/actualizar-semana/<int:id>', methods=['POST'])
+@login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
+def sst_plan_anual_actualizar_semana(id):
+    """Actualizar estado de una semana en el cronograma"""
+    if not current_user.puede('gestionar_plan_anual'):
+        return jsonify({'success': False, 'error': 'No tienes permisos'})
+    
+    try:
+        mes = request.form.get('mes')
+        semana = request.form.get('semana')
+        ejecutado = request.form.get('ejecutado') == 'true'
+        
+        if not mes or not semana:
+            return jsonify({'success': False, 'error': 'Datos incompletos'})
+        
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Actualizar cronograma
+        cursor.execute(f"""
+            UPDATE cronograma_pesv 
+            SET semana{semana}_ejecutado = %s
+            WHERE actividad_id = %s AND mes = %s
+        """, (ejecutado, id, mes))
+        
+        # Recalcular avance general
+        cursor.execute("""
+            SELECT 
+                (SELECT COUNT(*) FROM cronograma_pesv 
+                 WHERE actividad_id = %s 
+                 AND (semana1_planificado = true OR semana2_planificado = true 
+                      OR semana3_planificado = true OR semana4_planificado = true)) as total_semanas_planificadas,
+                (SELECT COUNT(*) FROM cronograma_pesv 
+                 WHERE actividad_id = %s 
+                 AND (semana1_ejecutado = true OR semana2_ejecutado = true 
+                      OR semana3_ejecutado = true OR semana4_ejecutado = true)) as total_semanas_ejecutadas
+        """, (id, id))
+        
+        resultado = cursor.fetchone()
+        total_planificadas = resultado[0] or 0
+        total_ejecutadas = resultado[1] or 0
+        
+        nuevo_avance = 0
+        if total_planificadas > 0:
+            nuevo_avance = int((total_ejecutadas / total_planificadas) * 100)
+        
+        # Actualizar estado basado en avance
+        nuevo_estado = 'pendiente'
+        if nuevo_avance >= 100:
+            nuevo_estado = 'completado'
+        elif nuevo_avance > 0:
+            nuevo_estado = 'en_proceso'
+        
+        # Actualizar actividad
+        cursor.execute("""
+            UPDATE actividades_pesv 
+            SET avance = %s, estado = %s, fecha_actualizacion = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (nuevo_avance, nuevo_estado, id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'avance': nuevo_avance,
+            'estado': nuevo_estado
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en sst_plan_anual_actualizar_semana: {e}")
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/sst/plan-anual/actividad/<int:id>/evidencia', methods=['POST'])
 @login_required
@@ -2349,21 +2691,19 @@ def sst_plan_anual_agregar_evidencia(id):
         
         if archivo_data:
             cursor.execute("""
-                INSERT INTO plan_evidencias (
-                    plan_id, titulo, descripcion, archivo_nombre, archivo_tipo,
-                    archivo_tamano, archivo_data, usuario_id
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO evidencias_pesv (
+                    actividad_id, titulo, descripcion, archivo_nombre, archivo_ruta
+                ) VALUES (%s, %s, %s, %s, %s)
             """, (
                 id, titulo, descripcion, archivo_data['nombre'],
-                archivo_data['tipo'], archivo_data['tamano'],
-                psycopg2.Binary(archivo_data['data']), current_user.id
+                archivo_data['nombre']  # En este caso, usamos el nombre como ruta
             ))
         else:
             cursor.execute("""
-                INSERT INTO plan_evidencias (
-                    plan_id, titulo, descripcion, usuario_id
-                ) VALUES (%s, %s, %s, %s)
-            """, (id, titulo, descripcion, current_user.id))
+                INSERT INTO evidencias_pesv (
+                    actividad_id, titulo, descripcion
+                ) VALUES (%s, %s, %s)
+            """, (id, titulo, descripcion))
         
         conn.commit()
         cursor.close()
@@ -2377,133 +2717,305 @@ def sst_plan_anual_agregar_evidencia(id):
     
     return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
 
-@app.route('/sst/plan-anual/cronograma')
+@app.route('/sst/plan-anual/actividad/<int:id>/seguimiento', methods=['POST'])
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
-def sst_plan_anual_cronograma():
-    """Vista de cronograma completo tipo Gantt"""
+def sst_plan_anual_agregar_seguimiento(id):
+    """Agregar comentario de seguimiento a una actividad"""
+    if not current_user.puede('gestionar_plan_anual'):
+        flash('No tienes permisos para agregar seguimiento', 'error')
+        return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
+    
+    try:
+        comentario = request.form.get('comentario', '').strip()
+        tipo = request.form.get('tipo', 'comentario')
+        
+        if not comentario:
+            flash('El comentario es obligatorio', 'error')
+            return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
+        
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO seguimiento_pesv (
+                actividad_id, tipo, comentario, usuario
+            ) VALUES (%s, %s, %s, %s)
+        """, (id, tipo, comentario, current_user.usuario))
+        
+        # Actualizar fecha de actualización de la actividad
+        cursor.execute("""
+            UPDATE actividades_pesv 
+            SET fecha_actualizacion = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (id,))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        flash('Seguimiento agregado exitosamente', 'success')
+        
+    except Exception as e:
+        flash(f'Error al agregar seguimiento: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_agregar_seguimiento: {e}")
+    
+    return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
+
+# ===== API PARA LOCALSTORAGE (OPCIONAL) =====
+@app.route('/api/pesv/actividades', methods=['GET'])
+@login_required
+def api_pesv_actividades():
+    """API para obtener actividades (para localStorage)"""
     if not current_user.puede('acceder_sst'):
-        flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+        return jsonify({'success': False, 'error': 'No autorizado'})
     
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
-        
-        # Obtener todas las actividades con su programación
-        cursor.execute("""
-            SELECT 
-                id, actividad, ciclo_phva, responsables, estado,
-                enero_semana1_p, enero_semana1_e, enero_semana2_p, enero_semana2_e,
-                enero_semana3_p, enero_semana3_e, enero_semana4_p, enero_semana4_e,
-                febrero_semana1_p, febrero_semana1_e, febrero_semana2_p, febrero_semana2_e,
-                febrero_semana3_p, febrero_semana3_e, febrero_semana4_p, febrero_semana4_e,
-                marzo_semana1_p, marzo_semana1_e, marzo_semana2_p, marzo_semana2_e,
-                marzo_semana3_p, marzo_semana3_e, marzo_semana4_p, marzo_semana4_e,
-                abril_semana1_p, abril_semana1_e, abril_semana2_p, abril_semana2_e,
-                abril_semana3_p, abril_semana3_e, abril_semana4_p, abril_semana4_e,
-                mayo_semana1_p, mayo_semana1_e, mayo_semana2_p, mayo_semana2_e,
-                mayo_semana3_p, mayo_semana3_e, mayo_semana4_p, mayo_semana4_e,
-                junio_semana1_p, junio_semana1_e, junio_semana2_p, junio_semana2_e,
-                junio_semana3_p, junio_semana3_e, junio_semana4_p, junio_semana4_e,
-                julio_semana1_p, julio_semana1_e, julio_semana2_p, julio_semana2_e,
-                julio_semana3_p, julio_semana3_e, julio_semana4_p, julio_semana4_e,
-                agosto_semana1_p, agosto_semana1_e, agosto_semana2_p, agosto_semana2_e,
-                agosto_semana3_p, agosto_semana3_e, agosto_semana4_p, agosto_semana4_e,
-                septiembre_semana1_p, septiembre_semana1_e, septiembre_semana2_p, septiembre_semana2_e,
-                septiembre_semana3_p, septiembre_semana3_e, septiembre_semana4_p, septiembre_semana4_e,
-                octubre_semana1_p, octubre_semana1_e, octubre_semana2_p, octubre_semana2_e,
-                octubre_semana3_p, octubre_semana3_e, octubre_semana4_p, octubre_semana4_e,
-                noviembre_semana1_p, noviembre_semana1_e, noviembre_semana2_p, noviembre_semana2_e,
-                noviembre_semana3_p, noviembre_semana3_e, noviembre_semana4_p, noviembre_semana4_e,
-                diciembre_semana1_p, diciembre_semana1_e, diciembre_semana2_p, diciembre_semana2_e,
-                diciembre_semana3_p, diciembre_semana3_e, diciembre_semana4_p, diciembre_semana4_e
-            FROM plan_anual_trabajo
-            ORDER BY ciclo_phva, actividad
-            LIMIT 50
-        """)
+        cursor.execute("SELECT * FROM actividades_pesv ORDER BY id")
         actividades = cursor.fetchall()
-        
         cursor.close()
         conn.close()
         
-        return render_template('sst/plan_anual_cronograma.html',
-                             actividades=actividades)
+        # Convertir a lista de diccionarios
+        actividades_list = []
+        for act in actividades:
+            actividades_list.append({
+                'id': act[0],
+                'actividad': act[1],
+                'evidencia': act[2],
+                'ciclo': act[3],
+                'articulo': act[4],
+                'nivel': act[5],
+                'responsables': act[6],
+                'recursos': act[7],
+                'estado': act[8],
+                'avance': act[9],
+                'observaciones': act[10],
+                'fecha_creacion': str(act[11]) if act[11] else None,
+                'fecha_actualizacion': str(act[12]) if act[12] else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'actividades': actividades_list,
+            'total': len(actividades_list)
+        })
         
     except Exception as e:
-        flash(f'Error al cargar cronograma: {str(e)}', 'error')
-        logger.error(f"Error en sst_plan_anual_cronograma: {e}")
-        return redirect(url_for('sst_plan_anual'))
+        logger.error(f"Error en api_pesv_actividades: {e}")
+        return jsonify({'success': False, 'error': str(e)})
 
-def inicializar_plan_anual():
-    """Crear tabla e importar datos del plan anual si no existen"""
+@app.route('/api/pesv/actividades/<int:id>', methods=['GET'])
+@login_required
+def api_pesv_actividad(id):
+    """API para obtener una actividad específica"""
+    if not current_user.puede('acceder_sst'):
+        return jsonify({'success': False, 'error': 'No autorizado'})
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM actividades_pesv WHERE id = %s", (id,))
+        actividad = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not actividad:
+            return jsonify({'success': False, 'error': 'Actividad no encontrada'}), 404
+        
+        return jsonify({
+            'success': True,
+            'actividad': {
+                'id': actividad[0],
+                'actividad': actividad[1],
+                'evidencia': actividad[2],
+                'ciclo': actividad[3],
+                'articulo': actividad[4],
+                'nivel': actividad[5],
+                'responsables': actividad[6],
+                'recursos': actividad[7],
+                'estado': actividad[8],
+                'avance': actividad[9],
+                'observaciones': actividad[10],
+                'fecha_creacion': str(actividad[11]) if actividad[11] else None,
+                'fecha_actualizacion': str(actividad[12]) if actividad[12] else None
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en api_pesv_actividad: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/pesv/actividades', methods=['POST'])
+@login_required
+def api_pesv_crear_actividad():
+    """API para crear nueva actividad (para localStorage sync)"""
+    if not current_user.puede('gestionar_plan_anual'):
+        return jsonify({'success': False, 'error': 'No autorizado'})
+    
+    try:
+        data = request.json
+        
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO actividades_pesv 
+            (actividad, evidencia, ciclo, articulo, nivel, responsables, recursos, 
+             observaciones, estado, avance)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """, (
+            data.get('actividad'),
+            data.get('evidencia'),
+            data.get('ciclo'),
+            data.get('articulo'),
+            data.get('nivel'),
+            data.get('responsables'),
+            data.get('recursos'),
+            data.get('observaciones'),
+            data.get('estado', 'pendiente'),
+            data.get('avance', 0)
+        ))
+        
+        actividad_id = cursor.fetchone()[0]
+        
+        # Crear cronograma vacío
+        meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+        
+        for mes in meses:
+            cursor.execute("""
+                INSERT INTO cronograma_pesv (actividad_id, mes)
+                VALUES (%s, %s)
+            """, (actividad_id, mes))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'id': actividad_id,
+            'message': 'Actividad creada exitosamente'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en api_pesv_crear_actividad: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ===== INICIALIZACIÓN DE TABLAS PESV =====
+def inicializar_tablas_pesv():
+    """Crear tablas PESV si no existen"""
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Verificar si la tabla tiene datos
-        cursor.execute("SELECT COUNT(*) FROM plan_anual_trabajo")
-        count = cursor.fetchone()[0]
+        # Tabla de actividades PESV
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS actividades_pesv (
+                id SERIAL PRIMARY KEY,
+                actividad VARCHAR(500) NOT NULL,
+                evidencia VARCHAR(500),
+                ciclo VARCHAR(50),
+                articulo VARCHAR(50),
+                nivel VARCHAR(50),
+                responsables VARCHAR(200),
+                recursos VARCHAR(500),
+                estado VARCHAR(20) DEFAULT 'pendiente',
+                avance INTEGER DEFAULT 0,
+                observaciones TEXT,
+                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
         
-        if count == 0:
-            print("📥 No hay datos en plan_anual_trabajo, importando...")
-            
-            # Crear tabla si no existe (versión simplificada)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS plan_anual_trabajo (
-                    id SERIAL PRIMARY KEY,
-                    actividad VARCHAR(500) NOT NULL,
-                    evidencia VARCHAR(500),
-                    ciclo_phva VARCHAR(50),
-                    responsables VARCHAR(200),
-                    estado VARCHAR(20) DEFAULT 'pendiente',
-                    porcentaje_avance DECIMAL(5,2) DEFAULT 0.00
-                )
-            """)
-            conn.commit()
-            
-            # Insertar datos de ejemplo
-            actividades_ejemplo = [
-                ("Capacitación en seguridad básica", "Lista de asistencia", "Planear", "Jefe SST", "pendiente", 0),
-                ("Inspección de equipos de protección", "Formato de inspección", "Hacer", "Supervisor", "en_proceso", 30),
-                ("Investigación de incidentes", "Reporte de incidente", "Verificar", "Coordinador SST", "completado", 100),
-                ("Actualización de procedimientos", "Documento firmado", "Actuar", "Gerente", "pendiente", 0),
-            ]
-            
-            for actividad in actividades_ejemplo:
-                cursor.execute("""
-                    INSERT INTO plan_anual_trabajo 
-                    (actividad, evidencia, ciclo_phva, responsables, estado, porcentaje_avance)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """, actividad)
-            
-            conn.commit()
-            print(f"✅ {len(actividades_ejemplo)} actividades de ejemplo insertadas")
-            
+        # Tabla de cronograma
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS cronograma_pesv (
+                id SERIAL PRIMARY KEY,
+                actividad_id INTEGER REFERENCES actividades_pesv(id) ON DELETE CASCADE,
+                mes VARCHAR(20),
+                semana1_planificado BOOLEAN DEFAULT FALSE,
+                semana1_ejecutado BOOLEAN DEFAULT FALSE,
+                semana2_planificado BOOLEAN DEFAULT FALSE,
+                semana2_ejecutado BOOLEAN DEFAULT FALSE,
+                semana3_planificado BOOLEAN DEFAULT FALSE,
+                semana3_ejecutado BOOLEAN DEFAULT FALSE,
+                semana4_planificado BOOLEAN DEFAULT FALSE,
+                semana4_ejecutado BOOLEAN DEFAULT FALSE,
+                UNIQUE(actividad_id, mes)
+            )
+        """)
+        
+        # Tabla de evidencias
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS evidencias_pesv (
+                id SERIAL PRIMARY KEY,
+                actividad_id INTEGER REFERENCES actividades_pesv(id) ON DELETE CASCADE,
+                titulo VARCHAR(200) NOT NULL,
+                descripcion TEXT,
+                archivo_nombre VARCHAR(255),
+                archivo_ruta VARCHAR(500),
+                fecha_subida TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Tabla de seguimiento
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS seguimiento_pesv (
+                id SERIAL PRIMARY KEY,
+                actividad_id INTEGER REFERENCES actividades_pesv(id) ON DELETE CASCADE,
+                tipo VARCHAR(50),
+                comentario TEXT NOT NULL,
+                usuario VARCHAR(100),
+                fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        conn.commit()
         cursor.close()
         conn.close()
         
+        print("✅ Tablas PESV creadas/verificadas correctamente")
+        
     except Exception as e:
-        print(f"⚠️  Error al inicializar plan anual: {e}")
+        print(f"⚠️  Error al crear tablas PESV: {e}")
 
-# EN LA SECCIÓN DE INICIALIZACIÓN DEL APP
+# ===== MANEJO DE ERRORES =====
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html'), 500
+
+# ===== EJECUCIÓN PRINCIPAL =====
 if __name__ == '__main__':
     with app.app_context():
         print("🚀 Iniciando la aplicación Flask...")
         print("📊 Creando tablas en la base de datos...")
         crear_tablas()
-        print("✅ Tablas creadas/verificadas correctamente")
+        print("✅ Tablas principales creadas/verificadas")
         
         print("📋 Verificando categorías SST...")
         try:
             verificar_y_crear_categorias_sst()
-            print("✅ Categorías SST verificadas correctamente")
+            print("✅ Categorías SST verificadas")
         except Exception as e:
             print(f"⚠️  Advertencia al crear categorías SST: {e}")
         
-        # AÑADE ESTA LÍNEA:
-        print("📥 Inicializando datos del plan anual...")
-        inicializar_plan_anual()
+        # Inicializar tablas PESV
+        print("📥 Inicializando tablas PESV...")
+        inicializar_tablas_pesv()
+        
+        # Crear directorio de uploads si no existe
+        if not os.path.exists(upload_path):
+            os.makedirs(upload_path, exist_ok=True)
+            print(f"📁 Directorio de uploads creado: {upload_path}")
     
     print("🌐 Aplicación lista en http://0.0.0.0:5000")
     app.run(host='0.0.0.0', port=5000, debug=True)
