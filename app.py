@@ -1978,6 +1978,26 @@ def obtener_problemas(categoria):
     return jsonify(problemas)
 
 # ===== RUTAS PARA GESTIÓN DEL PLAN ANUAL DE TRABAJO PESV =====
+@app.route('/sst/plan-anual/nueva')
+def sst_plan_anual_nueva():
+    return render_template('plan_anual_nueva.html')
+
+@app.route('/sst/plan-anual/editar')
+def sst_plan_anual_editar():
+    return render_template('plan_anual_editar.html')  # Similar a nueva.html pero para editar
+
+@app.route('/api/actividades', methods=['GET'])
+def api_actividades():
+    # Esta ruta puede devolver datos de localStorage o de tu base de datos
+    import json
+    actividades = []  # Aquí puedes cargar de tu base de datos
+    
+    return jsonify({
+        'success': True,
+        'actividades': actividades,
+        'total': len(actividades)
+    })
+    
 @app.route('/sst/plan-anual')
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
