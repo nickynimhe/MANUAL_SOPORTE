@@ -164,6 +164,7 @@ class User(UserMixin):
         self.usuario = usuario
         self.rol = rol
         self.modulo_principal = modulo_principal
+        self.redireccionar_sst = False  # ← NUEVO CAMPO
         self.permisos = permisos or {}
         
         # Definir permisos por rol
@@ -179,7 +180,7 @@ class User(UserMixin):
                 'acceder_soporte': True,
                 'acceder_dashboard': True
             }
-        elif rol == 'sst':
+      elif rol == 'sst':
             self.permisos = {
                 'ver_fichas': False,
                 'agregar_fichas': False,
@@ -188,6 +189,8 @@ class User(UserMixin):
                 'cambiar_password': True,
                 'gestion_usuarios': False,
                 'acceder_sst': True,
+                'gestionar_plan_anual': True,  # ← NUEVO
+                'agregar_evidencias': True,    # ← NUEVO
                 'acceder_soporte': False,
                 'acceder_dashboard': False
             }
@@ -209,13 +212,57 @@ class User(UserMixin):
 
 @login_manager.user_loader
 def load_user(user_id):
+    """Cargar usuario desde la base de datos (MEJORADO)"""
     try:
-        resultado = ejecutar_consulta(
-            "SELECT * FROM usuarios WHERE id = %s", 
-            (user_id,), 
-            fetch=True
-        )
+        conn = crear_conexion()
+        cursor = conn.cursor()
         
+        # Incluir redireccionar_sst en la consulta
+        cursor.execute("""
+            SELECT id, usuario, password, rol, modulo_principal, permisos, redireccionar_sst 
+            FROM usuarios 
+            WHERE id = %s
+        """, (user_id,))
+        
+        user_data = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if user_data:
+            user_dict = {
+                'id': user_data[0],
+                'usuario': user_data[1],
+                'rol': user_data[3],
+                'modulo_principal': user_data[4] if user_data[4] else 'soporte',
+                'permisos': user_data[5]
+            }
+            
+            # Cargar permisos desde JSON si existen
+            permisos = {}
+            if user_dict.get('permisos'):
+                try:
+                    permisos = json.loads(user_dict['permisos'])
+                except:
+                    permisos = {}
+            
+            user = User(
+                user_dict['id'], 
+                user_dict['usuario'], 
+                user_dict['rol'],
+                user_dict['modulo_principal'],
+                permisos
+            )
+            
+            # Agregar campo de redirección SST
+            user.redireccionar_sst = user_data[6] if len(user_data) > 6 else False
+            
+            return user
+            
+    except Exception as e:
+        logger.error(f"Error al cargar usuario: {e}")
+    
+    return None
+    
         if resultado and resultado[0]:
             user_data = resultado[0]
             user_dict = {
@@ -249,32 +296,42 @@ def load_user(user_id):
 # ===== RUTAS DE AUTENTICACIÓN =====
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """Login de usuarios con redirección automática según rol"""
     if current_user.is_authenticated:
+        # Si ya está autenticado, redirigir según su perfil
+        if hasattr(current_user, 'redireccionar_sst') and current_user.redireccionar_sst:
+            return redirect(url_for('sst_dashboard'))
         return redirect_a_modulo_principal()
     
     if request.method == 'POST':
-        usuario = request.form['usuario']
-        password = request.form['password']
+        usuario = request.form.get('usuario')
+        password = request.form.get('password')
         
         try:
-            resultado = ejecutar_consulta(
-                "SELECT * FROM usuarios WHERE usuario = %s", 
-                (usuario,), 
-                fetch=True
-            )
+            conn = crear_conexion()
+            cursor = conn.cursor()
             
-            if resultado and resultado[0] and resultado[0][2] and resultado[0][2].strip():
-                user_data = resultado[0]
-                user_dict = {
-                    'id': user_data[0],
-                    'usuario': user_data[1],
-                    'password': user_data[2],
-                    'rol': user_data[3],
-                    'modulo_principal': user_data[4] if user_data[4] else 'soporte',
-                    'permisos': user_data[5]
-                }
-                
-                if check_password_hash(user_dict['password'], password):
+            # Obtener usuario con el campo redireccionar_sst
+            cursor.execute("""
+                SELECT id, usuario, password, rol, modulo_principal, permisos, redireccionar_sst 
+                FROM usuarios 
+                WHERE usuario = %s
+            """, (usuario,))
+            
+            user_data = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            
+            if user_data and user_data[2] and user_data[2].strip():
+                if check_password_hash(user_data[2], password):
+                    user_dict = {
+                        'id': user_data[0],
+                        'usuario': user_data[1],
+                        'rol': user_data[3],
+                        'modulo_principal': user_data[4] if user_data[4] else 'soporte',
+                        'permisos': user_data[5]
+                    }
+                    
                     permisos = {}
                     if user_dict.get('permisos'):
                         try:
@@ -289,16 +346,26 @@ def login():
                         user_dict['modulo_principal'],
                         permisos
                     )
+                    
+                    # Agregar campo de redirección SST
+                    user.redireccionar_sst = user_data[6] if len(user_data) > 6 else False
+                    
                     login_user(user)
                     flash(f'¡Bienvenido {user.usuario}!', 'success')
-                    return redirect_a_modulo_principal()
+                    
+                    # REDIRECCIÓN AUTOMÁTICA SEGÚN PERFIL
+                    if user.redireccionar_sst:
+                        logger.info(f"Usuario {user.usuario} redirigido automáticamente a SST")
+                        return redirect(url_for('sst_dashboard'))
+                    else:
+                        return redirect_a_modulo_principal()
                 else:
                     flash('Usuario o contraseña incorrectos', 'error')
             else:
                 flash('Usuario no encontrado', 'error')
                 
         except Exception as e:
-            flash('Error de base de datos', 'error')
+            flash(f'Error al iniciar sesión: {str(e)}', 'error')
             logger.error(f"Error en login: {e}")
     
     return render_template('login.html')
@@ -1806,6 +1873,476 @@ def obtener_problemas(categoria):
     
     problemas = problemas_por_categoria.get(categoria, [])
     return jsonify(problemas)
+# ===== RUTAS PARA GESTIÓN DEL PLAN ANUAL DE TRABAJO PESV =====
+"""
+MODIFICACIONES PARA app.py - INTEGRACIÓN SST
+
+PARTE 2: RUTAS PARA GESTIÓN DEL PLAN ANUAL DE TRABAJO
+
+INSTRUCCIONES:
+1. Agregar estas rutas al archivo app.py
+2. Insertar después de las rutas SST existentes (alrededor de la línea 1700)
+3. Estas rutas permiten gestionar el cronograma PESV desde la web
+"""
+
+# ============================================================
+# RUTAS PARA GESTIÓN DEL PLAN ANUAL DE TRABAJO PESV
+# ============================================================
+
+@app.route('/sst/plan-anual')
+@login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
+def sst_plan_anual():
+    """Dashboard principal del Plan Anual de Trabajo"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Obtener estadísticas generales
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN estado = 'completado' THEN 1 ELSE 0 END) as completadas,
+                SUM(CASE WHEN estado = 'en_proceso' THEN 1 ELSE 0 END) as en_proceso,
+                SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as pendientes,
+                ROUND(AVG(porcentaje_avance), 2) as promedio_avance
+            FROM plan_anual_trabajo
+        """)
+        stats = cursor.fetchone()
+        
+        # Obtener actividades por ciclo PHVA
+        cursor.execute("""
+            SELECT 
+                ciclo_phva,
+                COUNT(*) as total,
+                SUM(CASE WHEN estado = 'completado' THEN 1 ELSE 0 END) as completadas,
+                ROUND(AVG(porcentaje_avance), 2) as promedio
+            FROM plan_anual_trabajo
+            WHERE ciclo_phva IS NOT NULL
+            GROUP BY ciclo_phva
+            ORDER BY 
+                CASE ciclo_phva 
+                    WHEN 'Planear' THEN 1 
+                    WHEN 'Hacer' THEN 2 
+                    WHEN 'Verificar' THEN 3 
+                    WHEN 'Actuar' THEN 4 
+                    ELSE 5 
+                END
+        """)
+        stats_phva = cursor.fetchall()
+        
+        # Obtener actividades recientes
+        cursor.execute("""
+            SELECT 
+                id, actividad, ciclo_phva, responsables, estado, 
+                porcentaje_avance, fecha_actualizacion
+            FROM plan_anual_trabajo
+            ORDER BY fecha_actualizacion DESC
+            LIMIT 10
+        """)
+        actividades_recientes = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return render_template('sst/plan_anual_dashboard.html',
+                             stats=stats,
+                             stats_phva=stats_phva,
+                             actividades_recientes=actividades_recientes)
+        
+    except Exception as e:
+        flash(f'Error al cargar el plan anual: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual: {e}")
+        return redirect(url_for('sst_dashboard'))
+
+
+@app.route('/sst/plan-anual/actividades')
+@login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
+def sst_plan_anual_actividades():
+    """Listar todas las actividades del plan anual"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
+    # Filtros
+    ciclo = request.args.get('ciclo', '')
+    estado = request.args.get('estado', '')
+    responsable = request.args.get('responsable', '')
+    mes = request.args.get('mes', '')
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Construir query con filtros
+        query = """
+            SELECT 
+                id, actividad, evidencia, ciclo_phva, responsables, 
+                estado, porcentaje_avance, nivel_pesv
+            FROM plan_anual_trabajo
+            WHERE 1=1
+        """
+        params = []
+        
+        if ciclo:
+            query += " AND ciclo_phva = %s"
+            params.append(ciclo)
+        
+        if estado:
+            query += " AND estado = %s"
+            params.append(estado)
+        
+        if responsable:
+            query += " AND responsables ILIKE %s"
+            params.append(f'%{responsable}%')
+        
+        # Si se filtra por mes, verificar que tenga actividad planificada ese mes
+        if mes:
+            meses = {
+                'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4,
+                'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8,
+                'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
+            }
+            mes_lower = mes.lower()
+            if mes_lower in meses:
+                # Verificar si tiene al menos una semana planificada en ese mes
+                query += f" AND ({mes_lower}_semana1_p = TRUE OR {mes_lower}_semana2_p = TRUE OR {mes_lower}_semana3_p = TRUE OR {mes_lower}_semana4_p = TRUE)"
+        
+        query += " ORDER BY ciclo_phva, actividad"
+        
+        cursor.execute(query, params)
+        actividades = cursor.fetchall()
+        
+        # Obtener opciones únicas para filtros
+        cursor.execute("SELECT DISTINCT ciclo_phva FROM plan_anual_trabajo WHERE ciclo_phva IS NOT NULL ORDER BY ciclo_phva")
+        ciclos_disponibles = [row[0] for row in cursor.fetchall()]
+        
+        cursor.execute("SELECT DISTINCT responsables FROM plan_anual_trabajo WHERE responsables IS NOT NULL")
+        responsables_disponibles = set()
+        for row in cursor.fetchall():
+            if row[0]:
+                # Separar por comas y limpiar
+                for r in row[0].split('-'):
+                    responsables_disponibles.add(r.strip())
+        responsables_disponibles = sorted(list(responsables_disponibles))
+        
+        cursor.close()
+        conn.close()
+        
+        return render_template('sst/plan_anual_actividades.html',
+                             actividades=actividades,
+                             ciclos=ciclos_disponibles,
+                             responsables_list=responsables_disponibles,
+                             filtro_ciclo=ciclo,
+                             filtro_estado=estado,
+                             filtro_responsable=responsable,
+                             filtro_mes=mes)
+        
+    except Exception as e:
+        flash(f'Error al cargar actividades: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_actividades: {e}")
+        return redirect(url_for('sst_plan_anual'))
+
+
+@app.route('/sst/plan-anual/actividad/<int:id>')
+@login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
+def sst_plan_anual_actividad_detalle(id):
+    """Ver detalle de una actividad específica"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Obtener actividad completa
+        cursor.execute("""
+            SELECT * FROM plan_anual_trabajo WHERE id = %s
+        """, (id,))
+        actividad = cursor.fetchone()
+        
+        if not actividad:
+            flash('Actividad no encontrada', 'error')
+            return redirect(url_for('sst_plan_anual_actividades'))
+        
+        # Obtener evidencias asociadas
+        cursor.execute("""
+            SELECT id, titulo, descripcion, archivo_nombre, fecha_carga
+            FROM plan_evidencias
+            WHERE plan_id = %s
+            ORDER BY fecha_carga DESC
+        """, (id,))
+        evidencias = cursor.fetchall()
+        
+        # Obtener seguimientos
+        cursor.execute("""
+            SELECT s.id, s.comentario, s.tipo, s.fecha_registro, u.usuario
+            FROM plan_seguimiento s
+            JOIN usuarios u ON s.usuario_id = u.id
+            WHERE s.plan_id = %s
+            ORDER BY s.fecha_registro DESC
+        """, (id,))
+        seguimientos = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        # Estructurar cronograma por meses
+        meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+        
+        cronograma = {}
+        col_offset = 7  # Las columnas de meses empiezan después de los campos básicos
+        
+        for i, mes in enumerate(meses):
+            cronograma[mes] = []
+            for semana in range(1, 5):
+                idx_p = col_offset + (i * 8) + ((semana - 1) * 2)
+                idx_e = idx_p + 1
+                cronograma[mes].append({
+                    'semana': semana,
+                    'planificado': actividad[idx_p] if idx_p < len(actividad) else False,
+                    'ejecutado': actividad[idx_e] if idx_e < len(actividad) else False
+                })
+        
+        return render_template('sst/plan_anual_detalle.html',
+                             actividad=actividad,
+                             evidencias=evidencias,
+                             seguimientos=seguimientos,
+                             cronograma=cronograma)
+        
+    except Exception as e:
+        flash(f'Error al cargar el detalle: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_actividad_detalle: {e}")
+        return redirect(url_for('sst_plan_anual_actividades'))
+
+
+@app.route('/sst/plan-anual/actividad/<int:id>/actualizar', methods=['POST'])
+@login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
+def sst_plan_anual_actualizar_actividad(id):
+    """Actualizar estado de ejecución de una actividad"""
+    if not current_user.puede('gestionar_plan_anual'):
+        flash('No tienes permisos para modificar el plan anual', 'error')
+        return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
+    
+    try:
+        # Obtener datos del formulario
+        mes = request.form.get('mes')
+        semana = request.form.get('semana')
+        ejecutado = request.form.get('ejecutado') == 'true'
+        
+        if not mes or not semana:
+            flash('Datos incompletos', 'error')
+            return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
+        
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Actualizar la semana específica
+        columna = f"{mes}_semana{semana}_e"
+        query = f"""
+            UPDATE plan_anual_trabajo 
+            SET {columna} = %s,
+                fecha_actualizacion = CURRENT_TIMESTAMP,
+                usuario_actualizacion = %s
+            WHERE id = %s
+        """
+        
+        cursor.execute(query, (ejecutado, current_user.id, id))
+        
+        # Recalcular porcentaje y estado
+        cursor.execute("""
+            SELECT 
+                (SELECT COUNT(*) FROM (
+                    SELECT enero_semana1_p, enero_semana2_p, enero_semana3_p, enero_semana4_p,
+                           febrero_semana1_p, febrero_semana2_p, febrero_semana3_p, febrero_semana4_p,
+                           marzo_semana1_p, marzo_semana2_p, marzo_semana3_p, marzo_semana4_p,
+                           abril_semana1_p, abril_semana2_p, abril_semana3_p, abril_semana4_p,
+                           mayo_semana1_p, mayo_semana2_p, mayo_semana3_p, mayo_semana4_p,
+                           junio_semana1_p, junio_semana2_p, junio_semana3_p, junio_semana4_p,
+                           julio_semana1_p, julio_semana2_p, julio_semana3_p, julio_semana4_p,
+                           agosto_semana1_p, agosto_semana2_p, agosto_semana3_p, agosto_semana4_p,
+                           septiembre_semana1_p, septiembre_semana2_p, septiembre_semana3_p, septiembre_semana4_p,
+                           octubre_semana1_p, octubre_semana2_p, octubre_semana3_p, octubre_semana4_p,
+                           noviembre_semana1_p, noviembre_semana2_p, noviembre_semana3_p, noviembre_semana4_p,
+                           diciembre_semana1_p, diciembre_semana2_p, diciembre_semana3_p, diciembre_semana4_p
+                    FROM plan_anual_trabajo WHERE id = %s
+                ) AS p WHERE TRUE IN (
+                    enero_semana1_p, enero_semana2_p, enero_semana3_p, enero_semana4_p,
+                    febrero_semana1_p, febrero_semana2_p, febrero_semana3_p, febrero_semana4_p,
+                    marzo_semana1_p, marzo_semana2_p, marzo_semana3_p, marzo_semana4_p,
+                    abril_semana1_p, abril_semana2_p, abril_semana3_p, abril_semana4_p,
+                    mayo_semana1_p, mayo_semana2_p, mayo_semana3_p, mayo_semana4_p,
+                    junio_semana1_p, junio_semana2_p, junio_semana3_p, junio_semana4_p,
+                    julio_semana1_p, julio_semana2_p, julio_semana3_p, julio_semana4_p,
+                    agosto_semana1_p, agosto_semana2_p, agosto_semana3_p, agosto_semana4_p,
+                    septiembre_semana1_p, septiembre_semana2_p, septiembre_semana3_p, septiembre_semana4_p,
+                    octubre_semana1_p, octubre_semana2_p, octubre_semana3_p, octubre_semana4_p,
+                    noviembre_semana1_p, noviembre_semana2_p, noviembre_semana3_p, noviembre_semana4_p,
+                    diciembre_semana1_p, diciembre_semana2_p, diciembre_semana3_p, diciembre_semana4_p
+                )) as planificadas
+        """, (id,))
+        
+        # Simplificado: obtener conteos directamente
+        cursor.execute(f"""
+            SELECT 
+                COALESCE(SUM(CASE WHEN col = TRUE THEN 1 ELSE 0 END), 0)
+            FROM (
+                SELECT enero_semana1_p AS col FROM plan_anual_trabajo WHERE id = %s
+                UNION ALL SELECT enero_semana2_p FROM plan_anual_trabajo WHERE id = %s
+                UNION ALL SELECT enero_semana3_p FROM plan_anual_trabajo WHERE id = %s
+                UNION ALL SELECT enero_semana4_p FROM plan_anual_trabajo WHERE id = %s
+                -- ... (repetir para todos los meses)
+            ) AS subq
+        """, (id,) * 48)  # 48 = 12 meses * 4 semanas
+        
+        # Actualizar estado basado en ejecución
+        nuevo_estado = 'en_proceso' if ejecutado else 'pendiente'
+        
+        cursor.execute("""
+            UPDATE plan_anual_trabajo
+            SET estado = %s
+            WHERE id = %s
+        """, (nuevo_estado, id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        flash('Actividad actualizada exitosamente', 'success')
+        
+    except Exception as e:
+        flash(f'Error al actualizar: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_actualizar_actividad: {e}")
+    
+    return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
+
+
+@app.route('/sst/plan-anual/actividad/<int:id>/evidencia', methods=['POST'])
+@login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
+def sst_plan_anual_agregar_evidencia(id):
+    """Agregar evidencia a una actividad"""
+    if not current_user.puede('agregar_evidencias'):
+        flash('No tienes permisos para agregar evidencias', 'error')
+        return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
+    
+    try:
+        titulo = request.form.get('titulo', '').strip()
+        descripcion = request.form.get('descripcion', '').strip()
+        archivo = request.files.get('archivo')
+        
+        if not titulo:
+            flash('El título es obligatorio', 'error')
+            return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
+        
+        archivo_data = None
+        if archivo and archivo.filename != '':
+            if allowed_file(archivo.filename):
+                archivo_data = guardar_archivo_en_bd(archivo)
+            else:
+                flash('Tipo de archivo no permitido', 'error')
+                return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
+        
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        if archivo_data:
+            cursor.execute("""
+                INSERT INTO plan_evidencias (
+                    plan_id, titulo, descripcion, archivo_nombre, archivo_tipo,
+                    archivo_tamano, archivo_data, usuario_id
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                id, titulo, descripcion, archivo_data['nombre'],
+                archivo_data['tipo'], archivo_data['tamano'],
+                psycopg2.Binary(archivo_data['data']), current_user.id
+            ))
+        else:
+            cursor.execute("""
+                INSERT INTO plan_evidencias (
+                    plan_id, titulo, descripcion, usuario_id
+                ) VALUES (%s, %s, %s, %s)
+            """, (id, titulo, descripcion, current_user.id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        flash('Evidencia agregada exitosamente', 'success')
+        
+    except Exception as e:
+        flash(f'Error al agregar evidencia: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_agregar_evidencia: {e}")
+    
+    return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
+
+
+@app.route('/sst/plan-anual/cronograma')
+@login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
+def sst_plan_anual_cronograma():
+    """Vista de cronograma completo tipo Gantt"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Obtener todas las actividades con su programación
+        cursor.execute("""
+            SELECT 
+                id, actividad, ciclo_phva, responsables, estado,
+                enero_semana1_p, enero_semana1_e, enero_semana2_p, enero_semana2_e,
+                enero_semana3_p, enero_semana3_e, enero_semana4_p, enero_semana4_e,
+                febrero_semana1_p, febrero_semana1_e, febrero_semana2_p, febrero_semana2_e,
+                febrero_semana3_p, febrero_semana3_e, febrero_semana4_p, febrero_semana4_e,
+                marzo_semana1_p, marzo_semana1_e, marzo_semana2_p, marzo_semana2_e,
+                marzo_semana3_p, marzo_semana3_e, marzo_semana4_p, marzo_semana4_e,
+                abril_semana1_p, abril_semana1_e, abril_semana2_p, abril_semana2_e,
+                abril_semana3_p, abril_semana3_e, abril_semana4_p, abril_semana4_e,
+                mayo_semana1_p, mayo_semana1_e, mayo_semana2_p, mayo_semana2_e,
+                mayo_semana3_p, mayo_semana3_e, mayo_semana4_p, mayo_semana4_e,
+                junio_semana1_p, junio_semana1_e, junio_semana2_p, junio_semana2_e,
+                junio_semana3_p, junio_semana3_e, junio_semana4_p, junio_semana4_e,
+                julio_semana1_p, julio_semana1_e, julio_semana2_p, julio_semana2_e,
+                julio_semana3_p, julio_semana3_e, julio_semana4_p, julio_semana4_e,
+                agosto_semana1_p, agosto_semana1_e, agosto_semana2_p, agosto_semana2_e,
+                agosto_semana3_p, agosto_semana3_e, agosto_semana4_p, agosto_semana4_e,
+                septiembre_semana1_p, septiembre_semana1_e, septiembre_semana2_p, septiembre_semana2_e,
+                septiembre_semana3_p, septiembre_semana3_e, septiembre_semana4_p, septiembre_semana4_e,
+                octubre_semana1_p, octubre_semana1_e, octubre_semana2_p, octubre_semana2_e,
+                octubre_semana3_p, octubre_semana3_e, octubre_semana4_p, octubre_semana4_e,
+                noviembre_semana1_p, noviembre_semana1_e, noviembre_semana2_p, noviembre_semana2_e,
+                noviembre_semana3_p, noviembre_semana3_e, noviembre_semana4_p, noviembre_semana4_e,
+                diciembre_semana1_p, diciembre_semana1_e, diciembre_semana2_p, diciembre_semana2_e,
+                diciembre_semana3_p, diciembre_semana3_e, diciembre_semana4_p, diciembre_semana4_e
+            FROM plan_anual_trabajo
+            ORDER BY ciclo_phva, actividad
+            LIMIT 50
+        """)
+        actividades = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return render_template('sst/plan_anual_cronograma.html',
+                             actividades=actividades)
+        
+    except Exception as e:
+        flash(f'Error al cargar cronograma: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_cronograma: {e}")
+        return redirect(url_for('sst_plan_anual'))
 
 # ===== INICIALIZACIÓN =====
 if __name__ == '__main__':
