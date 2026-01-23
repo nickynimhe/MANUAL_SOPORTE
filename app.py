@@ -119,6 +119,33 @@ def format_date_filter(date_value, format='%d/%m/%Y'):
     except:
         return 'Fecha inválida'
 
+@app.template_filter('safe_tags')
+def safe_tags_filter(tags_value):
+    """Filtro seguro para manejar tags"""
+    if tags_value is None:
+        return []
+    if isinstance(tags_value, str):
+        return [tag.strip() for tag in tags_value.split(',') if tag.strip()]
+    elif isinstance(tags_value, (int, float)):
+        return [str(tags_value)]
+    else:
+        return []
+
+@app.template_filter('is_video_url')
+def is_video_url_filter(url):
+    """Verificar si una URL es de video"""
+    if not url:
+        return False
+    video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.webm']
+    return any(url.lower().endswith(ext) for ext in video_extensions)
+
+@app.template_filter('file_extension')
+def file_extension_filter(filename):
+    """Obtener extensión del archivo"""
+    if not filename:
+        return ''
+    return os.path.splitext(filename)[1].lower().replace('.', '')
+
 # ===== MODELO DE USUARIO =====
 class User(UserMixin):
     def __init__(self, id, usuario, rol, modulo_principal, permisos=None):
