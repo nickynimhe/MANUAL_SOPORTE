@@ -4,89 +4,89 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
-    <!-- Header -->
+
+    <!-- HEADER -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h2><i class="fas fa-calendar-alt"></i> Plan Anual de Trabajo PESV 2026</h2>
-                    <p class="text-muted">Plan Estratégico de Seguridad Vial</p>
+                    <h2 class="fw-bold">
+                        <i class="fas fa-calendar-alt text-primary"></i>
+                        Plan Anual de Trabajo PESV 2026
+                    </h2>
+                    <p class="text-muted mb-0">Plan Estratégico de Seguridad Vial</p>
                 </div>
-                <div>
-                    <a href="{{ url_for('sst_dashboard') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left"></i> Volver a SST
-                    </a>
-                </div>
+                <a href="{{ url_for('sst_dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver a SST
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- Estadísticas Generales -->
+    <!-- ESTADÍSTICAS -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card border-primary">
-                <div class="card-body text-center">
+            <div class="card text-center">
+                <div class="card-body">
                     <i class="fas fa-tasks fa-3x text-primary mb-3"></i>
                     <h3>{{ stats[0] if stats else 0 }}</h3>
-                    <p class="text-muted mb-0">Total Actividades</p>
+                    <p class="text-muted">Total Actividades</p>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-success">
-                <div class="card-body text-center">
+            <div class="card text-center">
+                <div class="card-body">
                     <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
                     <h3>{{ stats[1] if stats else 0 }}</h3>
-                    <p class="text-muted mb-0">Completadas</p>
+                    <p class="text-muted">Completadas</p>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-warning">
-                <div class="card-body text-center">
+            <div class="card text-center">
+                <div class="card-body">
                     <i class="fas fa-spinner fa-3x text-warning mb-3"></i>
                     <h3>{{ stats[2] if stats else 0 }}</h3>
-                    <p class="text-muted mb-0">En Proceso</p>
+                    <p class="text-muted">En Proceso</p>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-info">
-                <div class="card-body text-center">
-                    <i class="fas fa-clock fa-3x text-info mb-3"></i>
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-chart-line fa-3x text-info mb-3"></i>
                     <h3>{{ stats[4] if stats else 0 }}%</h3>
-                    <p class="text-muted mb-0">Avance Promedio</p>
+                    <p class="text-muted">Avance Promedio</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Progreso por Ciclo PHVA -->
+    <!-- PROGRESO PHVA -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Progreso por Ciclo PHVA</h5>
+                    <h5 class="mb-0">
+                        <i class="fas fa-sync-alt"></i> Progreso por Ciclo PHVA
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         {% for ciclo in stats_phva %}
                         <div class="col-md-3 mb-3">
-                            <div class="card border-left-{{ 'primary' if ciclo[0] == 'Planear' else 'success' if ciclo[0] == 'Hacer' else 'warning' if ciclo[0] == 'Verificar' else 'danger' }} shadow">
+                            <div class="card shadow-sm">
                                 <div class="card-body">
-                                    <h6 class="font-weight-bold text-uppercase">{{ ciclo[0] }}</h6>
-                                    <div class="progress mb-2" style="height: 25px;">
-                                        <div class="progress-bar bg-{{ 'primary' if ciclo[0] == 'Planear' else 'success' if ciclo[0] == 'Hacer' else 'warning' if ciclo[0] == 'Verificar' else 'danger' }}" 
-                                             role="progressbar" 
-                                             style="width: {{ ciclo[3] }}%"
-                                             aria-valuenow="{{ ciclo[3] }}" 
-                                             aria-valuemin="0" 
-                                             aria-valuemax="100">
+                                    <h6 class="fw-bold text-uppercase">{{ ciclo[0] }}</h6>
+                                    <div class="progress mb-2" style="height: 22px;">
+                                        <div class="progress-bar 
+                                            bg-{{ 'primary' if ciclo[0]=='Planear' else 'success' if ciclo[0]=='Hacer' else 'warning' if ciclo[0]=='Verificar' else 'danger' }}"
+                                            style="width: {{ ciclo[3] }}%">
                                             {{ ciclo[3] }}%
                                         </div>
                                     </div>
-                                    <p class="mb-1"><strong>Total:</strong> {{ ciclo[1] }} actividades</p>
-                                    <p class="mb-0"><strong>Completadas:</strong> {{ ciclo[2] }}</p>
+                                    <small>Total: {{ ciclo[1] }} | Completadas: {{ ciclo[2] }}</small>
                                 </div>
                             </div>
                         </div>
@@ -97,29 +97,42 @@
         </div>
     </div>
 
-    <!-- Menú de Acciones Rápidas -->
+    <!-- GRÁFICO CIRCULAR PHVA -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Acciones Rápidas</h5>
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-circle-notch"></i> Avance Global del Plan PHVA
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 mb-2">
-                            <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-lg btn-block btn-primary">
-                                <i class="fas fa-list"></i> Ver Todas las Actividades
-                            </a>
+                    <div class="row align-items-center">
+                        <div class="col-md-6 text-center">
+                            <canvas id="phvaChart" height="260"></canvas>
                         </div>
-                        <div class="col-md-4 mb-2">
-                            <a href="{{ url_for('sst_plan_anual_cronograma') }}" class="btn btn-lg btn-block btn-success">
-                                <i class="fas fa-calendar-week"></i> Ver Cronograma Gantt
-                            </a>
-                        </div>
-                        <div class="col-md-4 mb-2">
-                            <a href="{{ url_for('sst_plan_anual_actividades') }}?estado=pendiente" class="btn btn-lg btn-block btn-warning">
-                                <i class="fas fa-exclamation-circle"></i> Ver Pendientes
-                            </a>
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <span class="badge badge-primary">Planear</span>
+                                    {{ stats_phva[0][3] if stats_phva else 0 }}%
+                                </li>
+                                <li class="list-group-item">
+                                    <span class="badge badge-success">Hacer</span>
+                                    {{ stats_phva[1][3] if stats_phva else 0 }}%
+                                </li>
+                                <li class="list-group-item">
+                                    <span class="badge badge-warning">Verificar</span>
+                                    {{ stats_phva[2][3] if stats_phva else 0 }}%
+                                </li>
+                                <li class="list-group-item">
+                                    <span class="badge badge-danger">Actuar</span>
+                                    {{ stats_phva[3][3] if stats_phva else 0 }}%
+                                </li>
+                            </ul>
+                            <p class="text-muted mt-3">
+                                El gráfico se completa a medida que las fases del PHVA alcanzan el 100%.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -127,139 +140,61 @@
         </div>
     </div>
 
-    <!-- Actividades Recientes -->
-   <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-dark text-white">
-                    <h5 class="mb-0"><i class="fas fa-history"></i> Actividades Actualizadas Recientemente</h5>
-                </div>
-                <div class="card-body">
-                    {% if actividades_recientes %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Actividad</th>
-                                    <th>Ciclo PHVA</th>
-                                    <th>Responsables</th>
-                                    <th>Estado</th>
-                                    <th>Avance</th>
-                                    <th>Última Actualización</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for act in actividades_recientes %}
-                                <tr>
-                                    <td>{{ act[1][:80] }}{% if act[1]|length > 80 %}...{% endif %}</td>
-                                    <td>
-                                        <span class="badge badge-{{ 'primary' if act[2] == 'Planear' else 'success' if act[2] == 'Hacer' else 'warning' if act[2] == 'Verificar' else 'danger' }}">
-                                            {{ act[2] }}
-                                        </span>
-                                    </td>
-                                    <td>{{ act[3][:30] if act[3] else 'N/A' }}</td>
-                                    <td>
-                                        {% if act[4] == 'completado' %}
-                                            <span class="badge badge-success">Completado</span>
-                                        {% elif act[4] == 'en_proceso' %}
-                                            <span class="badge badge-warning">En Proceso</span>
-                                        {% else %}
-                                            <span class="badge badge-secondary">Pendiente</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="progress" style="height: 20px;">
-                                            <div class="progress-bar bg-{{ 'success' if act[5] >= 100 else 'warning' if act[5] >= 50 else 'danger' }}" 
-                                                 role="progressbar" 
-                                                 style="width: {{ act[5] }}%">
-                                                {{ act[5] }}%
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>{{ act[6].strftime('%d/%m/%Y %H:%M') if act[6] else 'N/A' }}</td>
-                                    <td>
-                                        <a href="{{ url_for('sst_plan_anual_actividad_detalle', id=act[0]) }}" 
-                                           class="btn btn-sm btn-info">
-                                            <i class="fas fa-eye"></i> Ver
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> No hay actividades registradas aún.
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
-<!-- Agregar estas secciones después de "Actividades Recientes" -->
+<!-- CHART.JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Sección para agregar nueva actividad (solo mostrar si no hay datos) -->
-<div class="row mt-4" id="seccion-agregar-actividad">
-    <div class="col-12">
-        <div class="card border-success">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0"><i class="fas fa-plus-circle"></i> Agregar Nueva Actividad</h5>
-            </div>
-            <div class="card-body">
-                <p>¿Quieres comenzar a gestionar tus actividades del PESV? Agrega tu primera actividad:</p>
-                <a href="{{ url_for('sst_plan_anual_nueva') }}" class="btn btn-success btn-lg">
-                    <i class="fas fa-plus"></i> Nueva Actividad
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="{{ url_for('static', filename='js/pesv_data.js') }}"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar datos de ejemplo si es primera vez
-    if (typeof inicializarDatosEjemplo === 'function') {
-        inicializarDatosEjemplo();
-    }
-    
-    // Ocultar sección de agregar si ya hay actividades
-    const stats = {{ stats|tojson|safe if stats else 'null' }};
-    if (stats && stats[0] > 0) {
-        document.getElementById('seccion-agregar-actividad').style.display = 'none';
-    }
-    
-    // Cargar estadísticas desde localStorage si no hay datos del servidor
-    if (!stats || stats[0] === 0) {
-        if (typeof obtenerEstadisticas === 'function') {
-            const statsLocal = obtenerEstadisticas();
-            
-            // Actualizar los números en el dashboard
-            document.querySelectorAll('.card-body h3')[0].textContent = statsLocal.total;
-            document.querySelectorAll('.card-body h3')[1].textContent = statsLocal.completadas;
-            document.querySelectorAll('.card-body h3')[2].textContent = statsLocal.enProceso;
-            document.querySelectorAll('.card-body h3')[3].textContent = statsLocal.avancePromedio + '%';
+document.addEventListener('DOMContentLoaded', function () {
+    const phvaData = {{ stats_phva|tojson|safe if stats_phva else '[]' }};
+    if (!phvaData.length) return;
+
+    const labels = phvaData.map(c => c[0]);
+    const values = phvaData.map(c => c[3]);
+
+    new Chart(document.getElementById('phvaChart'), {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545'],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '65%',
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ctx.label + ': ' + ctx.parsed + '%'
+                    }
+                }
+            }
         }
-    }
+    });
 });
 </script>
 
 <style>
-.border-left-primary {
-    border-left: 4px solid #007bff !important;
+.card {
+    border-radius: 14px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    border: none;
 }
-.border-left-success {
-    border-left: 4px solid #28a745 !important;
+.card:hover {
+    transform: translateY(-3px);
+    transition: 0.3s ease;
 }
-.border-left-warning {
-    border-left: 4px solid #ffc107 !important;
+.progress {
+    border-radius: 20px;
 }
-.border-left-danger {
-    border-left: 4px solid #dc3545 !important;
+.progress-bar {
+    font-weight: bold;
 }
 </style>
+
 {% endblock %}
