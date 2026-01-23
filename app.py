@@ -89,8 +89,6 @@ def inject_now():
 def inject_permissions():
     def tiene_permiso(permiso):
         if current_user.is_authenticated:
-            if current_user.rol == 'admin':
-                return True
             if hasattr(current_user, 'permisos'):
                 return current_user.permisos.get(permiso, False)
         return False
@@ -112,10 +110,23 @@ def inject_permissions():
             return getattr(current_user, 'modulo_principal', 'soporte')
         return 'soporte'
     
+    def obtener_rol_display():
+        """Obtener nombre legible del rol"""
+        if current_user.is_authenticated:
+            rol = current_user.rol
+            display_map = {
+                'admin': 'Administrador',
+                'sst': 'SST',
+                'soporte': 'Soporte Técnico'
+            }
+            return display_map.get(rol, rol.capitalize())
+        return ''
+    
     return dict(
         tiene_permiso=tiene_permiso,
         puede_acceder_modulo=puede_acceder_modulo,
-        obtener_modulo_principal=obtener_modulo_principal
+        obtener_modulo_principal=obtener_modulo_principal,
+        obtener_rol_display=obtener_rol_display
     )
 
 # ===== FILTROS TEMPLATE =====
@@ -193,19 +204,46 @@ def file_extension_filter(filename):
         return ''
     return os.path.splitext(filename)[1].lower().replace('.', '')
 
-# ===== MODELO DE USUARIO =====
+# ===== MODELO DE USUARIO MEJORADO =====
 class User(UserMixin):
     def __init__(self, id, usuario, rol, modulo_principal, permisos=None):
         self.id = id
         self.usuario = usuario
-        self.rol = rol
-        self.modulo_principal = modulo_principal
-        self.redireccionar_sst = False  # ← NUEVO CAMPO
-        self.permisos = permisos or {}
+        self.rol_original = rol
+        self.rol = self._normalizar_rol(rol)  # Rol normalizado
+        self.modulo_principal = modulo_principal if modulo_principal else 'soporte'
+        self.redireccionar_sst = False
         
-        # Definir permisos por rol
-        if rol == 'admin':
-            self.permisos = {
+        # Definir permisos según rol normalizado
+        self.permisos = self._obtener_permisos_base()
+        
+        # Sobreescribir con permisos personalizados si existen
+        if permisos:
+            self.permisos.update(permisos)
+
+    def _normalizar_rol(self, rol):
+        """Normalizar diferentes variaciones de roles a valores estándar"""
+        if not rol:
+            return 'soporte'
+        
+        rol_str = str(rol).strip().lower()
+        
+        # Mapear variaciones comunes
+        if rol_str in ['admin', 'administrador', 'administradora', 'superadmin', 'super usuario']:
+            return 'admin'
+        elif rol_str in ['sst', 'seguridad', 'salud', 'salud y seguridad', 'seguridad y salud', 'seguridad laboral']:
+            return 'sst'
+        elif rol_str in ['soporte', 'tecnico', 'técnico', 'asistente', 'ayudante', 'operador', 'soporte técnico']:
+            return 'soporte'
+        else:
+            # Si no reconocemos el rol, usar soporte por defecto
+            logger.warning(f"Rol desconocido '{rol}', normalizando a 'soporte'")
+            return 'soporte'
+
+    def _obtener_permisos_base(self):
+        """Definir permisos base según rol normalizado"""
+        if self.rol == 'admin':
+            return {
                 'ver_fichas': True,
                 'agregar_fichas': True,
                 'editar_fichas': True,
@@ -216,10 +254,11 @@ class User(UserMixin):
                 'gestionar_plan_anual': True,
                 'agregar_evidencias': True,
                 'acceder_soporte': True,
-                'acceder_dashboard': True
+                'acceder_dashboard': True,
+                'administrar_sistema': True
             }
-        elif rol == 'sst':
-            self.permisos = {
+        elif self.rol == 'sst':
+            return {
                 'ver_fichas': False,
                 'agregar_fichas': False,
                 'editar_fichas': False,
@@ -230,10 +269,11 @@ class User(UserMixin):
                 'gestionar_plan_anual': True,
                 'agregar_evidencias': True,
                 'acceder_soporte': False,
-                'acceder_dashboard': False
+                'acceder_dashboard': False,
+                'administrar_sistema': False
             }
-        elif rol == 'soporte':
-            self.permisos = {
+        elif self.rol == 'soporte':
+            return {
                 'ver_fichas': True,
                 'agregar_fichas': True,
                 'editar_fichas': True,
@@ -244,20 +284,43 @@ class User(UserMixin):
                 'gestionar_plan_anual': False,
                 'agregar_evidencias': False,
                 'acceder_soporte': True,
-                'acceder_dashboard': False
+                'acceder_dashboard': False,
+                'administrar_sistema': False
+            }
+        else:
+            # Por defecto, permisos de soporte
+            return {
+                'ver_fichas': True,
+                'agregar_fichas': True,
+                'editar_fichas': True,
+                'eliminar_fichas': True,
+                'cambiar_password': True,
+                'gestion_usuarios': False,
+                'acceder_sst': False,
+                'acceder_soporte': True,
+                'acceder_dashboard': False,
+                'administrar_sistema': False
             }
 
     def puede(self, permiso):
         return self.permisos.get(permiso, False)
+    
+    def get_rol_display(self):
+        """Obtener nombre legible del rol"""
+        display_map = {
+            'admin': 'Administrador',
+            'sst': 'SST (Salud y Seguridad)',
+            'soporte': 'Soporte Técnico'
+        }
+        return display_map.get(self.rol, self.rol.capitalize())
 
 @login_manager.user_loader
 def load_user(user_id):
-    """Cargar usuario desde la base de datos (MEJORADO)"""
+    """Cargar usuario desde la base de datos"""
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Incluir redireccionar_sst en la consulta
         cursor.execute("""
             SELECT id, usuario, password, rol, modulo_principal, permisos, redireccionar_sst 
             FROM usuarios 
@@ -273,7 +336,7 @@ def load_user(user_id):
                 'id': user_data[0],
                 'usuario': user_data[1],
                 'rol': user_data[3],
-                'modulo_principal': user_data[4] if user_data[4] else 'soporte',
+                'modulo_principal': user_data[4],
                 'permisos': user_data[5]
             }
             
@@ -309,12 +372,14 @@ def redirect_a_modulo_principal():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
     
+    logger.info(f"Redirigiendo usuario {current_user.usuario} (rol: {current_user.rol})")
+    
     # Verificar si hay que redirigir a SST automáticamente
     if hasattr(current_user, 'redireccionar_sst') and current_user.redireccionar_sst:
-        logger.info(f"Redirigiendo usuario {current_user.usuario} a SST por configuración automática")
+        logger.info(f"Redirección automática a SST activada para {current_user.usuario}")
         return redirect(url_for('sst_dashboard'))
     
-    # Redirección normal según rol y módulo principal
+    # Redirección normal según rol
     if current_user.rol == 'admin':
         return redirect(url_for('index'))
     elif current_user.rol == 'sst':
@@ -322,9 +387,12 @@ def redirect_a_modulo_principal():
     elif current_user.rol == 'soporte':
         return redirect(url_for('index'))
     
-    # Por defecto, al dashboard principal
-    logger.warning(f"Usuario {current_user.usuario} con rol desconocido, redirigiendo a index")
-    return redirect(url_for('index'))
+    # Si llegamos aquí, usar módulo principal de la BD
+    modulo = getattr(current_user, 'modulo_principal', 'soporte')
+    if modulo == 'sst':
+        return redirect(url_for('sst_dashboard'))
+    else:
+        return redirect(url_for('index'))
 
 # ===== RUTAS DE AUTENTICACIÓN =====
 @app.route('/login', methods=['GET', 'POST'])
@@ -332,7 +400,7 @@ def login():
     """Login de usuarios con redirección automática según rol"""
     # Si ya está autenticado, redirigir según su perfil
     if current_user.is_authenticated:
-        logger.info(f"Usuario {current_user.usuario} ya autenticado, redirigiendo a módulo principal")
+        logger.info(f"Usuario {current_user.usuario} ya autenticado, redirigiendo...")
         return redirect_a_modulo_principal()
     
     if request.method == 'POST':
@@ -343,7 +411,6 @@ def login():
             conn = crear_conexion()
             cursor = conn.cursor()
             
-            # Obtener usuario con el campo redireccionar_sst
             cursor.execute("""
                 SELECT id, usuario, password, rol, modulo_principal, permisos, redireccionar_sst 
                 FROM usuarios 
@@ -360,10 +427,11 @@ def login():
                         'id': user_data[0],
                         'usuario': user_data[1],
                         'rol': user_data[3],
-                        'modulo_principal': user_data[4] if user_data[4] else 'soporte',
+                        'modulo_principal': user_data[4],
                         'permisos': user_data[5]
                     }
                     
+                    # Cargar permisos desde JSON si existen
                     permisos = {}
                     if user_dict.get('permisos'):
                         try:
@@ -385,14 +453,12 @@ def login():
                     login_user(user)
                     flash(f'¡Bienvenido {user.usuario}!', 'success')
                     
-                    # REDIRECCIÓN SEGURA - Evitar bucles
-                    logger.info(f"Usuario {user.usuario} autenticado exitosamente, rol: {user.rol}")
+                    logger.info(f"Login exitoso: {user.usuario}, rol: {user.rol}, módulo: {user.modulo_principal}")
                     
-                    if user.redireccionar_sst:
-                        logger.info(f"Redirección automática a SST activada para {user.usuario}")
-                        # Verificación adicional para evitar bucles
-                        if user.puede('acceder_sst'):
-                            return redirect(url_for('sst_dashboard'))
+                    # Redirigir según configuración
+                    if user.redireccionar_sst and user.puede('acceder_sst'):
+                        logger.info(f"Redirección automática a SST para {user.usuario}")
+                        return redirect(url_for('sst_dashboard'))
                     
                     return redirect_a_modulo_principal()
                 else:
@@ -462,14 +528,14 @@ def cambiar_password():
 @app.route('/')
 @login_required
 def index():
+    """Dashboard principal - solo para admin y soporte"""
+    # Si es usuario SST, redirigir a su dashboard
+    if current_user.rol == 'sst':
+        return redirect(url_for('sst_dashboard'))
+    
+    # Verificar permisos para soporte
     if not current_user.puede('acceder_soporte'):
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
-        if current_user.rol == 'sst':
-            return redirect(url_for('sst_dashboard'))
-        return redirect(url_for('login'))
-    
-    if not current_user.puede('ver_fichas'):
-        flash('No tienes permisos para ver las fichas', 'error')
         return redirect_a_modulo_principal()
     
     fichas = []
@@ -775,16 +841,11 @@ def gestion_usuarios():
             
             usuario_dict['permisos_parsed'] = permisos_parsed
             
-            # NOTA: Las fechas ya se manejan automáticamente con el filtro format_date
-            # No es necesario convertirlas aquí
-            
             usuarios.append(usuario_dict)
                     
     except Exception as e:
         flash('Error al cargar los usuarios', 'error')
         logger.error(f"❌ Error en gestion_usuarios: {e}")
-        import traceback
-        traceback.print_exc()
     
     return render_template('gestion_usuarios.html', usuarios=usuarios)
 
@@ -1332,13 +1393,9 @@ def informacion_general():
 @login_required
 def sst_dashboard():
     """Dashboard principal de SST"""
-    # Verificación adicional para evitar bucles
-    if not current_user.is_authenticated:
-        return redirect(url_for('login'))
-    
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     return render_template('sst/dashboard.html')
 
@@ -1348,7 +1405,7 @@ def sst_contenido():
     """Lista de todo el contenido SST"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     contenido = []
     categorias = []
@@ -1418,7 +1475,7 @@ def sst_agregar_contenido():
     """Agregar nuevo contenido SST - VERSIÓN MEJORADA CON BD"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     if current_user.rol != 'admin':
         flash('No tienes permisos para agregar contenido SST', 'error')
@@ -1576,7 +1633,7 @@ def sst_descargar_archivo(id):
     """Descargar archivo desde la base de datos"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     try:
         archivo = obtener_archivo_desde_bd(id)
@@ -1613,7 +1670,7 @@ def sst_descargar_archivo_forzado(id):
     """Descargar archivo forzadamente - SOLO SI QUIERES DESCARGAR"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     try:
         archivo = obtener_archivo_desde_bd(id)
@@ -1644,7 +1701,7 @@ def sst_editar_contenido(id):
     """Editar contenido SST existente"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     if current_user.rol != 'admin':
         flash('No tienes permisos para editar contenido SST', 'error')
@@ -1777,7 +1834,7 @@ def sst_eliminar_contenido(id):
     """Eliminar contenido SST"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     if current_user.rol != 'admin':
         flash('No tienes permisos para eliminar contenido SST', 'error')
@@ -1802,7 +1859,7 @@ def sst_ver_video(id):
     """Ver detalles de un video - VERSIÓN CORREGIDA"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     video = None
     
@@ -1928,7 +1985,7 @@ def sst_plan_anual():
     """Dashboard principal del Plan Anual de Trabajo"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     try:
         conn = crear_conexion()
@@ -1998,7 +2055,7 @@ def sst_plan_anual_actividades():
     """Listar todas las actividades del plan anual"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     # Filtros
     ciclo = request.args.get('ciclo', '')
@@ -2086,7 +2143,7 @@ def sst_plan_anual_actividad_detalle(id):
     """Ver detalle de una actividad específica"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     try:
         conn = crear_conexion()
@@ -2220,19 +2277,6 @@ def sst_plan_anual_actualizar_actividad(id):
                 )) as planificadas
         """, (id,))
         
-        # Simplificado: obtener conteos directamente
-        cursor.execute(f"""
-            SELECT 
-                COALESCE(SUM(CASE WHEN col = TRUE THEN 1 ELSE 0 END), 0)
-            FROM (
-                SELECT enero_semana1_p AS col FROM plan_anual_trabajo WHERE id = %s
-                UNION ALL SELECT enero_semana2_p FROM plan_anual_trabajo WHERE id = %s
-                UNION ALL SELECT enero_semana3_p FROM plan_anual_trabajo WHERE id = %s
-                UNION ALL SELECT enero_semana4_p FROM plan_anual_trabajo WHERE id = %s
-                -- ... (repetir para todos los meses)
-            ) AS subq
-        """, (id,) * 48)  # 48 = 12 meses * 4 semanas
-        
         # Actualizar estado basado en ejecución
         nuevo_estado = 'en_proceso' if ejecutado else 'pendiente'
         
@@ -2320,7 +2364,7 @@ def sst_plan_anual_cronograma():
     """Vista de cronograma completo tipo Gantt"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect(url_for('index'))
+        return redirect_a_modulo_principal()
     
     try:
         conn = crear_conexion()
@@ -2379,7 +2423,6 @@ if __name__ == '__main__':
         crear_tablas()
         print("✅ Tablas creadas/verificadas correctamente")
         
-        # Verificar y crear categorías SST
         print("📋 Verificando categorías SST...")
         try:
             verificar_y_crear_categorias_sst()
