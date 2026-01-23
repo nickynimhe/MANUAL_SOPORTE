@@ -1,55 +1,288 @@
 {% extends "base_sst.html" %}
-{% block title %}Contenido SST - M@STV{% endblock %}
+
+{% block title %}Contenido SST - M@STV Producciones{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid py-4">
+    <!-- ENCABEZADO -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0"><i class="fas fa-folder-open me-2"></i>Contenido SST</h1>
+        <div>
+            <h1 class="h3 mb-1 text-success">
+                <i class="fas fa-book-medical"></i> Contenido SST
+            </h1>
+            <p class="text-muted mb-0">Material de Seguridad y Salud en el Trabajo</p>
+        </div>
         {% if tiene_permiso('gestionar_contenido_sst') %}
         <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-success">
-            <i class="fas fa-plus me-2"></i>Agregar Contenido
+            <i class="fas fa-plus-circle"></i> Agregar Contenido
         </a>
         {% endif %}
     </div>
-    <div class="card mb-4">
+
+    <!-- FILTROS -->
+    <div class="card mb-4 shadow-sm border-0">
+        <div class="card-header bg-light border-0">
+            <h5 class="mb-0 text-success">
+                <i class="fas fa-filter"></i> Filtros de Búsqueda
+            </h5>
+        </div>
         <div class="card-body">
-            <form method="GET" class="row g-3">
-                <div class="col-md-4"><input type="text" class="form-control" name="q" placeholder="Buscar..." value="{{ request.args.get('q', '') }}"></div>
+            <form method="GET" action="{{ url_for('sst_contenido') }}" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white">
+                            <i class="fas fa-search text-success"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control" 
+                               placeholder="Buscar por título..." 
+                               value="{{ request.args.get('q', '') }}">
+                    </div>
+                </div>
+                
                 <div class="col-md-3">
-                    <select class="form-select" name="tipo">
-                        <option value="">Todos los tipos</option>
-                        <option value="video">Video</option>
-                        <option value="documento">Documento</option>
+                    <select name="categoria" class="form-select">
+                        <option value="">Todas las categorías</option>
+                        {% for cat in categorias %}
+                        <option value="{{ cat.id }}" 
+                                {% if request.args.get('categoria') == cat.id|string %}selected{% endif %}>
+                            {{ cat.nombre }}
+                        </option>
+                        {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-2"><button type="submit" class="btn btn-primary w-100"><i class="fas fa-search me-2"></i>Buscar</button></div>
+                
+                <div class="col-md-3">
+                    <select name="tipo" class="form-select">
+                        <option value="">Todos los tipos</option>
+                        <option value="video" {% if request.args.get('tipo') == 'video' %}selected{% endif %}>
+                            Video
+                        </option>
+                        <option value="documento" {% if request.args.get('tipo') == 'documento' %}selected{% endif %}>
+                            Documento
+                        </option>
+                        <option value="imagen" {% if request.args.get('tipo') == 'imagen' %}selected{% endif %}>
+                            Imagen
+                        </option>
+                        <option value="enlace" {% if request.args.get('tipo') == 'enlace' %}selected{% endif %}>
+                            Enlace
+                        </option>
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                </div>
             </form>
+            
+            {% if request.args.get('q') or request.args.get('categoria') or request.args.get('tipo') %}
+            <div class="mt-3">
+                <a href="{{ url_for('sst_contenido') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-times"></i> Limpiar filtros
+                </a>
+            </div>
+            {% endif %}
         </div>
     </div>
-    {% if contenidos %}
+
+    <!-- CONTADOR DE RESULTADOS -->
+    {% if contenido %}
+    <div class="alert alert-info mb-4">
+        <i class="fas fa-info-circle"></i>
+        Mostrando <strong>{{ contenido|length }}</strong> elemento{{ 's' if contenido|length != 1 else '' }}
+    </div>
+    {% endif %}
+
+    <!-- LISTA DE CONTENIDO -->
+    {% if contenido %}
     <div class="row">
-        {% for cont in contenidos %}
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-success text-white"><i class="fas fa-{{ 'video' if cont.tipo == 'video' else 'file-pdf' }} me-2"></i>{{ cont.tipo|title }}</div>
-                <div class="card-body">
-                    <h5>{{ cont.titulo }}</h5>
-                    <p class="text-muted small">{{ cont.descripcion[:100] if cont.descripcion else '' }}</p>
-                    {% if cont.obligatorio %}<span class="badge bg-danger">Obligatorio</span>{% endif %}
+        {% for item in contenido %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm border-0 hover-card">
+                <!-- HEADER CON CATEGORÍA -->
+                <div class="card-header border-0" style="background: linear-gradient(135deg, {{ item.categoria_color }}15 0%, {{ item.categoria_color }}05 100%);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge" style="background-color: {{ item.categoria_color }};">
+                            {{ item.categoria_nombre }}
+                        </span>
+                        <span class="badge bg-secondary">
+                            {% if item.tipo == 'video' %}
+                                <i class="fas fa-video"></i> Video
+                            {% elif item.tipo == 'documento' %}
+                                <i class="fas fa-file-pdf"></i> Documento
+                            {% elif item.tipo == 'imagen' %}
+                                <i class="fas fa-image"></i> Imagen
+                            {% elif item.tipo == 'enlace' %}
+                                <i class="fas fa-link"></i> Enlace
+                            {% endif %}
+                        </span>
+                    </div>
                 </div>
-                <div class="card-footer">
-                    {% if cont.tipo == 'video' %}
-                    <a href="{{ url_for('sst_ver_video', id=cont.id) }}" class="btn btn-sm btn-primary"><i class="fas fa-play me-1"></i>Ver</a>
+
+                <div class="card-body">
+                    <!-- TÍTULO -->
+                    <h5 class="card-title text-success mb-2">
+                        {{ item.titulo }}
+                    </h5>
+
+                    <!-- DESCRIPCIÓN -->
+                    {% if item.descripcion %}
+                    <p class="card-text text-muted small mb-3">
+                        {{ item.descripcion[:100] }}{% if item.descripcion|length > 100 %}...{% endif %}
+                    </p>
                     {% endif %}
-                    {% if tiene_permiso('gestionar_contenido_sst') %}
-                    <a href="{{ url_for('sst_editar_contenido', id=cont.id) }}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
+
+                    <!-- TAGS -->
+                    {% if item.tags %}
+                    <div class="mb-3">
+                        {% set tags_list = item.tags.split(',') if item.tags else [] %}
+                        {% for tag in tags_list[:3] %}
+                        <span class="badge bg-light text-dark me-1">
+                            <i class="fas fa-tag"></i> {{ tag.strip() }}
+                        </span>
+                        {% endfor %}
+                        {% if tags_list|length > 3 %}
+                        <span class="badge bg-light text-dark">+{{ tags_list|length - 3 }}</span>
+                        {% endif %}
+                    </div>
                     {% endif %}
+
+                    <!-- OBLIGATORIO -->
+                    {% if item.es_obligatorio %}
+                    <div class="mb-3">
+                        <span class="badge bg-danger">
+                            <i class="fas fa-exclamation-circle"></i> Obligatorio
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    <!-- FECHA -->
+                    <p class="card-text">
+                        <small class="text-muted">
+                            <i class="far fa-calendar"></i>
+                            {{ item.fecha_publicacion.strftime('%d/%m/%Y') if item.fecha_publicacion else 'Sin fecha' }}
+                        </small>
+                    </p>
+                </div>
+
+                <div class="card-footer bg-white border-0">
+                    <div class="d-flex justify-content-between">
+                        <!-- BOTÓN VER/DESCARGAR -->
+                        {% if item.tipo == 'video' %}
+                            {% if item.video_url %}
+                            <a href="{{ item.video_url }}" target="_blank" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-play-circle"></i> Ver Video
+                            </a>
+                            {% elif item.tiene_archivo %}
+                            <a href="{{ url_for('sst_descargar_archivo', id=item.id) }}" target="_blank" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-play-circle"></i> Ver Video
+                            </a>
+                            {% endif %}
+                        {% elif item.tipo == 'enlace' %}
+                            <a href="{{ item.archivo_url }}" target="_blank" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-external-link-alt"></i> Abrir
+                            </a>
+                        {% elif item.tiene_archivo %}
+                            <a href="{{ url_for('sst_descargar_archivo', id=item.id) }}" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-download"></i> Descargar
+                            </a>
+                        {% elif item.archivo_url %}
+                            <a href="{{ item.archivo_url }}" target="_blank" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-external-link-alt"></i> Ver
+                            </a>
+                        {% endif %}
+
+                        <!-- BOTONES DE ADMIN -->
+                        {% if tiene_permiso('gestionar_contenido_sst') %}
+                        <div class="btn-group" role="group">
+                            <a href="{{ url_for('sst_editar_contenido', id=item.id) }}" 
+                               class="btn btn-sm btn-outline-primary" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('sst_eliminar_contenido', id=item.id) }}" 
+                                  style="display:inline;" 
+                                  onsubmit="return confirm('¿Estás seguro de que deseas eliminar este contenido?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
     {% else %}
-    <div class="card"><div class="card-body text-center py-5"><i class="fas fa-folder-open fs-1 text-muted mb-3"></i><h4 class="text-muted">No hay contenido disponible</h4></div></div>
+    <!-- ESTADO VACÍO -->
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="fas fa-inbox fa-5x text-muted"></i>
+        </div>
+        <h4 class="text-muted mb-3">No hay contenido disponible</h4>
+        {% if tiene_permiso('gestionar_contenido_sst') %}
+        <p class="text-muted mb-4">Comienza agregando el primer contenido de SST</p>
+        <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-success">
+            <i class="fas fa-plus-circle"></i> Agregar Primer Contenido
+        </a>
+        {% else %}
+        <p class="text-muted">El contenido de SST estará disponible próximamente</p>
+        {% endif %}
+    </div>
     {% endif %}
 </div>
+
+<style>
+.hover-card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.card-header {
+    padding: 0.75rem 1rem;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+.card-footer {
+    padding: 0.75rem 1rem;
+}
+
+.badge {
+    padding: 0.4em 0.8em;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.form-select, .form-control {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.form-select:focus, .form-control:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+}
+
+.btn {
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+}
+
+.input-group-text {
+    border-radius: 8px 0 0 8px;
+}
+</style>
 {% endblock %}
