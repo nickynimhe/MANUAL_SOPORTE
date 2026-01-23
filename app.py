@@ -2242,10 +2242,10 @@ def sst_plan_anual_actividad_detalle(id):
         logger.error(f"Error en sst_plan_anual_actividad_detalle: {e}")
         return redirect(url_for('sst_plan_anual_actividades'))
 
-@app.route('/sst/plan-anual/nueva', methods=['GET', 'POST'])
+@app.route('/sst/plan-anual/agregar', methods=['GET', 'POST'])
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
-def sst_plan_anual_nueva():
+def sst_plan_anual_agregar():
     """Crear nueva actividad"""
     if not current_user.puede('gestionar_plan_anual'):
         flash('No tienes permisos para gestionar el plan anual', 'error')
@@ -2305,12 +2305,12 @@ def sst_plan_anual_nueva():
             
         except Exception as e:
             flash(f'Error al crear actividad: {str(e)}', 'error')
-            logger.error(f"Error en sst_plan_anual_nueva: {e}")
+            logger.error(f"Error en sst_plan_anual_agregar: {e}")
     
     # GET: Mostrar formulario
-    return render_template('plan_anual_nueva.html')
+    return render_template('plan_anual_agregar.html')
 
-@app.route('/sst/plan-anual/editar/<int:id>', methods=['GET', 'POST'])
+@app.route('/sst/plan-anual/actividades/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
 def sst_plan_anual_editar(id):
@@ -2381,14 +2381,14 @@ def sst_plan_anual_editar(id):
             'observaciones': actividad_data[10]
         }
         
-        return render_template('plan_anual_editar.html', actividad=actividad)
+        return render_template('plan_anual_nueva.html', actividad=actividad)
         
     except Exception as e:
         flash(f'Error al editar actividad: {str(e)}', 'error')
         logger.error(f"Error en sst_plan_anual_editar: {e}")
         return redirect(url_for('sst_plan_anual_actividades'))
 
-@app.route('/sst/plan-anual/eliminar/<int:id>', methods=['POST'])
+@app.route('/sst/plan-anual/actividades/<int:id>/eliminar', methods=['POST'])
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
 def sst_plan_anual_eliminar(id):
@@ -2660,7 +2660,7 @@ def sst_plan_anual_actualizar_semana(id):
         logger.error(f"Error en sst_plan_anual_actualizar_semana: {e}")
         return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/sst/plan-anual/actividad/<int:id>/evidencia', methods=['POST'])
+@app.route('/sst/plan-anual/actividades/<int:id>/evidencia', methods=['POST'])
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
 def sst_plan_anual_agregar_evidencia(id):
@@ -2717,7 +2717,7 @@ def sst_plan_anual_agregar_evidencia(id):
     
     return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
 
-@app.route('/sst/plan-anual/actividad/<int:id>/seguimiento', methods=['POST'])
+@app.route('/sst/plan-anual/actividades/<int:id>/seguimiento', methods=['POST'])
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
 def sst_plan_anual_agregar_seguimiento(id):
