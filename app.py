@@ -121,25 +121,48 @@ def inject_permissions():
 # ===== FILTROS TEMPLATE =====
 @app.template_filter('format_date')
 def format_date_filter(date_value, format='%d/%m/%Y'):
-    """Filtro para formatear fechas"""
+    """Filtro para formatear fechas - MANEJA STRINGS, DATETIME Y NONE"""
     if date_value is None:
         return 'Sin fecha'
+    
     try:
-        # Si es string, convertirlo a datetime primero
-        if isinstance(date_value, str):
-            try:
-                # Intentar diferentes formatos
-                for fmt in ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d']:
-                    try:
-                        date_value = datetime.strptime(date_value, fmt)
-                        break
-                    except:
-                        continue
-            except:
-                return date_value[:16]  # Si no se puede parsear, devolver los primeros caracteres
+        # Si ya es datetime, formatear directamente
+        if hasattr(date_value, 'strftime'):
+            return date_value.strftime(format)
         
-        return date_value.strftime(format)
-    except:
+        # Si es string, intentar convertirlo
+        if isinstance(date_value, str):
+            # Limpiar el string (quitar microsegundos si existen)
+            date_str = date_value.split('.')[0] if '.' in date_value else date_value
+            
+            # Intentar diferentes formatos comunes de PostgreSQL
+            formats_to_try = [
+                '%Y-%m-%d %H:%M:%S',
+                '%Y-%m-%d %H:%M:%S.%f',
+                '%Y-%m-%d %H:%M',
+                '%Y-%m-%d',
+                '%d/%m/%Y %H:%M:%S',
+                '%d/%m/%Y %H:%M',
+                '%d/%m/%Y'
+            ]
+            
+            for fmt in formats_to_try:
+                try:
+                    dt = datetime.strptime(date_str, fmt)
+                    return dt.strftime(format)
+                except ValueError:
+                    continue
+            
+            # Si no se pudo parsear, devolver los primeros caracteres
+            if len(date_str) >= 10:
+                return date_str[:10] + " " + date_str[11:16] if len(date_str) >= 16 else date_str[:10]
+            return date_str
+        
+        # Para otros tipos, devolver string
+        return str(date_value)
+        
+    except Exception as e:
+        logger.error(f"❌ Error en format_date_filter: {e}")
         return 'Fecha inválida'
 
 @app.template_filter('safe_tags')
@@ -691,6 +714,7 @@ def ver_ficha(id):
 @app.route('/usuarios')
 @login_required
 def gestion_usuarios():
+    """Gestión de usuarios con manejo mejorado de fechas y datos"""
     if not current_user.puede('gestion_usuarios'):
         flash('No tienes permisos para acceder a esta página', 'error')
         return redirect_a_modulo_principal()
@@ -698,7 +722,14 @@ def gestion_usuarios():
     usuarios = []
     
     try:
-        resultado = ejecutar_consulta("SELECT * FROM usuarios ORDER BY fecha_creacion DESC", fetch=True)
+        # Obtener usuarios con información completa
+        resultado = ejecutar_consulta("""
+            SELECT 
+                id, usuario, password, rol, modulo_principal, permisos,
+                fecha_creacion, fecha_actualizacion
+            FROM usuarios 
+            ORDER BY fecha_creacion DESC
+        """, fetch=True)
         
         for usuario in resultado or []:
             usuario_dict = {
@@ -712,38 +743,25 @@ def gestion_usuarios():
                 'fecha_actualizacion': usuario[7]
             }
             
-            # Convertir fechas string a datetime si es necesario
-            try:
-                if usuario_dict['fecha_creacion'] and isinstance(usuario_dict['fecha_creacion'], str):
-                    usuario_dict['fecha_creacion'] = datetime.strptime(
-                        usuario_dict['fecha_creacion'].split('.')[0],  # Quitar microsegundos
-                        '%Y-%m-%d %H:%M:%S'
-                    )
-            except:
-                usuario_dict['fecha_creacion'] = None
-                
-            try:
-                if usuario_dict['fecha_actualizacion'] and isinstance(usuario_dict['fecha_actualizacion'], str):
-                    usuario_dict['fecha_actualizacion'] = datetime.strptime(
-                        usuario_dict['fecha_actualizacion'].split('.')[0],  # Quitar microsegundos
-                        '%Y-%m-%d %H:%M:%S'
-                    )
-            except:
-                usuario_dict['fecha_actualizacion'] = None
-            
+            # Parsear permisos JSON si existen
+            permisos_parsed = {}
             if usuario_dict.get('permisos'):
                 try:
-                    usuario_dict['permisos_parsed'] = json.loads(usuario_dict['permisos'])
-                except:
-                    usuario_dict['permisos_parsed'] = {}
-            else:
-                usuario_dict['permisos_parsed'] = {}
+                    permisos_parsed = json.loads(usuario_dict['permisos'])
+                except Exception as e:
+                    logger.warning(f"Error al parsear permisos del usuario {usuario_dict['id']}: {e}")
+                    permisos_parsed = {}
+            
+            usuario_dict['permisos_parsed'] = permisos_parsed
+            
+            # NOTA: Las fechas ya se manejan automáticamente con el filtro format_date
+            # No es necesario convertirlas aquí
             
             usuarios.append(usuario_dict)
                     
     except Exception as e:
         flash('Error al cargar los usuarios', 'error')
-        logger.error(f"Error en gestion_usuarios: {e}")
+        logger.error(f"❌ Error en gestion_usuarios: {e}")
         import traceback
         traceback.print_exc()
     
