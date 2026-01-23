@@ -25,7 +25,7 @@
                         <th scope="col" class="text-center">ID</th>
                         <th scope="col" class="fw-semibold">Usuario</th>
                         <th scope="col" class="fw-semibold">Rol</th>
-                        <th scope="col" class="fw-semibold">Permisos</th>
+                        <th scope="col" class="fw-semibold">Módulo Principal</th>
                         <th scope="col" class="fw-semibold">Fecha Creación</th>
                         <th scope="col" class="fw-semibold">Última Actualización</th>
                         <th scope="col" class="text-center fw-semibold">Acciones</th>
@@ -44,7 +44,8 @@
                         <td>
                             <span class="badge 
                                 {% if usuario.rol == 'admin' %}bg-danger
-                                {% elif usuario.rol == 'asesor' %}bg-secondary
+                                {% elif usuario.rol == 'sst' %}bg-warning text-dark
+                                {% elif usuario.rol == 'soporte' %}bg-primary
                                 {% else %}bg-secondary
                                 {% endif %} text-uppercase px-3 py-1 fs-7 fw-semibold" 
                                 style="border-radius: 1rem;">
@@ -52,37 +53,26 @@
                             </span>
                         </td>
                         <td>
-                            <div class="d-flex flex-wrap gap-1">
-                                {% if usuario.permisos_parsed.agregar_fichas %}
-                                <span class="badge bg-success fs-8" title="Puede agregar fichas">Fichas+</span>
-                                {% endif %}
-                                {% if usuario.permisos_parsed.editar_fichas %}
-                                <span class="badge bg-warning text-dark fs-8" title="Puede editar fichas">Fichas✏️</span>
-                                {% endif %}
-                                {% if usuario.permisos_parsed.eliminar_fichas %}
-                                <span class="badge bg-danger fs-8" title="Puede eliminar fichas">Fichas🗑️</span>
-                                {% endif %}
-                                {% if usuario.permisos_parsed.gestion_soluciones_visuales %}
-                                <span class="badge bg-primary fs-8" title="Puede gestionar soluciones visuales">Soluciones📊</span>
-                                {% endif %}
-                                {% if not usuario.permisos_parsed.agregar_fichas and not usuario.permisos_parsed.editar_fichas and not usuario.permisos_parsed.eliminar_fichas and not usuario.permisos_parsed.gestion_soluciones_visuales %}
-                                <span class="badge bg-secondary fs-8" title="Solo permisos básicos">Básico</span>
-                                {% endif %}
-                            </div>
-                        </td>
-                        <td class="text-nowrap">
-                            {% if usuario.fecha_creacion %}
-                                {{ usuario.fecha_creacion[:10] }} {{ usuario.fecha_creacion[11:16] }}
+                            {% if usuario.modulo_principal %}
+                                <span class="badge 
+                                    {% if usuario.modulo_principal == 'soporte' %}bg-primary
+                                    {% elif usuario.modulo_principal == 'sst' %}bg-warning text-dark
+                                    {% else %}bg-secondary
+                                    {% endif %} text-uppercase px-3 py-1 fs-7 fw-semibold" 
+                                    style="border-radius: 1rem;">
+                                    {{ usuario.modulo_principal }}
+                                </span>
                             {% else %}
-                                Sin fecha
+                                <span class="text-muted">No definido</span>
                             {% endif %}
                         </td>
+                        <!-- FECHA CORREGIDA - USANDO FILTRO format_date -->
                         <td class="text-nowrap">
-                            {% if usuario.fecha_actualizacion %}
-                                {{ usuario.fecha_actualizacion[:10] }} {{ usuario.fecha_actualizacion[11:16] }}
-                            {% else %}
-                                Sin fecha
-                            {% endif %}
+                            {{ usuario.fecha_creacion|format_date('%d/%m/%Y %H:%M') }}
+                        </td>
+                        <!-- FECHA CORREGIDA - USANDO FILTRO format_date -->
+                        <td class="text-nowrap">
+                            {{ usuario.fecha_actualizacion|format_date('%d/%m/%Y %H:%M') }}
                         </td>
                         <td class="text-center">
                             {% if usuario.id != current_user.id %}
@@ -139,26 +129,17 @@
             <i class="fas fa-user-slash text-danger mb-3" style="font-size: 3rem;"></i>
             <h6 class="fw-bold mb-3">¿Estás seguro que deseas eliminar al usuario?</h6>
             <div class="alert alert-warning">
-              <strong>{{ usuario.usuario }}</strong> - {{ usuario.rol|upper }}
-            </div>
-            
-            <!-- Mostrar permisos del usuario en el modal -->
-            <div class="mb-3">
-                <small class="text-muted d-block mb-2">Permisos actuales:</small>
-                <div class="d-flex flex-wrap gap-1 justify-content-center">
-                    {% if usuario.permisos_parsed.agregar_fichas %}
-                    <span class="badge bg-success fs-8">Fichas+</span>
-                    {% endif %}
-                    {% if usuario.permisos_parsed.editar_fichas %}
-                    <span class="badge bg-warning text-dark fs-8">Fichas✏️</span>
-                    {% endif %}
-                    {% if usuario.permisos_parsed.eliminar_fichas %}
-                    <span class="badge bg-danger fs-8">Fichas🗑️</span>
-                    {% endif %}
-                    {% if usuario.permisos_parsed.gestion_soluciones_visuales %}
-                    <span class="badge bg-primary fs-8">Soluciones📊</span>
-                    {% endif %}
-                </div>
+              <strong>{{ usuario.usuario }}</strong> 
+              <div class="mt-1">
+                <span class="badge 
+                    {% if usuario.rol == 'admin' %}bg-danger
+                    {% elif usuario.rol == 'sst' %}bg-warning text-dark
+                    {% elif usuario.rol == 'soporte' %}bg-primary
+                    {% else %}bg-secondary
+                    {% endif %} text-uppercase px-2 py-1">
+                    {{ usuario.rol }}
+                </span>
+              </div>
             </div>
             
             <p class="text-muted small">
@@ -179,6 +160,47 @@
     </div>
     {% endif %}
 {% endfor %}
+
+<div class="row mt-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h6 class="card-title"><i class="fas fa-users"></i> Total Usuarios</h6>
+                <h2 class="mb-0">{{ usuarios|length }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <h6 class="card-title"><i class="fas fa-user-shield"></i> Administradores</h6>
+                <h2 class="mb-0">
+                    {{ usuarios|selectattr('rol', 'equalto', 'admin')|list|length }}
+                </h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body text-center">
+                <h6 class="card-title"><i class="fas fa-hard-hat"></i> Usuarios SST</h6>
+                <h2 class="mb-0">
+                    {{ usuarios|selectattr('rol', 'equalto', 'sst')|list|length }}
+                </h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h6 class="card-title"><i class="fas fa-headset"></i> Soporte</h6>
+                <h2 class="mb-0">
+                    {{ usuarios|selectattr('rol', 'equalto', 'soporte')|list|length }}
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="mt-4">
     <a href="{{ url_for('index') }}" class="btn btn-secondary d-inline-flex align-items-center gap-2 shadow-sm">
@@ -207,15 +229,31 @@
     border-radius: 12px 12px 0 0;
 }
 
-/* Estilos para los badges de permisos */
-.badge.fs-8 {
-    font-size: 0.7rem !important;
-    padding: 0.25em 0.5em;
-}
-
 /* Tooltip personalizado */
 .tooltip {
     z-index: 1070;
+}
+
+/* Mejoras visuales para la tabla */
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
 }
 </style>
 
@@ -227,9 +265,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
-    // Debug: Verificar que los modales se cargan
-    console.log('Modales cargados:', document.querySelectorAll('.modal').length);
-    
     // Forzar el cierre de cualquier modal abierto previamente
     var existingModals = document.querySelectorAll('.modal.show');
     existingModals.forEach(function(modal) {
@@ -238,13 +273,6 @@ document.addEventListener('DOMContentLoaded', function() {
             bsModal.hide();
         }
     });
-    
-    // Agregar tooltips a los badges de permisos
-    var permissionBadges = document.querySelectorAll('.badge[title]');
-    permissionBadges.forEach(function(badge) {
-        new bootstrap.Tooltip(badge);
-    });
 });
 </script>
 {% endblock %}
-
