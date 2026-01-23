@@ -311,42 +311,175 @@
     </div>
 </div>
 
+{% extends 'base.html' %}
+
+{% block title %}Nueva Actividad - Plan Anual PESV{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-plus-circle"></i> Nueva Actividad PESV</h2>
+                    <p class="text-muted">Agregar actividad al Plan Anual 2026</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Cancelar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Formulario de Actividad</h5>
+                </div>
+                <div class="card-body">
+                    <form id="formNuevaActividad">
+                        <!-- Información Básica -->
+                        <div class="form-section mb-4">
+                            <h5 class="border-bottom pb-2">📌 Información Básica</h5>
+                            <div class="form-group">
+                                <label for="actividad">Actividad *</label>
+                                <input type="text" id="actividad" class="form-control" required 
+                                       placeholder="Ej: Conformación Comité de Seguridad Vial">
+                            </div>
+                            <div class="form-group">
+                                <label for="evidencia">Evidencia Requerida</label>
+                                <textarea id="evidencia" class="form-control" rows="3" 
+                                          placeholder="Documento en el que consta la asignación..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Ciclo y Normativa -->
+                        <div class="form-section mb-4">
+                            <h5 class="border-bottom pb-2">🏛️ Marco Normativo</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="ciclo">Ciclo PHVA *</label>
+                                        <select id="ciclo" class="form-control" required>
+                                            <option value="">Seleccionar...</option>
+                                            <option value="Planear">Planear</option>
+                                            <option value="Hacer">Hacer</option>
+                                            <option value="Verificar">Verificar</option>
+                                            <option value="Actuar">Actuar</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="articulo">Artículo Decreto 1072</label>
+                                        <input type="text" id="articulo" class="form-control" 
+                                               placeholder="Ej: 2.2.4.6.8">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="nivel">Nivel PESV</label>
+                                        <select id="nivel" class="form-control">
+                                            <option value="">Seleccionar...</option>
+                                            <option value="Todos los niveles">Todos los niveles</option>
+                                            <option value="Estándar">Estándar</option>
+                                            <option value="Avanzado">Avanzado</option>
+                                            <option value="N/A">N/A</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Responsables y Recursos -->
+                        <div class="form-section mb-4">
+                            <h5 class="border-bottom pb-2">👥 Responsables y Recursos</h5>
+                            <div class="form-group">
+                                <label for="responsables">Responsables *</label>
+                                <input type="text" id="responsables" class="form-control" required 
+                                       placeholder="Ej: SST - GERENCIA - COMITÉ DE SEGURIDAD VIAL">
+                            </div>
+                            <div class="form-group">
+                                <label for="recursos">Recursos</label>
+                                <input type="text" id="recursos" class="form-control" 
+                                       placeholder="Ej: Tecnologicos, Infraestructura, Humanos, Financieros">
+                            </div>
+                        </div>
+
+                        <!-- Observaciones -->
+                        <div class="form-section mb-4">
+                            <h5 class="border-bottom pb-2">📝 Observaciones</h5>
+                            <div class="form-group">
+                                <textarea id="observaciones" class="form-control" rows="3" 
+                                          placeholder="Notas adicionales..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-secondary">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Guardar Actividad
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/pesv_data.js') }}"></script>
 <script>
-// Actualizar ejecución de semanas
-document.querySelectorAll('.semana-checkbox').forEach(checkbox => {
-    checkbox.addEventListener('change', function() {
-        const mes = this.dataset.mes;
-        const semana = this.dataset.semana;
-        const ejecutado = this.checked;
+document.addEventListener('DOMContentLoaded', function() {
+    inicializarDatosEjemplo();
+    
+    document.getElementById('formNuevaActividad').addEventListener('submit', function(e) {
+        e.preventDefault();
         
-        // Enviar actualización via AJAX
-        fetch('{{ url_for("sst_plan_anual_actualizar_actividad", id=actividad[0]) }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `mes=${mes}&semana=${semana}&ejecutado=${ejecutado}`
-        })
-        .then(response => {
-            if (response.ok) {
-                location.reload(); // Recargar para actualizar progreso
-            } else {
-                alert('Error al actualizar');
-                this.checked = !ejecutado; // Revertir checkbox
-            }
-        })
-        .catch(error => {
-            alert('Error de conexión');
-            this.checked = !ejecutado;
-        });
+        if (typeof guardarActividad !== 'function') {
+            alert('Error: No se puede guardar. Recarga la página.');
+            return;
+        }
+        
+        const datos = {
+            actividad: document.getElementById('actividad').value,
+            evidencia: document.getElementById('evidencia').value,
+            ciclo: document.getElementById('ciclo').value,
+            articulo: document.getElementById('articulo').value,
+            nivel: document.getElementById('nivel').value,
+            responsables: document.getElementById('responsables').value,
+            recursos: document.getElementById('recursos').value,
+            observaciones: document.getElementById('observaciones').value,
+            estado: 'pendiente',
+            avance: 0
+        };
+        
+        const id = guardarActividad(datos);
+        
+        if (id) {
+            alert('✅ Actividad guardada exitosamente (ID: ' + id + ')');
+            window.location.href = "{{ url_for('sst_plan_anual_actividades') }}";
+        } else {
+            alert('❌ Error al guardar la actividad');
+        }
     });
 });
 </script>
 
 <style>
-.badge-lg {
-    font-size: 1.1em;
-    padding: 0.5em 1em;
+.form-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
 }
 </style>
 {% endblock %}
