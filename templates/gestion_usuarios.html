@@ -70,8 +70,20 @@
                                 {% endif %}
                             </div>
                         </td>
-                        <td class="text-nowrap">{{ usuario.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}</td>
-                        <td class="text-nowrap">{{ usuario.fecha_actualizacion.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td class="text-nowrap">
+                            {% if usuario.fecha_creacion %}
+                                {{ usuario.fecha_creacion[:10] }} {{ usuario.fecha_creacion[11:16] }}
+                            {% else %}
+                                Sin fecha
+                            {% endif %}
+                        </td>
+                        <td class="text-nowrap">
+                            {% if usuario.fecha_actualizacion %}
+                                {{ usuario.fecha_actualizacion[:10] }} {{ usuario.fecha_actualizacion[11:16] }}
+                            {% else %}
+                                Sin fecha
+                            {% endif %}
+                        </td>
                         <td class="text-center">
                             {% if usuario.id != current_user.id %}
                             <div class="btn-group" role="group" aria-label="Acciones usuario {{ usuario.usuario }}">
@@ -235,3 +247,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+
