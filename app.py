@@ -2416,55 +2416,948 @@ def sst_plan_anual_cronograma():
         return redirect(url_for('sst_plan_anual'))
 
 def inicializar_plan_anual():
-    """Crear tabla e importar datos del plan anual si no existen"""
+    """Crear tabla e importar datos del plan anual basados en el Excel"""
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Verificar si la tabla tiene datos
+        # Verificar si la tabla existe, si no, crearla con estructura completa
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS plan_anual_trabajo (
+                id SERIAL PRIMARY KEY,
+                actividad TEXT NOT NULL,
+                evidencia TEXT,
+                ciclo_phva VARCHAR(50),
+                articulos VARCHAR(200),
+                nivel_pesv VARCHAR(100),
+                responsables VARCHAR(200),
+                recursos TEXT,
+                
+                -- Enero
+                enero_semana1_p BOOLEAN DEFAULT FALSE,
+                enero_semana1_e BOOLEAN DEFAULT FALSE,
+                enero_semana2_p BOOLEAN DEFAULT FALSE,
+                enero_semana2_e BOOLEAN DEFAULT FALSE,
+                enero_semana3_p BOOLEAN DEFAULT FALSE,
+                enero_semana3_e BOOLEAN DEFAULT FALSE,
+                enero_semana4_p BOOLEAN DEFAULT FALSE,
+                enero_semana4_e BOOLEAN DEFAULT FALSE,
+                
+                -- Febrero
+                febrero_semana1_p BOOLEAN DEFAULT FALSE,
+                febrero_semana1_e BOOLEAN DEFAULT FALSE,
+                febrero_semana2_p BOOLEAN DEFAULT FALSE,
+                febrero_semana2_e BOOLEAN DEFAULT FALSE,
+                febrero_semana3_p BOOLEAN DEFAULT FALSE,
+                febrero_semana3_e BOOLEAN DEFAULT FALSE,
+                febrero_semana4_p BOOLEAN DEFAULT FALSE,
+                febrero_semana4_e BOOLEAN DEFAULT FALSE,
+                
+                -- Marzo
+                marzo_semana1_p BOOLEAN DEFAULT FALSE,
+                marzo_semana1_e BOOLEAN DEFAULT FALSE,
+                marzo_semana2_p BOOLEAN DEFAULT FALSE,
+                marzo_semana2_e BOOLEAN DEFAULT FALSE,
+                marzo_semana3_p BOOLEAN DEFAULT FALSE,
+                marzo_semana3_e BOOLEAN DEFAULT FALSE,
+                marzo_semana4_p BOOLEAN DEFAULT FALSE,
+                marzo_semana4_e BOOLEAN DEFAULT FALSE,
+                
+                -- Abril
+                abril_semana1_p BOOLEAN DEFAULT FALSE,
+                abril_semana1_e BOOLEAN DEFAULT FALSE,
+                abril_semana2_p BOOLEAN DEFAULT FALSE,
+                abril_semana2_e BOOLEAN DEFAULT FALSE,
+                abril_semana3_p BOOLEAN DEFAULT FALSE,
+                abril_semana3_e BOOLEAN DEFAULT FALSE,
+                abril_semana4_p BOOLEAN DEFAULT FALSE,
+                abril_semana4_e BOOLEAN DEFAULT FALSE,
+                
+                -- Mayo
+                mayo_semana1_p BOOLEAN DEFAULT FALSE,
+                mayo_semana1_e BOOLEAN DEFAULT FALSE,
+                mayo_semana2_p BOOLEAN DEFAULT FALSE,
+                mayo_semana2_e BOOLEAN DEFAULT FALSE,
+                mayo_semana3_p BOOLEAN DEFAULT FALSE,
+                mayo_semana3_e BOOLEAN DEFAULT FALSE,
+                mayo_semana4_p BOOLEAN DEFAULT FALSE,
+                mayo_semana4_e BOOLEAN DEFAULT FALSE,
+                
+                -- Junio
+                junio_semana1_p BOOLEAN DEFAULT FALSE,
+                junio_semana1_e BOOLEAN DEFAULT FALSE,
+                junio_semana2_p BOOLEAN DEFAULT FALSE,
+                junio_semana2_e BOOLEAN DEFAULT FALSE,
+                junio_semana3_p BOOLEAN DEFAULT FALSE,
+                junio_semana3_e BOOLEAN DEFAULT FALSE,
+                junio_semana4_p BOOLEAN DEFAULT FALSE,
+                junio_semana4_e BOOLEAN DEFAULT FALSE,
+                
+                -- Julio
+                julio_semana1_p BOOLEAN DEFAULT FALSE,
+                julio_semana1_e BOOLEAN DEFAULT FALSE,
+                julio_semana2_p BOOLEAN DEFAULT FALSE,
+                julio_semana2_e BOOLEAN DEFAULT FALSE,
+                julio_semana3_p BOOLEAN DEFAULT FALSE,
+                julio_semana3_e BOOLEAN DEFAULT FALSE,
+                julio_semana4_p BOOLEAN DEFAULT FALSE,
+                julio_semana4_e BOOLEAN DEFAULT FALSE,
+                
+                -- Agosto
+                agosto_semana1_p BOOLEAN DEFAULT FALSE,
+                agosto_semana1_e BOOLEAN DEFAULT FALSE,
+                agosto_semana2_p BOOLEAN DEFAULT FALSE,
+                agosto_semana2_e BOOLEAN DEFAULT FALSE,
+                agosto_semana3_p BOOLEAN DEFAULT FALSE,
+                agosto_semana3_e BOOLEAN DEFAULT FALSE,
+                agosto_semana4_p BOOLEAN DEFAULT FALSE,
+                agosto_semana4_e BOOLEAN DEFAULT FALSE,
+                
+                -- Septiembre
+                septiembre_semana1_p BOOLEAN DEFAULT FALSE,
+                septiembre_semana1_e BOOLEAN DEFAULT FALSE,
+                septiembre_semana2_p BOOLEAN DEFAULT FALSE,
+                septiembre_semana2_e BOOLEAN DEFAULT FALSE,
+                septiembre_semana3_p BOOLEAN DEFAULT FALSE,
+                septiembre_semana3_e BOOLEAN DEFAULT FALSE,
+                septiembre_semana4_p BOOLEAN DEFAULT FALSE,
+                septiembre_semana4_e BOOLEAN DEFAULT FALSE,
+                
+                -- Octubre
+                octubre_semana1_p BOOLEAN DEFAULT FALSE,
+                octubre_semana1_e BOOLEAN DEFAULT FALSE,
+                octubre_semana2_p BOOLEAN DEFAULT FALSE,
+                octubre_semana2_e BOOLEAN DEFAULT FALSE,
+                octubre_semana3_p BOOLEAN DEFAULT FALSE,
+                octubre_semana3_e BOOLEAN DEFAULT FALSE,
+                octubre_semana4_p BOOLEAN DEFAULT FALSE,
+                octubre_semana4_e BOOLEAN DEFAULT FALSE,
+                
+                -- Noviembre
+                noviembre_semana1_p BOOLEAN DEFAULT FALSE,
+                noviembre_semana1_e BOOLEAN DEFAULT FALSE,
+                noviembre_semana2_p BOOLEAN DEFAULT FALSE,
+                noviembre_semana2_e BOOLEAN DEFAULT FALSE,
+                noviembre_semana3_p BOOLEAN DEFAULT FALSE,
+                noviembre_semana3_e BOOLEAN DEFAULT FALSE,
+                noviembre_semana4_p BOOLEAN DEFAULT FALSE,
+                noviembre_semana4_e BOOLEAN DEFAULT FALSE,
+                
+                -- Diciembre
+                diciembre_semana1_p BOOLEAN DEFAULT FALSE,
+                diciembre_semana1_e BOOLEAN DEFAULT FALSE,
+                diciembre_semana2_p BOOLEAN DEFAULT FALSE,
+                diciembre_semana2_e BOOLEAN DEFAULT FALSE,
+                diciembre_semana3_p BOOLEAN DEFAULT FALSE,
+                diciembre_semana3_e BOOLEAN DEFAULT FALSE,
+                diciembre_semana4_p BOOLEAN DEFAULT FALSE,
+                diciembre_semana4_e BOOLEAN DEFAULT FALSE,
+                
+                observaciones TEXT,
+                estado VARCHAR(20) DEFAULT 'pendiente',
+                porcentaje_avance DECIMAL(5,2) DEFAULT 0.00,
+                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                usuario_actualizacion INTEGER
+            )
+        """)
+        
+        # Crear tabla de evidencias si no existe
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS plan_evidencias (
+                id SERIAL PRIMARY KEY,
+                plan_id INTEGER REFERENCES plan_anual_trabajo(id) ON DELETE CASCADE,
+                titulo VARCHAR(200) NOT NULL,
+                descripcion TEXT,
+                archivo_nombre VARCHAR(300),
+                archivo_tipo VARCHAR(100),
+                archivo_tamano INTEGER,
+                archivo_data BYTEA,
+                usuario_id INTEGER,
+                fecha_carga TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Crear tabla de seguimiento
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS plan_seguimiento (
+                id SERIAL PRIMARY KEY,
+                plan_id INTEGER REFERENCES plan_anual_trabajo(id) ON DELETE CASCADE,
+                comentario TEXT NOT NULL,
+                tipo VARCHAR(50),
+                usuario_id INTEGER,
+                fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        conn.commit()
+        
+        # Verificar si ya hay datos
         cursor.execute("SELECT COUNT(*) FROM plan_anual_trabajo")
         count = cursor.fetchone()[0]
         
         if count == 0:
-            print("📥 No hay datos en plan_anual_trabajo, importando...")
+            print("📥 Importando datos del plan anual desde el Excel...")
             
-            # Crear tabla si no existe (versión simplificada)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS plan_anual_trabajo (
-                    id SERIAL PRIMARY KEY,
-                    actividad VARCHAR(500) NOT NULL,
-                    evidencia VARCHAR(500),
-                    ciclo_phva VARCHAR(50),
-                    responsables VARCHAR(200),
-                    estado VARCHAR(20) DEFAULT 'pendiente',
-                    porcentaje_avance DECIMAL(5,2) DEFAULT 0.00
-                )
-            """)
-            conn.commit()
-            
-            # Insertar datos de ejemplo
-            actividades_ejemplo = [
-                ("Capacitación en seguridad básica", "Lista de asistencia", "Planear", "Jefe SST", "pendiente", 0),
-                ("Inspección de equipos de protección", "Formato de inspección", "Hacer", "Supervisor", "en_proceso", 30),
-                ("Investigación de incidentes", "Reporte de incidente", "Verificar", "Coordinador SST", "completado", 100),
-                ("Actualización de procedimientos", "Documento firmado", "Actuar", "Gerente", "pendiente", 0),
+            # Datos de ejemplo basados en tu Excel
+            actividades_pesv = [
+                # PLANEAR: DISEÑO Y PLANIFICACIÓN DEL SG-SST
+                {
+                    'actividad': 'Responsable del Sistema de Gestión de Seguridad y Salud en el Trabajo SG-SST',
+                    'evidencia': 'Documento en el que consta la asignación, con la respectiva determinación de responsabilidades y constatar la hoja de vida con soportes de la persona asignada.',
+                    'ciclo_phva': 'Planear',
+                    'articulos': '2.2.4.6.8',
+                    'nivel_pesv': 'N/A',
+                    'responsables': 'SST - COPASST - GERENCIA',
+                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
+                    'observaciones': 'Asignación inicial del responsable',
+                    'programacion': {
+                        'enero': [True, False, False, False],  # Semana 1
+                        'febrero': [False, False, False, False],
+                        'marzo': [False, False, False, False],
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Lider del diseño e implementacion del PESV',
+                    'evidencia': 'Documento en el que consta la asignación, con la respectiva determinación de responsabilidades, evidencia de la competencia del Líder; por lo que se debe definir y documentar',
+                    'ciclo_phva': 'Planear',
+                    'articulos': 'N/A',
+                    'nivel_pesv': 'Todos los niveles - Paso 1',
+                    'responsables': 'SST - GERENCIA',
+                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
+                    'observaciones': 'Designación del líder PESV',
+                    'programacion': {
+                        'enero': [True, True, False, False],  # Semanas 1 y 2
+                        'febrero': [False, False, False, False],
+                        'marzo': [False, False, False, False],
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Politica de Seguridad y Salud en el Trabajo SST y del Plan Estrategico de Seguridad Vial PESV',
+                    'evidencia': 'Política del Sistema de Gestión deSeguridad y Salud en elTrabajo SG-SST firmada, fecha y comunicada al COPASST',
+                    'ciclo_phva': 'Planear',
+                    'articulos': '2.2.4.6.5, 2.2.4.6.6, 2.2.4.6.12',
+                    'nivel_pesv': 'Todos los niveles (Paso 3)',
+                    'responsables': 'SST - COPASST - COMITE DE SEGURIDAD VIAL',
+                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
+                    'observaciones': 'Política institucional',
+                    'programacion': {
+                        'enero': [True, True, True, False],  # Semanas 1-3
+                        'febrero': [False, True, False, False],  # Semana 2
+                        'marzo': [False, False, False, False],
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Objetivos del Sistema de Gestión de la Seguridad y Salud en el Trabajo SG-SST y del Plan Estrategico de Seguridad Vial PESV',
+                    'evidencia': 'Objetivos definidos, claros, medibles, cuantificables, con metas, documentados, revisados del SG-SST y del PESV',
+                    'ciclo_phva': 'Planear',
+                    'articulos': '2.2.4.6.7',
+                    'nivel_pesv': 'Estandar (Paso 7)',
+                    'responsables': 'SST - COPASST - COMITE DE SEGURIDAD VIAL- LIDER PESV',
+                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
+                    'observaciones': 'Definición anual de objetivos',
+                    'programacion': {
+                        'enero': [True, True, True, True],  # Todo enero
+                        'febrero': [True, False, False, False],  # Semana 1
+                        'marzo': [False, False, False, False],
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Responsabilidades en el Sistema de Gestión deSeguridad y Salud en el Trabajo SG - SST y del Plan Estrategico de Seguridad Vial PESV',
+                    'evidencia': 'Debe asignar, documentar y comunicar las responsabilidades específicas en SST y PESV a todos los niveles de la organización, incluida la alta dirección',
+                    'ciclo_phva': 'Planear',
+                    'articulos': '2.2.4.6.8, 2.2.4.6.9, 2.2.4.6.10, 2.2.4.6.8.12',
+                    'nivel_pesv': 'Estandar (Paso 11)',
+                    'responsables': 'SST - COPASST - COMITE DE SEGURIDAD VIAL',
+                    'recursos': 'Tecnologicos, Infraestructura, Humanos',
+                    'observaciones': 'Asignación de responsabilidades',
+                    'programacion': {
+                        'enero': [True, True, False, False],  # Semanas 1-2
+                        'febrero': [True, True, False, False],  # Semanas 1-2
+                        'marzo': [False, False, False, False],
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Asignación de recursos para el Sistema de Gestión de Seguridad y Salud en elTrabajo SG-SST y del Plan Estrategico de Seguridad Vial PESV',
+                    'evidencia': 'Establecer y asignar el presupuesto requerido para la ejecución de las actividades establecidas en el SG SST y PESV para el 2026',
+                    'ciclo_phva': 'Planear',
+                    'articulos': '2.2.4.6.8',
+                    'nivel_pesv': 'N/A',
+                    'responsables': 'SST - COPASST - COMITE DE SEGURIDAD VIAL',
+                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
+                    'observaciones': 'Presupuesto anual',
+                    'programacion': {
+                        'enero': [True, False, False, False],  # Semana 1
+                        'febrero': [False, False, False, False],
+                        'marzo': [False, False, False, False],
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Matriz legal',
+                    'evidencia': 'Debe contener Normatividad nacional vigente y aplicable en materia de SST y PESV',
+                    'ciclo_phva': 'Planear',
+                    'articulos': '2.2.4.6.8, 2.2.4.6.8.12',
+                    'nivel_pesv': 'N/A',
+                    'responsables': 'SST - COPASST - COMITE DE SEGURIDAD VIAL',
+                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
+                    'observaciones': 'Actualización normativa',
+                    'programacion': {
+                        'enero': [True, True, False, False],  # Semanas 1-2
+                        'febrero': [False, False, True, False],  # Semana 3
+                        'marzo': [False, False, False, False],
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Afiliación al Sistema General de Riesgos Laborales',
+                    'evidencia': 'Planilla de pago de aportes a la seguridad social',
+                    'ciclo_phva': 'Planear',
+                    'articulos': '',
+                    'nivel_pesv': 'N/A',
+                    'responsables': 'SST - COPASST - TALENTO HUMANO',
+                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
+                    'observaciones': 'Pago mensual',
+                    'programacion': {
+                        'enero': [True, False, False, False],
+                        'febrero': [True, False, False, False],
+                        'marzo': [True, False, False, False],
+                        'abril': [True, False, False, False],
+                        'mayo': [True, False, False, False],
+                        'junio': [True, False, False, False],
+                        'julio': [True, False, False, False],
+                        'agosto': [True, False, False, False],
+                        'septiembre': [True, False, False, False],
+                        'octubre': [True, False, False, False],
+                        'noviembre': [True, False, False, False],
+                        'diciembre': [True, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Identificación de trabajadores de alto riesgo y cotización de pensión especial',
+                    'evidencia': 'En el caso que aplique, identificar a los trabajadores que se dediquen en forma permanente al ejercicio de las actividades de alto riesgo...',
+                    'ciclo_phva': 'Planear',
+                    'articulos': '',
+                    'nivel_pesv': 'N/A',
+                    'responsables': 'SST',
+                    'recursos': 'Tecnologicos, Humanos',
+                    'observaciones': 'Identificación trimestral',
+                    'programacion': {
+                        'enero': [True, False, False, False],
+                        'febrero': [False, False, False, False],
+                        'marzo': [False, False, False, False],
+                        'abril': [True, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [True, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [True, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Conformación COPASST',
+                    'evidencia': 'convocatoria, elección, conformación del Comité Paritario de Seguridad y Salud en el Trabajo y el acta de constitución.',
+                    'ciclo_phva': 'Planear',
+                    'articulos': '2.2.4.6.12',
+                    'nivel_pesv': 'N/A',
+                    'responsables': 'SST - GERENCIA',
+                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
+                    'observaciones': 'Renovación anual',
+                    'programacion': {
+                        'enero': [True, True, True, True],  # Todo enero
+                        'febrero': [False, False, False, False],
+                        'marzo': [False, False, False, False],
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                # HACER: IMPLEMENTACIÓN Y EJECUCIÓN DEL PESV (algunas actividades)
+                {
+                    'actividad': 'Descripción sociodemográfica. Diagnostico de Condiciones de Salud',
+                    'evidencia': 'Recolectar la siguiente información actualizada de todos los trabajadores del último año...',
+                    'ciclo_phva': 'Hacer',
+                    'articulos': '',
+                    'nivel_pesv': '',
+                    'responsables': '',
+                    'recursos': '',
+                    'observaciones': 'Anual',
+                    'programacion': {
+                        'enero': [True, True, True, True],  # Todo enero
+                        'febrero': [True, True, True, True],  # Todo febrero
+                        'marzo': [False, False, False, False],
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Reuniones mensuales y/o extraordinarias COPASST',
+                    'evidencia': 'Actas de reunión mensuales del último año del Comité Paritario y verificar el cumplimiento de sus funciones.',
+                    'ciclo_phva': 'Hacer',
+                    'articulos': '2.2.4.6.12',
+                    'nivel_pesv': 'N/A',
+                    'responsables': 'SST - COPASST - GERENCIA',
+                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
+                    'observaciones': 'Mensual',
+                    'programacion': {
+                        'enero': [True, False, False, False],
+                        'febrero': [True, False, False, False],
+                        'marzo': [True, False, False, False],
+                        'abril': [True, False, False, False],
+                        'mayo': [True, False, False, False],
+                        'junio': [True, False, False, False],
+                        'julio': [True, False, False, False],
+                        'agosto': [True, False, False, False],
+                        'septiembre': [True, False, False, False],
+                        'octubre': [True, False, False, False],
+                        'noviembre': [True, False, False, False],
+                        'diciembre': [True, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Reuniones trimestrales y/o extraordinarias COMITE DE SEGURIDAD VIAL',
+                    'evidencia': 'Actas de reunión trimestrales del COMITE DE SEGURIDAD VIAL y verificar el cumplimiento de sus funciones.',
+                    'ciclo_phva': 'Hacer',
+                    'articulos': 'N/A',
+                    'nivel_pesv': 'Estandar y Avanzado (Paso 2)',
+                    'responsables': 'SST - GERENCIA - COMITE DE SEGURIDAD VIAL',
+                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
+                    'observaciones': 'Trimestral',
+                    'programacion': {
+                        'enero': [False, False, False, True],  # Última semana
+                        'febrero': [False, False, False, False],
+                        'marzo': [False, False, True, False],  # Tercera semana
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, True],  # Última semana
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, True],  # Última semana
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, True]   # Última semana
+                    }
+                },
+                {
+                    'actividad': 'Capacitacion COMITE DE SEGURIDAD VIAL',
+                    'evidencia': 'Capacitar a lo integrantes del COMITE DE SEGURIDAD VIAL para el cumplimiento efectivo de las responsabilidades que les asigna la ley.',
+                    'ciclo_phva': 'Hacer',
+                    'articulos': 'N/A',
+                    'nivel_pesv': 'Estandar y Avanzado (Paso 2)',
+                    'responsables': 'SST - GERENCIA - COMITE DE SEGURIDAD VIAL',
+                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
+                    'observaciones': 'Capacitación inicial',
+                    'programacion': {
+                        'enero': [True, True, False, False],  # Semanas 1-2
+                        'febrero': [False, False, False, False],
+                        'marzo': [False, False, False, False],
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Divulgación de los objetivos específicos y metas de SST y seguridad vial. (Anual)',
+                    'evidencia': '',
+                    'ciclo_phva': 'Hacer',
+                    'articulos': '',
+                    'nivel_pesv': 'Todos los niveles (Paso 7)',
+                    'responsables': 'SST - COPASST - COMITÉ DE SEGURIDAD VIAL / LÍDER PESV',
+                    'recursos': '',
+                    'observaciones': 'Comunicación interna',
+                    'programacion': {
+                        'enero': [True, False, False, False],
+                        'febrero': [True, False, False, False],
+                        'marzo': [True, False, False, False],
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Elaboración del plan de preparación y respuesta ante emergencias viales (PPRAEV).',
+                    'evidencia': '',
+                    'ciclo_phva': 'Hacer',
+                    'articulos': '',
+                    'nivel_pesv': 'Todos los niveles (Paso 12)',
+                    'responsables': 'Seguridad y Salud en el Trabajo',
+                    'recursos': '',
+                    'observaciones': 'Plan de emergencias',
+                    'programacion': {
+                        'enero': [True, False, False, False],
+                        'febrero': [False, False, False, False],
+                        'marzo': [False, False, False, False],
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Realización del simulacro anual de emergencias viales. (Anual)',
+                    'evidencia': '',
+                    'ciclo_phva': 'Paso 12',
+                    'articulos': '',
+                    'nivel_pesv': 'Todos los niveles',
+                    'responsables': 'Seguridad y Salud en el Trabajo',
+                    'recursos': '',
+                    'observaciones': 'Simulacro anual',
+                    'programacion': {
+                        'enero': [True, True, False, False],  # Semanas 1-2
+                        'febrero': [False, False, False, False],
+                        'marzo': [False, False, False, False],
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Desarrollo y/o actualización del procedimiento y mecanismos para el registro de la inspección preoperacional de vehículos motorizados y no motorizados que se utilizan en desplazamientos laborales.',
+                    'evidencia': '',
+                    'ciclo_phva': 'Paso 16',
+                    'articulos': '',
+                    'nivel_pesv': 'Todos los niveles',
+                    'responsables': 'Responsable Vehículos Seguros',
+                    'recursos': '',
+                    'observaciones': 'Inspección vehicular',
+                    'programacion': {
+                        'enero': [False, False, False, False],
+                        'febrero': [False, False, False, False],
+                        'marzo': [False, False, False, False],
+                        'abril': [True, True, False, False],  # Semanas 1-2 de abril
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Diseño e implementación del plan de mantenimiento preventivo para vehículos automotores y no automotores que se utilizan para los desplazamientos laborales.',
+                    'evidencia': '',
+                    'ciclo_phva': 'Paso 17',
+                    'articulos': '',
+                    'nivel_pesv': 'Todos los niveles',
+                    'responsables': 'Líder Vehículos Seguros',
+                    'recursos': '',
+                    'observaciones': 'Mantenimiento vehicular',
+                    'programacion': {
+                        'enero': [False, False, False, False],
+                        'febrero': [False, False, False, False],
+                        'marzo': [False, False, False, False],
+                        'abril': [True, False, False, False],  # Semana 1 de abril
+                        'mayo': [True, True, True, False],  # Semanas 1-3 de mayo
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Desarrollo del Protocolo o Manual para la gestión de contratistas',
+                    'evidencia': '',
+                    'ciclo_phva': 'Paso 18',
+                    'articulos': '',
+                    'nivel_pesv': 'Estándar y Avanzado',
+                    'responsables': 'Define Empresa',
+                    'recursos': '',
+                    'observaciones': 'Gestión de contratistas',
+                    'programacion': {
+                        'enero': [True, True, False, False],  # Semanas 1-2
+                        'febrero': [False, False, False, False],
+                        'marzo': [False, False, False, False],
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                {
+                    'actividad': 'Desarrollo del sistema de archivo y retención documental, para los registros y documentos que soportan el PESV.',
+                    'evidencia': '',
+                    'ciclo_phva': 'Paso 19',
+                    'articulos': '',
+                    'nivel_pesv': 'Estándar y Avanzado',
+                    'responsables': 'Define Empresa',
+                    'recursos': '',
+                    'observaciones': 'Gestión documental',
+                    'programacion': {
+                        'enero': [True, True, False, False],  # Semanas 1-2
+                        'febrero': [False, False, False, False],
+                        'marzo': [False, False, False, False],
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                # VERIFICAR: SEGUIMIENTO POR LA ORGANIZACIÓN
+                {
+                    'actividad': 'Revisión del PESV (Trimestral)',
+                    'evidencia': '',
+                    'ciclo_phva': 'Verificar',
+                    'articulos': '',
+                    'nivel_pesv': 'Todos los niveles (Paso 2)',
+                    'responsables': 'Comité de seguridad vial / Líder PESV',
+                    'recursos': '',
+                    'observaciones': 'Revisión trimestral',
+                    'programacion': {
+                        'enero': [False, False, False, True],  # Última semana
+                        'febrero': [False, False, False, False],
+                        'marzo': [False, False, False, True],  # Última semana
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, True],  # Última semana
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, True],  # Última semana
+                        'octubre': [False, False, False, False],
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, True]   # Última semana
+                    }
+                },
+                {
+                    'actividad': 'Auditoria interna al PESV. (Anual)',
+                    'evidencia': '',
+                    'ciclo_phva': 'Verificar',
+                    'articulos': '',
+                    'nivel_pesv': 'Todos los niveles (Paso 22)',
+                    'responsables': 'Comité de seguridad vial / Líder PESV',
+                    'recursos': '',
+                    'observaciones': 'Auditoría anual',
+                    'programacion': {
+                        'enero': [False, False, False, False],
+                        'febrero': [False, False, False, False],
+                        'marzo': [False, False, False, False],
+                        'abril': [False, False, False, False],
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [False, False, False, False],
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [False, False, False, False],
+                        'noviembre': [True, True, True, True],  # Todo noviembre
+                        'diciembre': [False, False, False, False]
+                    }
+                },
+                # ACTUAR: MEJORA CONTINUA DEL PESV
+                {
+                    'actividad': 'Definición e implementación de acciones preventivas y/o correctivas con base a los resultados de medición de los indicadores y auditorías al PESV (Trimestral)',
+                    'evidencia': '',
+                    'ciclo_phva': 'Actuar',
+                    'articulos': '',
+                    'nivel_pesv': 'Todos los niveles (Paso 23)',
+                    'responsables': 'Líder del PESV / Comité de Seguridad Vial',
+                    'recursos': '',
+                    'observaciones': 'Acciones de mejora trimestrales',
+                    'programacion': {
+                        'enero': [False, False, False, False],
+                        'febrero': [True, False, False, False],  # Primera semana
+                        'febrero': [False, False, False, False],
+                        'marzo': [False, False, False, False],
+                        'abril': [True, False, False, False],  # Primera semana
+                        'mayo': [False, False, False, False],
+                        'junio': [False, False, False, False],
+                        'julio': [True, False, False, False],  # Primera semana
+                        'agosto': [False, False, False, False],
+                        'septiembre': [False, False, False, False],
+                        'octubre': [True, False, False, False],  # Primera semana
+                        'noviembre': [False, False, False, False],
+                        'diciembre': [False, False, False, False]
+                    }
+                }
             ]
             
-            for actividad in actividades_ejemplo:
-                cursor.execute("""
-                    INSERT INTO plan_anual_trabajo 
-                    (actividad, evidencia, ciclo_phva, responsables, estado, porcentaje_avance)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """, actividad)
+            # Insertar cada actividad con su programación
+            for act in actividades_pesv:
+                # Construir query dinámica
+                columns = [
+                    'actividad', 'evidencia', 'ciclo_phva', 'articulos', 
+                    'nivel_pesv', 'responsables', 'recursos', 'observaciones',
+                    'estado'
+                ]
+                placeholders = ['%s'] * len(columns)
+                values = [
+                    act['actividad'], act['evidencia'], act['ciclo_phva'],
+                    act['articulos'], act['nivel_pesv'], act['responsables'],
+                    act['recursos'], act['observaciones'], 'pendiente'
+                ]
+                
+                # Agregar programación mensual
+                meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+                
+                for mes in meses:
+                    if mes in act['programacion']:
+                        programacion = act['programacion'][mes]
+                        for semana in range(1, 5):
+                            # Columna planificada (p)
+                            columns.append(f"{mes}_semana{semana}_p")
+                            placeholders.append('%s')
+                            values.append(programacion[semana-1])
+                            
+                            # Columna ejecutada (e) - inicialmente False
+                            columns.append(f"{mes}_semana{semana}_e")
+                            placeholders.append('%s')
+                            # Marcar algunas como ejecutadas para mostrar datos de prueba
+                            ejecutado = programacion[semana-1] and (semana % 2 == 0)  # Ejecutadas en semanas pares
+                            values.append(ejecutado)
+                    else:
+                        # Si no hay programación para este mes, llenar con False
+                        for semana in range(1, 5):
+                            columns.append(f"{mes}_semana{semana}_p")
+                            placeholders.append('%s')
+                            values.append(False)
+                            
+                            columns.append(f"{mes}_semana{semana}_e")
+                            placeholders.append('%s')
+                            values.append(False)
+                
+                # Insertar
+                query = f"""
+                    INSERT INTO plan_anual_trabajo ({', '.join(columns)})
+                    VALUES ({', '.join(placeholders)})
+                """
+                cursor.execute(query, values)
             
             conn.commit()
-            print(f"✅ {len(actividades_ejemplo)} actividades de ejemplo insertadas")
+            print(f"✅ {len(actividades_pesv)} actividades del PESV insertadas")
+            
+            # Insertar algunas evidencias de ejemplo
+            evidencias_ejemplo = [
+                (1, 'Acta de designación de responsable SST', 'Documento firmado por gerencia designando al responsable del SG-SST', None, None, None, None, 1),
+                (3, 'Política de SST y PESV', 'Documento oficial de la política institucional', 'politica_sst.pdf', 'application/pdf', 102400, None, 1),
+                (10, 'Actas de reunión COPASST Enero', 'Acta de la primera reunión del año', 'acta_copasst_enero.pdf', 'application/pdf', 153600, None, 1),
+                (15, 'Presentación objetivos PESV', 'Diapositivas para divulgación de objetivos', 'presentacion_objetivos.pptx', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 204800, None, 1),
+            ]
+            
+            for evidencia in evidencias_ejemplo:
+                cursor.execute("""
+                    INSERT INTO plan_evidencias 
+                    (plan_id, titulo, descripcion, archivo_nombre, archivo_tipo, archivo_tamano, usuario_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, evidencia)
+            
+            # Insertar seguimientos de ejemplo
+            seguimientos_ejemplo = [
+                (1, 'Se designó al Ing. Juan Pérez como responsable SST', 'asignacion', 1),
+                (3, 'Política revisada y aprobada por comité directivo', 'aprobacion', 1),
+                (10, 'Primera reunión del año realizada con quórum completo', 'reunion', 1),
+                (15, 'Objetivos comunicados a todo el personal', 'comunicacion', 1),
+            ]
+            
+            for seguimiento in seguimientos_ejemplo:
+                cursor.execute("""
+                    INSERT INTO plan_seguimiento 
+                    (plan_id, comentario, tipo, usuario_id)
+                    VALUES (%s, %s, %s, %s)
+                """, seguimiento)
+            
+            conn.commit()
+            print("✅ Evidencias y seguimientos de ejemplo insertados")
+            
+        else:
+            print(f"✅ Ya existen {count} actividades en el plan anual")
             
         cursor.close()
         conn.close()
         
     except Exception as e:
-        print(f"⚠️  Error al inicializar plan anual: {e}")
+        print(f"❌ Error al inicializar plan anual: {e}")
+        import traceback
+        traceback.print_exc()
+
+# También necesitamos actualizar la función para calcular porcentajes de avance automáticamente
+def actualizar_porcentaje_avance(id):
+    """Actualizar automáticamente el porcentaje de avance de una actividad"""
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Contar semanas planificadas vs ejecutadas
+        cursor.execute("""
+            SELECT 
+                (SELECT COUNT(*) FROM (
+                    SELECT enero_semana1_p, febrero_semana1_p, marzo_semana1_p, abril_semana1_p,
+                           mayo_semana1_p, junio_semana1_p, julio_semana1_p, agosto_semana1_p,
+                           septiembre_semana1_p, octubre_semana1_p, noviembre_semana1_p, diciembre_semana1_p,
+                           enero_semana2_p, febrero_semana2_p, marzo_semana2_p, abril_semana2_p,
+                           mayo_semana2_p, junio_semana2_p, julio_semana2_p, agosto_semana2_p,
+                           septiembre_semana2_p, octubre_semana2_p, noviembre_semana2_p, diciembre_semana2_p,
+                           enero_semana3_p, febrero_semana3_p, marzo_semana3_p, abril_semana3_p,
+                           mayo_semana3_p, junio_semana3_p, julio_semana3_p, agosto_semana3_p,
+                           septiembre_semana3_p, octubre_semana3_p, noviembre_semana3_p, diciembre_semana3_p,
+                           enero_semana4_p, febrero_semana4_p, marzo_semana4_p, abril_semana4_p,
+                           mayo_semana4_p, junio_semana4_p, julio_semana4_p, agosto_semana4_p,
+                           septiembre_semana4_p, octubre_semana4_p, noviembre_semana4_p, diciembre_semana4_p
+                    FROM plan_anual_trabajo WHERE id = %s
+                ) AS p WHERE p = TRUE) as total_planificadas,
+                
+                (SELECT COUNT(*) FROM (
+                    SELECT enero_semana1_e, febrero_semana1_e, marzo_semana1_e, abril_semana1_e,
+                           mayo_semana1_e, junio_semana1_e, julio_semana1_e, agosto_semana1_e,
+                           septiembre_semana1_e, octubre_semana1_e, noviembre_semana1_e, diciembre_semana1_e,
+                           enero_semana2_e, febrero_semana2_e, marzo_semana2_e, abril_semana2_e,
+                           mayo_semana2_e, junio_semana2_e, julio_semana2_e, agosto_semana2_e,
+                           septiembre_semana2_e, octubre_semana2_e, noviembre_semana2_e, diciembre_semana2_e,
+                           enero_semana3_e, febrero_semana3_e, marzo_semana3_e, abril_semana3_e,
+                           mayo_semana3_e, junio_semana3_e, julio_semana3_e, agosto_semana3_e,
+                           septiembre_semana3_e, octubre_semana3_e, noviembre_semana3_e, diciembre_semana3_e,
+                           enero_semana4_e, febrero_semana4_e, marzo_semana4_e, abril_semana4_e,
+                           mayo_semana4_e, junio_semana4_e, julio_semana4_e, agosto_semana4_e,
+                           septiembre_semana4_e, octubre_semana4_e, noviembre_semana4_e, diciembre_semana4_e
+                    FROM plan_anual_trabajo WHERE id = %s
+                ) AS e WHERE e = TRUE) as total_ejecutadas
+        """, (id, id))
+        
+        resultado = cursor.fetchone()
+        total_planificadas = resultado[0] or 0
+        total_ejecutadas = resultado[1] or 0
+        
+        # Calcular porcentaje
+        porcentaje = 0
+        if total_planificadas > 0:
+            porcentaje = round((total_ejecutadas / total_planificadas) * 100, 2)
+        
+        # Determinar estado
+        estado = 'pendiente'
+        if porcentaje == 100:
+            estado = 'completado'
+        elif porcentaje > 0:
+            estado = 'en_proceso'
+        
+        # Actualizar
+        cursor.execute("""
+            UPDATE plan_anual_trabajo 
+            SET porcentaje_avance = %s, estado = %s
+            WHERE id = %s
+        """, (porcentaje, estado, id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return porcentaje, estado
+        
+    except Exception as e:
+        print(f"Error al actualizar porcentaje: {e}")
+        return 0, 'pendiente'
 
 # EN LA SECCIÓN DE INICIALIZACIÓN DEL APP
 if __name__ == '__main__':
