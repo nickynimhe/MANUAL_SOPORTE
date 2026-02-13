@@ -3569,7 +3569,7 @@ def sst_importar_desde_excel():
         import openpyxl
         
         # Ruta del Excel
-        excel_path = '/mnt/user-data/uploads/Plan_Anual_de_Trabajo_2026.xlsx'
+        excel_path = 'Plan_Anual_de_Trabajo_2026.xlsx'
         
         # Verificar que existe
         if not os.path.exists(excel_path):
