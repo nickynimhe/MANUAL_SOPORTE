@@ -20,18 +20,20 @@
             </div>
         </div>
     </div>
-    <!-- Botón para nueva actividad -->
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div></div>
-    <div>
-        <a href="{{ url_for('sst_plan_anual_nueva') }}" class="btn btn-success">
-            <i class="fas fa-plus"></i> Nueva Actividad
-        </a>
-        <button onclick="cargarDesdeLocalStorage()" class="btn btn-outline-info">
-            <i class="fas fa-sync"></i> Recargar
-        </button>
+    
+    <!-- Botón para importar desde Excel -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div></div>
+        <div>
+            <!-- ✅ CAMBIADO: En lugar de "nueva actividad", botón para importar -->
+            <a href="{{ url_for('sst_importar_desde_excel') }}" class="btn btn-success">
+                <i class="fas fa-file-excel"></i> Importar desde Excel
+            </a>
+            <a href="{{ url_for('sst_plan_anual_cronograma') }}" class="btn btn-info">
+                <i class="fas fa-calendar-alt"></i> Ver Cronograma
+            </a>
+        </div>
     </div>
-</div>
 
     <!-- Filtros -->
     <div class="card mb-4">
@@ -200,7 +202,10 @@
             <div class="alert alert-info text-center">
                 <i class="fas fa-info-circle fa-3x mb-3"></i>
                 <h5>No se encontraron actividades</h5>
-                <p>Intenta ajustar los filtros de búsqueda</p>
+                <p>Importa el Excel del Plan Anual o ajusta los filtros de búsqueda</p>
+                <a href="{{ url_for('sst_importar_desde_excel') }}" class="btn btn-primary mt-2">
+                    <i class="fas fa-file-excel"></i> Importar desde Excel
+                </a>
             </div>
             {% endif %}
         </div>
@@ -214,138 +219,4 @@
 }
 </style>
 
-<script src="{{ url_for('static', filename='js/pesv_data.js') }}"></script>
-<script>
-// Tabla para mostrar actividades desde localStorage
-const tablaLocalStorage = document.createElement('div');
-tablaLocalStorage.id = 'tabla-actividades-local';
-tablaLocalStorage.className = 'table-responsive mt-3';
-document.querySelector('.card-body').appendChild(tablaLocalStorage);
-
-function cargarDesdeLocalStorage() {
-    if (typeof obtenerActividades !== 'function') {
-        console.error('No se encontró la función obtenerActividades');
-        return;
-    }
-    
-    // Obtener filtros del formulario
-    const filtros = {
-        ciclo: document.querySelector('select[name="ciclo"]')?.value,
-        estado: document.querySelector('select[name="estado"]')?.value,
-        responsable: document.querySelector('select[name="responsable"]')?.value
-    };
-    
-    const actividades = obtenerActividades(filtros);
-    
-    if (actividades.length === 0) {
-        tablaLocalStorage.innerHTML = `
-            <div class="alert alert-warning">
-                No hay actividades en localStorage. 
-                <a href="{{ url_for('sst_plan_anual_nueva') }}" class="alert-link">Crea tu primera actividad</a>
-            </div>
-        `;
-        return;
-    }
-    
-    let html = `
-        <table class="table table-hover table-striped">
-            <thead class="thead-dark">
-                <tr>
-                    <th>#</th>
-                    <th>Actividad</th>
-                    <th>Ciclo PHVA</th>
-                    <th>Responsables</th>
-                    <th>Estado</th>
-                    <th>Avance</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-    
-    actividades.forEach(act => {
-        const estadoClass = act.estado === 'completado' ? 'success' : 
-                          act.estado === 'en_proceso' ? 'warning' : 'secondary';
-        
-        const cicloClass = act.ciclo === 'Planear' ? 'primary' :
-                          act.ciclo === 'Hacer' ? 'success' :
-                          act.ciclo === 'Verificar' ? 'warning' : 'danger';
-        
-        html += `
-            <tr>
-                <td>${act.id}</td>
-                <td>
-                    <strong>${act.actividad.substring(0, 100)}${act.actividad.length > 100 ? '...' : ''}</strong>
-                    ${act.evidencia ? `<br><small class="text-muted">${act.evidencia.substring(0, 80)}</small>` : ''}
-                </td>
-                <td><span class="badge badge-${cicloClass}">${act.ciclo}</span></td>
-                <td><small>${act.responsables.substring(0, 30)}</small></td>
-                <td>
-                    <span class="badge badge-${estadoClass}">
-                        ${act.estado === 'completado' ? 'Completado' : 
-                          act.estado === 'en_proceso' ? 'En Proceso' : 'Pendiente'}
-                    </span>
-                    <br>
-                    <small class="text-muted">Avance: ${act.avance}%</small>
-                </td>
-                <td>
-                    <div class="progress" style="height: 20px;">
-                        <div class="progress-bar bg-${act.avance >= 100 ? 'success' : act.avance >= 50 ? 'warning' : 'danger'}" 
-                             style="width: ${act.avance}%">
-                            ${act.avance}%
-                        </div>
-                    </div>
-                </td>
-                <td>
-                    <a href="{{ url_for('sst_plan_anual_actividad_detalle') }}?id=${act.id}" 
-                       class="btn btn-sm btn-info" title="Ver detalle">
-                        <i class="fas fa-eye"></i>
-                    </a>
-                    <button onclick="editarActividad(${act.id})" class="btn btn-sm btn-warning" title="Editar">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button onclick="eliminarActividadLS(${act.id})" class="btn btn-sm btn-danger" title="Eliminar">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-    });
-    
-    html += '</tbody></table>';
-    tablaLocalStorage.innerHTML = html;
-}
-
-function editarActividad(id) {
-    window.location.href = "{{ url_for('sst_plan_anual_editar') }}?id=" + id;
-}
-
-function eliminarActividadLS(id) {
-    if (confirm('¿Estás seguro de eliminar esta actividad?')) {
-        if (typeof eliminarActividad === 'function') {
-            eliminarActividad(id);
-            cargarDesdeLocalStorage();
-            alert('Actividad eliminada');
-        }
-    }
-}
-
-// Cargar datos al iniciar
-document.addEventListener('DOMContentLoaded', function() {
-    inicializarDatosEjemplo();
-    
-    // Si no hay actividades del servidor, cargar desde localStorage
-    const tieneActividades = {{ 'true' if actividades else 'false' }};
-    if (!tieneActividades) {
-        cargarDesdeLocalStorage();
-    }
-});
-
-// Escuchar cambios en filtros
-document.querySelectorAll('select[name], input[name]').forEach(element => {
-    element.addEventListener('change', function() {
-        setTimeout(cargarDesdeLocalStorage, 100);
-    });
-});
-</script>
 {% endblock %}
