@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Subir Excel - Plan Anual PESV{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-excel"></i> 
+                        Subir Archivo Excel del Plan Anual
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Instrucciones:</strong>
+                        <ol class="mb-0 mt-2">
+                            <li>Selecciona el archivo <code>Plan_Anual_de_Trabajo_2026.xlsx</code></li>
+                            <li>Haz clic en "Subir Archivo"</li>
+                            <li>El sistema importará automáticamente las 133 actividades</li>
+                        </ol>
+                    </div>
+
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="excel_file">
+                                <i class="fas fa-upload"></i> Seleccionar archivo Excel:
+                            </label>
+                            <input type="file" 
+                                   class="form-control-file" 
+                                   id="excel_file" 
+                                   name="excel_file" 
+                                   accept=".xlsx,.xls"
+                                   required>
+                            <small class="form-text text-muted">
+                                Solo archivos .xlsx o .xls (máximo 10MB)
+                            </small>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ url_for('sst_plan_anual') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-upload"></i> Subir e Importar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Info adicional -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5><i class="fas fa-question-circle"></i> ¿Qué sucederá?</h5>
+                    <ul>
+                        <li>El archivo se subirá al servidor</li>
+                        <li>Se extraerán las 133 actividades del Excel</li>
+                        <li>Se insertarán en la base de datos con toda su programación</li>
+                        <li>Podrás ver y gestionar todas las actividades del plan</li>
+                    </ul>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Nota:</strong> Si ya existen actividades en la base de datos, 
+                        primero debes eliminarlas desde el panel de administración.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border-radius: 10px;
+}
+.form-control-file {
+    padding: 10px;
+    border: 2px dashed #007bff;
+    border-radius: 5px;
+    background: #f8f9fa;
+}
+</style>
+{% endblock %}
