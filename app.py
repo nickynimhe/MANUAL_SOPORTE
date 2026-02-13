@@ -3561,7 +3561,7 @@ def sst_verificar_tablas():
 @login_required
 def sst_importar_desde_excel():
     """Importar TODAS las actividades del Excel completo"""
-    if current_user.rol != 'admin':
+    if not current_user.puede('acceder_sst'):
         flash('No tienes permisos', 'error')
         return redirect(url_for('sst_dashboard'))
     
