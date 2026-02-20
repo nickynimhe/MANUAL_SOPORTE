@@ -329,8 +329,8 @@
         <div class="container">
             <div class="navbar-content">
                 <a class="navbar-brand" href="{{ url_for('index') }}">
-                    <i class="fas fa-tools"></i>
-                    Soporte Técnico
+                    <i class="fas fa-shield-alt"></i>
+                    SST
                 </a>
                 
                 <div class="navbar-actions">
@@ -338,7 +338,7 @@
                     <!-- Grupo de navegación principal - Más compacto -->
                     <div class="nav-group">
                         <!-- Navegación esencial -->
-                        <a class="nav-btn secondary {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
+                        <a class="nav-btn secondary {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('sst_dashboard') }}">
                             <i class="fas fa-home"></i>
                             <span class="btn-text">Inicio</span>
                         </a>
