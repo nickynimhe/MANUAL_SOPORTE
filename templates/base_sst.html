@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SST - Seguridad y Salud en el Trabajo{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+    /* ===== VARIABLES CSS ===== */
+    :root {
+      --primary: #052398;
+      --secondary: #e0f2fe;
+      --accent: #ff0000;
+      --bg: #f9fafb;
+      --white: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --radius: 12px;
+    }
+
+    /* ===== ESTILOS BASE ===== */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ===== NAVBAR OPTIMIZADA ===== */
+    .custom-navbar {
+      background: var(--white);
+      padding: 10px 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      flex-shrink: 0;
+    }
+
+    .navbar-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--primary);
+      text-decoration: none;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .navbar-brand i {
+      margin-right: 6px;
+    }
+
+    .navbar-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+
+    .nav-btn {
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: var(--radius);
+      font-weight: 500;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .nav-btn.primary {
+      background-color: var(--accent);
+      color: white;
+    }
+
+    .nav-btn.primary:hover {
+      background-color: #dc2626;
+    }
+
+    .nav-btn.secondary {
+      background-color: var(--secondary);
+      color: var(--text);
+    }
+
+    .nav-btn.secondary:hover {
+      background-color: #bae6fd;
+    }
+
+    /* Estado activo para botones de navegación */
+    .nav-btn.active {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    /* Menú compacto para elementos secundarios */
+    .compact-menu .nav-btn {
+      padding: 5px 8px;
+      font-size: 12px;
+    }
+
+    /* ===== CONTENIDO PRINCIPAL ===== */
+    main.main-container {
+      flex: 1 0 auto;
+      padding: 30px 0;
+    }
+
+    .alert {
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 14px;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    /* ===== MENÚ DE USUARIO COMPACTO ===== */
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .user-info {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .user-badge {
+      background-color: var(--secondary);
+      color: var(--primary);
+      padding: 3px 6px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* ===== GRUPOS DE NAVEGACIÓN ===== */
+    .nav-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* ===== MENÚ DESPLEGABLE PARA ELEMENTOS SECUNDARIOS ===== */
+    .more-menu .dropdown-toggle::after {
+      margin-left: 2px;
+    }
+
+    /* ===== RESPONSIVIDAD MEJORADA ===== */
+    @media (max-width: 1200px) {
+      .navbar-brand {
+        font-size: 16px;
+      }
+      
+      .nav-btn {
+        padding: 5px 8px;
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 992px) {
+      .navbar-content {
+        gap: 8px;
+      }
+      
+      .nav-group {
+        gap: 4px;
+      }
+      
+      .nav-btn {
+        padding: 4px 6px;
+        font-size: 11px;
+      }
+      
+      /* Ocultar elementos menos importantes en tablets */
+      .nav-btn .btn-text {
+        display: none;
+      }
+      
+      .nav-btn i {
+        margin-right: 0;
+      }
+      
+      .user-info .username {
+        display: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .navbar-content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .navbar-actions {
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .nav-group {
+        justify-content: center;
+        gap: 4px;
+      }
+
+      .nav-btn {
+        flex: 1;
+        justify-content: center;
+        min-width: 60px;
+      }
+
+      .user-menu {
+        justify-content: center;
+        width: 100%;
+      }
+      
+      /* Mostrar texto en móviles */
+      .nav-btn .btn-text {
+        display: inline;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .nav-btn {
+        padding: 6px 8px;
+        font-size: 12px;
+      }
+    }
+
+    /* ===== ESTILOS PARA ICONOS SOLOS ===== */
+    .icon-only .btn-text {
+      display: none;
+    }
+    </style>
+</head>
+<body>
+    <!-- ===== NAVBAR OPTIMIZADA CON MENÚ SST ===== -->
+    <nav class="custom-navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <a class="navbar-brand" href="{{ url_for('sst_dashboard') }}">
+                    <i class="fas fa-shield-alt"></i>
+                    SST
+                </a>
+                
+                <div class="navbar-actions">
+                    {% if current_user.is_authenticated %}
+                    <!-- Grupo de navegación principal - Más compacto -->
+                    <div class="nav-group">
+                        <!-- Navegación SST esencial -->
+                        <a class="nav-btn secondary {% if request.endpoint == 'sst_dashboard' %}active{% endif %}" href="{{ url_for('sst_dashboard') }}">
+                            <i class="fas fa-home"></i>
+                            <span class="btn-text">Inicio SST</span>
+                        </a>
+
+                        <a class="nav-btn secondary {% if 'contenido' in request.endpoint %}active{% endif %}" href="{{ url_for('sst_contenido') }}">
+                            <i class="fas fa-folder-open"></i>
+                            <span class="btn-text">Contenidos</span>
+                        </a>
+
+                        <!-- MENÚ DESPLEGABLE: PLAN ANUAL PESV -->
+                        <div class="dropdown more-menu">
+                            <button class="nav-btn primary dropdown-toggle {% if 'plan_anual' in request.endpoint %}active{% endif %}" 
+                                    type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span class="btn-text">Plan Anual PESV</span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('sst_plan_anual') }}">
+                                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard Plan Anual
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('sst_plan_anual_actividades') }}">
+                                        <i class="fas fa-tasks me-2"></i>Ver Actividades
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('sst_plan_anual_cronograma') }}">
+                                        <i class="fas fa-chart-gantt me-2"></i>Cronograma Gantt
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('sst_plan_anual_gestionar') }}">
+                                        <i class="fas fa-cog me-2"></i>Gestionar Actividades
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('sst_plan_anual_nueva_actividad') }}">
+                                        <i class="fas fa-plus-circle me-2"></i>Nueva Actividad
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('sst_subir_excel') }}">
+                                        <i class="fas fa-file-excel me-2"></i>Importar Excel
+                                    </a>
+                                </li>
+                                {% if current_user.rol == 'admin' %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="{{ url_for('sst_plan_anual_limpiar_datos') }}">
+                                        <i class="fas fa-trash-alt me-2"></i>Limpiar Datos
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+
+                        <!-- Agregar contenido (solo admin) -->
+                        {% if current_user.rol == 'admin' %}
+                        <a class="nav-btn secondary" href="{{ url_for('sst_agregar_contenido') }}">
+                            <i class="fas fa-plus"></i>
+                            <span class="btn-text">Nuevo Contenido</span>
+                        </a>
+                        {% endif %}
+
+                        <!-- Menú desplegable: MÁS OPCIONES -->
+                        <div class="dropdown more-menu">
+                            <button class="nav-btn secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-th"></i>
+                                <span class="btn-text">Más</span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('informacion_general') }}">
+                                        <i class="fas fa-info-circle me-2"></i>Información General
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('atencion_telefonica') }}">
+                                        <i class="fas fa-headset me-2"></i>Atención Telefónica
+                                    </a>
+                                </li>
+                                {% if current_user.puede('acceder_soporte') %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('index') }}">
+                                        <i class="fas fa-arrow-left me-2"></i>Volver a Soporte
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% if current_user.rol == 'admin' %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('gestion_usuarios') }}">
+                                        <i class="fas fa-users me-2"></i>Gestionar Usuarios
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Menú de usuario compacto -->
+                    <div class="user-menu">
+                        <div class="user-info">
+                            <i class="fas fa-user-circle"></i>
+                            <span class="username">{{ current_user.usuario }}</span>
+                            <span class="user-badge">{{ current_user.rol|title }}</span>
+                        </div>
+                        
+                        <div class="dropdown">
+                            <button class="nav-btn secondary dropdown-toggle icon-only" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-cog"></i>
+                                <span class="btn-text">Config</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <span class="dropdown-item-text">
+                                        <small>Conectado como</small>
+                                        <br>
+                                        <strong>{{ current_user.usuario }}</strong>
+                                    </span>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('cambiar_password') }}">
+                                        <i class="fas fa-key me-2"></i>Cambiar Contraseña
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% else %}
+                    <a class="nav-btn primary" href="{{ url_for('login') }}">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span class="btn-text">Iniciar Sesión</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== CONTENIDO PRINCIPAL ===== -->
+    <main class="main-container">
+        <div class="container">
+            <!-- Mensajes flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show mb-4" role="alert">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Contenido de la página -->
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- ===== PIE DE PÁGINA ===== -->
+    <footer class="mt-auto py-3">
+        <div class="container text-center">
+            <p class="mb-0 text-muted" style="font-size: 12px;">&copy; 2024 SST - Seguridad y Salud en el Trabajo. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- ===== SCRIPTS ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-cierre de alertas después de 5 segundos
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
