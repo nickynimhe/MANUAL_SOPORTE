@@ -2138,6 +2138,8 @@ def sst_plan_anual_actividades():
 
 # ===== REEMPLAZA ESTA RUTA EN TU app.py =====
 
+# ===== REEMPLAZA LA RUTA sst_plan_anual_actividad_detalle EN app.py =====
+
 @app.route('/sst/plan-anual/actividad/<int:id>')
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
@@ -2151,8 +2153,40 @@ def sst_plan_anual_actividad_detalle(id):
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Obtener actividad
-        cursor.execute("SELECT * FROM plan_anual_trabajo WHERE id = %s", (id,))
+        # Obtener actividad con nombres de columnas específicos
+        cursor.execute("""
+            SELECT 
+                id, actividad, evidencia, ciclo_phva, articulos_decreto, 
+                nivel_pesv, responsables, recursos,
+                enero_semana1_p, enero_semana1_e, enero_semana2_p, enero_semana2_e,
+                enero_semana3_p, enero_semana3_e, enero_semana4_p, enero_semana4_e,
+                febrero_semana1_p, febrero_semana1_e, febrero_semana2_p, febrero_semana2_e,
+                febrero_semana3_p, febrero_semana3_e, febrero_semana4_p, febrero_semana4_e,
+                marzo_semana1_p, marzo_semana1_e, marzo_semana2_p, marzo_semana2_e,
+                marzo_semana3_p, marzo_semana3_e, marzo_semana4_p, marzo_semana4_e,
+                abril_semana1_p, abril_semana1_e, abril_semana2_p, abril_semana2_e,
+                abril_semana3_p, abril_semana3_e, abril_semana4_p, abril_semana4_e,
+                mayo_semana1_p, mayo_semana1_e, mayo_semana2_p, mayo_semana2_e,
+                mayo_semana3_p, mayo_semana3_e, mayo_semana4_p, mayo_semana4_e,
+                junio_semana1_p, junio_semana1_e, junio_semana2_p, junio_semana2_e,
+                junio_semana3_p, junio_semana3_e, junio_semana4_p, junio_semana4_e,
+                julio_semana1_p, julio_semana1_e, julio_semana2_p, julio_semana2_e,
+                julio_semana3_p, julio_semana3_e, julio_semana4_p, julio_semana4_e,
+                agosto_semana1_p, agosto_semana1_e, agosto_semana2_p, agosto_semana2_e,
+                agosto_semana3_p, agosto_semana3_e, agosto_semana4_p, agosto_semana4_e,
+                septiembre_semana1_p, septiembre_semana1_e, septiembre_semana2_p, septiembre_semana2_e,
+                septiembre_semana3_p, septiembre_semana3_e, septiembre_semana4_p, septiembre_semana4_e,
+                octubre_semana1_p, octubre_semana1_e, octubre_semana2_p, octubre_semana2_e,
+                octubre_semana3_p, octubre_semana3_e, octubre_semana4_p, octubre_semana4_e,
+                noviembre_semana1_p, noviembre_semana1_e, noviembre_semana2_p, noviembre_semana2_e,
+                noviembre_semana3_p, noviembre_semana3_e, noviembre_semana4_p, noviembre_semana4_e,
+                diciembre_semana1_p, diciembre_semana1_e, diciembre_semana2_p, diciembre_semana2_e,
+                diciembre_semana3_p, diciembre_semana3_e, diciembre_semana4_p, diciembre_semana4_e,
+                observaciones, estado, porcentaje_avance, fecha_creacion, fecha_actualizacion, usuario_actualizacion
+            FROM plan_anual_trabajo 
+            WHERE id = %s
+        """, (id,))
+        
         actividad_raw = cursor.fetchone()
         
         if not actividad_raw:
@@ -2161,7 +2195,7 @@ def sst_plan_anual_actividad_detalle(id):
             conn.close()
             return redirect(url_for('sst_plan_anual_actividades'))
         
-        # Estructurar datos de la actividad
+        # Mapear datos básicos (primeras 8 columnas)
         actividad = {
             'id': actividad_raw[0],
             'actividad': actividad_raw[1],
@@ -2171,29 +2205,22 @@ def sst_plan_anual_actividad_detalle(id):
             'nivel_pesv': actividad_raw[5],
             'responsables': actividad_raw[6],
             'recursos': actividad_raw[7],
-            'observaciones': actividad_raw[103] if len(actividad_raw) > 103 else '',
-            'estado': actividad_raw[104] if len(actividad_raw) > 104 else 'pendiente',
-            'porcentaje_avance': float(actividad_raw[105]) if len(actividad_raw) > 105 and actividad_raw[105] else 0.0,
-            'fecha_actualizacion': actividad_raw[107] if len(actividad_raw) > 107 else None
         }
         
-        # Extraer programación mensual
+        # Extraer programación mensual (columnas 8-103)
         meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
                 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
         
         programacion = {}
-        col_offset = 8
         semanas_planificadas = 0
         semanas_ejecutadas = 0
+        col_idx = 8  # Empieza después de las 8 columnas básicas
         
-        for i, mes in enumerate(meses):
+        for mes in meses:
             programacion[mes] = []
             for semana in range(1, 5):
-                idx_p = col_offset + (i * 8) + ((semana - 1) * 2)
-                idx_e = idx_p + 1
-                
-                planificado = actividad_raw[idx_p] if idx_p < len(actividad_raw) else False
-                ejecutado = actividad_raw[idx_e] if idx_e < len(actividad_raw) else False
+                planificado = actividad_raw[col_idx] if actividad_raw[col_idx] else False
+                ejecutado = actividad_raw[col_idx + 1] if actividad_raw[col_idx + 1] else False
                 
                 if planificado:
                     semanas_planificadas += 1
@@ -2205,29 +2232,60 @@ def sst_plan_anual_actividad_detalle(id):
                     'planificado': planificado,
                     'ejecutado': ejecutado
                 })
+                
+                col_idx += 2  # Avanzar a la siguiente semana (planificado + ejecutado)
         
+        # Agregar datos finales (después de las 96 columnas de semanas)
+        # col_idx ahora está en 104 (8 + 96)
+        actividad['observaciones'] = actividad_raw[104] if len(actividad_raw) > 104 else ''
+        actividad['estado'] = actividad_raw[105] if len(actividad_raw) > 105 else 'pendiente'
+        
+        # IMPORTANTE: Convertir porcentaje_avance a float de forma segura
+        try:
+            porcentaje_raw = actividad_raw[106] if len(actividad_raw) > 106 else 0
+            if porcentaje_raw is None or porcentaje_raw == '':
+                actividad['porcentaje_avance'] = 0.0
+            else:
+                actividad['porcentaje_avance'] = float(porcentaje_raw)
+        except (ValueError, TypeError):
+            actividad['porcentaje_avance'] = 0.0
+            logger.warning(f"Error al convertir porcentaje_avance para actividad {id}")
+        
+        actividad['fecha_creacion'] = actividad_raw[107] if len(actividad_raw) > 107 else None
+        actividad['fecha_actualizacion'] = actividad_raw[108] if len(actividad_raw) > 108 else None
+        actividad['usuario_actualizacion'] = actividad_raw[109] if len(actividad_raw) > 109 else None
+        
+        # Agregar programación y estadísticas
         actividad['programacion'] = programacion
         actividad['semanas_planificadas'] = semanas_planificadas
         actividad['semanas_ejecutadas'] = semanas_ejecutadas
         
         # Obtener evidencias
-        cursor.execute("""
-            SELECT id, titulo, descripcion, nombre_archivo, fecha_creacion
-            FROM plan_evidencias
-            WHERE actividad_id = %s
-            ORDER BY fecha_creacion DESC
-        """, (id,))
-        evidencias = cursor.fetchall()
+        try:
+            cursor.execute("""
+                SELECT id, titulo, descripcion, nombre_archivo, fecha_creacion
+                FROM plan_evidencias
+                WHERE actividad_id = %s
+                ORDER BY fecha_creacion DESC
+            """, (id,))
+            evidencias = cursor.fetchall()
+        except Exception as e:
+            logger.warning(f"No se pudieron cargar evidencias: {e}")
+            evidencias = []
         
         # Obtener seguimientos
-        cursor.execute("""
-            SELECT s.id, s.comentario, s.tipo, s.fecha, u.usuario
-            FROM plan_seguimiento s
-            LEFT JOIN usuarios u ON s.usuario_id = u.id
-            WHERE s.actividad_id = %s
-            ORDER BY s.fecha DESC
-        """, (id,))
-        seguimientos = cursor.fetchall()
+        try:
+            cursor.execute("""
+                SELECT s.id, s.comentario, s.tipo, s.fecha, u.usuario
+                FROM plan_seguimiento s
+                LEFT JOIN usuarios u ON s.usuario_id = u.id
+                WHERE s.actividad_id = %s
+                ORDER BY s.fecha DESC
+            """, (id,))
+            seguimientos = cursor.fetchall()
+        except Exception as e:
+            logger.warning(f"No se pudieron cargar seguimientos: {e}")
+            seguimientos = []
         
         cursor.close()
         conn.close()
@@ -2240,6 +2298,8 @@ def sst_plan_anual_actividad_detalle(id):
     except Exception as e:
         flash(f'❌ Error al cargar detalle: {str(e)}', 'error')
         logger.error(f"Error en sst_plan_anual_actividad_detalle: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return redirect(url_for('sst_plan_anual_actividades'))
 
 @app.route('/sst/plan-anual/actividad/<int:id>/actualizar', methods=['POST'])
