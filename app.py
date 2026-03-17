@@ -1477,7 +1477,7 @@ def sst_agregar_contenido():
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
     
-    if current_user.rol != 'sst':
+    if current_user.rol != 'admin':
         flash('No tienes permisos para agregar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
     
@@ -1836,7 +1836,7 @@ def sst_eliminar_contenido(id):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
     
-    if current_user.rol != 'sst':
+    if current_user.rol != 'admin':
         flash('No tienes permisos para eliminar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
     
