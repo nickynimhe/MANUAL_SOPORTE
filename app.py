@@ -3316,68 +3316,72 @@ def inicializar_plan_anual():
         traceback.print_exc()
 
 # También necesitamos actualizar la función para calcular porcentajes de avance automáticamente
+# ===== FUNCIÓN MEJORADA PARA ACTUALIZAR PORCENTAJES =====
+# Reemplaza la función existente en app.py
+
 def actualizar_porcentaje_avance(id):
-    """Actualizar automáticamente el porcentaje de avance de una actividad"""
+    """
+    Actualizar automáticamente el porcentaje de avance de una actividad
+    basándose en semanas planificadas vs ejecutadas
+    """
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Contar semanas planificadas vs ejecutadas
-        cursor.execute("""
-            SELECT 
-                (SELECT COUNT(*) FROM (
-                    SELECT enero_semana1_p, febrero_semana1_p, marzo_semana1_p, abril_semana1_p,
-                           mayo_semana1_p, junio_semana1_p, julio_semana1_p, agosto_semana1_p,
-                           septiembre_semana1_p, octubre_semana1_p, noviembre_semana1_p, diciembre_semana1_p,
-                           enero_semana2_p, febrero_semana2_p, marzo_semana2_p, abril_semana2_p,
-                           mayo_semana2_p, junio_semana2_p, julio_semana2_p, agosto_semana2_p,
-                           septiembre_semana2_p, octubre_semana2_p, noviembre_semana2_p, diciembre_semana2_p,
-                           enero_semana3_p, febrero_semana3_p, marzo_semana3_p, abril_semana3_p,
-                           mayo_semana3_p, junio_semana3_p, julio_semana3_p, agosto_semana3_p,
-                           septiembre_semana3_p, octubre_semana3_p, noviembre_semana3_p, diciembre_semana3_p,
-                           enero_semana4_p, febrero_semana4_p, marzo_semana4_p, abril_semana4_p,
-                           mayo_semana4_p, junio_semana4_p, julio_semana4_p, agosto_semana4_p,
-                           septiembre_semana4_p, octubre_semana4_p, noviembre_semana4_p, diciembre_semana4_p
-                    FROM plan_anual_trabajo WHERE id = %s
-                ) AS p WHERE p = TRUE) as total_planificadas,
-                
-                (SELECT COUNT(*) FROM (
-                    SELECT enero_semana1_e, febrero_semana1_e, marzo_semana1_e, abril_semana1_e,
-                           mayo_semana1_e, junio_semana1_e, julio_semana1_e, agosto_semana1_e,
-                           septiembre_semana1_e, octubre_semana1_e, noviembre_semana1_e, diciembre_semana1_e,
-                           enero_semana2_e, febrero_semana2_e, marzo_semana2_e, abril_semana2_e,
-                           mayo_semana2_e, junio_semana2_e, julio_semana2_e, agosto_semana2_e,
-                           septiembre_semana2_e, octubre_semana2_e, noviembre_semana2_e, diciembre_semana2_e,
-                           enero_semana3_e, febrero_semana3_e, marzo_semana3_e, abril_semana3_e,
-                           mayo_semana3_e, junio_semana3_e, julio_semana3_e, agosto_semana3_e,
-                           septiembre_semana3_e, octubre_semana3_e, noviembre_semana3_e, diciembre_semana3_e,
-                           enero_semana4_e, febrero_semana4_e, marzo_semana4_e, abril_semana4_e,
-                           mayo_semana4_e, junio_semana4_e, julio_semana4_e, agosto_semana4_e,
-                           septiembre_semana4_e, octubre_semana4_e, noviembre_semana4_e, diciembre_semana4_e
-                    FROM plan_anual_trabajo WHERE id = %s
-                ) AS e WHERE e = TRUE) as total_ejecutadas
-        """, (id, id))
+        # Nombres de los meses
+        meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
         
-        resultado = cursor.fetchone()
-        total_planificadas = resultado[0] or 0
-        total_ejecutadas = resultado[1] or 0
+        # Construir lista de columnas planificadas y ejecutadas
+        columnas_planificadas = []
+        columnas_ejecutadas = []
+        
+        for mes in meses:
+            for semana in range(1, 5):
+                columnas_planificadas.append(f'{mes}_semana{semana}_p')
+                columnas_ejecutadas.append(f'{mes}_semana{semana}_e')
+        
+        # Contar semanas planificadas (TRUE)
+        query_planificadas = f"""
+            SELECT 
+                {' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_planificadas])} as total_planificadas
+            FROM plan_anual_trabajo 
+            WHERE id = %s
+        """
+        cursor.execute(query_planificadas, (id,))
+        resultado_p = cursor.fetchone()
+        total_planificadas = resultado_p[0] if resultado_p else 0
+        
+        # Contar semanas ejecutadas (TRUE)
+        query_ejecutadas = f"""
+            SELECT 
+                {' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_ejecutadas])} as total_ejecutadas
+            FROM plan_anual_trabajo 
+            WHERE id = %s
+        """
+        cursor.execute(query_ejecutadas, (id,))
+        resultado_e = cursor.fetchone()
+        total_ejecutadas = resultado_e[0] if resultado_e else 0
         
         # Calcular porcentaje
         porcentaje = 0
         if total_planificadas > 0:
             porcentaje = round((total_ejecutadas / total_planificadas) * 100, 2)
         
-        # Determinar estado
-        estado = 'pendiente'
+        # Determinar estado automáticamente
         if porcentaje == 100:
             estado = 'completado'
         elif porcentaje > 0:
             estado = 'en_proceso'
+        else:
+            estado = 'pendiente'
         
-        # Actualizar
+        # Actualizar en la base de datos
         cursor.execute("""
             UPDATE plan_anual_trabajo 
-            SET porcentaje_avance = %s, estado = %s
+            SET porcentaje_avance = %s, 
+                estado = %s,
+                fecha_actualizacion = CURRENT_TIMESTAMP
             WHERE id = %s
         """, (porcentaje, estado, id))
         
@@ -3385,12 +3389,12 @@ def actualizar_porcentaje_avance(id):
         cursor.close()
         conn.close()
         
+        logger.info(f"✅ Porcentaje actualizado para actividad {id}: {porcentaje}% ({estado})")
         return porcentaje, estado
         
     except Exception as e:
-        print(f"Error al actualizar porcentaje: {e}")
+        logger.error(f"❌ Error al actualizar porcentaje: {e}")
         return 0, 'pendiente'
-
 # ===== RUTAS NUEVAS PARA INICIALIZAR EL PLAN ANUAL =====
 
 @app.route('/sst/plan-anual/inicializar-datos-simple')
