@@ -2136,77 +2136,109 @@ def sst_plan_anual_actividades():
         logger.error(f"Error en sst_plan_anual_actividades: {e}")
         return redirect(url_for('sst_plan_anual'))
 
+# ===== REEMPLAZA ESTA RUTA EN TU app.py =====
+
 @app.route('/sst/plan-anual/actividad/<int:id>')
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
 def sst_plan_anual_actividad_detalle(id):
-    """Ver detalle de una actividad específica"""
+    """Ver detalle completo de una actividad"""
     if not current_user.puede('acceder_sst'):
-        flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
+        flash('No tienes permisos para ver esta actividad', 'error')
+        return redirect(url_for('sst_plan_anual'))
     
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Obtener actividad completa
-        cursor.execute("""
-            SELECT * FROM plan_anual_trabajo WHERE id = %s
-        """, (id,))
-        actividad = cursor.fetchone()
+        # Obtener actividad
+        cursor.execute("SELECT * FROM plan_anual_trabajo WHERE id = %s", (id,))
+        actividad_raw = cursor.fetchone()
         
-        if not actividad:
-            flash('Actividad no encontrada', 'error')
+        if not actividad_raw:
+            flash('❌ Actividad no encontrada', 'error')
+            cursor.close()
+            conn.close()
             return redirect(url_for('sst_plan_anual_actividades'))
         
-        # Obtener evidencias asociadas
+        # Estructurar datos de la actividad
+        actividad = {
+            'id': actividad_raw[0],
+            'actividad': actividad_raw[1],
+            'evidencia': actividad_raw[2],
+            'ciclo_phva': actividad_raw[3],
+            'articulos_decreto': actividad_raw[4],
+            'nivel_pesv': actividad_raw[5],
+            'responsables': actividad_raw[6],
+            'recursos': actividad_raw[7],
+            'observaciones': actividad_raw[103] if len(actividad_raw) > 103 else '',
+            'estado': actividad_raw[104] if len(actividad_raw) > 104 else 'pendiente',
+            'porcentaje_avance': float(actividad_raw[105]) if len(actividad_raw) > 105 and actividad_raw[105] else 0.0,
+            'fecha_actualizacion': actividad_raw[107] if len(actividad_raw) > 107 else None
+        }
+        
+        # Extraer programación mensual
+        meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+        
+        programacion = {}
+        col_offset = 8
+        semanas_planificadas = 0
+        semanas_ejecutadas = 0
+        
+        for i, mes in enumerate(meses):
+            programacion[mes] = []
+            for semana in range(1, 5):
+                idx_p = col_offset + (i * 8) + ((semana - 1) * 2)
+                idx_e = idx_p + 1
+                
+                planificado = actividad_raw[idx_p] if idx_p < len(actividad_raw) else False
+                ejecutado = actividad_raw[idx_e] if idx_e < len(actividad_raw) else False
+                
+                if planificado:
+                    semanas_planificadas += 1
+                if ejecutado:
+                    semanas_ejecutadas += 1
+                
+                programacion[mes].append({
+                    'semana': semana,
+                    'planificado': planificado,
+                    'ejecutado': ejecutado
+                })
+        
+        actividad['programacion'] = programacion
+        actividad['semanas_planificadas'] = semanas_planificadas
+        actividad['semanas_ejecutadas'] = semanas_ejecutadas
+        
+        # Obtener evidencias
         cursor.execute("""
-            SELECT id, titulo, descripcion, archivo_nombre, fecha_carga
+            SELECT id, titulo, descripcion, nombre_archivo, fecha_creacion
             FROM plan_evidencias
-            WHERE plan_id = %s
-            ORDER BY fecha_carga DESC
+            WHERE actividad_id = %s
+            ORDER BY fecha_creacion DESC
         """, (id,))
         evidencias = cursor.fetchall()
         
         # Obtener seguimientos
         cursor.execute("""
-            SELECT s.id, s.comentario, s.tipo, s.fecha_registro, u.usuario
+            SELECT s.id, s.comentario, s.tipo, s.fecha, u.usuario
             FROM plan_seguimiento s
-            JOIN usuarios u ON s.usuario_id = u.id
-            WHERE s.plan_id = %s
-            ORDER BY s.fecha_registro DESC
+            LEFT JOIN usuarios u ON s.usuario_id = u.id
+            WHERE s.actividad_id = %s
+            ORDER BY s.fecha DESC
         """, (id,))
         seguimientos = cursor.fetchall()
         
         cursor.close()
         conn.close()
         
-        # Estructurar cronograma por meses
-        meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-                'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-        
-        cronograma = {}
-        col_offset = 7  # Las columnas de meses empiezan después de los campos básicos
-        
-        for i, mes in enumerate(meses):
-            cronograma[mes] = []
-            for semana in range(1, 5):
-                idx_p = col_offset + (i * 8) + ((semana - 1) * 2)
-                idx_e = idx_p + 1
-                cronograma[mes].append({
-                    'semana': semana,
-                    'planificado': actividad[idx_p] if idx_p < len(actividad) else False,
-                    'ejecutado': actividad[idx_e] if idx_e < len(actividad) else False
-                })
-        
         return render_template('sst/plan_anual_detalle.html',
                              actividad=actividad,
                              evidencias=evidencias,
-                             seguimientos=seguimientos,
-                             cronograma=cronograma)
+                             seguimientos=seguimientos)
         
     except Exception as e:
-        flash(f'Error al cargar el detalle: {str(e)}', 'error')
+        flash(f'❌ Error al cargar detalle: {str(e)}', 'error')
         logger.error(f"Error en sst_plan_anual_actividad_detalle: {e}")
         return redirect(url_for('sst_plan_anual_actividades'))
 
