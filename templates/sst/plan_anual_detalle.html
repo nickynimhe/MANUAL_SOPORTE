@@ -9,12 +9,15 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h2><i class="fas fa-clipboard-check"></i> Detalle de Actividad</h2>
+                    <h2><i class="fas fa-clipboard-check"></i> Detalle de Actividad #{{ actividad.id }}</h2>
                     <p class="text-muted">Plan Anual de Trabajo PESV 2026</p>
                 </div>
                 <div>
-                    <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left"></i> Volver al Listado
+                    <a href="{{ url_for('sst_plan_anual_editar_actividad', id=actividad.id) }}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <a href="{{ url_for('sst_plan_anual_gestionar') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
                     </a>
                 </div>
             </div>
@@ -25,38 +28,38 @@
         <!-- Columna Principal -->
         <div class="col-lg-8">
             <!-- Información de la Actividad -->
-            <div class="card mb-4">
+            <div class="card mb-4 shadow-sm">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0"><i class="fas fa-info-circle"></i> Información General</h5>
                 </div>
                 <div class="card-body">
-                    <h4>{{ actividad[1] }}</h4>
+                    <h4>{{ actividad.actividad }}</h4>
                     
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <p><strong><i class="fas fa-circle-notch"></i> Ciclo PHVA:</strong></p>
-                            {% if actividad[3] == 'Planear' %}
-                            <span class="badge badge-primary badge-lg">{{ actividad[3] }}</span>
-                            {% elif actividad[3] == 'Hacer' %}
-                            <span class="badge badge-success badge-lg">{{ actividad[3] }}</span>
-                            {% elif actividad[3] == 'Verificar' %}
-                            <span class="badge badge-warning badge-lg">{{ actividad[3] }}</span>
-                            {% elif actividad[3] == 'Actuar' %}
-                            <span class="badge badge-danger badge-lg">{{ actividad[3] }}</span>
+                            {% if actividad.ciclo_phva == 'Planear' %}
+                            <span class="badge bg-primary badge-lg">{{ actividad.ciclo_phva }}</span>
+                            {% elif actividad.ciclo_phva == 'Hacer' %}
+                            <span class="badge bg-success badge-lg">{{ actividad.ciclo_phva }}</span>
+                            {% elif actividad.ciclo_phva == 'Verificar' %}
+                            <span class="badge bg-warning badge-lg">{{ actividad.ciclo_phva }}</span>
+                            {% elif actividad.ciclo_phva == 'Actuar' %}
+                            <span class="badge bg-danger badge-lg">{{ actividad.ciclo_phva }}</span>
                             {% endif %}
                         </div>
                         <div class="col-md-6">
                             <p><strong><i class="fas fa-tasks"></i> Estado:</strong></p>
-                            {% if actividad[101] == 'completado' %}
-                            <span class="badge badge-success badge-lg">
+                            {% if actividad.estado == 'completado' %}
+                            <span class="badge bg-success badge-lg fs-6">
                                 <i class="fas fa-check-circle"></i> Completado
                             </span>
-                            {% elif actividad[101] == 'en_proceso' %}
-                            <span class="badge badge-warning badge-lg">
+                            {% elif actividad.estado == 'en_proceso' %}
+                            <span class="badge bg-warning text-dark badge-lg fs-6">
                                 <i class="fas fa-spinner"></i> En Proceso
                             </span>
                             {% else %}
-                            <span class="badge badge-secondary badge-lg">
+                            <span class="badge bg-secondary badge-lg fs-6">
                                 <i class="fas fa-clock"></i> Pendiente
                             </span>
                             {% endif %}
@@ -65,55 +68,62 @@
 
                     <hr>
 
-                    {% if actividad[2] %}
+                    {% if actividad.evidencia %}
                     <div class="mb-3">
                         <p><strong><i class="fas fa-file-alt"></i> Evidencia Requerida:</strong></p>
-                        <p class="text-muted">{{ actividad[2] }}</p>
+                        <p class="text-muted">{{ actividad.evidencia }}</p>
                     </div>
                     {% endif %}
 
                     <div class="row">
                         <div class="col-md-6">
                             <p><strong><i class="fas fa-book"></i> Artículos Decreto:</strong></p>
-                            <p class="text-muted">{{ actividad[4] if actividad[4] else 'N/A' }}</p>
+                            <p class="text-muted">{{ actividad.articulos_decreto if actividad.articulos_decreto else 'N/A' }}</p>
                         </div>
                         <div class="col-md-6">
                             <p><strong><i class="fas fa-layer-group"></i> Nivel PESV:</strong></p>
-                            <p class="text-muted">{{ actividad[5] if actividad[5] else 'N/A' }}</p>
+                            <p class="text-muted">{{ actividad.nivel_pesv if actividad.nivel_pesv else 'N/A' }}</p>
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6">
                             <p><strong><i class="fas fa-users"></i> Responsables:</strong></p>
-                            <p class="text-muted">{{ actividad[6] if actividad[6] else 'N/A' }}</p>
+                            <p class="text-muted">{{ actividad.responsables if actividad.responsables else 'N/A' }}</p>
                         </div>
                         <div class="col-md-6">
                             <p><strong><i class="fas fa-tools"></i> Recursos:</strong></p>
-                            <p class="text-muted">{{ actividad[7] if actividad[7] else 'N/A' }}</p>
+                            <p class="text-muted">{{ actividad.recursos if actividad.recursos else 'N/A' }}</p>
                         </div>
                     </div>
 
-                    {% if actividad[100] %}
+                    {% if actividad.observaciones %}
                     <div class="mt-3">
                         <p><strong><i class="fas fa-comment"></i> Observaciones:</strong></p>
                         <div class="alert alert-info">
-                            {{ actividad[100] }}
+                            {{ actividad.observaciones }}
                         </div>
                     </div>
                     {% endif %}
+
+                    <div class="mt-3">
+                        <p><strong><i class="fas fa-clock"></i> Última Actualización:</strong></p>
+                        <p class="text-muted">
+                            {{ actividad.fecha_actualizacion.strftime('%d/%m/%Y %H:%M') if actividad.fecha_actualizacion else 'Sin actualizar' }}
+                        </p>
+                    </div>
                 </div>
             </div>
 
             <!-- Cronograma Mensual -->
-            <div class="card mb-4">
+            <div class="card mb-4 shadow-sm">
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> Cronograma de Ejecución 2026</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-bordered table-sm">
-                            <thead class="thead-light">
+                            <thead class="table-light">
                                 <tr>
                                     <th>Mes</th>
                                     <th class="text-center">Semana 1</th>
@@ -123,27 +133,24 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for mes, semanas in cronograma.items() %}
+                                {% set meses_orden = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
+                                                      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'] %}
+                                {% for mes in meses_orden %}
                                 <tr>
                                     <td><strong>{{ mes|capitalize }}</strong></td>
-                                    {% for semana_data in semanas %}
+                                    {% for semana_data in actividad.programacion[mes] %}
                                     <td class="text-center">
                                         {% if semana_data.planificado %}
-                                        <div class="custom-control custom-checkbox">
-                                            <input type="checkbox" 
-                                                   class="custom-control-input semana-checkbox" 
-                                                   id="check_{{ mes }}_{{ semana_data.semana }}"
-                                                   data-mes="{{ mes }}"
-                                                   data-semana="{{ semana_data.semana }}"
-                                                   {% if semana_data.ejecutado %}checked{% endif %}
-                                                   {% if not current_user.puede('gestionar_plan_anual') %}disabled{% endif %}>
-                                            <label class="custom-control-label" for="check_{{ mes }}_{{ semana_data.semana }}">
-                                                {% if semana_data.ejecutado %}
-                                                <span class="text-success"><i class="fas fa-check-circle"></i> E</span>
-                                                {% else %}
-                                                <span class="text-primary"><i class="far fa-circle"></i> P</span>
-                                                {% endif %}
-                                            </label>
+                                        <div>
+                                            {% if semana_data.ejecutado %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle"></i> Ejecutado
+                                            </span>
+                                            {% else %}
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-calendar-check"></i> Planificado
+                                            </span>
+                                            {% endif %}
                                         </div>
                                         {% else %}
                                         <span class="text-muted">-</span>
@@ -155,23 +162,22 @@
                             </tbody>
                         </table>
                     </div>
-                    <small class="text-muted">
-                        <i class="fas fa-info-circle"></i> 
-                        <strong>P</strong> = Planificado | <strong>E</strong> = Ejecutado
-                        {% if current_user.puede('gestionar_plan_anual') %}
-                        | Haz clic en las casillas para marcar como ejecutado
-                        {% endif %}
-                    </small>
+                    <div class="alert alert-info mt-3">
+                        <small>
+                            <i class="fas fa-info-circle"></i> 
+                            Para modificar el cronograma, haz clic en el botón <strong>"Editar"</strong> arriba
+                        </small>
+                    </div>
                 </div>
             </div>
 
             <!-- Evidencias -->
-            <div class="card mb-4">
+            <div class="card mb-4 shadow-sm">
                 <div class="card-header bg-info text-white">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="fas fa-paperclip"></i> Evidencias</h5>
                         {% if current_user.puede('agregar_evidencias') %}
-                        <button class="btn btn-light btn-sm" data-toggle="modal" data-target="#modalAgregarEvidencia">
+                        <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalAgregarEvidencia">
                             <i class="fas fa-plus"></i> Agregar Evidencia
                         </button>
                         {% endif %}
@@ -218,55 +224,111 @@
         <!-- Columna Lateral -->
         <div class="col-lg-4">
             <!-- Progreso -->
-            <div class="card mb-4">
+            <div class="card mb-4 shadow-sm">
                 <div class="card-header bg-warning text-white">
                     <h5 class="mb-0"><i class="fas fa-chart-line"></i> Progreso</h5>
                 </div>
                 <div class="card-body text-center">
-                    <h2 class="display-3">{{ actividad[102] }}%</h2>
+                    <h2 class="display-3 mb-3">{{ actividad.porcentaje_avance }}%</h2>
                     <div class="progress" style="height: 30px;">
-                        <div class="progress-bar bg-success" 
+                        <div class="progress-bar bg-{{ 'success' if actividad.porcentaje_avance == 100 else 'warning' if actividad.porcentaje_avance > 50 else 'info' }}" 
                              role="progressbar" 
-                             style="width: {{ actividad[102] }}%"
-                             aria-valuenow="{{ actividad[102] }}" 
+                             style="width: {{ actividad.porcentaje_avance }}%"
+                             aria-valuenow="{{ actividad.porcentaje_avance }}" 
                              aria-valuemin="0" 
                              aria-valuemax="100">
-                            {{ actividad[102] }}%
+                            <strong>{{ actividad.porcentaje_avance }}%</strong>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        {% if actividad.porcentaje_avance == 100 %}
+                        <p class="text-success mb-0">
+                            <i class="fas fa-check-circle"></i> 
+                            <strong>¡Actividad Completada!</strong>
+                        </p>
+                        {% elif actividad.porcentaje_avance > 0 %}
+                        <p class="text-warning mb-0">
+                            <i class="fas fa-sync"></i> 
+                            <strong>En Progreso</strong>
+                        </p>
+                        {% else %}
+                        <p class="text-secondary mb-0">
+                            <i class="fas fa-clock"></i> 
+                            <strong>Sin Iniciar</strong>
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estadísticas Rápidas -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Estadísticas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span><i class="fas fa-calendar-check text-info"></i> Planificadas:</span>
+                            <span class="badge bg-info">{{ actividad.semanas_planificadas }}</span>
+                        </div>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar bg-info" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span><i class="fas fa-check-circle text-success"></i> Ejecutadas:</span>
+                            <span class="badge bg-success">{{ actividad.semanas_ejecutadas }}</span>
+                        </div>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar bg-success" 
+                                 style="width: {{ (actividad.semanas_ejecutadas / actividad.semanas_planificadas * 100) if actividad.semanas_planificadas > 0 else 0 }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span><i class="fas fa-hourglass-half text-warning"></i> Pendientes:</span>
+                            <span class="badge bg-warning text-dark">{{ actividad.semanas_planificadas - actividad.semanas_ejecutadas }}</span>
+                        </div>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar bg-warning" 
+                                 style="width: {{ ((actividad.semanas_planificadas - actividad.semanas_ejecutadas) / actividad.semanas_planificadas * 100) if actividad.semanas_planificadas > 0 else 0 }}%"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Seguimiento -->
-            <div class="card">
-                <div class="card-header bg-dark text-white">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
                     <h5 class="mb-0"><i class="fas fa-comments"></i> Seguimiento</h5>
                 </div>
                 <div class="card-body" style="max-height: 400px; overflow-y: auto;">
                     {% if seguimientos %}
                     {% for seg in seguimientos %}
-                    <div class="media mb-3">
-                        <div class="media-body">
-                            <h6 class="mt-0">
+                    <div class="mb-3 pb-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h6 class="mb-1">
                                 <i class="fas fa-user-circle"></i> {{ seg[4] }}
-                                <small class="text-muted float-right">{{ seg[3].strftime('%d/%m/%Y') if seg[3] else 'N/A' }}</small>
                             </h6>
-                            <p class="mb-1">{{ seg[1] }}</p>
-                            <small>
-                                {% if seg[2] == 'alerta' %}
-                                <span class="badge badge-danger">Alerta</span>
-                                {% elif seg[2] == 'completado' %}
-                                <span class="badge badge-success">Completado</span>
-                                {% else %}
-                                <span class="badge badge-info">Seguimiento</span>
-                                {% endif %}
-                            </small>
+                            <small class="text-muted">{{ seg[3].strftime('%d/%m/%Y') if seg[3] else 'N/A' }}</small>
                         </div>
+                        <p class="mb-1 text-muted">{{ seg[1] }}</p>
+                        {% if seg[2] == 'alerta' %}
+                        <span class="badge bg-danger">Alerta</span>
+                        {% elif seg[2] == 'completado' %}
+                        <span class="badge bg-success">Completado</span>
+                        {% else %}
+                        <span class="badge bg-info">Seguimiento</span>
+                        {% endif %}
                     </div>
-                    <hr>
                     {% endfor %}
                     {% else %}
-                    <p class="text-muted text-center">No hay seguimientos registrados</p>
+                    <p class="text-muted text-center my-4">
+                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                        No hay seguimientos registrados
+                    </p>
                     {% endif %}
                 </div>
             </div>
@@ -278,30 +340,28 @@
 <div class="modal fade" id="modalAgregarEvidencia" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ url_for('sst_plan_anual_agregar_evidencia', id=actividad[0]) }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ url_for('sst_plan_anual_agregar_evidencia', id=actividad.id) }}" enctype="multipart/form-data">
                 <div class="modal-header bg-info text-white">
                     <h5 class="modal-title"><i class="fas fa-paperclip"></i> Agregar Evidencia</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label>Título *</label>
+                    <div class="mb-3">
+                        <label class="form-label">Título *</label>
                         <input type="text" name="titulo" class="form-control" required>
                     </div>
-                    <div class="form-group">
-                        <label>Descripción</label>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
                         <textarea name="descripcion" class="form-control" rows="3"></textarea>
                     </div>
-                    <div class="form-group">
-                        <label>Archivo</label>
-                        <input type="file" name="archivo" class="form-control-file">
+                    <div class="mb-3">
+                        <label class="form-label">Archivo</label>
+                        <input type="file" name="archivo" class="form-control">
                         <small class="text-muted">Formatos permitidos: PDF, Word, Excel, Imágenes, Videos</small>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-info">
                         <i class="fas fa-save"></i> Guardar
                     </button>
@@ -310,5 +370,30 @@
         </div>
     </div>
 </div>
+
+<style>
+.card {
+    border-radius: 10px;
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.progress {
+    border-radius: 10px;
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.6s ease;
+}
+
+.badge-lg {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+}
+</style>
 
 {% endblock %}
