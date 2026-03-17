@@ -3774,6 +3774,527 @@ def sst_limpiar_datos():
         flash(f'❌ Error: {str(e)}', 'error')
     
     return redirect(url_for('sst_plan_anual'))
+
+# ===== COPIA TODO ESTE CÓDIGO Y PÉGALO EN TU app.py =====
+# ===== PÉGALO JUSTO ANTES DE LA LÍNEA: if __name__ == '__main__': =====
+
+# ========================================
+# RUTAS DE GESTIÓN DEL PLAN ANUAL (CRUD)
+# ========================================
+
+@app.route('/sst/plan-anual/gestionar')
+@login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
+def sst_plan_anual_gestionar():
+    """Panel de gestión de actividades - CRUD completo"""
+    if not current_user.puede('gestionar_plan_anual'):
+        flash('No tienes permisos para gestionar actividades', 'error')
+        return redirect(url_for('sst_plan_anual'))
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Obtener estadísticas
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE ciclo_phva = 'Planear') as planear,
+                COUNT(*) FILTER (WHERE ciclo_phva = 'Hacer') as hacer,
+                COUNT(*) FILTER (WHERE ciclo_phva = 'Verificar') as verificar,
+                COUNT(*) FILTER (WHERE ciclo_phva = 'Actuar') as actuar,
+                COUNT(*) FILTER (WHERE estado = 'completado') as completadas,
+                COUNT(*) FILTER (WHERE estado = 'en_proceso') as en_proceso,
+                COUNT(*) FILTER (WHERE estado = 'pendiente') as pendientes
+            FROM plan_anual_trabajo
+        """)
+        stats = cursor.fetchone()
+        
+        # Obtener todas las actividades
+        filtro_ciclo = request.args.get('ciclo', '')
+        filtro_estado = request.args.get('estado', '')
+        busqueda = request.args.get('q', '')
+        
+        query = """
+            SELECT 
+                id, actividad, ciclo_phva, responsables, estado,
+                porcentaje_avance, fecha_actualizacion
+            FROM plan_anual_trabajo
+            WHERE 1=1
+        """
+        params = []
+        
+        if filtro_ciclo:
+            query += " AND ciclo_phva = %s"
+            params.append(filtro_ciclo)
+        
+        if filtro_estado:
+            query += " AND estado = %s"
+            params.append(filtro_estado)
+        
+        if busqueda:
+            query += " AND (actividad ILIKE %s OR responsables ILIKE %s)"
+            params.extend([f'%{busqueda}%', f'%{busqueda}%'])
+        
+        query += " ORDER BY ciclo_phva, actividad LIMIT 100"
+        
+        cursor.execute(query, params)
+        actividades = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return render_template('sst/plan_anual_gestionar.html',
+                             stats=stats,
+                             actividades=actividades,
+                             filtro_ciclo=filtro_ciclo,
+                             filtro_estado=filtro_estado,
+                             busqueda=busqueda)
+        
+    except Exception as e:
+        flash(f'❌ Error al cargar panel de gestión: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_gestionar: {e}")
+        return redirect(url_for('sst_plan_anual'))
+
+
+@app.route('/sst/plan-anual/actividad/nueva', methods=['GET', 'POST'])
+@login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
+def sst_plan_anual_nueva_actividad():
+    """Crear una nueva actividad del plan anual"""
+    if not current_user.puede('gestionar_plan_anual'):
+        flash('No tienes permisos para crear actividades', 'error')
+        return redirect(url_for('sst_plan_anual_actividades'))
+    
+    try:
+        if request.method == 'POST':
+            # Obtener datos del formulario
+            actividad = request.form.get('actividad', '').strip()
+            evidencia = request.form.get('evidencia', '').strip()
+            ciclo_phva = request.form.get('ciclo_phva', '').strip()
+            articulos = request.form.get('articulos_decreto', '').strip()
+            nivel_pesv = request.form.get('nivel_pesv', '').strip()
+            responsables = request.form.get('responsables', '').strip()
+            recursos = request.form.get('recursos', '').strip()
+            observaciones = request.form.get('observaciones', '').strip()
+            estado = request.form.get('estado', 'pendiente')
+            
+            if not actividad or not ciclo_phva:
+                flash('❌ La actividad y el ciclo PHVA son obligatorios', 'error')
+                return render_template('sst/plan_anual_nueva.html')
+            
+            conn = crear_conexion()
+            cursor = conn.cursor()
+            
+            # Construir columnas y valores
+            columnas = ['actividad', 'evidencia', 'ciclo_phva', 'articulos_decreto',
+                       'nivel_pesv', 'responsables', 'recursos', 'observaciones',
+                       'estado', 'usuario_actualizacion']
+            
+            valores = [
+                actividad[:500], evidencia[:500] if evidencia else None, ciclo_phva[:50],
+                articulos[:200] if articulos else None, nivel_pesv[:100] if nivel_pesv else None, 
+                responsables[:200] if responsables else None,
+                recursos[:200] if recursos else None, observaciones, estado, current_user.id
+            ]
+            
+            # Agregar programación mensual
+            meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+            
+            for mes in meses:
+                for semana in range(1, 5):
+                    key_p = f'{mes}_semana{semana}_p'
+                    key_e = f'{mes}_semana{semana}_e'
+                    
+                    columnas.append(key_p)
+                    valores.append(request.form.get(key_p) == 'on')
+                    
+                    columnas.append(key_e)
+                    valores.append(request.form.get(key_e) == 'on')
+            
+            # Insertar
+            placeholders = ', '.join(['%s'] * len(valores))
+            query = f"""
+                INSERT INTO plan_anual_trabajo ({', '.join(columnas)})
+                VALUES ({placeholders})
+                RETURNING id
+            """
+            
+            cursor.execute(query, valores)
+            new_id = cursor.fetchone()[0]
+            
+            conn.commit()
+            
+            # Recalcular porcentaje
+            actualizar_porcentaje_avance(new_id)
+            
+            cursor.close()
+            conn.close()
+            
+            flash('✅ Actividad creada correctamente', 'success')
+            logger.info(f"Nueva actividad {new_id} creada por usuario {current_user.id}")
+            
+            return redirect(url_for('sst_plan_anual_actividad_detalle', id=new_id))
+        
+        # GET: Mostrar formulario vacío
+        return render_template('sst/plan_anual_nueva.html')
+        
+    except Exception as e:
+        flash(f'❌ Error al crear actividad: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_nueva_actividad: {e}")
+        return redirect(url_for('sst_plan_anual_actividades'))
+
+
+@app.route('/sst/plan-anual/actividad/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
+def sst_plan_anual_editar_actividad(id):
+    """Editar una actividad del plan anual"""
+    if not current_user.puede('gestionar_plan_anual'):
+        flash('No tienes permisos para editar actividades', 'error')
+        return redirect(url_for('sst_plan_anual_actividades'))
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        if request.method == 'POST':
+            # Obtener datos del formulario
+            actividad = request.form.get('actividad', '').strip()
+            evidencia = request.form.get('evidencia', '').strip()
+            ciclo_phva = request.form.get('ciclo_phva', '').strip()
+            articulos = request.form.get('articulos_decreto', '').strip()
+            nivel_pesv = request.form.get('nivel_pesv', '').strip()
+            responsables = request.form.get('responsables', '').strip()
+            recursos = request.form.get('recursos', '').strip()
+            observaciones = request.form.get('observaciones', '').strip()
+            estado = request.form.get('estado', 'pendiente')
+            
+            if not actividad or not ciclo_phva:
+                flash('❌ La actividad y el ciclo PHVA son obligatorios', 'error')
+                return redirect(url_for('sst_plan_anual_editar_actividad', id=id))
+            
+            # Construir query de actualización
+            query = """
+                UPDATE plan_anual_trabajo 
+                SET actividad = %s, evidencia = %s, ciclo_phva = %s, 
+                    articulos_decreto = %s, nivel_pesv = %s, responsables = %s,
+                    recursos = %s, observaciones = %s, estado = %s,
+                    fecha_actualizacion = CURRENT_TIMESTAMP,
+                    usuario_actualizacion = %s
+                WHERE id = %s
+            """
+            
+            cursor.execute(query, (
+                actividad[:500], evidencia[:500] if evidencia else None, ciclo_phva[:50],
+                articulos[:200] if articulos else None, nivel_pesv[:100] if nivel_pesv else None, 
+                responsables[:200] if responsables else None,
+                recursos[:200] if recursos else None, observaciones, estado, current_user.id, id
+            ))
+            
+            # Actualizar programación mensual
+            meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+            
+            for mes in meses:
+                for semana in range(1, 5):
+                    # Planificado
+                    key_p = f'{mes}_semana{semana}_p'
+                    val_p = request.form.get(key_p) == 'on'
+                    
+                    # Ejecutado
+                    key_e = f'{mes}_semana{semana}_e'
+                    val_e = request.form.get(key_e) == 'on'
+                    
+                    cursor.execute(f"""
+                        UPDATE plan_anual_trabajo 
+                        SET {key_p} = %s, {key_e} = %s
+                        WHERE id = %s
+                    """, (val_p, val_e, id))
+            
+            conn.commit()
+            
+            # Recalcular porcentaje
+            actualizar_porcentaje_avance(id)
+            
+            flash('✅ Actividad actualizada correctamente', 'success')
+            cursor.close()
+            conn.close()
+            return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
+        
+        # GET: Cargar actividad
+        cursor.execute("SELECT * FROM plan_anual_trabajo WHERE id = %s", (id,))
+        actividad_data = cursor.fetchone()
+        
+        if not actividad_data:
+            flash('❌ Actividad no encontrada', 'error')
+            cursor.close()
+            conn.close()
+            return redirect(url_for('sst_plan_anual_actividades'))
+        
+        # Estructurar datos
+        actividad = {
+            'id': actividad_data[0],
+            'actividad': actividad_data[1],
+            'evidencia': actividad_data[2],
+            'ciclo_phva': actividad_data[3],
+            'articulos_decreto': actividad_data[4],
+            'nivel_pesv': actividad_data[5],
+            'responsables': actividad_data[6],
+            'recursos': actividad_data[7],
+            'observaciones': actividad_data[103] if len(actividad_data) > 103 else '',
+            'estado': actividad_data[104] if len(actividad_data) > 104 else 'pendiente',
+            'porcentaje_avance': actividad_data[105] if len(actividad_data) > 105 else 0
+        }
+        
+        # Extraer programación mensual
+        meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+        
+        programacion = {}
+        col_offset = 8
+        
+        for i, mes in enumerate(meses):
+            programacion[mes] = []
+            for semana in range(1, 5):
+                idx_p = col_offset + (i * 8) + ((semana - 1) * 2)
+                idx_e = idx_p + 1
+                
+                programacion[mes].append({
+                    'semana': semana,
+                    'planificado': actividad_data[idx_p] if idx_p < len(actividad_data) else False,
+                    'ejecutado': actividad_data[idx_e] if idx_e < len(actividad_data) else False
+                })
+        
+        actividad['programacion'] = programacion
+        
+        cursor.close()
+        conn.close()
+        
+        return render_template('sst/plan_anual_editar.html', actividad=actividad)
+        
+    except Exception as e:
+        flash(f'❌ Error al editar actividad: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_editar_actividad: {e}")
+        return redirect(url_for('sst_plan_anual_actividades'))
+
+
+@app.route('/sst/plan-anual/actividad/<int:id>/eliminar', methods=['POST'])
+@login_required
+def sst_plan_anual_eliminar_actividad(id):
+    """Eliminar una actividad del plan anual"""
+    if not current_user.puede('gestionar_plan_anual'):
+        flash('No tienes permisos para eliminar actividades', 'error')
+        return redirect(url_for('sst_plan_anual_actividades'))
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Verificar que existe
+        cursor.execute("SELECT actividad FROM plan_anual_trabajo WHERE id = %s", (id,))
+        actividad = cursor.fetchone()
+        
+        if not actividad:
+            flash('❌ Actividad no encontrada', 'error')
+        else:
+            # Eliminar
+            cursor.execute("DELETE FROM plan_anual_trabajo WHERE id = %s", (id,))
+            conn.commit()
+            flash(f'✅ Actividad "{actividad[0][:50]}..." eliminada correctamente', 'success')
+            logger.info(f"Actividad {id} eliminada por usuario {current_user.id}")
+        
+        cursor.close()
+        conn.close()
+        
+    except Exception as e:
+        flash(f'❌ Error al eliminar: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_eliminar_actividad: {e}")
+    
+    return redirect(url_for('sst_plan_anual_actividades'))
+
+
+@app.route('/sst/plan-anual/gestionar/limpiar-masivo', methods=['POST'])
+@login_required
+def sst_plan_anual_limpiar_masivo():
+    """Eliminar múltiples actividades seleccionadas"""
+    if current_user.rol != 'admin':
+        flash('Solo el administrador puede eliminar masivamente', 'error')
+        return redirect(url_for('sst_plan_anual_gestionar'))
+    
+    try:
+        ids = request.form.getlist('actividad_ids')
+        
+        if not ids:
+            flash('❌ No se seleccionaron actividades', 'warning')
+            return redirect(url_for('sst_plan_anual_gestionar'))
+        
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Convertir a enteros
+        ids_int = [int(id) for id in ids]
+        
+        # Eliminar
+        placeholders = ', '.join(['%s'] * len(ids_int))
+        query = f"DELETE FROM plan_anual_trabajo WHERE id IN ({placeholders})"
+        cursor.execute(query, ids_int)
+        
+        eliminadas = cursor.rowcount
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        flash(f'✅ {eliminadas} actividades eliminadas correctamente', 'success')
+        logger.info(f"Eliminación masiva de {eliminadas} actividades por admin {current_user.id}")
+        
+    except Exception as e:
+        flash(f'❌ Error en eliminación masiva: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_limpiar_masivo: {e}")
+    
+    return redirect(url_for('sst_plan_anual_gestionar'))
+
+
+# ========================================
+# RUTA MEJORADA PARA LIMPIAR DATOS (CON CONFIRMACIÓN)
+# ========================================
+
+@app.route('/sst/plan-anual/limpiar-datos', methods=['GET', 'POST'])
+@login_required
+def sst_plan_anual_limpiar_datos():
+    """Eliminar todas las actividades del plan anual - CON CONFIRMACIÓN"""
+    if current_user.rol != 'admin':
+        flash('❌ Solo el administrador puede eliminar todos los datos', 'error')
+        return redirect(url_for('sst_plan_anual'))
+    
+    if request.method == 'POST':
+        # Solo se ejecuta si se confirmó el formulario
+        confirmacion = request.form.get('confirmacion', '')
+        
+        if confirmacion != 'ELIMINAR TODO':
+            flash('❌ Debes escribir "ELIMINAR TODO" para confirmar', 'error')
+            return redirect(url_for('sst_plan_anual_limpiar_datos'))
+        
+        try:
+            conn = crear_conexion()
+            cursor = conn.cursor()
+            
+            # Contar antes de eliminar
+            cursor.execute("SELECT COUNT(*) FROM plan_anual_trabajo")
+            total = cursor.fetchone()[0]
+            
+            # Eliminar todo
+            cursor.execute("DELETE FROM plan_anual_trabajo")
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            flash(f'✅ {total} actividades eliminadas correctamente', 'success')
+            logger.info(f"Admin {current_user.id} eliminó {total} actividades del plan anual")
+            
+        except Exception as e:
+            flash(f'❌ Error al eliminar: {str(e)}', 'error')
+            logger.error(f"Error en sst_plan_anual_limpiar_datos: {e}")
+        
+        return redirect(url_for('sst_plan_anual'))
+    
+    # GET: Mostrar página de confirmación
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Obtener estadísticas antes de eliminar
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE ciclo_phva = 'Planear') as planear,
+                COUNT(*) FILTER (WHERE ciclo_phva = 'Hacer') as hacer,
+                COUNT(*) FILTER (WHERE ciclo_phva = 'Verificar') as verificar,
+                COUNT(*) FILTER (WHERE ciclo_phva = 'Actuar') as actuar
+            FROM plan_anual_trabajo
+        """)
+        stats = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        return render_template('sst/plan_anual_limpiar_confirmacion.html', stats=stats)
+        
+    except Exception as e:
+        flash(f'❌ Error: {str(e)}', 'error')
+        return redirect(url_for('sst_plan_anual'))
+
+
+# ========================================
+# FUNCIÓN AUXILIAR (actualizar_porcentaje_avance)
+# ========================================
+# IMPORTANTE: Esta función debe existir para que las rutas anteriores funcionen
+
+def actualizar_porcentaje_avance(id):
+    """Actualizar automáticamente el porcentaje de avance de una actividad"""
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+        
+        # Construir lista de columnas planificadas
+        columnas_p = []
+        for mes in meses:
+            for semana in range(1, 5):
+                columnas_p.append(f'{mes}_semana{semana}_p')
+        
+        # Contar semanas planificadas
+        query_p = f"""
+            SELECT {' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_p])}
+            FROM plan_anual_trabajo WHERE id = %s
+        """
+        cursor.execute(query_p, (id,))
+        total_planificadas = cursor.fetchone()[0]
+        
+        # Construir lista de columnas ejecutadas
+        columnas_e = [col.replace('_p', '_e') for col in columnas_p]
+        
+        # Contar semanas ejecutadas
+        query_e = f"""
+            SELECT {' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_e])}
+            FROM plan_anual_trabajo WHERE id = %s
+        """
+        cursor.execute(query_e, (id,))
+        total_ejecutadas = cursor.fetchone()[0]
+        
+        # Calcular porcentaje
+        porcentaje = 0
+        if total_planificadas > 0:
+            porcentaje = round((total_ejecutadas / total_planificadas) * 100, 2)
+        
+        # Determinar estado
+        if porcentaje == 100:
+            estado = 'completado'
+        elif porcentaje > 0:
+            estado = 'en_proceso'
+        else:
+            estado = 'pendiente'
+        
+        # Actualizar
+        cursor.execute("""
+            UPDATE plan_anual_trabajo 
+            SET porcentaje_avance = %s, estado = %s
+            WHERE id = %s
+        """, (porcentaje, estado, id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return porcentaje, estado
+        
+    except Exception as e:
+        logger.error(f"Error al actualizar porcentaje: {e}")
+        return 0, 'pendiente'
     
 
 # EN LA SECCIÓN DE INICIALIZACIÓN DEL APP
