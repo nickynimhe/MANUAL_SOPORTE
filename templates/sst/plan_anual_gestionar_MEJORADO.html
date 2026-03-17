@@ -1,0 +1,399 @@
+{% extends 'base_sst.html' %}
+
+{% block title %}Gestionar Actividades - Plan Anual PESV{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+
+    <!-- HEADER -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="fw-bold">
+                        <i class="fas fa-tasks text-primary"></i>
+                        Gestión de Actividades del Plan Anual
+                    </h2>
+                    <p class="text-muted mb-0">Crear, editar y eliminar actividades del PESV</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('sst_plan_anual_nueva_actividad') }}" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Nueva Actividad
+                    </a>
+                    <a href="{{ url_for('sst_plan_anual') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MENSAJES FLASH MEJORADOS -->
+    <div id="flashMessages"></div>
+
+    <!-- ESTADÍSTICAS RÁPIDAS -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card text-center border-0 shadow-sm">
+                <div class="card-body">
+                    <h4 class="text-primary mb-1">{{ stats[0] }}</h4>
+                    <small class="text-muted">Total</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-0 shadow-sm">
+                <div class="card-body">
+                    <h4 class="text-info mb-1">{{ stats[1] }}</h4>
+                    <small class="text-muted">Planear</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-0 shadow-sm">
+                <div class="card-body">
+                    <h4 class="text-success mb-1">{{ stats[2] }}</h4>
+                    <small class="text-muted">Hacer</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-0 shadow-sm">
+                <div class="card-body">
+                    <h4 class="text-warning mb-1">{{ stats[3] }}</h4>
+                    <small class="text-muted">Verificar</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-0 shadow-sm">
+                <div class="card-body">
+                    <h4 class="text-danger mb-1">{{ stats[4] }}</h4>
+                    <small class="text-muted">Actuar</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-0 shadow-sm">
+                <div class="card-body">
+                    <h4 class="text-success mb-1">{{ stats[5] }}</h4>
+                    <small class="text-muted">Completadas</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTROS Y BÚSQUEDA -->
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold"><i class="fas fa-search"></i> Buscar:</label>
+                    <input type="text" name="q" class="form-control" 
+                           placeholder="Nombre de actividad..." 
+                           value="{{ busqueda }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold"><i class="fas fa-recycle"></i> Ciclo PHVA:</label>
+                    <select name="ciclo" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="Planear" {% if filtro_ciclo == 'Planear' %}selected{% endif %}>Planear</option>
+                        <option value="Hacer" {% if filtro_ciclo == 'Hacer' %}selected{% endif %}>Hacer</option>
+                        <option value="Verificar" {% if filtro_ciclo == 'Verificar' %}selected{% endif %}>Verificar</option>
+                        <option value="Actuar" {% if filtro_ciclo == 'Actuar' %}selected{% endif %}>Actuar</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold"><i class="fas fa-flag"></i> Estado:</label>
+                    <select name="estado" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="pendiente" {% if filtro_estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                        <option value="en_proceso" {% if filtro_estado == 'en_proceso' %}selected{% endif %}>En Proceso</option>
+                        <option value="completado" {% if filtro_estado == 'completado' %}selected{% endif %}>Completado</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                    <a href="{{ url_for('sst_plan_anual_gestionar') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TABLA DE ACTIVIDADES -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i> 
+                Listado de Actividades ({{ actividades|length }})
+            </h5>
+            {% if current_user.rol == 'admin' %}
+            <button type="button" class="btn btn-danger btn-sm" 
+                    onclick="eliminarSeleccionadas()"
+                    id="btnEliminarMasivo" disabled>
+                <i class="fas fa-trash"></i> Eliminar Seleccionadas
+            </button>
+            {% endif %}
+        </div>
+        <div class="card-body p-0">
+            {% if actividades %}
+            <form method="POST" action="{{ url_for('sst_plan_anual_limpiar_masivo') }}" id="formEliminarMasivo">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                {% if current_user.rol == 'admin' %}
+                                <th width="40" class="text-center">
+                                    <input type="checkbox" id="selectAll" onchange="toggleAll(this)" class="form-check-input">
+                                </th>
+                                {% endif %}
+                                <th width="80">ID</th>
+                                <th width="120">Ciclo</th>
+                                <th>Actividad</th>
+                                <th width="180">Responsables</th>
+                                <th width="100">Estado</th>
+                                <th width="120">Avance</th>
+                                <th width="180">Actualización</th>
+                                <th width="180" class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for act in actividades %}
+                            <tr id="row-{{ act[0] }}">
+                                {% if current_user.rol == 'admin' %}
+                                <td class="text-center">
+                                    <input type="checkbox" name="actividad_ids" value="{{ act[0] }}" 
+                                           class="checkbox-actividad form-check-input" onchange="updateBtnEliminar()">
+                                </td>
+                                {% endif %}
+                                <td><span class="badge bg-secondary">#{{ act[0] }}</span></td>
+                                <td>
+                                    <span class="badge bg-{{ 'primary' if act[2]=='Planear' else 'success' if act[2]=='Hacer' else 'warning' if act[2]=='Verificar' else 'danger' }}">
+                                        {{ act[2] }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('sst_plan_anual_actividad_detalle', id=act[0]) }}" class="text-decoration-none">
+                                        {{ act[1][:80] }}{% if act[1]|length > 80 %}...{% endif %}
+                                    </a>
+                                </td>
+                                <td><small class="text-muted">{{ act[3][:30] if act[3] else '-' }}</small></td>
+                                <td>
+                                    {% if act[4] == 'completado' %}
+                                    <span class="badge bg-success"><i class="fas fa-check-circle"></i> Completado</span>
+                                    {% elif act[4] == 'en_proceso' %}
+                                    <span class="badge bg-warning text-dark"><i class="fas fa-sync"></i> En Proceso</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary"><i class="fas fa-clock"></i> Pendiente</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 22px;">
+                                        <div class="progress-bar bg-{{ 'success' if act[5] == 100 else 'warning' if act[5] > 50 else 'info' }}" 
+                                             style="width: {{ act[5] }}%"
+                                             role="progressbar">
+                                            <small class="fw-bold">{{ act[5] }}%</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><small class="text-muted">{{ act[6].strftime('%d/%m/%Y') if act[6] else '-' }}</small></td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('sst_plan_anual_editar_actividad', id=act[0]) }}" 
+                                           class="btn btn-sm btn-warning" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{{ url_for('sst_plan_anual_actividad_detalle', id=act[0]) }}" 
+                                           class="btn btn-sm btn-info" title="Ver detalle">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-danger" 
+                                                onclick="eliminarActividad({{ act[0] }}, '{{ act[1][:30] }}')"
+                                                title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">No se encontraron actividades</h5>
+                <p class="text-muted">Prueba con otros filtros o crea una nueva actividad</p>
+                <a href="{{ url_for('sst_plan_anual_nueva_actividad') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Crear Primera Actividad
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- Formulario oculto para eliminar individual -->
+<form method="POST" id="formEliminarIndividual" style="display: none;">
+    <input type="hidden" name="actividad_id" id="actividadEliminar">
+</form>
+
+<script>
+// ===== FUNCIONES DE SELECCIÓN =====
+function toggleAll(checkbox) {
+    const checkboxes = document.querySelectorAll('.checkbox-actividad');
+    checkboxes.forEach(cb => cb.checked = checkbox.checked);
+    updateBtnEliminar();
+}
+
+function updateBtnEliminar() {
+    const checkboxes = document.querySelectorAll('.checkbox-actividad:checked');
+    const btn = document.getElementById('btnEliminarMasivo');
+    if (btn) {
+        btn.disabled = checkboxes.length === 0;
+        if (checkboxes.length > 0) {
+            btn.innerHTML = `<i class="fas fa-trash"></i> Eliminar ${checkboxes.length} Seleccionadas`;
+        } else {
+            btn.innerHTML = '<i class="fas fa-trash"></i> Eliminar Seleccionadas';
+        }
+    }
+}
+
+// ===== ELIMINAR SELECCIONADAS (MASIVO) =====
+function eliminarSeleccionadas() {
+    const checkboxes = document.querySelectorAll('.checkbox-actividad:checked');
+    if (checkboxes.length === 0) {
+        mostrarMensaje('warning', 'Debes seleccionar al menos una actividad');
+        return;
+    }
+    
+    if (confirm(`¿Estás seguro de eliminar ${checkboxes.length} actividades?\n\nEsta acción no se puede deshacer.`)) {
+        document.getElementById('formEliminarMasivo').submit();
+    }
+}
+
+// ===== ELIMINAR INDIVIDUAL CON AJAX =====
+function eliminarActividad(id, nombre) {
+    if (!confirm(`¿Eliminar la actividad?\n\n"${nombre}..."\n\nEsta acción no se puede deshacer.`)) {
+        return;
+    }
+    
+    // Mostrar loading
+    const row = document.getElementById(`row-${id}`);
+    row.style.opacity = '0.5';
+    
+    // Hacer petición AJAX
+    fetch(`/sst/plan-anual/actividad/${id}/eliminar`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            // Animación de eliminación
+            row.style.transition = 'all 0.3s';
+            row.style.backgroundColor = '#ffebee';
+            setTimeout(() => {
+                row.remove();
+                mostrarMensaje('success', '✅ Actividad eliminada correctamente');
+                actualizarEstadisticas();
+            }, 300);
+        } else {
+            row.style.opacity = '1';
+            mostrarMensaje('error', '❌ Error al eliminar la actividad');
+        }
+    })
+    .catch(error => {
+        row.style.opacity = '1';
+        mostrarMensaje('error', '❌ Error de conexión');
+    });
+}
+
+// ===== MOSTRAR MENSAJES FLASH ANIMADOS =====
+function mostrarMensaje(tipo, mensaje) {
+    const container = document.getElementById('flashMessages');
+    const iconos = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle'
+    };
+    
+    const colores = {
+        success: 'success',
+        error: 'danger',
+        warning: 'warning',
+        info: 'info'
+    };
+    
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${colores[tipo]} alert-dismissible fade show`;
+    alert.innerHTML = `
+        <i class="fas ${iconos[tipo]} me-2"></i>
+        <strong>${mensaje}</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    container.appendChild(alert);
+    
+    // Auto-cerrar después de 5 segundos
+    setTimeout(() => {
+        alert.classList.remove('show');
+        setTimeout(() => alert.remove(), 300);
+    }, 5000);
+}
+
+// ===== ACTUALIZAR ESTADÍSTICAS DESPUÉS DE ELIMINAR =====
+function actualizarEstadisticas() {
+    location.reload(); // Recarga simple por ahora
+}
+</script>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.table tbody tr {
+    transition: all 0.3s;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.btn-group .btn {
+    transition: all 0.2s;
+}
+
+.btn-group .btn:hover {
+    transform: scale(1.1);
+}
+
+.progress {
+    border-radius: 10px;
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.6s ease;
+}
+</style>
+
+{% endblock %}
