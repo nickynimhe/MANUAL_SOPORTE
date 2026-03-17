@@ -1,0 +1,144 @@
+{% extends 'base_sst.html' %}
+
+{% block title %}Editar Actividad - Plan Anual PESV{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-edit text-warning"></i> Editar Actividad</h2>
+                <a href="{{ url_for('sst_plan_anual_actividad_detalle', id=actividad.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Cancelar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST">
+        <div class="row">
+            <!-- COLUMNA IZQUIERDA: DATOS BÁSICOS -->
+            <div class="col-lg-6">
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-info-circle"></i> Información Básica</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Actividad *</label>
+                            <textarea name="actividad" class="form-control" rows="3" required>{{ actividad.actividad }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Evidencia</label>
+                            <input type="text" name="evidencia" class="form-control" 
+                                   value="{{ actividad.evidencia or '' }}" maxlength="500">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Ciclo PHVA *</label>
+                            <select name="ciclo_phva" class="form-select" required>
+                                <option value="">Seleccionar...</option>
+                                <option value="Planear" {% if actividad.ciclo_phva == 'Planear' %}selected{% endif %}>Planear</option>
+                                <option value="Hacer" {% if actividad.ciclo_phva == 'Hacer' %}selected{% endif %}>Hacer</option>
+                                <option value="Verificar" {% if actividad.ciclo_phva == 'Verificar' %}selected{% endif %}>Verificar</option>
+                                <option value="Actuar" {% if actividad.ciclo_phva == 'Actuar' %}selected{% endif %}>Actuar</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Artículos del Decreto 1072</label>
+                            <input type="text" name="articulos_decreto" class="form-control" 
+                                   value="{{ actividad.articulos_decreto or '' }}" maxlength="200">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nivel PESV</label>
+                            <input type="text" name="nivel_pesv" class="form-control" 
+                                   value="{{ actividad.nivel_pesv or '' }}" maxlength="100">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Responsables</label>
+                            <input type="text" name="responsables" class="form-control" 
+                                   value="{{ actividad.responsables or '' }}" maxlength="200">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Recursos</label>
+                            <input type="text" name="recursos" class="form-control" 
+                                   value="{{ actividad.recursos or '' }}" maxlength="200">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Estado</label>
+                            <select name="estado" class="form-select">
+                                <option value="pendiente" {% if actividad.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                                <option value="en_proceso" {% if actividad.estado == 'en_proceso' %}selected{% endif %}>En Proceso</option>
+                                <option value="completado" {% if actividad.estado == 'completado' %}selected{% endif %}>Completado</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Observaciones</label>
+                            <textarea name="observaciones" class="form-control" rows="3">{{ actividad.observaciones or '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA: PROGRAMACIÓN MENSUAL -->
+            <div class="col-lg-6">
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-calendar"></i> Programación Mensual 2026</h5>
+                    </div>
+                    <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                        {% set meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
+                                       'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'] %}
+                        
+                        {% for mes in meses %}
+                        <div class="mb-3 border-bottom pb-2">
+                            <h6 class="text-primary mb-2">{{ mes|title }}</h6>
+                            <div class="row">
+                                {% for semana_data in actividad.programacion[mes] %}
+                                <div class="col-6 mb-2">
+                                    <div class="border rounded p-2 bg-light">
+                                        <strong>Semana {{ semana_data.semana }}</strong>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   name="{{ mes }}_semana{{ semana_data.semana }}_p" 
+                                                   {% if semana_data.planificado %}checked{% endif %}>
+                                            <label class="form-check-label small">Planificado</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   name="{{ mes }}_semana{{ semana_data.semana }}_e"
+                                                   {% if semana_data.ejecutado %}checked{% endif %}>
+                                            <label class="form-check-label small">Ejecutado</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTONES DE ACCIÓN -->
+        <div class="row mt-3 mb-4">
+            <div class="col-12 text-center">
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-save"></i> Guardar Cambios
+                </button>
+                <a href="{{ url_for('sst_plan_anual_actividad_detalle', id=actividad.id) }}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

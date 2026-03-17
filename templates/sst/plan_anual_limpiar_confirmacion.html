@@ -1,0 +1,174 @@
+{% extends 'base_sst.html' %}
+
+{% block title %}Limpiar Datos - Plan Anual PESV{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            
+            <!-- ALERTA DE ADVERTENCIA -->
+            <div class="alert alert-danger border-danger shadow-lg" role="alert">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fas fa-exclamation-triangle fa-3x me-3"></i>
+                    <div>
+                        <h4 class="alert-heading mb-1">⚠️ ZONA DE PELIGRO</h4>
+                        <p class="mb-0">Estás a punto de eliminar TODAS las actividades del Plan Anual</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD DE CONFIRMACIÓN -->
+            <div class="card shadow-lg border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-trash-alt"></i> 
+                        Confirmar Eliminación Total de Datos
+                    </h4>
+                </div>
+                <div class="card-body">
+                    
+                    <!-- ESTADÍSTICAS ACTUALES -->
+                    <div class="mb-4">
+                        <h5 class="text-danger mb-3">📊 Datos que serán eliminados:</h5>
+                        <div class="row text-center">
+                            <div class="col">
+                                <div class="bg-light p-3 rounded">
+                                    <h3 class="text-danger mb-0">{{ stats[0] }}</h3>
+                                    <small class="text-muted">Total actividades</small>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="bg-light p-3 rounded">
+                                    <h3 class="text-primary mb-0">{{ stats[1] }}</h3>
+                                    <small class="text-muted">Planear</small>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="bg-light p-3 rounded">
+                                    <h3 class="text-success mb-0">{{ stats[2] }}</h3>
+                                    <small class="text-muted">Hacer</small>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="bg-light p-3 rounded">
+                                    <h3 class="text-warning mb-0">{{ stats[3] }}</h3>
+                                    <small class="text-muted">Verificar</small>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="bg-light p-3 rounded">
+                                    <h3 class="text-danger mb-0">{{ stats[4] }}</h3>
+                                    <small class="text-muted">Actuar</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ADVERTENCIAS -->
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">⚠️ Advertencias importantes:</h6>
+                        <ul class="mb-0">
+                            <li>Se eliminarán <strong>{{ stats[0] }} actividades</strong> permanentemente</li>
+                            <li>Se perderá toda la programación mensual</li>
+                            <li>Se eliminarán todos los porcentajes de avance</li>
+                            <li>Se borrarán todas las evidencias asociadas</li>
+                            <li><strong class="text-danger">ESTA ACCIÓN NO SE PUEDE DESHACER</strong></li>
+                        </ul>
+                    </div>
+
+                    <!-- FORMULARIO DE CONFIRMACIÓN -->
+                    <form method="POST" onsubmit="return validarConfirmacion(event)">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                Para confirmar, escribe exactamente: 
+                                <span class="text-danger">ELIMINAR TODO</span>
+                            </label>
+                            <input type="text" 
+                                   name="confirmacion" 
+                                   id="inputConfirmacion"
+                                   class="form-control form-control-lg" 
+                                   placeholder="Escribe: ELIMINAR TODO"
+                                   autocomplete="off"
+                                   required>
+                            <small class="text-muted">Distingue entre mayúsculas y minúsculas</small>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('sst_plan_anual') }}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger btn-lg" id="btnEliminar" disabled>
+                                <i class="fas fa-trash-alt"></i> SÍ, ELIMINAR TODO
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+            <!-- INFORMACIÓN ADICIONAL -->
+            <div class="alert alert-info mt-4">
+                <h6><i class="fas fa-info-circle"></i> ¿Por qué necesito hacer esto?</h6>
+                <p class="mb-0 small">
+                    Esta función está diseñada para limpiar datos de prueba o reiniciar el sistema. 
+                    Si solo necesitas eliminar algunas actividades, usa la opción 
+                    <a href="{{ url_for('sst_plan_anual_gestionar') }}">Gestionar Actividades</a>.
+                </p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+// Habilitar botón solo si el texto es correcto
+document.getElementById('inputConfirmacion').addEventListener('input', function(e) {
+    const btnEliminar = document.getElementById('btnEliminar');
+    if (e.target.value === 'ELIMINAR TODO') {
+        btnEliminar.disabled = false;
+        btnEliminar.classList.remove('btn-secondary');
+        btnEliminar.classList.add('btn-danger');
+    } else {
+        btnEliminar.disabled = true;
+        btnEliminar.classList.remove('btn-danger');
+        btnEliminar.classList.add('btn-secondary');
+    }
+});
+
+// Validación adicional antes de enviar
+function validarConfirmacion(event) {
+    const valor = document.getElementById('inputConfirmacion').value;
+    if (valor !== 'ELIMINAR TODO') {
+        event.preventDefault();
+        alert('⚠️ Debes escribir exactamente: ELIMINAR TODO');
+        return false;
+    }
+    
+    // Confirmación final
+    const confirmacion = confirm(
+        '⚠️ ÚLTIMA ADVERTENCIA ⚠️\n\n' +
+        'Estás a punto de eliminar {{ stats[0] }} actividades.\n' +
+        'Esta acción NO se puede deshacer.\n\n' +
+        '¿Estás ABSOLUTAMENTE SEGURO?'
+    );
+    
+    if (!confirmacion) {
+        event.preventDefault();
+        return false;
+    }
+    
+    return true;
+}
+</script>
+
+<style>
+.card {
+    border-width: 2px;
+}
+.alert {
+    border-width: 2px;
+}
+</style>
+
+{% endblock %}
