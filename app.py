@@ -1477,7 +1477,7 @@ def sst_agregar_contenido():
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
     
-    if current_user.rol != 'admin , sst':
+    if current_user.rol not in ['admin', 'sst']:
         flash('No tienes permisos para agregar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
     
@@ -1703,7 +1703,7 @@ def sst_editar_contenido(id):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
     
-    if current_user.rol != 'admin , sst':
+    if current_user.rol not in ['admin', 'sst']:
         flash('No tienes permisos para editar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
     
@@ -1836,9 +1836,9 @@ def sst_eliminar_contenido(id):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
     
-    if current_user.rol != 'admin, sst':
+    if current_user.rol not in ['admin', 'sst']:
         flash('No tienes permisos para eliminar contenido SST', 'error')
-        return redirect(url_for('sst_dashboard'))
+        return redirect(url_for('sst_contenido'))
     
     try:
         # Eliminar de la base de datos (el archivo se elimina automáticamente)
