@@ -51,7 +51,7 @@ app.config.from_object(Config)
 
 # ===== CONFIGURACIÓN PARA SUBIDA DE ARCHIVOS SST =====
 app.config['UPLOAD_FOLDER_SST'] = 'static/uploads/sst'
-app.config['MAX_CONTENT_LENGTH'] = 300 * 1024 * 1024  # 100MB máximo
+app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024  # 200MB máximo
 app.config['ALLOWED_EXTENSIONS'] = {
     'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx',
     'jpg', 'jpeg', 'png', 'gif', 'mp4', 'avi', 'mov', 'mkv', 'webm'
@@ -1477,7 +1477,7 @@ def sst_agregar_contenido():
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
     
-    if current_user.rol != 'admin':
+    if current_user.rol != 'admin , sst':
         flash('No tienes permisos para agregar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
     
@@ -1703,7 +1703,7 @@ def sst_editar_contenido(id):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
     
-    if current_user.rol != 'admin':
+    if current_user.rol != 'admin , sst':
         flash('No tienes permisos para editar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
     
@@ -1836,7 +1836,7 @@ def sst_eliminar_contenido(id):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
     
-    if current_user.rol != 'admin':
+    if current_user.rol != 'admin, sst':
         flash('No tienes permisos para eliminar contenido SST', 'error')
         return redirect(url_for('sst_dashboard'))
     
