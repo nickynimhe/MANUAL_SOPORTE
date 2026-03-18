@@ -4064,14 +4064,14 @@ def sst_plan_anual_editar_actividad(id):
             nivel_pesv = request.form.get('nivel_pesv', '').strip()
             responsables = request.form.get('responsables', '').strip()
             recursos = request.form.get('recursos', '').strip()
-            observaciones = request.form.get('observaciones', '').strip()
+            observaciones = request.form.get('observaciones', '').strip()  # ← IMPORTANTE
             estado = request.form.get('estado', 'pendiente')
             
             if not actividad or not ciclo_phva:
                 flash('❌ La actividad y el ciclo PHVA son obligatorios', 'error')
                 return redirect(url_for('sst_plan_anual_editar_actividad', id=id))
             
-            # Construir query de actualización
+            # ===== ACTUALIZAR DATOS BÁSICOS =====
             query = """
                 UPDATE plan_anual_trabajo 
                 SET actividad = %s, evidencia = %s, ciclo_phva = %s, 
@@ -4083,13 +4083,20 @@ def sst_plan_anual_editar_actividad(id):
             """
             
             cursor.execute(query, (
-                actividad[:500], evidencia[:500] if evidencia else None, ciclo_phva[:50],
-                articulos[:200] if articulos else None, nivel_pesv[:100] if nivel_pesv else None, 
+                actividad[:500], 
+                evidencia[:500] if evidencia else None, 
+                ciclo_phva[:50],
+                articulos[:200] if articulos else None, 
+                nivel_pesv[:100] if nivel_pesv else None, 
                 responsables[:200] if responsables else None,
-                recursos[:200] if recursos else None, observaciones, estado, current_user.id, id
+                recursos[:200] if recursos else None, 
+                observaciones,  # ← GUARDANDO OBSERVACIONES
+                estado, 
+                current_user.id, 
+                id
             ))
             
-            # Actualizar programación mensual
+            # ===== ACTUALIZAR PROGRAMACIÓN MENSUAL =====
             meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
                     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
             
@@ -4111,15 +4118,17 @@ def sst_plan_anual_editar_actividad(id):
             
             conn.commit()
             
-            # Recalcular porcentaje
+            # ===== RECALCULAR PORCENTAJE =====
             actualizar_porcentaje_avance(id)
             
             flash('✅ Actividad actualizada correctamente', 'success')
             cursor.close()
             conn.close()
-            return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
+            
+            # ← REDIRIGIR A GESTIONAR (NO A DETALLE)
+            return redirect(url_for('sst_plan_anual_gestionar'))
         
-        # GET: Cargar actividad
+        # ===== GET: CARGAR ACTIVIDAD =====
         cursor.execute("SELECT * FROM plan_anual_trabajo WHERE id = %s", (id,))
         actividad_data = cursor.fetchone()
         
@@ -4139,9 +4148,9 @@ def sst_plan_anual_editar_actividad(id):
             'nivel_pesv': actividad_data[5],
             'responsables': actividad_data[6],
             'recursos': actividad_data[7],
-            'observaciones': actividad_data[103] if len(actividad_data) > 103 else '',
-            'estado': actividad_data[104] if len(actividad_data) > 104 else 'pendiente',
-            'porcentaje_avance': actividad_data[105] if len(actividad_data) > 105 else 0
+            'observaciones': actividad_data[104] if len(actividad_data) > 104 else '',  # ← COLUMNA 104
+            'estado': actividad_data[105] if len(actividad_data) > 105 else 'pendiente',
+            'porcentaje_avance': actividad_data[106] if len(actividad_data) > 106 else 0
         }
         
         # Extraer programación mensual
