@@ -2144,7 +2144,7 @@ def sst_plan_anual_actividades():
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
 def sst_plan_anual_actividad_detalle(id):
-    """Ver detalle completo de una actividad"""
+    """Ver detalle completo de una actividad - VERSIÓN CORREGIDA"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para ver esta actividad', 'error')
         return redirect(url_for('sst_plan_anual'))
@@ -2153,7 +2153,7 @@ def sst_plan_anual_actividad_detalle(id):
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Obtener actividad con nombres de columnas específicos
+        # ===== OBTENER ACTIVIDAD CON TODAS LAS COLUMNAS =====
         cursor.execute("""
             SELECT 
                 id, actividad, evidencia, ciclo_phva, articulos_decreto, 
@@ -2182,7 +2182,8 @@ def sst_plan_anual_actividad_detalle(id):
                 noviembre_semana3_p, noviembre_semana3_e, noviembre_semana4_p, noviembre_semana4_e,
                 diciembre_semana1_p, diciembre_semana1_e, diciembre_semana2_p, diciembre_semana2_e,
                 diciembre_semana3_p, diciembre_semana3_e, diciembre_semana4_p, diciembre_semana4_e,
-                observaciones, estado, porcentaje_avance, fecha_creacion, fecha_actualizacion, usuario_actualizacion
+                observaciones, estado, porcentaje_avance, 
+                fecha_creacion, fecha_actualizacion, usuario_actualizacion
             FROM plan_anual_trabajo 
             WHERE id = %s
         """, (id,))
@@ -2195,7 +2196,7 @@ def sst_plan_anual_actividad_detalle(id):
             conn.close()
             return redirect(url_for('sst_plan_anual_actividades'))
         
-        # Mapear datos básicos (primeras 8 columnas)
+        # ===== MAPEAR DATOS BÁSICOS (primeras 8 columnas) =====
         actividad = {
             'id': actividad_raw[0],
             'actividad': actividad_raw[1],
@@ -2207,7 +2208,7 @@ def sst_plan_anual_actividad_detalle(id):
             'recursos': actividad_raw[7],
         }
         
-        # Extraer programación mensual (columnas 8-103)
+        # ===== EXTRAER PROGRAMACIÓN MENSUAL (columnas 8-103) =====
         meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
                 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
         
@@ -2219,8 +2220,8 @@ def sst_plan_anual_actividad_detalle(id):
         for mes in meses:
             programacion[mes] = []
             for semana in range(1, 5):
-                planificado = actividad_raw[col_idx] if actividad_raw[col_idx] else False
-                ejecutado = actividad_raw[col_idx + 1] if actividad_raw[col_idx + 1] else False
+                planificado = bool(actividad_raw[col_idx]) if col_idx < len(actividad_raw) else False
+                ejecutado = bool(actividad_raw[col_idx + 1]) if (col_idx + 1) < len(actividad_raw) else False
                 
                 if planificado:
                     semanas_planificadas += 1
@@ -2235,9 +2236,9 @@ def sst_plan_anual_actividad_detalle(id):
                 
                 col_idx += 2  # Avanzar a la siguiente semana (planificado + ejecutado)
         
-        # Agregar datos finales (después de las 96 columnas de semanas)
+        # ===== AGREGAR DATOS FINALES (después de las 96 columnas) =====
         # col_idx ahora está en 104 (8 + 96)
-        actividad['observaciones'] = actividad_raw[104] if len(actividad_raw) > 104 else ''
+        actividad['observaciones'] = actividad_raw[104] if len(actividad_raw) > 104 and actividad_raw[104] else None
         actividad['estado'] = actividad_raw[105] if len(actividad_raw) > 105 else 'pendiente'
         
         # IMPORTANTE: Convertir porcentaje_avance a float de forma segura
@@ -2255,15 +2256,16 @@ def sst_plan_anual_actividad_detalle(id):
         actividad['fecha_actualizacion'] = actividad_raw[108] if len(actividad_raw) > 108 else None
         actividad['usuario_actualizacion'] = actividad_raw[109] if len(actividad_raw) > 109 else None
         
-        # Agregar programación y estadísticas
+        # ===== AGREGAR PROGRAMACIÓN Y ESTADÍSTICAS =====
         actividad['programacion'] = programacion
         actividad['semanas_planificadas'] = semanas_planificadas
         actividad['semanas_ejecutadas'] = semanas_ejecutadas
         
-        # Obtener evidencias
+        # ===== OBTENER EVIDENCIAS (opcional) =====
+        evidencias = []
         try:
             cursor.execute("""
-                SELECT id, titulo, descripcion, nombre_archivo, fecha_creacion
+                SELECT id, titulo, descripcion, archivo_nombre, fecha_creacion
                 FROM plan_evidencias
                 WHERE actividad_id = %s
                 ORDER BY fecha_creacion DESC
@@ -2271,9 +2273,9 @@ def sst_plan_anual_actividad_detalle(id):
             evidencias = cursor.fetchall()
         except Exception as e:
             logger.warning(f"No se pudieron cargar evidencias: {e}")
-            evidencias = []
         
-        # Obtener seguimientos
+        # ===== OBTENER SEGUIMIENTOS (opcional) =====
+        seguimientos = []
         try:
             cursor.execute("""
                 SELECT s.id, s.comentario, s.tipo, s.fecha, u.usuario
@@ -2285,10 +2287,16 @@ def sst_plan_anual_actividad_detalle(id):
             seguimientos = cursor.fetchall()
         except Exception as e:
             logger.warning(f"No se pudieron cargar seguimientos: {e}")
-            seguimientos = []
         
         cursor.close()
         conn.close()
+        
+        # ===== DEBUG: IMPRIMIR EN LOGS =====
+        logger.info(f"✅ Actividad {id} cargada:")
+        logger.info(f"   - Observaciones: {actividad['observaciones']}")
+        logger.info(f"   - Semanas planificadas: {semanas_planificadas}")
+        logger.info(f"   - Semanas ejecutadas: {semanas_ejecutadas}")
+        logger.info(f"   - Porcentaje: {actividad['porcentaje_avance']}%")
         
         return render_template('sst/plan_anual_detalle.html',
                              actividad=actividad,
