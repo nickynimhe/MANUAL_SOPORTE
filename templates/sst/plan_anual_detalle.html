@@ -179,43 +179,78 @@
         <!-- ESTADÍSTICAS -->
         <div class="col-md-4">
             <!-- PROGRESO -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-line"></i> Progreso
-                    </h5>
-                </div>
-                <div class="card-body text-center">
-                    <h1 class="display-4 mb-3">
-                        {{ "%.2f"|format(actividad.porcentaje_avance) }}%
-                    </h1>
-                    
-                    <div class="progress mb-3" style="height: 30px;">
-                        <div class="progress-bar 
-                            {% if actividad.porcentaje_avance == 100 %}bg-success
-                            {% elif actividad.porcentaje_avance > 0 %}bg-warning
-                            {% else %}bg-secondary
-                            {% endif %}"
-                            role="progressbar" 
-                            style="width: {{ actividad.porcentaje_avance }}%">
-                            {{ "%.0f"|format(actividad.porcentaje_avance) }}%
-                        </div>
-                    </div>
+            <!-- REEMPLAZA ESTA SECCIÓN EN plan_anual_detalle.html -->
 
-                    <div class="row text-center mt-4">
-                        <div class="col-4">
-                            <h4 class="text-primary">{{ actividad.semanas_planificadas }}</h4>
-                            <small class="text-muted">Planificadas</small>
-                        </div>
-                        <div class="col-4">
-                            <h4 class="text-success">{{ actividad.semanas_ejecutadas }}</h4>
-                            <small class="text-muted">Ejecutadas</small>
-                        </div>
-                        <div class="col-4">
-                            <h4 class="text-warning">{{ actividad.semanas_planificadas - actividad.semanas_ejecutadas }}</h4>
-                            <small class="text-muted">Pendientes</small>
-                        </div>
-                    </div>
+<!-- CRONOGRAMA MENSUAL -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">
+            <i class="fas fa-calendar-alt"></i> Cronograma de Ejecución
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 120px;">Mes</th>
+                        <th class="text-center" style="width: 80px;">S1</th>
+                        <th class="text-center" style="width: 80px;">S2</th>
+                        <th class="text-center" style="width: 80px;">S3</th>
+                        <th class="text-center" style="width: 80px;">S4</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mes, semanas in actividad.programacion.items() %}
+                    <tr>
+                        <td><strong>{{ mes|capitalize }}</strong></td>
+                        {% for sem in semanas %}
+                        <td class="text-center" style="padding: 15px;">
+                            {% if sem.planificado %}
+                                {% if sem.ejecutado %}
+                                    <!-- ✅ EJECUTADO = Verde con check -->
+                                    <i class="fas fa-check-circle text-success" 
+                                       title="✅ Ejecutado"
+                                       style="font-size: 1.8rem;"></i>
+                                {% else %}
+                                    <!-- ⏳ PENDIENTE = Naranja con exclamación -->
+                                    <i class="fas fa-exclamation-circle text-warning" 
+                                       title="⏳ Pendiente de ejecutar"
+                                       style="font-size: 1.8rem;"></i>
+                                {% endif %}
+                            {% else %}
+                                <!-- ➖ NO PLANIFICADO = Gris con guión -->
+                                <span class="text-muted" style="font-size: 1.5rem;">-</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- LEYENDA ACTUALIZADA -->
+        <div class="mt-3 p-3 bg-light rounded">
+            <h6 class="mb-2"><i class="fas fa-info-circle"></i> Leyenda:</h6>
+            <div class="row">
+                <div class="col-md-4 mb-2">
+                    <i class="fas fa-check-circle text-success" style="font-size: 1.5rem;"></i>
+                    <strong class="ms-2">Ejecutado</strong>
+                    <br>
+                    <small class="text-muted ms-4">La actividad fue completada</small>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <i class="fas fa-exclamation-circle text-warning" style="font-size: 1.5rem;"></i>
+                    <strong class="ms-2">Pendiente</strong>
+                    <br>
+                    <small class="text-muted ms-4">Planificado pero no ejecutado</small>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <span class="text-muted" style="font-size: 1.5rem;">-</span>
+                    <strong class="ms-2">No aplica</strong>
+                    <br>
+                    <small class="text-muted ms-4">No está planificado para esta semana</small>
                 </div>
             </div>
         </div>
