@@ -26,11 +26,11 @@
                 <a href="{{ url_for('sst_contenido') }}" class="btn btn-light btn-sm fw-medium">
                     <i class="fas fa-list me-1"></i>Ver Contenido
                 </a>
-                {% if current_user.rol == 'admin , sst' %}
+               {% if current_user.rol in ['admin', 'sst'] %}
                 <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-warning btn-sm fw-medium">
                     <i class="fas fa-plus-circle me-1"></i>Nuevo Contenido
                 </a>
-                {% endif %}
+               {% endif %}
             </div>
         </div>
     </div>
