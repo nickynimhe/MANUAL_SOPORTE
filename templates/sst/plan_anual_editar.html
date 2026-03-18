@@ -79,9 +79,23 @@
                             </select>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Observaciones</label>
-                            <textarea name="observaciones" class="form-control" rows="3">{{ actividad.observaciones or '' }}</textarea>
+                        <!-- BUSCA ESTA SECCIÓN EN tu plan_anual_editar.html -->
+
+                        <!-- Observaciones -->
+                        <div class="mb-4">
+                            <h5><i class="fas fa-clipboard text-info"></i> Observaciones</h5>
+                            <hr>
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Observaciones / Notas</strong></label>
+                                <textarea name="observaciones" 
+                                          class="form-control" 
+                                          rows="4" 
+                                          placeholder="Escribe aquí cualquier observación o nota importante sobre esta actividad">{{ actividad.observaciones if actividad.observaciones else '' }}</textarea>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Espacio para comentarios, actualizaciones, problemas encontrados, etc.
+                                </small>
+                            </div>
                         </div>
                     </div>
                 </div>
