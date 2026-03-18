@@ -3,7 +3,7 @@ services:
     name: flask-sst-app
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: ./start.sh
+    startCommand: gunicorn app:app -c gunicorn_config.py
     envVars:
       - key: DATABASE_URL
         sync: false
