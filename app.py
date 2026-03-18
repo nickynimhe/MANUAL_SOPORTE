@@ -51,7 +51,7 @@ app.config.from_object(Config)
 
 # ===== CONFIGURACIÓN PARA SUBIDA DE ARCHIVOS SST =====
 app.config['UPLOAD_FOLDER_SST'] = 'static/uploads/sst'
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB máximo
+app.config['MAX_CONTENT_LENGTH'] = 300 * 1024 * 1024  # 100MB máximo
 app.config['ALLOWED_EXTENSIONS'] = {
     'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx',
     'jpg', 'jpeg', 'png', 'gif', 'mp4', 'avi', 'mov', 'mkv', 'webm'
