@@ -3364,8 +3364,6 @@ def actualizar_porcentaje_avance(id):
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        print(f"\n🔄 RECALCULANDO PORCENTAJE PARA ACTIVIDAD {id}")
-        
         # Nombres de los meses
         meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
                 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
@@ -3380,9 +3378,9 @@ def actualizar_porcentaje_avance(id):
                 columnas_ejecutadas.append(f'{mes}_semana{semana}_e')
         
         # Contar semanas planificadas (TRUE)
-        select_planificadas = ' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_planificadas])
         query_planificadas = f"""
-            SELECT ({select_planificadas}) as total_planificadas
+            SELECT 
+                {' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_planificadas])} as total_planificadas
             FROM plan_anual_trabajo 
             WHERE id = %s
         """
@@ -3391,9 +3389,9 @@ def actualizar_porcentaje_avance(id):
         total_planificadas = resultado_p[0] if resultado_p else 0
         
         # Contar semanas ejecutadas (TRUE)
-        select_ejecutadas = ' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_ejecutadas])
         query_ejecutadas = f"""
-            SELECT ({select_ejecutadas}) as total_ejecutadas
+            SELECT 
+                {' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_ejecutadas])} as total_ejecutadas
             FROM plan_anual_trabajo 
             WHERE id = %s
         """
@@ -3414,11 +3412,6 @@ def actualizar_porcentaje_avance(id):
         else:
             estado = 'pendiente'
         
-        print(f"   📊 Planificadas: {total_planificadas}")
-        print(f"   ✅ Ejecutadas: {total_ejecutadas}")
-        print(f"   📈 Porcentaje: {porcentaje}%")
-        print(f"   🏷️  Estado: {estado}")
-        
         # Actualizar en la base de datos
         cursor.execute("""
             UPDATE plan_anual_trabajo 
@@ -3433,15 +3426,10 @@ def actualizar_porcentaje_avance(id):
         conn.close()
         
         logger.info(f"✅ Porcentaje actualizado para actividad {id}: {porcentaje}% ({estado})")
-        print(f"   ✅ ACTUALIZACIÓN COMPLETADA\n")
-        
         return porcentaje, estado
         
     except Exception as e:
         logger.error(f"❌ Error al actualizar porcentaje: {e}")
-        print(f"   ❌ ERROR: {e}\n")
-        import traceback
-        traceback.print_exc()
         return 0, 'pendiente'
 # ===== RUTAS NUEVAS PARA INICIALIZAR EL PLAN ANUAL =====
 
@@ -4034,7 +4022,7 @@ def sst_plan_anual_nueva_actividad():
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
 def sst_plan_anual_editar_actividad(id):
-    """Editar una actividad del plan anual - CON DEBUG"""
+    """Editar una actividad del plan anual"""
     if not current_user.puede('gestionar_plan_anual'):
         flash('No tienes permisos para editar actividades', 'error')
         return redirect(url_for('sst_plan_anual_actividades'))
@@ -4044,22 +4032,6 @@ def sst_plan_anual_editar_actividad(id):
         cursor = conn.cursor()
         
         if request.method == 'POST':
-            # ===== DEBUG: VER QUÉ LLEGA DEL FORMULARIO =====
-            print(f"\n{'='*60}")
-            print(f"🔍 FORM DATA RECIBIDO PARA ACTIVIDAD {id}:")
-            observaciones_form = request.form.get('observaciones', '')
-            print(f"   📝 Observaciones: '{observaciones_form}'")
-            print(f"   📏 Longitud: {len(observaciones_form)} caracteres")
-            
-            # Ver checkboxes ejecutados
-            ejecutados_form = [k for k in request.form.keys() if k.endswith('_e')]
-            print(f"   ✅ Checkboxes _e marcados: {len(ejecutados_form)}")
-            if ejecutados_form:
-                print(f"   📋 Primeros 5: {ejecutados_form[:5]}")
-            
-            logger.info(f"Editando actividad {id}: obs='{observaciones_form[:50]}...', checkboxes={len(ejecutados_form)}")
-            # ================================================
-            
             # Obtener datos del formulario
             actividad = request.form.get('actividad', '').strip()
             evidencia = request.form.get('evidencia', '').strip()
@@ -4068,7 +4040,7 @@ def sst_plan_anual_editar_actividad(id):
             nivel_pesv = request.form.get('nivel_pesv', '').strip()
             responsables = request.form.get('responsables', '').strip()
             recursos = request.form.get('recursos', '').strip()
-            observaciones = observaciones_form.strip()
+            observaciones = request.form.get('observaciones', '').strip()  # ← IMPORTANTE
             estado = request.form.get('estado', 'pendiente')
             
             if not actividad or not ciclo_phva:
@@ -4100,14 +4072,9 @@ def sst_plan_anual_editar_actividad(id):
                 id
             ))
             
-            print(f"   💾 UPDATE básico ejecutado")
-            
             # ===== ACTUALIZAR PROGRAMACIÓN MENSUAL =====
             meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
                     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-            
-            ejecutados_count = 0
-            planificados_count = 0
             
             for mes in meses:
                 for semana in range(1, 5):
@@ -4119,47 +4086,22 @@ def sst_plan_anual_editar_actividad(id):
                     key_e = f'{mes}_semana{semana}_e'
                     val_e = request.form.get(key_e) == 'on'
                     
-                    if val_p:
-                        planificados_count += 1
-                    if val_e:
-                        ejecutados_count += 1
-                    
                     cursor.execute(f"""
                         UPDATE plan_anual_trabajo 
                         SET {key_p} = %s, {key_e} = %s
                         WHERE id = %s
                     """, (val_p, val_e, id))
             
-            print(f"   📊 Planificados: {planificados_count}, Ejecutados: {ejecutados_count}")
-            
             conn.commit()
-            print(f"   ✅ COMMIT realizado")
             
-            # ===== VERIFICACIÓN INMEDIATA POST-COMMIT =====
-            cursor.execute("""
-                SELECT observaciones, abril_semana1_e, abril_semana2_e, mayo_semana1_e
-                FROM plan_anual_trabajo 
-                WHERE id = %s
-            """, (id,))
-            check = cursor.fetchone()
-            
-            print(f"\n🔍 VERIFICACIÓN POST-COMMIT:")
-            print(f"   📝 Observaciones en BD: '{check[0]}'")
-            print(f"   ✅ Abril S1: {check[1]}")
-            print(f"   ✅ Abril S2: {check[2]}")
-            print(f"   ✅ Mayo S1: {check[3]}")
-            print(f"{'='*60}\n")
-            
-            logger.info(f"Post-commit {id}: obs_guardado='{check[0][:50] if check[0] else None}...', abril_s1={check[1]}")
-            # ================================================
-            
-            # Recalcular porcentaje
+            # ===== RECALCULAR PORCENTAJE =====
             actualizar_porcentaje_avance(id)
             
             flash('✅ Actividad actualizada correctamente', 'success')
             cursor.close()
             conn.close()
             
+            # ← REDIRIGIR A GESTIONAR (NO A DETALLE)
             return redirect(url_for('sst_plan_anual_gestionar'))
         
         # ===== GET: CARGAR ACTIVIDAD =====
@@ -4182,7 +4124,7 @@ def sst_plan_anual_editar_actividad(id):
             'nivel_pesv': actividad_data[5],
             'responsables': actividad_data[6],
             'recursos': actividad_data[7],
-            'observaciones': actividad_data[104] if len(actividad_data) > 104 else '',
+            'observaciones': actividad_data[104] if len(actividad_data) > 104 else '',  # ← COLUMNA 104
             'estado': actividad_data[105] if len(actividad_data) > 105 else 'pendiente',
             'porcentaje_avance': actividad_data[106] if len(actividad_data) > 106 else 0
         }
@@ -4216,8 +4158,6 @@ def sst_plan_anual_editar_actividad(id):
     except Exception as e:
         flash(f'❌ Error al editar actividad: {str(e)}', 'error')
         logger.error(f"Error en sst_plan_anual_editar_actividad: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
         return redirect(url_for('sst_plan_anual_actividades'))
 
 
