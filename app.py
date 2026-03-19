@@ -3364,6 +3364,8 @@ def actualizar_porcentaje_avance(id):
         conn = crear_conexion()
         cursor = conn.cursor()
         
+        print(f"\n🔄 RECALCULANDO PORCENTAJE PARA ACTIVIDAD {id}")
+        
         # Nombres de los meses
         meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
                 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
@@ -3378,9 +3380,9 @@ def actualizar_porcentaje_avance(id):
                 columnas_ejecutadas.append(f'{mes}_semana{semana}_e')
         
         # Contar semanas planificadas (TRUE)
+        select_planificadas = ' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_planificadas])
         query_planificadas = f"""
-            SELECT 
-                {' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_planificadas])} as total_planificadas
+            SELECT ({select_planificadas}) as total_planificadas
             FROM plan_anual_trabajo 
             WHERE id = %s
         """
@@ -3389,9 +3391,9 @@ def actualizar_porcentaje_avance(id):
         total_planificadas = resultado_p[0] if resultado_p else 0
         
         # Contar semanas ejecutadas (TRUE)
+        select_ejecutadas = ' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_ejecutadas])
         query_ejecutadas = f"""
-            SELECT 
-                {' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_ejecutadas])} as total_ejecutadas
+            SELECT ({select_ejecutadas}) as total_ejecutadas
             FROM plan_anual_trabajo 
             WHERE id = %s
         """
@@ -3412,6 +3414,11 @@ def actualizar_porcentaje_avance(id):
         else:
             estado = 'pendiente'
         
+        print(f"   📊 Planificadas: {total_planificadas}")
+        print(f"   ✅ Ejecutadas: {total_ejecutadas}")
+        print(f"   📈 Porcentaje: {porcentaje}%")
+        print(f"   🏷️  Estado: {estado}")
+        
         # Actualizar en la base de datos
         cursor.execute("""
             UPDATE plan_anual_trabajo 
@@ -3426,10 +3433,15 @@ def actualizar_porcentaje_avance(id):
         conn.close()
         
         logger.info(f"✅ Porcentaje actualizado para actividad {id}: {porcentaje}% ({estado})")
+        print(f"   ✅ ACTUALIZACIÓN COMPLETADA\n")
+        
         return porcentaje, estado
         
     except Exception as e:
         logger.error(f"❌ Error al actualizar porcentaje: {e}")
+        print(f"   ❌ ERROR: {e}\n")
+        import traceback
+        traceback.print_exc()
         return 0, 'pendiente'
 # ===== RUTAS NUEVAS PARA INICIALIZAR EL PLAN ANUAL =====
 
