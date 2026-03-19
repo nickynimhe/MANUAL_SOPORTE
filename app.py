@@ -4409,6 +4409,113 @@ def actualizar_porcentaje_avance(id):
         logger.error(f"Error al actualizar porcentaje: {e}")
         return 0, 'pendiente'
 
+# ===== AGREGAR ESTO AL FINAL DE TU app.py (ANTES DE if __name__ == '__main__') =====
+# ===== RUTA DE DEBUG TEMPORAL =====
+
+@app.route('/sst/plan-anual/debug/<int:id>')
+@login_required
+def sst_debug_actividad(id):
+    """Ruta temporal para ver qué hay en la BD"""
+    if current_user.rol != 'admin':
+        return "Solo admin"
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Ver TODO lo que tiene la actividad
+        cursor.execute("SELECT * FROM plan_anual_trabajo WHERE id = %s", (id,))
+        data = cursor.fetchone()
+        
+        if not data:
+            return f"Actividad {id} no encontrada"
+        
+        # Formatear salida
+        output = f"""
+        <html>
+        <head><title>Debug Actividad {id}</title></head>
+        <body style="font-family: monospace; padding: 20px;">
+        <h2>🔍 DEBUG: Actividad {id}</h2>
+        <hr>
+        
+        <h3>📋 Datos Básicos:</h3>
+        <ul>
+            <li><strong>ID:</strong> {data[0]}</li>
+            <li><strong>Actividad:</strong> {data[1]}</li>
+            <li><strong>Ciclo PHVA:</strong> {data[3]}</li>
+            <li><strong>Responsables:</strong> {data[6]}</li>
+        </ul>
+        
+        <h3>📝 OBSERVACIONES (Columna 104):</h3>
+        <div style="background: #f0f0f0; padding: 10px; border: 2px solid #333;">
+            <strong>Valor:</strong> <code>{data[104] if len(data) > 104 else 'N/A'}</code><br>
+            <strong>Tipo:</strong> {type(data[104]) if len(data) > 104 else 'N/A'}<br>
+            <strong>Es None?:</strong> {data[104] is None if len(data) > 104 else 'N/A'}<br>
+            <strong>Longitud:</strong> {len(str(data[104])) if len(data) > 104 and data[104] else 0}
+        </div>
+        
+        <h3>📊 Estado y Porcentaje:</h3>
+        <ul>
+            <li><strong>Estado (Col 105):</strong> {data[105] if len(data) > 105 else 'N/A'}</li>
+            <li><strong>Porcentaje (Col 106):</strong> {data[106] if len(data) > 106 else 'N/A'}</li>
+        </ul>
+        
+        <h3>✅ Semanas EJECUTADAS (muestra de Enero-Febrero):</h3>
+        <table border="1" cellpadding="5" style="border-collapse: collapse;">
+            <tr>
+                <th>Mes</th>
+                <th>S1_P</th>
+                <th>S1_E</th>
+                <th>S2_P</th>
+                <th>S2_E</th>
+                <th>S3_P</th>
+                <th>S3_E</th>
+                <th>S4_P</th>
+                <th>S4_E</th>
+            </tr>
+            <tr>
+                <td><strong>Enero</strong></td>
+                <td style="background: {'#cfc' if data[8] else '#fcc'}">{data[8]}</td>
+                <td style="background: {'#cfc' if data[9] else '#fcc'}">{data[9]}</td>
+                <td style="background: {'#cfc' if data[10] else '#fcc'}">{data[10]}</td>
+                <td style="background: {'#cfc' if data[11] else '#fcc'}">{data[11]}</td>
+                <td style="background: {'#cfc' if data[12] else '#fcc'}">{data[12]}</td>
+                <td style="background: {'#cfc' if data[13] else '#fcc'}">{data[13]}</td>
+                <td style="background: {'#cfc' if data[14] else '#fcc'}">{data[14]}</td>
+                <td style="background: {'#cfc' if data[15] else '#fcc'}">{data[15]}</td>
+            </tr>
+            <tr>
+                <td><strong>Febrero</strong></td>
+                <td style="background: {'#cfc' if data[16] else '#fcc'}">{data[16]}</td>
+                <td style="background: {'#cfc' if data[17] else '#fcc'}">{data[17]}</td>
+                <td style="background: {'#cfc' if data[18] else '#fcc'}">{data[18]}</td>
+                <td style="background: {'#cfc' if data[19] else '#fcc'}">{data[19]}</td>
+                <td style="background: {'#cfc' if data[20] else '#fcc'}">{data[20]}</td>
+                <td style="background: {'#cfc' if data[21] else '#fcc'}">{data[21]}</td>
+                <td style="background: {'#cfc' if data[22] else '#fcc'}">{data[22]}</td>
+                <td style="background: {'#cfc' if data[23] else '#fcc'}">{data[23]}</td>
+            </tr>
+        </table>
+        <p><small>Verde = TRUE, Rojo = FALSE</small></p>
+        
+        <h3>🔢 Total de Columnas:</h3>
+        <p><strong>{len(data)}</strong> columnas en total</p>
+        
+        <hr>
+        <a href="/sst/plan-anual/actividad/{id}/editar">← Ir a Editar</a> | 
+        <a href="/sst/plan-anual/actividad/{id}">← Ir a Detalle</a>
+        </body>
+        </html>
+        """
+        
+        cursor.close()
+        conn.close()
+        
+        return output
+        
+    except Exception as e:
+        return f"<h1>Error:</h1><pre>{str(e)}</pre>"
+
 # EN LA SECCIÓN DE INICIALIZACIÓN DEL APP
 if __name__ == '__main__':
     with app.app_context():
