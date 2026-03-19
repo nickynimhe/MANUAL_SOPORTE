@@ -79,19 +79,23 @@
                             </select>
                         </div>
 
-                        <!-- ✅ OBSERVACIONES DENTRO DEL CARD -->
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">
-                                <i class="fas fa-clipboard text-info"></i> Observaciones / Notas
-                            </label>
-                            <textarea name="observaciones" 
-                                      class="form-control" 
-                                      rows="4" 
-                                      placeholder="Escribe aquí cualquier observación o nota importante sobre esta actividad">{{ actividad.observaciones if actividad.observaciones else '' }}</textarea>
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle"></i> 
-                                Espacio para comentarios, actualizaciones, problemas encontrados, etc.
-                            </small>
+                        <!-- BUSCA ESTA SECCIÓN EN tu plan_anual_editar.html -->
+
+                        <!-- Observaciones -->
+                        <div class="mb-4">
+                            <h5><i class="fas fa-clipboard text-info"></i> Observaciones</h5>
+                            <hr>
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Observaciones / Notas</strong></label>
+                                <textarea name="observaciones" 
+                                          class="form-control" 
+                                          rows="4" 
+                                          placeholder="Escribe aquí cualquier observación o nota importante sobre esta actividad">{{ actividad.observaciones if actividad.observaciones else '' }}</textarea>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Espacio para comentarios, actualizaciones, problemas encontrados, etc.
+                                </small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -125,7 +129,7 @@
                                             <input class="form-check-input" type="checkbox" 
                                                    name="{{ mes }}_semana{{ semana_data.semana }}_e"
                                                    {% if semana_data.ejecutado %}checked{% endif %}>
-                                            <label class="form-check-label small text-success fw-bold">Ejecutado</label>
+                                            <label class="form-check-label small">Ejecutado</label>
                                         </div>
                                     </div>
                                 </div>
@@ -151,25 +155,4 @@
         </div>
     </form>
 </div>
-
-<style>
-/* Resaltar checkboxes ejecutados */
-.form-check-input:checked + .fw-bold {
-    color: #28a745 !important;
-}
-</style>
-
-<script>
-// Debug: Ver qué se envía cuando guardas
-document.querySelector('form').addEventListener('submit', function(e) {
-    const observaciones = document.querySelector('textarea[name="observaciones"]').value;
-    console.log('📝 Observaciones a enviar:', observaciones);
-    
-    // Contar checkboxes ejecutados marcados
-    const ejecutadosMarcados = document.querySelectorAll('input[name*="_e"]:checked').length;
-    console.log('✅ Checkboxes ejecutados marcados:', ejecutadosMarcados);
-    
-    // NO prevenir el envío, solo loggear
-});
-</script>
 {% endblock %}
