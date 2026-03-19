@@ -2144,7 +2144,7 @@ def sst_plan_anual_actividades():
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
 def sst_plan_anual_actividad_detalle(id):
-    """Ver detalle completo de una actividad - VERSIÓN FINAL CORREGIDA"""
+    """Ver detalle completo de una actividad"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para ver esta actividad', 'error')
         return redirect(url_for('sst_plan_anual'))
@@ -2153,7 +2153,7 @@ def sst_plan_anual_actividad_detalle(id):
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # ===== OBTENER ACTIVIDAD CON NOMBRES EXPLÍCITOS =====
+        # Obtener actividad con nombres de columnas específicos
         cursor.execute("""
             SELECT 
                 id, actividad, evidencia, ciclo_phva, articulos_decreto, 
@@ -2182,8 +2182,7 @@ def sst_plan_anual_actividad_detalle(id):
                 noviembre_semana3_p, noviembre_semana3_e, noviembre_semana4_p, noviembre_semana4_e,
                 diciembre_semana1_p, diciembre_semana1_e, diciembre_semana2_p, diciembre_semana2_e,
                 diciembre_semana3_p, diciembre_semana3_e, diciembre_semana4_p, diciembre_semana4_e,
-                observaciones, estado, porcentaje_avance, 
-                fecha_creacion, fecha_actualizacion, usuario_actualizacion
+                observaciones, estado, porcentaje_avance, fecha_creacion, fecha_actualizacion, usuario_actualizacion
             FROM plan_anual_trabajo 
             WHERE id = %s
         """, (id,))
@@ -2196,7 +2195,7 @@ def sst_plan_anual_actividad_detalle(id):
             conn.close()
             return redirect(url_for('sst_plan_anual_actividades'))
         
-        # ===== MAPEAR DATOS BÁSICOS =====
+        # Mapear datos básicos (primeras 8 columnas)
         actividad = {
             'id': actividad_raw[0],
             'actividad': actividad_raw[1],
@@ -2208,27 +2207,20 @@ def sst_plan_anual_actividad_detalle(id):
             'recursos': actividad_raw[7],
         }
         
-        # ===== EXTRAER PROGRAMACIÓN MENSUAL =====
+        # Extraer programación mensual (columnas 8-103)
         meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
                 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
         
         programacion = {}
         semanas_planificadas = 0
         semanas_ejecutadas = 0
-        col_idx = 8
-        
-        print(f"🔍 DEBUG ACTIVIDAD {id}:")
+        col_idx = 8  # Empieza después de las 8 columnas básicas
         
         for mes in meses:
             programacion[mes] = []
             for semana in range(1, 5):
-                # Leer valores booleanos directamente
-                p_val = actividad_raw[col_idx] if col_idx < len(actividad_raw) else False
-                e_val = actividad_raw[col_idx + 1] if (col_idx + 1) < len(actividad_raw) else False
-                
-                # Convertir a booleano explícitamente
-                planificado = bool(p_val) if p_val is not None else False
-                ejecutado = bool(e_val) if e_val is not None else False
+                planificado = actividad_raw[col_idx] if actividad_raw[col_idx] else False
+                ejecutado = actividad_raw[col_idx + 1] if actividad_raw[col_idx + 1] else False
                 
                 if planificado:
                     semanas_planificadas += 1
@@ -2241,35 +2233,67 @@ def sst_plan_anual_actividad_detalle(id):
                     'ejecutado': ejecutado
                 })
                 
-                # Debug de primeras semanas
-                if mes == 'abril' and semana == 1:
-                    print(f"   {mes} S{semana}: P={p_val} ({type(p_val)}) → {planificado}, E={e_val} ({type(e_val)}) → {ejecutado}")
-                
-                col_idx += 2
+                col_idx += 2  # Avanzar a la siguiente semana (planificado + ejecutado)
         
-        print(f"   Total planificadas: {semanas_planificadas}")
-        print(f"   Total ejecutadas: {semanas_ejecutadas}")
-        
-        # ===== AGREGAR DATOS FINALES =====
-        actividad['observaciones'] = actividad_raw[104] if len(actividad_raw) > 104 and actividad_raw[104] else None
+        # Agregar datos finales (después de las 96 columnas de semanas)
+        # col_idx ahora está en 104 (8 + 96)
+        actividad['observaciones'] = actividad_raw[104] if len(actividad_raw) > 104 else ''
         actividad['estado'] = actividad_raw[105] if len(actividad_raw) > 105 else 'pendiente'
         
+        # IMPORTANTE: Convertir porcentaje_avance a float de forma segura
         try:
             porcentaje_raw = actividad_raw[106] if len(actividad_raw) > 106 else 0
-            actividad['porcentaje_avance'] = float(porcentaje_raw) if porcentaje_raw else 0.0
+            if porcentaje_raw is None or porcentaje_raw == '':
+                actividad['porcentaje_avance'] = 0.0
+            else:
+                actividad['porcentaje_avance'] = float(porcentaje_raw)
         except (ValueError, TypeError):
             actividad['porcentaje_avance'] = 0.0
+            logger.warning(f"Error al convertir porcentaje_avance para actividad {id}")
         
+        actividad['fecha_creacion'] = actividad_raw[107] if len(actividad_raw) > 107 else None
+        actividad['fecha_actualizacion'] = actividad_raw[108] if len(actividad_raw) > 108 else None
+        actividad['usuario_actualizacion'] = actividad_raw[109] if len(actividad_raw) > 109 else None
+        
+        # Agregar programación y estadísticas
         actividad['programacion'] = programacion
         actividad['semanas_planificadas'] = semanas_planificadas
         actividad['semanas_ejecutadas'] = semanas_ejecutadas
         
-        print(f"   Observaciones: '{actividad['observaciones']}'")
+        # Obtener evidencias
+        try:
+            cursor.execute("""
+                SELECT id, titulo, descripcion, nombre_archivo, fecha_creacion
+                FROM plan_evidencias
+                WHERE actividad_id = %s
+                ORDER BY fecha_creacion DESC
+            """, (id,))
+            evidencias = cursor.fetchall()
+        except Exception as e:
+            logger.warning(f"No se pudieron cargar evidencias: {e}")
+            evidencias = []
+        
+        # Obtener seguimientos
+        try:
+            cursor.execute("""
+                SELECT s.id, s.comentario, s.tipo, s.fecha, u.usuario
+                FROM plan_seguimiento s
+                LEFT JOIN usuarios u ON s.usuario_id = u.id
+                WHERE s.actividad_id = %s
+                ORDER BY s.fecha DESC
+            """, (id,))
+            seguimientos = cursor.fetchall()
+        except Exception as e:
+            logger.warning(f"No se pudieron cargar seguimientos: {e}")
+            seguimientos = []
         
         cursor.close()
         conn.close()
         
-        return render_template('sst/plan_anual_detalle.html', actividad=actividad)
+        return render_template('sst/plan_anual_detalle.html',
+                             actividad=actividad,
+                             evidencias=evidencias,
+                             seguimientos=seguimientos)
         
     except Exception as e:
         flash(f'❌ Error al cargar detalle: {str(e)}', 'error')
@@ -4040,14 +4064,14 @@ def sst_plan_anual_editar_actividad(id):
             nivel_pesv = request.form.get('nivel_pesv', '').strip()
             responsables = request.form.get('responsables', '').strip()
             recursos = request.form.get('recursos', '').strip()
-            observaciones = request.form.get('observaciones', '').strip()  # ← IMPORTANTE
+            observaciones = request.form.get('observaciones', '').strip()
             estado = request.form.get('estado', 'pendiente')
             
             if not actividad or not ciclo_phva:
                 flash('❌ La actividad y el ciclo PHVA son obligatorios', 'error')
                 return redirect(url_for('sst_plan_anual_editar_actividad', id=id))
             
-            # ===== ACTUALIZAR DATOS BÁSICOS =====
+            # Construir query de actualización
             query = """
                 UPDATE plan_anual_trabajo 
                 SET actividad = %s, evidencia = %s, ciclo_phva = %s, 
@@ -4059,20 +4083,13 @@ def sst_plan_anual_editar_actividad(id):
             """
             
             cursor.execute(query, (
-                actividad[:500], 
-                evidencia[:500] if evidencia else None, 
-                ciclo_phva[:50],
-                articulos[:200] if articulos else None, 
-                nivel_pesv[:100] if nivel_pesv else None, 
+                actividad[:500], evidencia[:500] if evidencia else None, ciclo_phva[:50],
+                articulos[:200] if articulos else None, nivel_pesv[:100] if nivel_pesv else None, 
                 responsables[:200] if responsables else None,
-                recursos[:200] if recursos else None, 
-                observaciones,  # ← GUARDANDO OBSERVACIONES
-                estado, 
-                current_user.id, 
-                id
+                recursos[:200] if recursos else None, observaciones, estado, current_user.id, id
             ))
             
-            # ===== ACTUALIZAR PROGRAMACIÓN MENSUAL =====
+            # Actualizar programación mensual
             meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
                     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
             
@@ -4094,17 +4111,15 @@ def sst_plan_anual_editar_actividad(id):
             
             conn.commit()
             
-            # ===== RECALCULAR PORCENTAJE =====
+            # Recalcular porcentaje
             actualizar_porcentaje_avance(id)
             
             flash('✅ Actividad actualizada correctamente', 'success')
             cursor.close()
             conn.close()
-            
-            # ← REDIRIGIR A GESTIONAR (NO A DETALLE)
-            return redirect(url_for('sst_plan_anual_gestionar'))
+            return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
         
-        # ===== GET: CARGAR ACTIVIDAD =====
+        # GET: Cargar actividad
         cursor.execute("SELECT * FROM plan_anual_trabajo WHERE id = %s", (id,))
         actividad_data = cursor.fetchone()
         
@@ -4124,9 +4139,9 @@ def sst_plan_anual_editar_actividad(id):
             'nivel_pesv': actividad_data[5],
             'responsables': actividad_data[6],
             'recursos': actividad_data[7],
-            'observaciones': actividad_data[104] if len(actividad_data) > 104 else '',  # ← COLUMNA 104
-            'estado': actividad_data[105] if len(actividad_data) > 105 else 'pendiente',
-            'porcentaje_avance': actividad_data[106] if len(actividad_data) > 106 else 0
+            'observaciones': actividad_data[103] if len(actividad_data) > 103 else '',
+            'estado': actividad_data[104] if len(actividad_data) > 104 else 'pendiente',
+            'porcentaje_avance': actividad_data[105] if len(actividad_data) > 105 else 0
         }
         
         # Extraer programación mensual
@@ -4376,113 +4391,6 @@ def actualizar_porcentaje_avance(id):
     except Exception as e:
         logger.error(f"Error al actualizar porcentaje: {e}")
         return 0, 'pendiente'
-
-# ===== AGREGAR ESTO AL FINAL DE TU app.py (ANTES DE if __name__ == '__main__') =====
-# ===== RUTA DE DEBUG TEMPORAL =====
-
-@app.route('/sst/plan-anual/debug/<int:id>')
-@login_required
-def sst_debug_actividad(id):
-    """Ruta temporal para ver qué hay en la BD"""
-    if current_user.rol != 'admin':
-        return "Solo admin"
-    
-    try:
-        conn = crear_conexion()
-        cursor = conn.cursor()
-        
-        # Ver TODO lo que tiene la actividad
-        cursor.execute("SELECT * FROM plan_anual_trabajo WHERE id = %s", (id,))
-        data = cursor.fetchone()
-        
-        if not data:
-            return f"Actividad {id} no encontrada"
-        
-        # Formatear salida
-        output = f"""
-        <html>
-        <head><title>Debug Actividad {id}</title></head>
-        <body style="font-family: monospace; padding: 20px;">
-        <h2>🔍 DEBUG: Actividad {id}</h2>
-        <hr>
-        
-        <h3>📋 Datos Básicos:</h3>
-        <ul>
-            <li><strong>ID:</strong> {data[0]}</li>
-            <li><strong>Actividad:</strong> {data[1]}</li>
-            <li><strong>Ciclo PHVA:</strong> {data[3]}</li>
-            <li><strong>Responsables:</strong> {data[6]}</li>
-        </ul>
-        
-        <h3>📝 OBSERVACIONES (Columna 104):</h3>
-        <div style="background: #f0f0f0; padding: 10px; border: 2px solid #333;">
-            <strong>Valor:</strong> <code>{data[104] if len(data) > 104 else 'N/A'}</code><br>
-            <strong>Tipo:</strong> {type(data[104]) if len(data) > 104 else 'N/A'}<br>
-            <strong>Es None?:</strong> {data[104] is None if len(data) > 104 else 'N/A'}<br>
-            <strong>Longitud:</strong> {len(str(data[104])) if len(data) > 104 and data[104] else 0}
-        </div>
-        
-        <h3>📊 Estado y Porcentaje:</h3>
-        <ul>
-            <li><strong>Estado (Col 105):</strong> {data[105] if len(data) > 105 else 'N/A'}</li>
-            <li><strong>Porcentaje (Col 106):</strong> {data[106] if len(data) > 106 else 'N/A'}</li>
-        </ul>
-        
-        <h3>✅ Semanas EJECUTADAS (muestra de Enero-Febrero):</h3>
-        <table border="1" cellpadding="5" style="border-collapse: collapse;">
-            <tr>
-                <th>Mes</th>
-                <th>S1_P</th>
-                <th>S1_E</th>
-                <th>S2_P</th>
-                <th>S2_E</th>
-                <th>S3_P</th>
-                <th>S3_E</th>
-                <th>S4_P</th>
-                <th>S4_E</th>
-            </tr>
-            <tr>
-                <td><strong>Enero</strong></td>
-                <td style="background: {'#cfc' if data[8] else '#fcc'}">{data[8]}</td>
-                <td style="background: {'#cfc' if data[9] else '#fcc'}">{data[9]}</td>
-                <td style="background: {'#cfc' if data[10] else '#fcc'}">{data[10]}</td>
-                <td style="background: {'#cfc' if data[11] else '#fcc'}">{data[11]}</td>
-                <td style="background: {'#cfc' if data[12] else '#fcc'}">{data[12]}</td>
-                <td style="background: {'#cfc' if data[13] else '#fcc'}">{data[13]}</td>
-                <td style="background: {'#cfc' if data[14] else '#fcc'}">{data[14]}</td>
-                <td style="background: {'#cfc' if data[15] else '#fcc'}">{data[15]}</td>
-            </tr>
-            <tr>
-                <td><strong>Febrero</strong></td>
-                <td style="background: {'#cfc' if data[16] else '#fcc'}">{data[16]}</td>
-                <td style="background: {'#cfc' if data[17] else '#fcc'}">{data[17]}</td>
-                <td style="background: {'#cfc' if data[18] else '#fcc'}">{data[18]}</td>
-                <td style="background: {'#cfc' if data[19] else '#fcc'}">{data[19]}</td>
-                <td style="background: {'#cfc' if data[20] else '#fcc'}">{data[20]}</td>
-                <td style="background: {'#cfc' if data[21] else '#fcc'}">{data[21]}</td>
-                <td style="background: {'#cfc' if data[22] else '#fcc'}">{data[22]}</td>
-                <td style="background: {'#cfc' if data[23] else '#fcc'}">{data[23]}</td>
-            </tr>
-        </table>
-        <p><small>Verde = TRUE, Rojo = FALSE</small></p>
-        
-        <h3>🔢 Total de Columnas:</h3>
-        <p><strong>{len(data)}</strong> columnas en total</p>
-        
-        <hr>
-        <a href="/sst/plan-anual/actividad/{id}/editar">← Ir a Editar</a> | 
-        <a href="/sst/plan-anual/actividad/{id}">← Ir a Detalle</a>
-        </body>
-        </html>
-        """
-        
-        cursor.close()
-        conn.close()
-        
-        return output
-        
-    except Exception as e:
-        return f"<h1>Error:</h1><pre>{str(e)}</pre>"
 
 # EN LA SECCIÓN DE INICIALIZACIÓN DEL APP
 if __name__ == '__main__':
