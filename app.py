@@ -2287,7 +2287,6 @@ def sst_descargar_evidencia(id):
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Obtener datos de la evidencia
         cursor.execute("""
             SELECT archivo_nombre, archivo_data, archivo_tipo
             FROM plan_evidencias
@@ -2306,7 +2305,6 @@ def sst_descargar_evidencia(id):
         archivo_data = evidencia[1]
         archivo_tipo = evidencia[2] or 'application/octet-stream'
         
-        # Retornar el archivo
         return send_file(
             BytesIO(archivo_data),
             mimetype=archivo_tipo,
@@ -2333,7 +2331,6 @@ def sst_eliminar_evidencia(id):
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Obtener plan_id antes de eliminar (para redireccionar)
         cursor.execute("SELECT plan_id FROM plan_evidencias WHERE id = %s", (id,))
         resultado = cursor.fetchone()
         
@@ -2345,7 +2342,6 @@ def sst_eliminar_evidencia(id):
         
         plan_id = resultado[0]
         
-        # Eliminar evidencia
         cursor.execute("DELETE FROM plan_evidencias WHERE id = %s", (id,))
         conn.commit()
         
@@ -2361,35 +2357,46 @@ def sst_eliminar_evidencia(id):
         logger.error(f"Error eliminando evidencia: {e}")
         flash(f'❌ Error al eliminar: {str(e)}', 'error')
         return redirect(url_for('sst_plan_anual'))
+
+
+# ===== RUTA PARA AGREGAR SEGUIMIENTO =====
+@app.route('/sst/plan-anual/actividad/<int:id>/seguimiento', methods=['POST'])
+@login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
+def sst_plan_anual_agregar_seguimiento(id):
+    """Agregar comentario/seguimiento a una actividad"""
+    if not current_user.puede('gestionar_plan_anual'):
+        flash('No tienes permisos para agregar comentarios', 'error')
+        return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
+    
+    try:
+        comentario = request.form.get('comentario', '').strip()
+        tipo = request.form.get('tipo', 'seguimiento')
         
-        # Obtener seguimientos
-        try:
-            cursor.execute("""
-                SELECT s.id, s.comentario, s.tipo, s.fecha, u.usuario
-                FROM plan_seguimiento s
-                LEFT JOIN usuarios u ON s.usuario_id = u.id
-                WHERE s.actividad_id = %s
-                ORDER BY s.fecha DESC
-            """, (id,))
-            seguimientos = cursor.fetchall()
-        except Exception as e:
-            logger.warning(f"No se pudieron cargar seguimientos: {e}")
-            seguimientos = []
+        if not comentario:
+            flash('El comentario es obligatorio', 'error')
+            return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
         
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO plan_seguimiento (
+                plan_id, comentario, tipo, usuario_id
+            ) VALUES (%s, %s, %s, %s)
+        """, (id, comentario, tipo, current_user.id))
+        
+        conn.commit()
         cursor.close()
         conn.close()
         
-        return render_template('sst/plan_anual_detalle.html',
-                             actividad=actividad,
-                             evidencias=evidencias,
-                             seguimientos=seguimientos)
+        flash('✅ Comentario agregado correctamente', 'success')
         
     except Exception as e:
-        flash(f'❌ Error al cargar detalle: {str(e)}', 'error')
-        logger.error(f"Error en sst_plan_anual_actividad_detalle: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
-        return redirect(url_for('sst_plan_anual_actividades'))
+        flash(f'❌ Error al agregar comentario: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_agregar_seguimiento: {e}")
+    
+    return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
 
 @app.route('/sst/plan-anual/actividad/<int:id>/actualizar', methods=['POST'])
 @login_required
