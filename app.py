@@ -2136,10 +2136,6 @@ def sst_plan_anual_actividades():
         logger.error(f"Error en sst_plan_anual_actividades: {e}")
         return redirect(url_for('sst_plan_anual'))
 
-# ===== REEMPLAZA ESTA RUTA EN TU app.py =====
-
-# ===== REEMPLAZA LA RUTA sst_plan_anual_actividad_detalle EN app.py =====
-
 @app.route('/sst/plan-anual/actividad/<int:id>')
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
@@ -2273,6 +2269,33 @@ def sst_plan_anual_actividad_detalle(id):
         except Exception as e:
             logger.error(f"❌ Error cargando evidencias: {e}")
             evidencias = []
+        
+        # Obtener seguimiento
+        try:
+            cursor.execute("""
+                SELECT id, comentario, tipo, fecha_registro, usuario_id
+                FROM plan_seguimiento
+                WHERE plan_id = %s
+                ORDER BY fecha_registro DESC
+            """, (id,))
+            seguimiento = cursor.fetchall()
+            logger.info(f"✅ Seguimiento encontrado: {len(seguimiento)}")
+        except Exception as e:
+            logger.error(f"❌ Error cargando seguimiento: {e}")
+            seguimiento = []
+        
+        cursor.close()
+        conn.close()
+        
+        return render_template('sst/plan_anual_detalle.html',
+                             actividad=actividad,
+                             evidencias=evidencias,
+                             seguimiento=seguimiento)
+        
+    except Exception as e:
+        flash(f'❌ Error al cargar actividad: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_actividad_detalle: {e}")
+        return redirect(url_for('sst_plan_anual'))
 
 @app.route('/sst/plan-anual/actividad/<int:id>/actualizar', methods=['POST'])
 @login_required
@@ -2309,52 +2332,13 @@ def sst_plan_anual_actualizar_actividad(id):
         cursor.execute(query, (ejecutado, current_user.id, id))
         
         # Recalcular porcentaje y estado
-        cursor.execute("""
-            SELECT 
-                (SELECT COUNT(*) FROM (
-                    SELECT enero_semana1_p, enero_semana2_p, enero_semana3_p, enero_semana4_p,
-                           febrero_semana1_p, febrero_semana2_p, febrero_semana3_p, febrero_semana4_p,
-                           marzo_semana1_p, marzo_semana2_p, marzo_semana3_p, marzo_semana4_p,
-                           abril_semana1_p, abril_semana2_p, abril_semana3_p, abril_semana4_p,
-                           mayo_semana1_p, mayo_semana2_p, mayo_semana3_p, mayo_semana4_p,
-                           junio_semana1_p, junio_semana2_p, junio_semana3_p, junio_semana4_p,
-                           julio_semana1_p, julio_semana2_p, julio_semana3_p, julio_semana4_p,
-                           agosto_semana1_p, agosto_semana2_p, agosto_semana3_p, agosto_semana4_p,
-                           septiembre_semana1_p, septiembre_semana2_p, septiembre_semana3_p, septiembre_semana4_p,
-                           octubre_semana1_p, octubre_semana2_p, octubre_semana3_p, octubre_semana4_p,
-                           noviembre_semana1_p, noviembre_semana2_p, noviembre_semana3_p, noviembre_semana4_p,
-                           diciembre_semana1_p, diciembre_semana2_p, diciembre_semana3_p, diciembre_semana4_p
-                    FROM plan_anual_trabajo WHERE id = %s
-                ) AS p WHERE TRUE IN (
-                    enero_semana1_p, enero_semana2_p, enero_semana3_p, enero_semana4_p,
-                    febrero_semana1_p, febrero_semana2_p, febrero_semana3_p, febrero_semana4_p,
-                    marzo_semana1_p, marzo_semana2_p, marzo_semana3_p, marzo_semana4_p,
-                    abril_semana1_p, abril_semana2_p, abril_semana3_p, abril_semana4_p,
-                    mayo_semana1_p, mayo_semana2_p, mayo_semana3_p, mayo_semana4_p,
-                    junio_semana1_p, junio_semana2_p, junio_semana3_p, junio_semana4_p,
-                    julio_semana1_p, julio_semana2_p, julio_semana3_p, julio_semana4_p,
-                    agosto_semana1_p, agosto_semana2_p, agosto_semana3_p, agosto_semana4_p,
-                    septiembre_semana1_p, septiembre_semana2_p, septiembre_semana3_p, septiembre_semana4_p,
-                    octubre_semana1_p, octubre_semana2_p, octubre_semana3_p, octubre_semana4_p,
-                    noviembre_semana1_p, noviembre_semana2_p, noviembre_semana3_p, noviembre_semana4_p,
-                    diciembre_semana1_p, diciembre_semana2_p, diciembre_semana3_p, diciembre_semana4_p
-                )) as planificadas
-        """, (id,))
-        
-        # Actualizar estado basado en ejecución
-        nuevo_estado = 'en_proceso' if ejecutado else 'pendiente'
-        
-        cursor.execute("""
-            UPDATE plan_anual_trabajo
-            SET estado = %s
-            WHERE id = %s
-        """, (nuevo_estado, id))
+        actualizar_porcentaje_avance(id)
         
         conn.commit()
         cursor.close()
         conn.close()
         
-        flash('Actividad actualizada exitosamente', 'success')
+        flash('✅ Actividad actualizada exitosamente', 'success')
         
     except Exception as e:
         flash(f'Error al actualizar: {str(e)}', 'error')
@@ -2413,7 +2397,7 @@ def sst_plan_anual_agregar_evidencia(id):
         cursor.close()
         conn.close()
         
-        flash('Evidencia agregada exitosamente', 'success')
+        flash('✅ Evidencia agregada exitosamente', 'success')
         
     except Exception as e:
         flash(f'Error al agregar evidencia: {str(e)}', 'error')
@@ -2464,7 +2448,6 @@ def sst_descargar_evidencia(id):
         flash(f'❌ Error al descargar: {str(e)}', 'error')
         return redirect(url_for('sst_plan_anual'))
 
-
 # ===== RUTA PARA ELIMINAR EVIDENCIA =====
 @app.route('/sst/evidencia/<int:id>/eliminar', methods=['POST'])
 @login_required
@@ -2504,7 +2487,6 @@ def sst_eliminar_evidencia(id):
         logger.error(f"Error eliminando evidencia: {e}")
         flash(f'❌ Error al eliminar: {str(e)}', 'error')
         return redirect(url_for('sst_plan_anual'))
-
 
 # ===== RUTA PARA AGREGAR SEGUIMIENTO =====
 @app.route('/sst/plan-anual/actividad/<int:id>/seguimiento', methods=['POST'])
@@ -2603,6 +2585,83 @@ def sst_plan_anual_cronograma():
         logger.error(f"Error en sst_plan_anual_cronograma: {e}")
         return redirect(url_for('sst_plan_anual'))
 
+def actualizar_porcentaje_avance(id):
+    """
+    Actualizar automáticamente el porcentaje de avance de una actividad
+    basándose en semanas planificadas vs ejecutadas
+    """
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Nombres de los meses
+        meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+        
+        # Construir lista de columnas planificadas y ejecutadas
+        columnas_planificadas = []
+        columnas_ejecutadas = []
+        
+        for mes in meses:
+            for semana in range(1, 5):
+                columnas_planificadas.append(f'{mes}_semana{semana}_p')
+                columnas_ejecutadas.append(f'{mes}_semana{semana}_e')
+        
+        # Contar semanas planificadas (TRUE)
+        query_planificadas = f"""
+            SELECT 
+                {' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_planificadas])} as total_planificadas
+            FROM plan_anual_trabajo 
+            WHERE id = %s
+        """
+        cursor.execute(query_planificadas, (id,))
+        resultado_p = cursor.fetchone()
+        total_planificadas = resultado_p[0] if resultado_p else 0
+        
+        # Contar semanas ejecutadas (TRUE)
+        query_ejecutadas = f"""
+            SELECT 
+                {' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_ejecutadas])} as total_ejecutadas
+            FROM plan_anual_trabajo 
+            WHERE id = %s
+        """
+        cursor.execute(query_ejecutadas, (id,))
+        resultado_e = cursor.fetchone()
+        total_ejecutadas = resultado_e[0] if resultado_e else 0
+        
+        # Calcular porcentaje
+        porcentaje = 0
+        if total_planificadas > 0:
+            porcentaje = round((total_ejecutadas / total_planificadas) * 100, 2)
+        
+        # Determinar estado automáticamente
+        if porcentaje == 100:
+            estado = 'completado'
+        elif porcentaje > 0:
+            estado = 'en_proceso'
+        else:
+            estado = 'pendiente'
+        
+        # Actualizar en la base de datos
+        cursor.execute("""
+            UPDATE plan_anual_trabajo 
+            SET porcentaje_avance = %s, 
+                estado = %s,
+                fecha_actualizacion = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (porcentaje, estado, id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        logger.info(f"✅ Porcentaje actualizado para actividad {id}: {porcentaje}% ({estado})")
+        return porcentaje, estado
+        
+    except Exception as e:
+        logger.error(f"❌ Error al actualizar porcentaje: {e}")
+        return 0, 'pendiente'
+
 def inicializar_plan_anual():
     """Crear tabla e importar datos del plan anual basados en el Excel"""
     try:
@@ -2616,7 +2675,7 @@ def inicializar_plan_anual():
                 actividad TEXT NOT NULL,
                 evidencia TEXT,
                 ciclo_phva VARCHAR(50),
-                articulos VARCHAR(200),
+                articulos_decreto VARCHAR(200),
                 nivel_pesv VARCHAR(100),
                 responsables VARCHAR(200),
                 recursos TEXT,
@@ -2785,680 +2844,74 @@ def inicializar_plan_anual():
         count = cursor.fetchone()[0]
         
         if count == 0:
-            print("📥 Importando datos del plan anual desde el Excel...")
+            print("📥 Importando datos de ejemplo del plan anual...")
             
-            # Datos de ejemplo basados en tu Excel
-            actividades_pesv = [
-                # PLANEAR: DISEÑO Y PLANIFICACIÓN DEL SG-SST
+            # Insertar algunas actividades de ejemplo
+            actividades_ejemplo = [
                 {
                     'actividad': 'Responsable del Sistema de Gestión de Seguridad y Salud en el Trabajo SG-SST',
-                    'evidencia': 'Documento en el que consta la asignación, con la respectiva determinación de responsabilidades y constatar la hoja de vida con soportes de la persona asignada.',
+                    'evidencia': 'Documento de asignación del responsable SST',
                     'ciclo_phva': 'Planear',
-                    'articulos': '2.2.4.6.8',
+                    'articulos_decreto': '2.2.4.6.8',
                     'nivel_pesv': 'N/A',
                     'responsables': 'SST - COPASST - GERENCIA',
-                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
-                    'observaciones': 'Asignación inicial del responsable',
-                    'programacion': {
-                        'enero': [True, False, False, False],  # Semana 1
-                        'febrero': [False, False, False, False],
-                        'marzo': [False, False, False, False],
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
+                    'recursos': 'Humanos, Tecnológicos',
+                    'enero_s1_p': True, 'enero_s1_e': True
                 },
                 {
-                    'actividad': 'Lider del diseño e implementacion del PESV',
-                    'evidencia': 'Documento en el que consta la asignación, con la respectiva determinación de responsabilidades, evidencia de la competencia del Líder; por lo que se debe definir y documentar',
+                    'actividad': 'Política de Seguridad y Salud en el Trabajo SST',
+                    'evidencia': 'Política firmada y comunicada',
                     'ciclo_phva': 'Planear',
-                    'articulos': 'N/A',
-                    'nivel_pesv': 'Todos los niveles - Paso 1',
-                    'responsables': 'SST - GERENCIA',
-                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
-                    'observaciones': 'Designación del líder PESV',
-                    'programacion': {
-                        'enero': [True, True, False, False],  # Semanas 1 y 2
-                        'febrero': [False, False, False, False],
-                        'marzo': [False, False, False, False],
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
+                    'articulos_decreto': '2.2.4.6.5, 2.2.4.6.6',
+                    'nivel_pesv': 'Paso 3',
+                    'responsables': 'SST - COPASST',
+                    'recursos': 'Humanos',
+                    'enero_s1_p': True, 'enero_s2_p': True, 'enero_s3_p': True
                 },
                 {
-                    'actividad': 'Politica de Seguridad y Salud en el Trabajo SST y del Plan Estrategico de Seguridad Vial PESV',
-                    'evidencia': 'Política del Sistema de Gestión deSeguridad y Salud en elTrabajo SG-SST firmada, fecha y comunicada al COPASST',
-                    'ciclo_phva': 'Planear',
-                    'articulos': '2.2.4.6.5, 2.2.4.6.6, 2.2.4.6.12',
-                    'nivel_pesv': 'Todos los niveles (Paso 3)',
-                    'responsables': 'SST - COPASST - COMITE DE SEGURIDAD VIAL',
-                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
-                    'observaciones': 'Política institucional',
-                    'programacion': {
-                        'enero': [True, True, True, False],  # Semanas 1-3
-                        'febrero': [False, True, False, False],  # Semana 2
-                        'marzo': [False, False, False, False],
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                {
-                    'actividad': 'Objetivos del Sistema de Gestión de la Seguridad y Salud en el Trabajo SG-SST y del Plan Estrategico de Seguridad Vial PESV',
-                    'evidencia': 'Objetivos definidos, claros, medibles, cuantificables, con metas, documentados, revisados del SG-SST y del PESV',
-                    'ciclo_phva': 'Planear',
-                    'articulos': '2.2.4.6.7',
-                    'nivel_pesv': 'Estandar (Paso 7)',
-                    'responsables': 'SST - COPASST - COMITE DE SEGURIDAD VIAL- LIDER PESV',
-                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
-                    'observaciones': 'Definición anual de objetivos',
-                    'programacion': {
-                        'enero': [True, True, True, True],  # Todo enero
-                        'febrero': [True, False, False, False],  # Semana 1
-                        'marzo': [False, False, False, False],
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                {
-                    'actividad': 'Responsabilidades en el Sistema de Gestión deSeguridad y Salud en el Trabajo SG - SST y del Plan Estrategico de Seguridad Vial PESV',
-                    'evidencia': 'Debe asignar, documentar y comunicar las responsabilidades específicas en SST y PESV a todos los niveles de la organización, incluida la alta dirección',
-                    'ciclo_phva': 'Planear',
-                    'articulos': '2.2.4.6.8, 2.2.4.6.9, 2.2.4.6.10, 2.2.4.6.8.12',
-                    'nivel_pesv': 'Estandar (Paso 11)',
-                    'responsables': 'SST - COPASST - COMITE DE SEGURIDAD VIAL',
-                    'recursos': 'Tecnologicos, Infraestructura, Humanos',
-                    'observaciones': 'Asignación de responsabilidades',
-                    'programacion': {
-                        'enero': [True, True, False, False],  # Semanas 1-2
-                        'febrero': [True, True, False, False],  # Semanas 1-2
-                        'marzo': [False, False, False, False],
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                {
-                    'actividad': 'Asignación de recursos para el Sistema de Gestión de Seguridad y Salud en elTrabajo SG-SST y del Plan Estrategico de Seguridad Vial PESV',
-                    'evidencia': 'Establecer y asignar el presupuesto requerido para la ejecución de las actividades establecidas en el SG SST y PESV para el 2026',
-                    'ciclo_phva': 'Planear',
-                    'articulos': '2.2.4.6.8',
-                    'nivel_pesv': 'N/A',
-                    'responsables': 'SST - COPASST - COMITE DE SEGURIDAD VIAL',
-                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
-                    'observaciones': 'Presupuesto anual',
-                    'programacion': {
-                        'enero': [True, False, False, False],  # Semana 1
-                        'febrero': [False, False, False, False],
-                        'marzo': [False, False, False, False],
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                {
-                    'actividad': 'Matriz legal',
-                    'evidencia': 'Debe contener Normatividad nacional vigente y aplicable en materia de SST y PESV',
-                    'ciclo_phva': 'Planear',
-                    'articulos': '2.2.4.6.8, 2.2.4.6.8.12',
-                    'nivel_pesv': 'N/A',
-                    'responsables': 'SST - COPASST - COMITE DE SEGURIDAD VIAL',
-                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
-                    'observaciones': 'Actualización normativa',
-                    'programacion': {
-                        'enero': [True, True, False, False],  # Semanas 1-2
-                        'febrero': [False, False, True, False],  # Semana 3
-                        'marzo': [False, False, False, False],
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                {
-                    'actividad': 'Afiliación al Sistema General de Riesgos Laborales',
-                    'evidencia': 'Planilla de pago de aportes a la seguridad social',
-                    'ciclo_phva': 'Planear',
-                    'articulos': '',
-                    'nivel_pesv': 'N/A',
-                    'responsables': 'SST - COPASST - TALENTO HUMANO',
-                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
-                    'observaciones': 'Pago mensual',
-                    'programacion': {
-                        'enero': [True, False, False, False],
-                        'febrero': [True, False, False, False],
-                        'marzo': [True, False, False, False],
-                        'abril': [True, False, False, False],
-                        'mayo': [True, False, False, False],
-                        'junio': [True, False, False, False],
-                        'julio': [True, False, False, False],
-                        'agosto': [True, False, False, False],
-                        'septiembre': [True, False, False, False],
-                        'octubre': [True, False, False, False],
-                        'noviembre': [True, False, False, False],
-                        'diciembre': [True, False, False, False]
-                    }
-                },
-                {
-                    'actividad': 'Identificación de trabajadores de alto riesgo y cotización de pensión especial',
-                    'evidencia': 'En el caso que aplique, identificar a los trabajadores que se dediquen en forma permanente al ejercicio de las actividades de alto riesgo...',
-                    'ciclo_phva': 'Planear',
-                    'articulos': '',
-                    'nivel_pesv': 'N/A',
-                    'responsables': 'SST',
-                    'recursos': 'Tecnologicos, Humanos',
-                    'observaciones': 'Identificación trimestral',
-                    'programacion': {
-                        'enero': [True, False, False, False],
-                        'febrero': [False, False, False, False],
-                        'marzo': [False, False, False, False],
-                        'abril': [True, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [True, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [True, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                {
-                    'actividad': 'Conformación COPASST',
-                    'evidencia': 'convocatoria, elección, conformación del Comité Paritario de Seguridad y Salud en el Trabajo y el acta de constitución.',
-                    'ciclo_phva': 'Planear',
-                    'articulos': '2.2.4.6.12',
-                    'nivel_pesv': 'N/A',
-                    'responsables': 'SST - GERENCIA',
-                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
-                    'observaciones': 'Renovación anual',
-                    'programacion': {
-                        'enero': [True, True, True, True],  # Todo enero
-                        'febrero': [False, False, False, False],
-                        'marzo': [False, False, False, False],
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                # HACER: IMPLEMENTACIÓN Y EJECUCIÓN DEL PESV (algunas actividades)
-                {
-                    'actividad': 'Descripción sociodemográfica. Diagnostico de Condiciones de Salud',
-                    'evidencia': 'Recolectar la siguiente información actualizada de todos los trabajadores del último año...',
+                    'actividad': 'Reuniones mensuales COPASST',
+                    'evidencia': 'Actas de reunión',
                     'ciclo_phva': 'Hacer',
-                    'articulos': '',
-                    'nivel_pesv': '',
-                    'responsables': '',
-                    'recursos': '',
-                    'observaciones': 'Anual',
-                    'programacion': {
-                        'enero': [True, True, True, True],  # Todo enero
-                        'febrero': [True, True, True, True],  # Todo febrero
-                        'marzo': [False, False, False, False],
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                {
-                    'actividad': 'Reuniones mensuales y/o extraordinarias COPASST',
-                    'evidencia': 'Actas de reunión mensuales del último año del Comité Paritario y verificar el cumplimiento de sus funciones.',
-                    'ciclo_phva': 'Hacer',
-                    'articulos': '2.2.4.6.12',
+                    'articulos_decreto': '2.2.4.6.12',
                     'nivel_pesv': 'N/A',
-                    'responsables': 'SST - COPASST - GERENCIA',
-                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
-                    'observaciones': 'Mensual',
-                    'programacion': {
-                        'enero': [True, False, False, False],
-                        'febrero': [True, False, False, False],
-                        'marzo': [True, False, False, False],
-                        'abril': [True, False, False, False],
-                        'mayo': [True, False, False, False],
-                        'junio': [True, False, False, False],
-                        'julio': [True, False, False, False],
-                        'agosto': [True, False, False, False],
-                        'septiembre': [True, False, False, False],
-                        'octubre': [True, False, False, False],
-                        'noviembre': [True, False, False, False],
-                        'diciembre': [True, False, False, False]
-                    }
-                },
-                {
-                    'actividad': 'Reuniones trimestrales y/o extraordinarias COMITE DE SEGURIDAD VIAL',
-                    'evidencia': 'Actas de reunión trimestrales del COMITE DE SEGURIDAD VIAL y verificar el cumplimiento de sus funciones.',
-                    'ciclo_phva': 'Hacer',
-                    'articulos': 'N/A',
-                    'nivel_pesv': 'Estandar y Avanzado (Paso 2)',
-                    'responsables': 'SST - GERENCIA - COMITE DE SEGURIDAD VIAL',
-                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
-                    'observaciones': 'Trimestral',
-                    'programacion': {
-                        'enero': [False, False, False, True],  # Última semana
-                        'febrero': [False, False, False, False],
-                        'marzo': [False, False, True, False],  # Tercera semana
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, True],  # Última semana
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, True],  # Última semana
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, True]   # Última semana
-                    }
-                },
-                {
-                    'actividad': 'Capacitacion COMITE DE SEGURIDAD VIAL',
-                    'evidencia': 'Capacitar a lo integrantes del COMITE DE SEGURIDAD VIAL para el cumplimiento efectivo de las responsabilidades que les asigna la ley.',
-                    'ciclo_phva': 'Hacer',
-                    'articulos': 'N/A',
-                    'nivel_pesv': 'Estandar y Avanzado (Paso 2)',
-                    'responsables': 'SST - GERENCIA - COMITE DE SEGURIDAD VIAL',
-                    'recursos': 'Tecnologicos, Infraestructura, Humanos, Financieros',
-                    'observaciones': 'Capacitación inicial',
-                    'programacion': {
-                        'enero': [True, True, False, False],  # Semanas 1-2
-                        'febrero': [False, False, False, False],
-                        'marzo': [False, False, False, False],
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                {
-                    'actividad': 'Divulgación de los objetivos específicos y metas de SST y seguridad vial. (Anual)',
-                    'evidencia': '',
-                    'ciclo_phva': 'Hacer',
-                    'articulos': '',
-                    'nivel_pesv': 'Todos los niveles (Paso 7)',
-                    'responsables': 'SST - COPASST - COMITÉ DE SEGURIDAD VIAL / LÍDER PESV',
-                    'recursos': '',
-                    'observaciones': 'Comunicación interna',
-                    'programacion': {
-                        'enero': [True, False, False, False],
-                        'febrero': [True, False, False, False],
-                        'marzo': [True, False, False, False],
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                {
-                    'actividad': 'Elaboración del plan de preparación y respuesta ante emergencias viales (PPRAEV).',
-                    'evidencia': '',
-                    'ciclo_phva': 'Hacer',
-                    'articulos': '',
-                    'nivel_pesv': 'Todos los niveles (Paso 12)',
-                    'responsables': 'Seguridad y Salud en el Trabajo',
-                    'recursos': '',
-                    'observaciones': 'Plan de emergencias',
-                    'programacion': {
-                        'enero': [True, False, False, False],
-                        'febrero': [False, False, False, False],
-                        'marzo': [False, False, False, False],
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                {
-                    'actividad': 'Realización del simulacro anual de emergencias viales. (Anual)',
-                    'evidencia': '',
-                    'ciclo_phva': 'Paso 12',
-                    'articulos': '',
-                    'nivel_pesv': 'Todos los niveles',
-                    'responsables': 'Seguridad y Salud en el Trabajo',
-                    'recursos': '',
-                    'observaciones': 'Simulacro anual',
-                    'programacion': {
-                        'enero': [True, True, False, False],  # Semanas 1-2
-                        'febrero': [False, False, False, False],
-                        'marzo': [False, False, False, False],
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                {
-                    'actividad': 'Desarrollo y/o actualización del procedimiento y mecanismos para el registro de la inspección preoperacional de vehículos motorizados y no motorizados que se utilizan en desplazamientos laborales.',
-                    'evidencia': '',
-                    'ciclo_phva': 'Paso 16',
-                    'articulos': '',
-                    'nivel_pesv': 'Todos los niveles',
-                    'responsables': 'Responsable Vehículos Seguros',
-                    'recursos': '',
-                    'observaciones': 'Inspección vehicular',
-                    'programacion': {
-                        'enero': [False, False, False, False],
-                        'febrero': [False, False, False, False],
-                        'marzo': [False, False, False, False],
-                        'abril': [True, True, False, False],  # Semanas 1-2 de abril
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                {
-                    'actividad': 'Diseño e implementación del plan de mantenimiento preventivo para vehículos automotores y no automotores que se utilizan para los desplazamientos laborales.',
-                    'evidencia': '',
-                    'ciclo_phva': 'Paso 17',
-                    'articulos': '',
-                    'nivel_pesv': 'Todos los niveles',
-                    'responsables': 'Líder Vehículos Seguros',
-                    'recursos': '',
-                    'observaciones': 'Mantenimiento vehicular',
-                    'programacion': {
-                        'enero': [False, False, False, False],
-                        'febrero': [False, False, False, False],
-                        'marzo': [False, False, False, False],
-                        'abril': [True, False, False, False],  # Semana 1 de abril
-                        'mayo': [True, True, True, False],  # Semanas 1-3 de mayo
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                {
-                    'actividad': 'Desarrollo del Protocolo o Manual para la gestión de contratistas',
-                    'evidencia': '',
-                    'ciclo_phva': 'Paso 18',
-                    'articulos': '',
-                    'nivel_pesv': 'Estándar y Avanzado',
-                    'responsables': 'Define Empresa',
-                    'recursos': '',
-                    'observaciones': 'Gestión de contratistas',
-                    'programacion': {
-                        'enero': [True, True, False, False],  # Semanas 1-2
-                        'febrero': [False, False, False, False],
-                        'marzo': [False, False, False, False],
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                {
-                    'actividad': 'Desarrollo del sistema de archivo y retención documental, para los registros y documentos que soportan el PESV.',
-                    'evidencia': '',
-                    'ciclo_phva': 'Paso 19',
-                    'articulos': '',
-                    'nivel_pesv': 'Estándar y Avanzado',
-                    'responsables': 'Define Empresa',
-                    'recursos': '',
-                    'observaciones': 'Gestión documental',
-                    'programacion': {
-                        'enero': [True, True, False, False],  # Semanas 1-2
-                        'febrero': [False, False, False, False],
-                        'marzo': [False, False, False, False],
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                # VERIFICAR: SEGUIMIENTO POR LA ORGANIZACIÓN
-                {
-                    'actividad': 'Revisión del PESV (Trimestral)',
-                    'evidencia': '',
-                    'ciclo_phva': 'Verificar',
-                    'articulos': '',
-                    'nivel_pesv': 'Todos los niveles (Paso 2)',
-                    'responsables': 'Comité de seguridad vial / Líder PESV',
-                    'recursos': '',
-                    'observaciones': 'Revisión trimestral',
-                    'programacion': {
-                        'enero': [False, False, False, True],  # Última semana
-                        'febrero': [False, False, False, False],
-                        'marzo': [False, False, False, True],  # Última semana
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, True],  # Última semana
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, True],  # Última semana
-                        'octubre': [False, False, False, False],
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, True]   # Última semana
-                    }
-                },
-                {
-                    'actividad': 'Auditoria interna al PESV. (Anual)',
-                    'evidencia': '',
-                    'ciclo_phva': 'Verificar',
-                    'articulos': '',
-                    'nivel_pesv': 'Todos los niveles (Paso 22)',
-                    'responsables': 'Comité de seguridad vial / Líder PESV',
-                    'recursos': '',
-                    'observaciones': 'Auditoría anual',
-                    'programacion': {
-                        'enero': [False, False, False, False],
-                        'febrero': [False, False, False, False],
-                        'marzo': [False, False, False, False],
-                        'abril': [False, False, False, False],
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [False, False, False, False],
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [False, False, False, False],
-                        'noviembre': [True, True, True, True],  # Todo noviembre
-                        'diciembre': [False, False, False, False]
-                    }
-                },
-                # ACTUAR: MEJORA CONTINUA DEL PESV
-                {
-                    'actividad': 'Definición e implementación de acciones preventivas y/o correctivas con base a los resultados de medición de los indicadores y auditorías al PESV (Trimestral)',
-                    'evidencia': '',
-                    'ciclo_phva': 'Actuar',
-                    'articulos': '',
-                    'nivel_pesv': 'Todos los niveles (Paso 23)',
-                    'responsables': 'Líder del PESV / Comité de Seguridad Vial',
-                    'recursos': '',
-                    'observaciones': 'Acciones de mejora trimestrales',
-                    'programacion': {
-                        'enero': [False, False, False, False],
-                        'febrero': [True, False, False, False],  # Primera semana
-                        'febrero': [False, False, False, False],
-                        'marzo': [False, False, False, False],
-                        'abril': [True, False, False, False],  # Primera semana
-                        'mayo': [False, False, False, False],
-                        'junio': [False, False, False, False],
-                        'julio': [True, False, False, False],  # Primera semana
-                        'agosto': [False, False, False, False],
-                        'septiembre': [False, False, False, False],
-                        'octubre': [True, False, False, False],  # Primera semana
-                        'noviembre': [False, False, False, False],
-                        'diciembre': [False, False, False, False]
-                    }
+                    'responsables': 'SST - COPASST',
+                    'recursos': 'Humanos',
+                    'enero_s1_p': True, 'febrero_s1_p': True, 'marzo_s1_p': True
                 }
             ]
             
-            # Insertar cada actividad con su programación
-            for act in actividades_pesv:
-                # Construir query dinámica
-                columns = [
-                    'actividad', 'evidencia', 'ciclo_phva', 'articulos', 
-                    'nivel_pesv', 'responsables', 'recursos', 'observaciones',
-                    'estado'
+            meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+            
+            for act in actividades_ejemplo:
+                columnas = ['actividad', 'evidencia', 'ciclo_phva', 'articulos_decreto',
+                           'nivel_pesv', 'responsables', 'recursos', 'estado']
+                valores = [
+                    act['actividad'], act.get('evidencia', ''), act['ciclo_phva'],
+                    act.get('articulos_decreto', ''), act.get('nivel_pesv', ''),
+                    act.get('responsables', ''), act.get('recursos', ''), 'pendiente'
                 ]
-                placeholders = ['%s'] * len(columns)
-                values = [
-                    act['actividad'], act['evidencia'], act['ciclo_phva'],
-                    act['articulos'], act['nivel_pesv'], act['responsables'],
-                    act['recursos'], act['observaciones'], 'pendiente'
-                ]
-                
-                # Agregar programación mensual
-                meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-                        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
                 
                 for mes in meses:
-                    if mes in act['programacion']:
-                        programacion = act['programacion'][mes]
-                        for semana in range(1, 5):
-                            # Columna planificada (p)
-                            columns.append(f"{mes}_semana{semana}_p")
-                            placeholders.append('%s')
-                            values.append(programacion[semana-1])
-                            
-                            # Columna ejecutada (e) - inicialmente False
-                            columns.append(f"{mes}_semana{semana}_e")
-                            placeholders.append('%s')
-                            # Marcar algunas como ejecutadas para mostrar datos de prueba
-                            ejecutado = programacion[semana-1] and (semana % 2 == 0)  # Ejecutadas en semanas pares
-                            values.append(ejecutado)
-                    else:
-                        # Si no hay programación para este mes, llenar con False
-                        for semana in range(1, 5):
-                            columns.append(f"{mes}_semana{semana}_p")
-                            placeholders.append('%s')
-                            values.append(False)
-                            
-                            columns.append(f"{mes}_semana{semana}_e")
-                            placeholders.append('%s')
-                            values.append(False)
+                    for semana in range(1, 5):
+                        key_p = f'{mes}_semana{semana}_p'
+                        key_e = f'{mes}_semana{semana}_e'
+                        
+                        columnas.append(key_p)
+                        valores.append(act.get(key_p, False))
+                        
+                        columnas.append(key_e)
+                        valores.append(act.get(key_e, False))
                 
-                # Insertar
+                placeholders = ', '.join(['%s'] * len(valores))
                 query = f"""
-                    INSERT INTO plan_anual_trabajo ({', '.join(columns)})
-                    VALUES ({', '.join(placeholders)})
+                    INSERT INTO plan_anual_trabajo ({', '.join(columnas)})
+                    VALUES ({placeholders})
                 """
-                cursor.execute(query, values)
+                cursor.execute(query, valores)
             
             conn.commit()
-            print(f"✅ {len(actividades_pesv)} actividades del PESV insertadas")
-            
-            # Insertar algunas evidencias de ejemplo
-            evidencias_ejemplo = [
-                (1, 'Acta de designación de responsable SST', 'Documento firmado por gerencia designando al responsable del SG-SST', None, None, None, None, 1),
-                (3, 'Política de SST y PESV', 'Documento oficial de la política institucional', 'politica_sst.pdf', 'application/pdf', 102400, None, 1),
-                (10, 'Actas de reunión COPASST Enero', 'Acta de la primera reunión del año', 'acta_copasst_enero.pdf', 'application/pdf', 153600, None, 1),
-                (15, 'Presentación objetivos PESV', 'Diapositivas para divulgación de objetivos', 'presentacion_objetivos.pptx', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 204800, None, 1),
-            ]
-            
-            for evidencia in evidencias_ejemplo:
-                cursor.execute("""
-                    INSERT INTO plan_evidencias 
-                    (plan_id, titulo, descripcion, archivo_nombre, archivo_tipo, archivo_tamano, usuario_id)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                """, evidencia)
-            
-            # Insertar seguimientos de ejemplo
-            seguimientos_ejemplo = [
-                (1, 'Se designó al Ing. Juan Pérez como responsable SST', 'asignacion', 1),
-                (3, 'Política revisada y aprobada por comité directivo', 'aprobacion', 1),
-                (10, 'Primera reunión del año realizada con quórum completo', 'reunion', 1),
-                (15, 'Objetivos comunicados a todo el personal', 'comunicacion', 1),
-            ]
-            
-            for seguimiento in seguimientos_ejemplo:
-                cursor.execute("""
-                    INSERT INTO plan_seguimiento 
-                    (plan_id, comentario, tipo, usuario_id)
-                    VALUES (%s, %s, %s, %s)
-                """, seguimiento)
-            
-            conn.commit()
-            print("✅ Evidencias y seguimientos de ejemplo insertados")
+            print(f"✅ {len(actividades_ejemplo)} actividades de ejemplo insertadas")
             
         else:
             print(f"✅ Ya existen {count} actividades en el plan anual")
@@ -3470,1023 +2923,6 @@ def inicializar_plan_anual():
         print(f"❌ Error al inicializar plan anual: {e}")
         import traceback
         traceback.print_exc()
-
-# También necesitamos actualizar la función para calcular porcentajes de avance automáticamente
-# ===== FUNCIÓN MEJORADA PARA ACTUALIZAR PORCENTAJES =====
-# Reemplaza la función existente en app.py
-
-def actualizar_porcentaje_avance(id):
-    """
-    Actualizar automáticamente el porcentaje de avance de una actividad
-    basándose en semanas planificadas vs ejecutadas
-    """
-    try:
-        conn = crear_conexion()
-        cursor = conn.cursor()
-        
-        # Nombres de los meses
-        meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-                'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-        
-        # Construir lista de columnas planificadas y ejecutadas
-        columnas_planificadas = []
-        columnas_ejecutadas = []
-        
-        for mes in meses:
-            for semana in range(1, 5):
-                columnas_planificadas.append(f'{mes}_semana{semana}_p')
-                columnas_ejecutadas.append(f'{mes}_semana{semana}_e')
-        
-        # Contar semanas planificadas (TRUE)
-        query_planificadas = f"""
-            SELECT 
-                {' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_planificadas])} as total_planificadas
-            FROM plan_anual_trabajo 
-            WHERE id = %s
-        """
-        cursor.execute(query_planificadas, (id,))
-        resultado_p = cursor.fetchone()
-        total_planificadas = resultado_p[0] if resultado_p else 0
-        
-        # Contar semanas ejecutadas (TRUE)
-        query_ejecutadas = f"""
-            SELECT 
-                {' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_ejecutadas])} as total_ejecutadas
-            FROM plan_anual_trabajo 
-            WHERE id = %s
-        """
-        cursor.execute(query_ejecutadas, (id,))
-        resultado_e = cursor.fetchone()
-        total_ejecutadas = resultado_e[0] if resultado_e else 0
-        
-        # Calcular porcentaje
-        porcentaje = 0
-        if total_planificadas > 0:
-            porcentaje = round((total_ejecutadas / total_planificadas) * 100, 2)
-        
-        # Determinar estado automáticamente
-        if porcentaje == 100:
-            estado = 'completado'
-        elif porcentaje > 0:
-            estado = 'en_proceso'
-        else:
-            estado = 'pendiente'
-        
-        # Actualizar en la base de datos
-        cursor.execute("""
-            UPDATE plan_anual_trabajo 
-            SET porcentaje_avance = %s, 
-                estado = %s,
-                fecha_actualizacion = CURRENT_TIMESTAMP
-            WHERE id = %s
-        """, (porcentaje, estado, id))
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        logger.info(f"✅ Porcentaje actualizado para actividad {id}: {porcentaje}% ({estado})")
-        return porcentaje, estado
-        
-    except Exception as e:
-        logger.error(f"❌ Error al actualizar porcentaje: {e}")
-        return 0, 'pendiente'
-# ===== RUTAS NUEVAS PARA INICIALIZAR EL PLAN ANUAL =====
-
-@app.route('/sst/plan-anual/inicializar-datos-simple')
-@login_required
-def sst_inicializar_datos_simple():
-    """Inicializar datos básicos del plan anual - VERSIÓN SIMPLE"""
-    if current_user.rol != 'admin':
-        flash('No tienes permisos', 'error')
-        return redirect(url_for('sst_dashboard'))
-    
-    try:
-        conn = crear_conexion()
-        cursor = conn.cursor()
-        
-        # Verificar si ya hay datos
-        cursor.execute("SELECT COUNT(*) FROM plan_anual_trabajo")
-        count = cursor.fetchone()[0]
-        
-        if count > 0:
-            flash(f'⚠️ Ya existen {count} actividades. No se insertarán duplicados.', 'warning')
-            cursor.close()
-            conn.close()
-            return redirect(url_for('sst_plan_anual'))
-        
-        # Datos de ejemplo simplificados
-        actividades = [
-            {
-                'actividad': 'Responsable del Sistema de Gestión de Seguridad y Salud en el Trabajo SG-SST',
-                'evidencia': 'Documento en el que consta la asignación',
-                'ciclo_phva': 'Planear',
-                'articulos': '2.2.4.6.8',
-                'nivel_pesv': 'N/A',
-                'responsables': 'SST - COPASST - GERENCIA',
-                'recursos': 'Tecnologicos, Infraestructura, Humanos',
-                'estado': 'completado',
-                'enero_s1_p': True, 'enero_s1_e': True
-            },
-            {
-                'actividad': 'Lider del diseño e implementacion del PESV',
-                'evidencia': 'Documento de asignación del líder',
-                'ciclo_phva': 'Planear',
-                'articulos': 'N/A',
-                'nivel_pesv': 'Paso 1',
-                'responsables': 'SST - GERENCIA',
-                'recursos': 'Humanos, Financieros',
-                'estado': 'en_proceso',
-                'enero_s1_p': True, 'enero_s1_e': True,
-                'enero_s2_p': True, 'enero_s2_e': False
-            },
-            {
-                'actividad': 'Politica de SST y PESV',
-                'evidencia': 'Política firmada y comunicada',
-                'ciclo_phva': 'Planear',
-                'articulos': '2.2.4.6.5, 2.2.4.6.6',
-                'nivel_pesv': 'Paso 3',
-                'responsables': 'SST - COPASST',
-                'recursos': 'Humanos',
-                'estado': 'pendiente',
-                'enero_s1_p': True, 'enero_s2_p': True, 'enero_s3_p': True
-            },
-            {
-                'actividad': 'Reuniones mensuales COPASST',
-                'evidencia': 'Actas de reunión',
-                'ciclo_phva': 'Hacer',
-                'articulos': '2.2.4.6.12',
-                'nivel_pesv': 'N/A',
-                'responsables': 'SST - COPASST',
-                'recursos': 'Humanos',
-                'estado': 'en_proceso',
-                'enero_s1_p': True, 'febrero_s1_p': True, 'marzo_s1_p': True,
-                'abril_s1_p': True, 'mayo_s1_p': True, 'junio_s1_p': True
-            },
-            {
-                'actividad': 'Revisión trimestral del PESV',
-                'evidencia': 'Actas de revisión',
-                'ciclo_phva': 'Verificar',
-                'articulos': 'N/A',
-                'nivel_pesv': 'Paso 2',
-                'responsables': 'Comité de seguridad vial',
-                'recursos': 'Humanos',
-                'estado': 'pendiente',
-                'marzo_s4_p': True, 'junio_s4_p': True,
-                'septiembre_s4_p': True, 'diciembre_s4_p': True
-            },
-            {
-                'actividad': 'Auditoria interna al PESV',
-                'evidencia': 'Informe de auditoría',
-                'ciclo_phva': 'Verificar',
-                'articulos': 'N/A',
-                'nivel_pesv': 'Paso 22',
-                'responsables': 'Líder PESV',
-                'recursos': 'Humanos, Financieros',
-                'estado': 'pendiente',
-                'noviembre_s1_p': True, 'noviembre_s2_p': True,
-                'noviembre_s3_p': True, 'noviembre_s4_p': True
-            },
-            {
-                'actividad': 'Acciones preventivas y correctivas',
-                'evidencia': 'Plan de acción de mejora',
-                'ciclo_phva': 'Actuar',
-                'articulos': 'N/A',
-                'nivel_pesv': 'Paso 23',
-                'responsables': 'Líder PESV',
-                'recursos': 'Todos',
-                'estado': 'pendiente',
-                'febrero_s1_p': True, 'abril_s1_p': True,
-                'julio_s1_p': True, 'octubre_s1_p': True
-            }
-        ]
-        
-        # Insertar cada actividad
-        meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-                'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-        
-        for act in actividades:
-            # Construir columnas y valores dinámicamente
-            columnas = ['actividad', 'evidencia', 'ciclo_phva', 'articulos_decreto',
-                       'nivel_pesv', 'responsables', 'recursos', 'estado']
-            valores = [
-                act['actividad'], act['evidencia'], act['ciclo_phva'],
-                act['articulos'], act['nivel_pesv'], act['responsables'],
-                act['recursos'], act['estado']
-            ]
-            
-            # Agregar programación mensual
-            for mes in meses:
-                for semana in [1, 2, 3, 4]:
-                    key_p = f'{mes}_s{semana}_p'
-                    key_e = f'{mes}_s{semana}_e'
-                    
-                    columnas.append(f'{mes}_semana{semana}_p')
-                    valores.append(act.get(key_p, False))
-                    
-                    columnas.append(f'{mes}_semana{semana}_e')
-                    valores.append(act.get(key_e, False))
-            
-            # Crear query
-            query = f"""
-                INSERT INTO plan_anual_trabajo ({', '.join(columnas)})
-                VALUES ({', '.join(['%s'] * len(valores))})
-            """
-            
-            cursor.execute(query, valores)
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        flash(f'✅ {len(actividades)} actividades del plan anual insertadas correctamente', 'success')
-        logger.info(f"✅ Plan anual inicializado con {len(actividades)} actividades")
-        
-    except Exception as e:
-        flash(f'❌ Error al inicializar: {str(e)}', 'error')
-        logger.error(f"❌ Error en sst_inicializar_datos_simple: {e}")
-        import traceback
-        traceback.print_exc()
-    
-    return redirect(url_for('sst_plan_anual'))
-
-
-@app.route('/sst/plan-anual/verificar-tablas')
-@login_required
-def sst_verificar_tablas():
-    """Verificar que las tablas del plan anual existan - DEBUG"""
-    if current_user.rol != 'admin':
-        flash('No tienes permisos', 'error')
-        return redirect(url_for('sst_dashboard'))
-    
-    try:
-        conn = crear_conexion()
-        cursor = conn.cursor()
-        
-        # Verificar tabla principal
-        cursor.execute("""
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_name = 'plan_anual_trabajo'
-            )
-        """)
-        tabla_existe = cursor.fetchone()[0]
-        
-        if tabla_existe:
-            cursor.execute("SELECT COUNT(*) FROM plan_anual_trabajo")
-            count = cursor.fetchone()[0]
-            flash(f'✅ Tabla plan_anual_trabajo existe con {count} registros', 'success')
-        else:
-            flash('❌ Tabla plan_anual_trabajo NO existe. Crear tablas primero.', 'error')
-        
-        cursor.close()
-        conn.close()
-        
-    except Exception as e:
-        flash(f'❌ Error: {str(e)}', 'error')
-        logger.error(f"Error en verificar_tablas: {e}")
-
-# ===== AGREGAR ESTAS 2 RUTAS A TU app.py =====
-
-@app.route('/sst/plan-anual/subir-excel', methods=['GET', 'POST'])
-@login_required
-def sst_subir_excel():
-    """Subir archivo Excel del Plan Anual"""
-    if not current_user.puede('acceder_sst'):
-        flash('No tienes permisos', 'error')
-        return redirect_a_modulo_principal()
-    
-    if request.method == 'POST':
-        try:
-            file = request.files.get('excel_file')
-            
-            if not file or file.filename == '':
-                flash('❌ No se seleccionó ningún archivo', 'error')
-                return redirect(url_for('sst_subir_excel'))
-            
-            # Verificar que sea un archivo Excel
-            if not file.filename.endswith(('.xlsx', '.xls')):
-                flash('❌ El archivo debe ser un Excel (.xlsx o .xls)', 'error')
-                return redirect(url_for('sst_subir_excel'))
-            
-            # Guardar el archivo temporalmente
-            excel_path = os.path.join('/tmp', 'Plan_Anual_de_Trabajo_2026.xlsx')
-            file.save(excel_path)
-            
-            flash('✅ Archivo Excel subido correctamente. Ahora puedes importar los datos.', 'success')
-            return redirect(url_for('sst_importar_desde_excel'))
-            
-        except Exception as e:
-            flash(f'❌ Error al subir archivo: {str(e)}', 'error')
-            logger.error(f"Error en sst_subir_excel: {e}")
-    
-    return render_template('sst/subir_excel.html')
-
-
-@app.route('/sst/plan-anual/importar-desde-excel')
-@login_required
-def sst_importar_desde_excel():
-    """Importar TODAS las actividades del Excel completo"""
-    if not current_user.puede('acceder_sst'):
-        flash('No tienes permisos para acceder al módulo de SST', 'error')
-        return redirect_a_modulo_principal()
-    
-    try:
-        import openpyxl
-        
-        # Buscar el archivo en /tmp (donde se sube)
-        excel_path = '/tmp/Plan_Anual_de_Trabajo_2026.xlsx'
-        
-        # Verificar que existe
-        if not os.path.exists(excel_path):
-            flash('❌ Archivo Excel no encontrado. Debes subirlo primero.', 'error')
-            return redirect(url_for('sst_subir_excel'))
-        
-        conn = crear_conexion()
-        cursor = conn.cursor()
-        
-        # Verificar si ya hay datos
-        cursor.execute("SELECT COUNT(*) FROM plan_anual_trabajo")
-        count = cursor.fetchone()[0]
-        
-        if count > 10:
-            flash(f'⚠️ Ya existen {count} actividades. Elimínalas primero desde la ruta /sst/plan-anual/limpiar-datos', 'warning')
-            cursor.close()
-            conn.close()
-            return redirect(url_for('sst_plan_anual'))
-        
-        # Cargar Excel
-        wb = openpyxl.load_workbook(excel_path)
-        ws = wb.active
-        
-        # Extraer actividades
-        actividades = []
-        fila_actual = 13
-        
-        logger.info("📥 Extrayendo actividades del Excel...")
-        
-        while fila_actual <= ws.max_row:
-            actividad = ws.cell(fila_actual, 2).value
-            evidencia = ws.cell(fila_actual, 3).value
-            ciclo_phva = ws.cell(fila_actual, 4).value
-            articulos = ws.cell(fila_actual, 5).value
-            nivel_pesv = ws.cell(fila_actual, 6).value
-            responsables = ws.cell(fila_actual, 7).value
-            recursos = ws.cell(fila_actual, 8).value
-            
-            if not actividad or isinstance(actividad, str) and (
-                'PLANEAR' in actividad.upper() or 
-                'HACER' in actividad.upper() or 
-                'VERIFICAR' in actividad.upper() or 
-                'ACTUAR' in actividad.upper() or
-                'DISEÑO' in actividad.upper()
-            ):
-                fila_actual += 1
-                continue
-            
-            programacion = {}
-            meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-            
-            col_inicio = 9
-            
-            for idx, mes in enumerate(meses):
-                programacion[mes] = []
-                mes_col_inicio = col_inicio + (idx * 8)
-                
-                for semana in range(4):
-                    col_p = mes_col_inicio + (semana * 2)
-                    col_e = col_p + 1
-                    
-                    val_p = ws.cell(fila_actual, col_p).value
-                    val_e = ws.cell(fila_actual, col_e).value
-                    
-                    planificado = val_p in ['x', 'X', True, 1, '1'] if val_p else False
-                    ejecutado = val_e in ['x', 'X', True, 1, '1'] if val_e else False
-                    
-                    programacion[mes].append({
-                        'planificado': planificado,
-                        'ejecutado': ejecutado
-                    })
-            
-            actividades.append({
-                'actividad': str(actividad).strip() if actividad else '',
-                'evidencia': str(evidencia).strip() if evidencia else '',
-                'ciclo_phva': str(ciclo_phva).strip() if ciclo_phva else '',
-                'articulos': str(articulos).strip() if articulos else '',
-                'nivel_pesv': str(nivel_pesv).strip() if nivel_pesv else '',
-                'responsables': str(responsables).strip() if responsables else '',
-                'recursos': str(recursos).strip() if recursos else '',
-                'programacion': programacion
-            })
-            
-            fila_actual += 1
-        
-        logger.info(f"✅ {len(actividades)} actividades extraídas")
-        
-        # Insertar en BD
-        insertadas = 0
-        
-        for act in actividades:
-            try:
-                columnas = ['actividad', 'evidencia', 'ciclo_phva', 'articulos_decreto',
-                           'nivel_pesv', 'responsables', 'recursos', 'estado']
-                valores = [
-                    act['actividad'][:500] if act['actividad'] else None,
-                    act['evidencia'][:500] if act['evidencia'] else None,
-                    act['ciclo_phva'][:50] if act['ciclo_phva'] else None,
-                    act['articulos'][:200] if act['articulos'] else None,
-                    act['nivel_pesv'][:100] if act['nivel_pesv'] else None,
-                    act['responsables'][:200] if act['responsables'] else None,
-                    act['recursos'][:200] if act['recursos'] else None,
-                    'pendiente'
-                ]
-                
-                for mes in meses:
-                    if mes in act['programacion']:
-                        semanas = act['programacion'][mes]
-                        for semana_idx, semana in enumerate(semanas, 1):
-                            columnas.append(f'{mes}_semana{semana_idx}_p')
-                            valores.append(semana['planificado'])
-                            columnas.append(f'{mes}_semana{semana_idx}_e')
-                            valores.append(semana['ejecutado'])
-                    else:
-                        for semana in range(1, 5):
-                            columnas.append(f'{mes}_semana{semana}_p')
-                            valores.append(False)
-                            columnas.append(f'{mes}_semana{semana}_e')
-                            valores.append(False)
-                
-                placeholders = ', '.join(['%s'] * len(valores))
-                query = f"""
-                    INSERT INTO plan_anual_trabajo ({', '.join(columnas)})
-                    VALUES ({placeholders})
-                """
-                
-                cursor.execute(query, valores)
-                insertadas += 1
-                
-            except Exception as e:
-                logger.error(f"Error insertando: {e}")
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        flash(f'✅ {insertadas} actividades importadas correctamente desde el Excel', 'success')
-        logger.info(f"✅ {insertadas} actividades importadas")
-        
-    except Exception as e:
-        flash(f'❌ Error al importar: {str(e)}', 'error')
-        logger.error(f"❌ Error en importar_desde_excel: {e}")
-        import traceback
-        traceback.print_exc()
-    
-    return redirect(url_for('sst_plan_anual'))
-
-
-# Ruta adicional para limpiar datos si es necesario
-@app.route('/sst/plan-anual/limpiar-datos')
-@login_required
-def sst_limpiar_datos():
-    """Eliminar todas las actividades del plan anual"""
-    if current_user.rol != 'admin':
-        flash('Solo el administrador puede eliminar datos', 'error')
-        return redirect(url_for('sst_plan_anual'))
-    
-    try:
-        conn = crear_conexion()
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM plan_anual_trabajo")
-        conn.commit()
-        cursor.close()
-        conn.close()
-        flash('✅ Todas las actividades han sido eliminadas', 'success')
-    except Exception as e:
-        flash(f'❌ Error: {str(e)}', 'error')
-    
-    return redirect(url_for('sst_plan_anual'))
-
-# ===== COPIA TODO ESTE CÓDIGO Y PÉGALO EN TU app.py =====
-# ===== PÉGALO JUSTO ANTES DE LA LÍNEA: if __name__ == '__main__': =====
-
-# ========================================
-# RUTAS DE GESTIÓN DEL PLAN ANUAL (CRUD)
-# ========================================
-
-@app.route('/sst/plan-anual/gestionar')
-@login_required
-@retry_on_ssl_error(max_retries=2, delay=2)
-def sst_plan_anual_gestionar():
-    """Panel de gestión de actividades - CRUD completo"""
-    if not current_user.puede('gestionar_plan_anual'):
-        flash('No tienes permisos para gestionar actividades', 'error')
-        return redirect(url_for('sst_plan_anual'))
-    
-    try:
-        conn = crear_conexion()
-        cursor = conn.cursor()
-        
-        # Obtener estadísticas
-        cursor.execute("""
-            SELECT 
-                COUNT(*) as total,
-                COUNT(*) FILTER (WHERE ciclo_phva = 'Planear') as planear,
-                COUNT(*) FILTER (WHERE ciclo_phva = 'Hacer') as hacer,
-                COUNT(*) FILTER (WHERE ciclo_phva = 'Verificar') as verificar,
-                COUNT(*) FILTER (WHERE ciclo_phva = 'Actuar') as actuar,
-                COUNT(*) FILTER (WHERE estado = 'completado') as completadas,
-                COUNT(*) FILTER (WHERE estado = 'en_proceso') as en_proceso,
-                COUNT(*) FILTER (WHERE estado = 'pendiente') as pendientes
-            FROM plan_anual_trabajo
-        """)
-        stats = cursor.fetchone()
-        
-        # Obtener todas las actividades
-        filtro_ciclo = request.args.get('ciclo', '')
-        filtro_estado = request.args.get('estado', '')
-        busqueda = request.args.get('q', '')
-        
-        query = """
-            SELECT 
-                id, actividad, ciclo_phva, responsables, estado,
-                porcentaje_avance, fecha_actualizacion
-            FROM plan_anual_trabajo
-            WHERE 1=1
-        """
-        params = []
-        
-        if filtro_ciclo:
-            query += " AND ciclo_phva = %s"
-            params.append(filtro_ciclo)
-        
-        if filtro_estado:
-            query += " AND estado = %s"
-            params.append(filtro_estado)
-        
-        if busqueda:
-            query += " AND (actividad ILIKE %s OR responsables ILIKE %s)"
-            params.extend([f'%{busqueda}%', f'%{busqueda}%'])
-        
-        query += " ORDER BY ciclo_phva, actividad LIMIT 100"
-        
-        cursor.execute(query, params)
-        actividades = cursor.fetchall()
-        
-        cursor.close()
-        conn.close()
-        
-        return render_template('sst/plan_anual_gestionar.html',
-                             stats=stats,
-                             actividades=actividades,
-                             filtro_ciclo=filtro_ciclo,
-                             filtro_estado=filtro_estado,
-                             busqueda=busqueda)
-        
-    except Exception as e:
-        flash(f'❌ Error al cargar panel de gestión: {str(e)}', 'error')
-        logger.error(f"Error en sst_plan_anual_gestionar: {e}")
-        return redirect(url_for('sst_plan_anual'))
-
-
-@app.route('/sst/plan-anual/actividad/nueva', methods=['GET', 'POST'])
-@login_required
-@retry_on_ssl_error(max_retries=2, delay=2)
-def sst_plan_anual_nueva_actividad():
-    """Crear una nueva actividad del plan anual"""
-    if not current_user.puede('gestionar_plan_anual'):
-        flash('No tienes permisos para crear actividades', 'error')
-        return redirect(url_for('sst_plan_anual_actividades'))
-    
-    try:
-        if request.method == 'POST':
-            # Obtener datos del formulario
-            actividad = request.form.get('actividad', '').strip()
-            evidencia = request.form.get('evidencia', '').strip()
-            ciclo_phva = request.form.get('ciclo_phva', '').strip()
-            articulos = request.form.get('articulos_decreto', '').strip()
-            nivel_pesv = request.form.get('nivel_pesv', '').strip()
-            responsables = request.form.get('responsables', '').strip()
-            recursos = request.form.get('recursos', '').strip()
-            observaciones = request.form.get('observaciones', '').strip()
-            estado = request.form.get('estado', 'pendiente')
-            
-            if not actividad or not ciclo_phva:
-                flash('❌ La actividad y el ciclo PHVA son obligatorios', 'error')
-                return render_template('sst/plan_anual_nueva.html')
-            
-            conn = crear_conexion()
-            cursor = conn.cursor()
-            
-            # Construir columnas y valores
-            columnas = ['actividad', 'evidencia', 'ciclo_phva', 'articulos_decreto',
-                       'nivel_pesv', 'responsables', 'recursos', 'observaciones',
-                       'estado', 'usuario_actualizacion']
-            
-            valores = [
-                actividad[:500], evidencia[:500] if evidencia else None, ciclo_phva[:50],
-                articulos[:200] if articulos else None, nivel_pesv[:100] if nivel_pesv else None, 
-                responsables[:200] if responsables else None,
-                recursos[:200] if recursos else None, observaciones, estado, current_user.id
-            ]
-            
-            # Agregar programación mensual
-            meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-            
-            for mes in meses:
-                for semana in range(1, 5):
-                    key_p = f'{mes}_semana{semana}_p'
-                    key_e = f'{mes}_semana{semana}_e'
-                    
-                    columnas.append(key_p)
-                    valores.append(request.form.get(key_p) == 'on')
-                    
-                    columnas.append(key_e)
-                    valores.append(request.form.get(key_e) == 'on')
-            
-            # Insertar
-            placeholders = ', '.join(['%s'] * len(valores))
-            query = f"""
-                INSERT INTO plan_anual_trabajo ({', '.join(columnas)})
-                VALUES ({placeholders})
-                RETURNING id
-            """
-            
-            cursor.execute(query, valores)
-            new_id = cursor.fetchone()[0]
-            
-            conn.commit()
-            
-            # Recalcular porcentaje
-            actualizar_porcentaje_avance(new_id)
-            
-            cursor.close()
-            conn.close()
-            
-            flash('✅ Actividad creada correctamente', 'success')
-            logger.info(f"Nueva actividad {new_id} creada por usuario {current_user.id}")
-            
-            return redirect(url_for('sst_plan_anual_actividad_detalle', id=new_id))
-        
-        # GET: Mostrar formulario vacío
-        return render_template('sst/plan_anual_nueva.html')
-        
-    except Exception as e:
-        flash(f'❌ Error al crear actividad: {str(e)}', 'error')
-        logger.error(f"Error en sst_plan_anual_nueva_actividad: {e}")
-        return redirect(url_for('sst_plan_anual_actividades'))
-
-
-@app.route('/sst/plan-anual/actividad/<int:id>/editar', methods=['GET', 'POST'])
-@login_required
-@retry_on_ssl_error(max_retries=2, delay=2)
-def sst_plan_anual_editar_actividad(id):
-    """Editar una actividad del plan anual"""
-    if not current_user.puede('gestionar_plan_anual'):
-        flash('No tienes permisos para editar actividades', 'error')
-        return redirect(url_for('sst_plan_anual_actividades'))
-    
-    try:
-        conn = crear_conexion()
-        cursor = conn.cursor()
-        
-        if request.method == 'POST':
-            # Obtener datos del formulario
-            actividad = request.form.get('actividad', '').strip()
-            evidencia = request.form.get('evidencia', '').strip()
-            ciclo_phva = request.form.get('ciclo_phva', '').strip()
-            articulos = request.form.get('articulos_decreto', '').strip()
-            nivel_pesv = request.form.get('nivel_pesv', '').strip()
-            responsables = request.form.get('responsables', '').strip()
-            recursos = request.form.get('recursos', '').strip()
-            observaciones = request.form.get('observaciones', '').strip()
-            estado = request.form.get('estado', 'pendiente')
-            
-            if not actividad or not ciclo_phva:
-                flash('❌ La actividad y el ciclo PHVA son obligatorios', 'error')
-                return redirect(url_for('sst_plan_anual_editar_actividad', id=id))
-            
-            # Construir query de actualización
-            query = """
-                UPDATE plan_anual_trabajo 
-                SET actividad = %s, evidencia = %s, ciclo_phva = %s, 
-                    articulos_decreto = %s, nivel_pesv = %s, responsables = %s,
-                    recursos = %s, observaciones = %s, estado = %s,
-                    fecha_actualizacion = CURRENT_TIMESTAMP,
-                    usuario_actualizacion = %s
-                WHERE id = %s
-            """
-            
-            cursor.execute(query, (
-                actividad[:500], evidencia[:500] if evidencia else None, ciclo_phva[:50],
-                articulos[:200] if articulos else None, nivel_pesv[:100] if nivel_pesv else None, 
-                responsables[:200] if responsables else None,
-                recursos[:200] if recursos else None, observaciones, estado, current_user.id, id
-            ))
-            
-            # Actualizar programación mensual
-            meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-            
-            for mes in meses:
-                for semana in range(1, 5):
-                    # Planificado
-                    key_p = f'{mes}_semana{semana}_p'
-                    val_p = request.form.get(key_p) == 'on'
-                    
-                    # Ejecutado
-                    key_e = f'{mes}_semana{semana}_e'
-                    val_e = request.form.get(key_e) == 'on'
-                    
-                    cursor.execute(f"""
-                        UPDATE plan_anual_trabajo 
-                        SET {key_p} = %s, {key_e} = %s
-                        WHERE id = %s
-                    """, (val_p, val_e, id))
-            
-            conn.commit()
-            
-            # Recalcular porcentaje
-            actualizar_porcentaje_avance(id)
-            
-            flash('✅ Actividad actualizada correctamente', 'success')
-            cursor.close()
-            conn.close()
-            return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
-        
-        # GET: Cargar actividad
-        cursor.execute("SELECT * FROM plan_anual_trabajo WHERE id = %s", (id,))
-        actividad_data = cursor.fetchone()
-        
-        if not actividad_data:
-            flash('❌ Actividad no encontrada', 'error')
-            cursor.close()
-            conn.close()
-            return redirect(url_for('sst_plan_anual_actividades'))
-        
-        # Estructurar datos
-        actividad = {
-            'id': actividad_data[0],
-            'actividad': actividad_data[1],
-            'evidencia': actividad_data[2],
-            'ciclo_phva': actividad_data[3],
-            'articulos_decreto': actividad_data[4],
-            'nivel_pesv': actividad_data[5],
-            'responsables': actividad_data[6],
-            'recursos': actividad_data[7],
-            'observaciones': actividad_data[103] if len(actividad_data) > 103 else '',
-            'estado': actividad_data[104] if len(actividad_data) > 104 else 'pendiente',
-            'porcentaje_avance': actividad_data[105] if len(actividad_data) > 105 else 0
-        }
-        
-        # Extraer programación mensual
-        meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-                'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-        
-        programacion = {}
-        col_offset = 8
-        
-        for i, mes in enumerate(meses):
-            programacion[mes] = []
-            for semana in range(1, 5):
-                idx_p = col_offset + (i * 8) + ((semana - 1) * 2)
-                idx_e = idx_p + 1
-                
-                programacion[mes].append({
-                    'semana': semana,
-                    'planificado': actividad_data[idx_p] if idx_p < len(actividad_data) else False,
-                    'ejecutado': actividad_data[idx_e] if idx_e < len(actividad_data) else False
-                })
-        
-        actividad['programacion'] = programacion
-        
-        cursor.close()
-        conn.close()
-        
-        return render_template('sst/plan_anual_editar.html', actividad=actividad)
-        
-    except Exception as e:
-        flash(f'❌ Error al editar actividad: {str(e)}', 'error')
-        logger.error(f"Error en sst_plan_anual_editar_actividad: {e}")
-        return redirect(url_for('sst_plan_anual_actividades'))
-
-
-@app.route('/sst/plan-anual/actividad/<int:id>/eliminar', methods=['POST'])
-@login_required
-def sst_plan_anual_eliminar_actividad(id):
-    """Eliminar una actividad del plan anual"""
-    if not current_user.puede('gestionar_plan_anual'):
-        flash('No tienes permisos para eliminar actividades', 'error')
-        return redirect(url_for('sst_plan_anual_actividades'))
-    
-    try:
-        conn = crear_conexion()
-        cursor = conn.cursor()
-        
-        # Verificar que existe
-        cursor.execute("SELECT actividad FROM plan_anual_trabajo WHERE id = %s", (id,))
-        actividad = cursor.fetchone()
-        
-        if not actividad:
-            flash('❌ Actividad no encontrada', 'error')
-        else:
-            # Eliminar
-            cursor.execute("DELETE FROM plan_anual_trabajo WHERE id = %s", (id,))
-            conn.commit()
-            flash(f'✅ Actividad "{actividad[0][:50]}..." eliminada correctamente', 'success')
-            logger.info(f"Actividad {id} eliminada por usuario {current_user.id}")
-        
-        cursor.close()
-        conn.close()
-        
-    except Exception as e:
-        flash(f'❌ Error al eliminar: {str(e)}', 'error')
-        logger.error(f"Error en sst_plan_anual_eliminar_actividad: {e}")
-    
-    return redirect(url_for('sst_plan_anual_actividades'))
-
-
-@app.route('/sst/plan-anual/gestionar/limpiar-masivo', methods=['POST'])
-@login_required
-def sst_plan_anual_limpiar_masivo():
-    """Eliminar múltiples actividades seleccionadas"""
-    if current_user.rol != 'admin':
-        flash('Solo el administrador puede eliminar masivamente', 'error')
-        return redirect(url_for('sst_plan_anual_gestionar'))
-    
-    try:
-        ids = request.form.getlist('actividad_ids')
-        
-        if not ids:
-            flash('❌ No se seleccionaron actividades', 'warning')
-            return redirect(url_for('sst_plan_anual_gestionar'))
-        
-        conn = crear_conexion()
-        cursor = conn.cursor()
-        
-        # Convertir a enteros
-        ids_int = [int(id) for id in ids]
-        
-        # Eliminar
-        placeholders = ', '.join(['%s'] * len(ids_int))
-        query = f"DELETE FROM plan_anual_trabajo WHERE id IN ({placeholders})"
-        cursor.execute(query, ids_int)
-        
-        eliminadas = cursor.rowcount
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        flash(f'✅ {eliminadas} actividades eliminadas correctamente', 'success')
-        logger.info(f"Eliminación masiva de {eliminadas} actividades por admin {current_user.id}")
-        
-    except Exception as e:
-        flash(f'❌ Error en eliminación masiva: {str(e)}', 'error')
-        logger.error(f"Error en sst_plan_anual_limpiar_masivo: {e}")
-    
-    return redirect(url_for('sst_plan_anual_gestionar'))
-
-
-# ========================================
-# RUTA MEJORADA PARA LIMPIAR DATOS (CON CONFIRMACIÓN)
-# ========================================
-
-@app.route('/sst/plan-anual/limpiar-datos', methods=['GET', 'POST'])
-@login_required
-def sst_plan_anual_limpiar_datos():
-    """Eliminar todas las actividades del plan anual - CON CONFIRMACIÓN"""
-    if current_user.rol != 'admin':
-        flash('❌ Solo el administrador puede eliminar todos los datos', 'error')
-        return redirect(url_for('sst_plan_anual'))
-    
-    if request.method == 'POST':
-        # Solo se ejecuta si se confirmó el formulario
-        confirmacion = request.form.get('confirmacion', '')
-        
-        if confirmacion != 'ELIMINAR TODO':
-            flash('❌ Debes escribir "ELIMINAR TODO" para confirmar', 'error')
-            return redirect(url_for('sst_plan_anual_limpiar_datos'))
-        
-        try:
-            conn = crear_conexion()
-            cursor = conn.cursor()
-            
-            # Contar antes de eliminar
-            cursor.execute("SELECT COUNT(*) FROM plan_anual_trabajo")
-            total = cursor.fetchone()[0]
-            
-            # Eliminar todo
-            cursor.execute("DELETE FROM plan_anual_trabajo")
-            
-            conn.commit()
-            cursor.close()
-            conn.close()
-            
-            flash(f'✅ {total} actividades eliminadas correctamente', 'success')
-            logger.info(f"Admin {current_user.id} eliminó {total} actividades del plan anual")
-            
-        except Exception as e:
-            flash(f'❌ Error al eliminar: {str(e)}', 'error')
-            logger.error(f"Error en sst_plan_anual_limpiar_datos: {e}")
-        
-        return redirect(url_for('sst_plan_anual'))
-    
-    # GET: Mostrar página de confirmación
-    try:
-        conn = crear_conexion()
-        cursor = conn.cursor()
-        
-        # Obtener estadísticas antes de eliminar
-        cursor.execute("""
-            SELECT 
-                COUNT(*) as total,
-                COUNT(*) FILTER (WHERE ciclo_phva = 'Planear') as planear,
-                COUNT(*) FILTER (WHERE ciclo_phva = 'Hacer') as hacer,
-                COUNT(*) FILTER (WHERE ciclo_phva = 'Verificar') as verificar,
-                COUNT(*) FILTER (WHERE ciclo_phva = 'Actuar') as actuar
-            FROM plan_anual_trabajo
-        """)
-        stats = cursor.fetchone()
-        
-        cursor.close()
-        conn.close()
-        
-        return render_template('sst/plan_anual_limpiar_confirmacion.html', stats=stats)
-        
-    except Exception as e:
-        flash(f'❌ Error: {str(e)}', 'error')
-        return redirect(url_for('sst_plan_anual'))
-
-
-# ========================================
-# FUNCIÓN AUXILIAR (actualizar_porcentaje_avance)
-# ========================================
-# IMPORTANTE: Esta función debe existir para que las rutas anteriores funcionen
-
-def actualizar_porcentaje_avance(id):
-    """Actualizar automáticamente el porcentaje de avance de una actividad"""
-    try:
-        conn = crear_conexion()
-        cursor = conn.cursor()
-        
-        meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-                'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-        
-        # Construir lista de columnas planificadas
-        columnas_p = []
-        for mes in meses:
-            for semana in range(1, 5):
-                columnas_p.append(f'{mes}_semana{semana}_p')
-        
-        # Contar semanas planificadas
-        query_p = f"""
-            SELECT {' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_p])}
-            FROM plan_anual_trabajo WHERE id = %s
-        """
-        cursor.execute(query_p, (id,))
-        total_planificadas = cursor.fetchone()[0]
-        
-        # Construir lista de columnas ejecutadas
-        columnas_e = [col.replace('_p', '_e') for col in columnas_p]
-        
-        # Contar semanas ejecutadas
-        query_e = f"""
-            SELECT {' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_e])}
-            FROM plan_anual_trabajo WHERE id = %s
-        """
-        cursor.execute(query_e, (id,))
-        total_ejecutadas = cursor.fetchone()[0]
-        
-        # Calcular porcentaje
-        porcentaje = 0
-        if total_planificadas > 0:
-            porcentaje = round((total_ejecutadas / total_planificadas) * 100, 2)
-        
-        # Determinar estado
-        if porcentaje == 100:
-            estado = 'completado'
-        elif porcentaje > 0:
-            estado = 'en_proceso'
-        else:
-            estado = 'pendiente'
-        
-        # Actualizar
-        cursor.execute("""
-            UPDATE plan_anual_trabajo 
-            SET porcentaje_avance = %s, estado = %s
-            WHERE id = %s
-        """, (porcentaje, estado, id))
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        return porcentaje, estado
-        
-    except Exception as e:
-        logger.error(f"Error al actualizar porcentaje: {e}")
-        return 0, 'pendiente'
 
 # EN LA SECCIÓN DE INICIALIZACIÓN DEL APP
 if __name__ == '__main__':
@@ -4503,7 +2939,6 @@ if __name__ == '__main__':
         except Exception as e:
             print(f"⚠️  Advertencia al crear categorías SST: {e}")
         
-        # AÑADE ESTA LÍNEA:
         print("📥 Inicializando datos del plan anual...")
         inicializar_plan_anual()
     
