@@ -2273,6 +2273,94 @@ def sst_plan_anual_actividad_detalle(id):
         except Exception as e:
             logger.error(f"❌ Error cargando evidencias: {e}")
             evidencias = []
+
+        # ===== RUTA PARA DESCARGAR EVIDENCIA =====
+@app.route('/sst/evidencia/<int:id>/descargar')
+@login_required
+def sst_descargar_evidencia(id):
+    """Descargar archivo de evidencia"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos', 'error')
+        return redirect(url_for('sst_plan_anual'))
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Obtener datos de la evidencia
+        cursor.execute("""
+            SELECT archivo_nombre, archivo_data, archivo_tipo
+            FROM plan_evidencias
+            WHERE id = %s
+        """, (id,))
+        
+        evidencia = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not evidencia or not evidencia[1]:
+            flash('❌ Archivo no encontrado', 'error')
+            return redirect(url_for('sst_plan_anual'))
+        
+        nombre_archivo = evidencia[0]
+        archivo_data = evidencia[1]
+        archivo_tipo = evidencia[2] or 'application/octet-stream'
+        
+        # Retornar el archivo
+        return send_file(
+            BytesIO(archivo_data),
+            mimetype=archivo_tipo,
+            as_attachment=True,
+            download_name=nombre_archivo
+        )
+        
+    except Exception as e:
+        logger.error(f"Error descargando evidencia: {e}")
+        flash(f'❌ Error al descargar: {str(e)}', 'error')
+        return redirect(url_for('sst_plan_anual'))
+
+
+# ===== RUTA PARA ELIMINAR EVIDENCIA =====
+@app.route('/sst/evidencia/<int:id>/eliminar', methods=['POST'])
+@login_required
+def sst_eliminar_evidencia(id):
+    """Eliminar una evidencia"""
+    if not current_user.puede('gestionar_plan_anual'):
+        flash('No tienes permisos para eliminar evidencias', 'error')
+        return redirect(url_for('sst_plan_anual'))
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Obtener plan_id antes de eliminar (para redireccionar)
+        cursor.execute("SELECT plan_id FROM plan_evidencias WHERE id = %s", (id,))
+        resultado = cursor.fetchone()
+        
+        if not resultado:
+            flash('❌ Evidencia no encontrada', 'error')
+            cursor.close()
+            conn.close()
+            return redirect(url_for('sst_plan_anual'))
+        
+        plan_id = resultado[0]
+        
+        # Eliminar evidencia
+        cursor.execute("DELETE FROM plan_evidencias WHERE id = %s", (id,))
+        conn.commit()
+        
+        cursor.close()
+        conn.close()
+        
+        logger.info(f"✅ Evidencia {id} eliminada por usuario {current_user.id}")
+        flash('✅ Evidencia eliminada correctamente', 'success')
+        
+        return redirect(url_for('sst_plan_anual_actividad_detalle', id=plan_id))
+        
+    except Exception as e:
+        logger.error(f"Error eliminando evidencia: {e}")
+        flash(f'❌ Error al eliminar: {str(e)}', 'error')
+        return redirect(url_for('sst_plan_anual'))
         
         # Obtener seguimientos
         try:
