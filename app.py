@@ -2263,14 +2263,15 @@ def sst_plan_anual_actividad_detalle(id):
         # Obtener evidencias
         try:
             cursor.execute("""
-                SELECT id, titulo, descripcion, nombre_archivo, fecha_creacion
+                SELECT id, titulo, descripcion, archivo_nombre, fecha_carga
                 FROM plan_evidencias
-                WHERE actividad_id = %s
-                ORDER BY fecha_creacion DESC
+                WHERE plan_id = %s
+                ORDER BY fecha_carga DESC
             """, (id,))
             evidencias = cursor.fetchall()
+            logger.info(f"✅ Evidencias encontradas: {len(evidencias)}")
         except Exception as e:
-            logger.warning(f"No se pudieron cargar evidencias: {e}")
+            logger.error(f"❌ Error cargando evidencias: {e}")
             evidencias = []
         
         # Obtener seguimientos
