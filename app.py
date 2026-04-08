@@ -2511,6 +2511,19 @@ def sst_plan_anual_cronograma():
         logger.error(f"Error en sst_plan_anual_cronograma: {e}")
         return redirect(url_for('sst_plan_anual'))
 
+# ===== RUTA FALTANTE - GESTIONAR ACTIVIDADES =====
+@app.route('/sst/plan-anual/gestionar')
+@login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
+def sst_plan_anual_gestionar():
+    """Redirige a la gestión de actividades del plan anual"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
+    # Redirigir a la vista de actividades
+    return redirect(url_for('sst_plan_anual_actividades'))
+
 def actualizar_porcentaje_avance(id):
     """Actualizar automáticamente el porcentaje de avance de una actividad"""
     try:
