@@ -210,7 +210,7 @@ class User(UserMixin):
         self.id = id
         self.usuario = usuario
         self.rol_original = rol
-        self.rol = self._normalizar_rol(rol)  # Rol normalizado
+        self.rol = self._normalizar_rol(rol)
         self.modulo_principal = modulo_principal if modulo_principal else 'soporte'
         self.redireccionar_sst = False
         
@@ -236,7 +236,6 @@ class User(UserMixin):
         elif rol_str in ['soporte', 'tecnico', 'técnico', 'asistente', 'ayudante', 'operador', 'soporte técnico']:
             return 'soporte'
         else:
-            # Si no reconocemos el rol, usar soporte por defecto
             logger.warning(f"Rol desconocido '{rol}', normalizando a 'soporte'")
             return 'soporte'
 
@@ -288,7 +287,6 @@ class User(UserMixin):
                 'administrar_sistema': False
             }
         else:
-            # Por defecto, permisos de soporte
             return {
                 'ver_fichas': True,
                 'agregar_fichas': True,
@@ -398,7 +396,6 @@ def redirect_a_modulo_principal():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """Login de usuarios con redirección automática según rol"""
-    # Si ya está autenticado, redirigir según su perfil
     if current_user.is_authenticated:
         logger.info(f"Usuario {current_user.usuario} ya autenticado, redirigiendo...")
         return redirect_a_modulo_principal()
@@ -529,11 +526,9 @@ def cambiar_password():
 @login_required
 def index():
     """Dashboard principal - solo para admin y soporte"""
-    # Si es usuario SST, redirigir a su dashboard
     if current_user.rol == 'sst':
         return redirect(url_for('sst_dashboard'))
     
-    # Verificar permisos para soporte
     if not current_user.puede('acceder_soporte'):
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
         return redirect_a_modulo_principal()
@@ -583,7 +578,6 @@ def agregar_ficha():
         solucion = request.form.get('solucion', '')
         palabras_clave = request.form.get('palabras_clave', '')
         
-        # Validar campos requeridos
         campos_requeridos = {
             'categoria': categoria,
             'problema': problema, 
@@ -633,7 +627,6 @@ def editar_ficha(id):
             solucion = request.form['solucion']
             palabras_clave = request.form['palabras_clave']
             
-            # Procesar causas (convertir saltos de línea a |)
             causas_items = [item.strip() for item in causas.split('\n') if item.strip()]
             causas_str = '|'.join(causas_items)
             
@@ -647,7 +640,6 @@ def editar_ficha(id):
             flash('Ficha actualizada correctamente', 'success')
             return redirect(url_for('index'))
         
-        # GET: Cargar datos de la ficha
         resultado = ejecutar_consulta("SELECT * FROM fichas WHERE id = %s", (id,), fetch=True)
         
         if resultado and resultado[0]:
@@ -664,7 +656,6 @@ def editar_ficha(id):
                 'fecha_actualizacion': ficha_data[8]
             }
             
-            # Convertir | de vuelta a saltos de línea para el formulario
             if ficha and ficha['causas']:
                 ficha['causas'] = ficha['causas'].replace('|', '\n')
             
@@ -738,7 +729,6 @@ def buscar():
                 fetch=True
             )
         
-        # Convertir tuplas a diccionarios
         for ficha in resultado or []:
             fichas.append({
                 'id': ficha[0],
@@ -797,7 +787,7 @@ def ver_ficha(id):
     
     return render_template('ver_ficha.html', ficha=ficha)
 
-# ===== RUTAS DE GESTIÓN DE USUARIOS (Solo Admin) =====
+# ===== RUTAS DE GESTIÓN DE USUARIOS =====
 @app.route('/usuarios')
 @login_required
 def gestion_usuarios():
@@ -809,7 +799,6 @@ def gestion_usuarios():
     usuarios = []
     
     try:
-        # Obtener usuarios con información completa
         resultado = ejecutar_consulta("""
             SELECT 
                 id, usuario, password, rol, modulo_principal, permisos,
@@ -830,7 +819,6 @@ def gestion_usuarios():
                 'fecha_actualizacion': usuario[7]
             }
             
-            # Parsear permisos JSON si existen
             permisos_parsed = {}
             if usuario_dict.get('permisos'):
                 try:
@@ -1212,7 +1200,7 @@ def informacion_general():
                         '',
                         '*Servicio de TV:* 1 televisor',
                         '*Puntos adicionales:* $35.000 c/u',
-                        '*Requisitos y tiempos iguales*  a afiliación general'
+                        '*Requisitos y tiempos iguales* a afiliación general'
                     ]
                 },
                 {
@@ -1226,7 +1214,7 @@ def informacion_general():
                         '',
                         '*Sin cláusula de permanencia*',
                         '*Pago por adelantado* después de firmar contrato',
-                        '*Contrato*  se envía y recibe por el mismo medio'
+                        '*Contrato* se envía y recibe por el mismo medio'
                     ]
                 }
             ]
@@ -1388,7 +1376,7 @@ def informacion_general():
     
     return render_template('informacion_general.html', informacion=informacion)
 
-# ===== RUTAS SST MEJORADAS =====
+# ===== RUTAS SST =====
 @app.route('/sst')
 @login_required
 def sst_dashboard():
@@ -1411,7 +1399,6 @@ def sst_contenido():
     categorias = []
     
     try:
-        # Obtener categorías para filtros
         categorias_data = obtener_categorias_sst()
         for cat in categorias_data:
             categorias.append({
@@ -1420,18 +1407,15 @@ def sst_contenido():
                 'color': cat[2]
             })
         
-        # Obtener filtros
         filtros = {
             'query': request.args.get('q', ''),
             'categoria': request.args.get('categoria', ''),
             'tipo': request.args.get('tipo', '')
         }
         
-        # Obtener contenido
         contenido_data = obtener_contenido_sst(filtros)
         
         for item in contenido_data:
-            # Manejar tags de forma segura
             tags_value = item[12]
             if tags_value is None:
                 tags_str = ''
@@ -1472,7 +1456,7 @@ def sst_contenido():
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=3)
 def sst_agregar_contenido():
-    """Agregar nuevo contenido SST - VERSIÓN MEJORADA CON BD"""
+    """Agregar nuevo contenido SST"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
@@ -1484,7 +1468,6 @@ def sst_agregar_contenido():
     categorias = []
     
     try:
-        # Cargar categorías
         categorias_data = obtener_categorias_sst()
         for cat in categorias_data:
             categorias.append({
@@ -1494,7 +1477,6 @@ def sst_agregar_contenido():
             })
         
         if request.method == 'POST':
-            # Obtener datos del formulario
             titulo = request.form.get('titulo', '').strip()
             descripcion = request.form.get('descripcion', '').strip()
             tipo = request.form.get('tipo', '').strip()
@@ -1504,38 +1486,33 @@ def sst_agregar_contenido():
             video_url = request.form.get('video_url', '').strip()
             archivo_url = request.form.get('archivo_url', '').strip()
             
-            # Validaciones básicas
             if not titulo or not tipo or not categoria_id:
                 flash('❌ Todos los campos obligatorios deben ser completados', 'error')
                 return render_template('sst/agregar_contenido.html', categorias=categorias)
             
-            # Validar que categoria_id sea un número
             try:
                 categoria_id_int = int(categoria_id)
             except (ValueError, TypeError):
                 flash('❌ Categoría inválida', 'error')
                 return render_template('sst/agregar_contenido.html', categorias=categorias)
             
-            # Procesar archivo subido - CON MANEJO DE ARCHIVOS GRANDES
             archivo_data = None
             file = request.files.get('archivo_local')
             
             if file and file.filename != '':
                 if allowed_file(file.filename):
-                    # Verificar tamaño para estrategia diferente
-                    file.seek(0, 2)  # Ir al final
+                    file.seek(0, 2)
                     file_size = file.tell()
-                    file.seek(0)  # Volver al inicio
+                    file.seek(0)
                     
                     logger.info(f"📦 Procesando archivo: {file.filename} ({file_size} bytes)")
                     
-                    if file_size > 5 * 1024 * 1024:  # Si es mayor a 5MB
+                    if file_size > 5 * 1024 * 1024:
                         logger.info(f"📦 Archivo grande detectado, procesando por chunks...")
                         
-                        # Leer en chunks para evitar sobrecargar la memoria
                         chunks = []
                         while True:
-                            chunk = file.read(8192)  # Leer en chunks de 8KB
+                            chunk = file.read(8192)
                             if not chunk:
                                 break
                             chunks.append(chunk)
@@ -1553,7 +1530,6 @@ def sst_agregar_contenido():
                         
                         logger.info(f"✅ Archivo grande procesado: {file_name} ({len(file_data)} bytes)")
                     else:
-                        # Para archivos pequeños, procesamiento normal
                         archivo_data = guardar_archivo_en_bd(file)
                     
                     if not archivo_data:
@@ -1562,7 +1538,6 @@ def sst_agregar_contenido():
                     
                     logger.info(f"✅ Archivo preparado para BD: {archivo_data['nombre']} ({archivo_data['tamano']} bytes)")
                     
-                    # Si se subió archivo local, limpiar URLs
                     video_url = None
                     archivo_url = None
                 else:
@@ -1570,7 +1545,6 @@ def sst_agregar_contenido():
                     flash(f'❌ Tipo de archivo no permitido. Extensiones válidas: {extensiones_permitidas}', 'error')
                     return render_template('sst/agregar_contenido.html', categorias=categorias)
             
-            # Validaciones específicas por tipo
             validation_error = None
             if tipo == 'video':
                 if not video_url and not archivo_data:
@@ -1581,7 +1555,6 @@ def sst_agregar_contenido():
             elif tipo == 'enlace':
                 if not archivo_url:
                     validation_error = 'Debe proporcionar una URL para enlaces'
-                # Para enlaces, no permitir archivos locales
                 archivo_data = None
                 video_url = None
             
@@ -1589,13 +1562,11 @@ def sst_agregar_contenido():
                 flash(f'❌ {validation_error}', 'error')
                 return render_template('sst/agregar_contenido.html', categorias=categorias)
             
-            # Limpiar valores para la base de datos
             video_url = video_url if video_url else None
             archivo_url = archivo_url if archivo_url else None
             descripcion = descripcion if descripcion else None
             tags = tags if tags else None
             
-            # Insertar en la base de datos usando la nueva función
             try:
                 success = insertar_contenido_con_archivo(
                     titulo=titulo,
@@ -1642,15 +1613,12 @@ def sst_descargar_archivo(id):
             flash('Archivo no encontrado', 'error')
             return redirect(url_for('sst_contenido'))
         
-        # Verificar que el archivo tenga datos
         if not archivo.get('data'):
             flash('El archivo está vacío', 'error')
             return redirect(url_for('sst_contenido'))
         
-        # Crear un objeto BytesIO con los datos
         file_data = BytesIO(archivo['data'])
         
-        # Usar send_file para devolver el archivo correctamente
         return send_file(
             file_data,
             mimetype=archivo['tipo'],
@@ -1667,7 +1635,7 @@ def sst_descargar_archivo(id):
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
 def sst_descargar_archivo_forzado(id):
-    """Descargar archivo forzadamente - SOLO SI QUIERES DESCARGAR"""
+    """Descargar archivo forzadamente"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
@@ -1681,11 +1649,10 @@ def sst_descargar_archivo_forzado(id):
         
         file_data = BytesIO(archivo['data'])
         
-        # ESTA SÍ fuerza la descarga
         return send_file(
             file_data,
             mimetype=archivo['tipo'],
-            as_attachment=True,  # Esto SÍ fuerza descarga
+            as_attachment=True,
             download_name=archivo['nombre']
         )
         
@@ -1711,7 +1678,6 @@ def sst_editar_contenido(id):
     categorias = []
     
     try:
-        # Cargar categorías
         categorias_data = obtener_categorias_sst()
         for cat in categorias_data:
             categorias.append({
@@ -1721,7 +1687,6 @@ def sst_editar_contenido(id):
             })
         
         if request.method == 'POST':
-            # Obtener datos del formulario
             titulo = request.form.get('titulo', '').strip()
             descripcion = request.form.get('descripcion', '').strip()
             tipo = request.form.get('tipo', '').strip()
@@ -1731,12 +1696,10 @@ def sst_editar_contenido(id):
             video_url = request.form.get('video_url', '').strip() or None
             archivo_url = request.form.get('archivo_url', '').strip() or None
             
-            # Validaciones
             if not titulo or not tipo or not categoria_id:
                 flash('Todos los campos obligatorios deben ser completados', 'error')
                 return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
             
-            # Procesar archivo subido
             archivo_data = None
             file = request.files.get('archivo_local')
             if file and file.filename != '':
@@ -1746,16 +1709,13 @@ def sst_editar_contenido(id):
                         flash('Error al procesar el archivo', 'error')
                         return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
                     
-                    # Si se subió nuevo archivo, limpiar URLs
                     video_url = None
                     archivo_url = None
                 else:
                     flash('Tipo de archivo no permitido', 'error')
                     return render_template('sst/editar_contenido.html', contenido=contenido, categorias=categorias)
             
-            # Actualizar en base de datos
             if archivo_data:
-                # Si se subió nuevo archivo, actualizar con archivo
                 ejecutar_consulta("""
                     UPDATE sst_contenido 
                     SET titulo=%s, descripcion=%s, tipo=%s, archivo_url=%s, 
@@ -1770,7 +1730,6 @@ def sst_editar_contenido(id):
                     video_url, categoria_id, es_obligatorio, tags, id
                 ), commit=True)
             else:
-                # Mantener el archivo existente, solo actualizar otros campos
                 ejecutar_consulta("""
                     UPDATE sst_contenido 
                     SET titulo=%s, descripcion=%s, tipo=%s, archivo_url=%s, 
@@ -1785,7 +1744,6 @@ def sst_editar_contenido(id):
             flash('✅ Contenido actualizado correctamente', 'success')
             return redirect(url_for('sst_contenido'))
         
-        # GET: Cargar datos del contenido
         resultado = ejecutar_consulta("""
             SELECT sc.*, cat.nombre as categoria_nombre, cat.color as categoria_color,
                    u.usuario as creador_nombre
@@ -1841,7 +1799,6 @@ def sst_eliminar_contenido(id):
         return redirect(url_for('sst_contenido'))
     
     try:
-        # Eliminar de la base de datos (el archivo se elimina automáticamente)
         ejecutar_consulta("DELETE FROM sst_contenido WHERE id = %s", (id,), commit=True)
         
         flash('✅ Contenido eliminado correctamente', 'success')
@@ -1856,7 +1813,7 @@ def sst_eliminar_contenido(id):
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
 def sst_ver_video(id):
-    """Ver detalles de un video - VERSIÓN CORREGIDA"""
+    """Ver detalles de un video"""
     if not current_user.puede('acceder_sst'):
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
@@ -1864,7 +1821,6 @@ def sst_ver_video(id):
     video = None
     
     try:
-        # Obtener datos básicos del video
         resultado = ejecutar_consulta("""
             SELECT sc.*, cat.nombre as categoria_nombre, cat.color as categoria_color
             FROM sst_contenido sc
@@ -1918,11 +1874,9 @@ def sst_stream_video(id):
         if not archivo or not archivo.get('data'):
             return Response('Video no encontrado', status=404)
         
-        # Verificar que sea un video
         if not archivo['tipo'].startswith('video/'):
             return Response('El archivo no es un video', status=400)
         
-        # Crear respuesta con el video
         file_data = BytesIO(archivo['data'])
         
         return send_file(
@@ -1977,7 +1931,7 @@ def obtener_problemas(categoria):
     problemas = problemas_por_categoria.get(categoria, [])
     return jsonify(problemas)
 
-# ===== RUTAS PARA GESTIÓN DEL PLAN ANUAL DE TRABAJO PESV =====
+# ===== RUTAS PLAN ANUAL =====
 @app.route('/sst/plan-anual')
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
@@ -1991,7 +1945,6 @@ def sst_plan_anual():
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Obtener estadísticas generales
         cursor.execute("""
             SELECT 
                 COUNT(*) as total,
@@ -2003,7 +1956,6 @@ def sst_plan_anual():
         """)
         stats = cursor.fetchone()
         
-        # Obtener actividades por ciclo PHVA
         cursor.execute("""
             SELECT 
                 ciclo_phva,
@@ -2024,7 +1976,6 @@ def sst_plan_anual():
         """)
         stats_phva = cursor.fetchall()
         
-        # Obtener actividades recientes
         cursor.execute("""
             SELECT 
                 id, actividad, ciclo_phva, responsables, estado, 
@@ -2057,7 +2008,6 @@ def sst_plan_anual_actividades():
         flash('No tienes permisos para acceder al módulo de SST', 'error')
         return redirect_a_modulo_principal()
     
-    # Filtros
     ciclo = request.args.get('ciclo', '')
     estado = request.args.get('estado', '')
     responsable = request.args.get('responsable', '')
@@ -2067,7 +2017,6 @@ def sst_plan_anual_actividades():
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Construir query con filtros
         query = """
             SELECT 
                 id, actividad, evidencia, ciclo_phva, responsables, 
@@ -2089,7 +2038,6 @@ def sst_plan_anual_actividades():
             query += " AND responsables ILIKE %s"
             params.append(f'%{responsable}%')
         
-        # Si se filtra por mes, verificar que tenga actividad planificada ese mes
         if mes:
             meses = {
                 'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4,
@@ -2098,7 +2046,6 @@ def sst_plan_anual_actividades():
             }
             mes_lower = mes.lower()
             if mes_lower in meses:
-                # Verificar si tiene al menos una semana planificada en ese mes
                 query += f" AND ({mes_lower}_semana1_p = TRUE OR {mes_lower}_semana2_p = TRUE OR {mes_lower}_semana3_p = TRUE OR {mes_lower}_semana4_p = TRUE)"
         
         query += " ORDER BY ciclo_phva, actividad"
@@ -2106,7 +2053,6 @@ def sst_plan_anual_actividades():
         cursor.execute(query, params)
         actividades = cursor.fetchall()
         
-        # Obtener opciones únicas para filtros
         cursor.execute("SELECT DISTINCT ciclo_phva FROM plan_anual_trabajo WHERE ciclo_phva IS NOT NULL ORDER BY ciclo_phva")
         ciclos_disponibles = [row[0] for row in cursor.fetchall()]
         
@@ -2114,7 +2060,6 @@ def sst_plan_anual_actividades():
         responsables_disponibles = set()
         for row in cursor.fetchall():
             if row[0]:
-                # Separar por comas y limpiar
                 for r in row[0].split('-'):
                     responsables_disponibles.add(r.strip())
         responsables_disponibles = sorted(list(responsables_disponibles))
@@ -2149,7 +2094,6 @@ def sst_plan_anual_actividad_detalle(id):
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Obtener actividad con nombres de columnas específicos
         cursor.execute("""
             SELECT 
                 id, actividad, evidencia, ciclo_phva, articulos_decreto, 
@@ -2191,7 +2135,6 @@ def sst_plan_anual_actividad_detalle(id):
             conn.close()
             return redirect(url_for('sst_plan_anual_actividades'))
         
-        # Mapear datos básicos (primeras 8 columnas)
         actividad = {
             'id': actividad_raw[0],
             'actividad': actividad_raw[1],
@@ -2203,14 +2146,13 @@ def sst_plan_anual_actividad_detalle(id):
             'recursos': actividad_raw[7],
         }
         
-        # Extraer programación mensual (columnas 8-103)
         meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
                 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
         
         programacion = {}
         semanas_planificadas = 0
         semanas_ejecutadas = 0
-        col_idx = 8  # Empieza después de las 8 columnas básicas
+        col_idx = 8
         
         for mes in meses:
             programacion[mes] = []
@@ -2229,14 +2171,11 @@ def sst_plan_anual_actividad_detalle(id):
                     'ejecutado': ejecutado
                 })
                 
-                col_idx += 2  # Avanzar a la siguiente semana (planificado + ejecutado)
+                col_idx += 2
         
-        # Agregar datos finales (después de las 96 columnas de semanas)
-        # col_idx ahora está en 104 (8 + 96)
         actividad['observaciones'] = actividad_raw[104] if len(actividad_raw) > 104 else ''
         actividad['estado'] = actividad_raw[105] if len(actividad_raw) > 105 else 'pendiente'
         
-        # IMPORTANTE: Convertir porcentaje_avance a float de forma segura
         try:
             porcentaje_raw = actividad_raw[106] if len(actividad_raw) > 106 else 0
             if porcentaje_raw is None or porcentaje_raw == '':
@@ -2251,12 +2190,10 @@ def sst_plan_anual_actividad_detalle(id):
         actividad['fecha_actualizacion'] = actividad_raw[108] if len(actividad_raw) > 108 else None
         actividad['usuario_actualizacion'] = actividad_raw[109] if len(actividad_raw) > 109 else None
         
-        # Agregar programación y estadísticas
         actividad['programacion'] = programacion
         actividad['semanas_planificadas'] = semanas_planificadas
         actividad['semanas_ejecutadas'] = semanas_ejecutadas
         
-        # Obtener evidencias
         try:
             cursor.execute("""
                 SELECT id, titulo, descripcion, archivo_nombre, fecha_carga
@@ -2265,24 +2202,22 @@ def sst_plan_anual_actividad_detalle(id):
                 ORDER BY fecha_carga DESC
             """, (id,))
             evidencias = cursor.fetchall()
-            logger.info(f"✅ Evidencias encontradas: {len(evidencias)}")
         except Exception as e:
             logger.error(f"❌ Error cargando evidencias: {e}")
             evidencias = []
         
-        # Obtener seguimiento
         try:
             cursor.execute("""
-                SELECT id, comentario, tipo, fecha_registro, usuario_id
-                FROM plan_seguimiento
-                WHERE plan_id = %s
-                ORDER BY fecha_registro DESC
+                SELECT s.id, s.comentario, s.tipo, s.fecha_registro, u.usuario
+                FROM plan_seguimiento s
+                LEFT JOIN usuarios u ON s.usuario_id = u.id
+                WHERE s.plan_id = %s
+                ORDER BY s.fecha_registro DESC
             """, (id,))
-            seguimiento = cursor.fetchall()
-            logger.info(f"✅ Seguimiento encontrado: {len(seguimiento)}")
+            seguimientos = cursor.fetchall()
         except Exception as e:
-            logger.error(f"❌ Error cargando seguimiento: {e}")
-            seguimiento = []
+            logger.error(f"❌ Error cargando seguimientos: {e}")
+            seguimientos = []
         
         cursor.close()
         conn.close()
@@ -2290,12 +2225,12 @@ def sst_plan_anual_actividad_detalle(id):
         return render_template('sst/plan_anual_detalle.html',
                              actividad=actividad,
                              evidencias=evidencias,
-                             seguimiento=seguimiento)
+                             seguimientos=seguimientos)
         
     except Exception as e:
         flash(f'❌ Error al cargar actividad: {str(e)}', 'error')
         logger.error(f"Error en sst_plan_anual_actividad_detalle: {e}")
-        return redirect(url_for('sst_plan_anual'))
+        return redirect(url_for('sst_plan_anual_actividades'))
 
 @app.route('/sst/plan-anual/actividad/<int:id>/actualizar', methods=['POST'])
 @login_required
@@ -2307,7 +2242,6 @@ def sst_plan_anual_actualizar_actividad(id):
         return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
     
     try:
-        # Obtener datos del formulario
         mes = request.form.get('mes')
         semana = request.form.get('semana')
         ejecutado = request.form.get('ejecutado') == 'true'
@@ -2319,7 +2253,6 @@ def sst_plan_anual_actualizar_actividad(id):
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Actualizar la semana específica
         columna = f"{mes}_semana{semana}_e"
         query = f"""
             UPDATE plan_anual_trabajo 
@@ -2330,9 +2263,6 @@ def sst_plan_anual_actualizar_actividad(id):
         """
         
         cursor.execute(query, (ejecutado, current_user.id, id))
-        
-        # Recalcular porcentaje y estado
-        actualizar_porcentaje_avance(id)
         
         conn.commit()
         cursor.close()
@@ -2405,7 +2335,6 @@ def sst_plan_anual_agregar_evidencia(id):
     
     return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
 
-# ===== RUTA PARA DESCARGAR EVIDENCIA =====
 @app.route('/sst/evidencia/<int:id>/descargar')
 @login_required
 def sst_descargar_evidencia(id):
@@ -2448,7 +2377,6 @@ def sst_descargar_evidencia(id):
         flash(f'❌ Error al descargar: {str(e)}', 'error')
         return redirect(url_for('sst_plan_anual'))
 
-# ===== RUTA PARA ELIMINAR EVIDENCIA =====
 @app.route('/sst/evidencia/<int:id>/eliminar', methods=['POST'])
 @login_required
 def sst_eliminar_evidencia(id):
@@ -2488,7 +2416,6 @@ def sst_eliminar_evidencia(id):
         flash(f'❌ Error al eliminar: {str(e)}', 'error')
         return redirect(url_for('sst_plan_anual'))
 
-# ===== RUTA PARA AGREGAR SEGUIMIENTO =====
 @app.route('/sst/plan-anual/actividad/<int:id>/seguimiento', methods=['POST'])
 @login_required
 @retry_on_ssl_error(max_retries=2, delay=2)
@@ -2540,7 +2467,6 @@ def sst_plan_anual_cronograma():
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Obtener todas las actividades con su programación
         cursor.execute("""
             SELECT 
                 id, actividad, ciclo_phva, responsables, estado,
@@ -2586,19 +2512,14 @@ def sst_plan_anual_cronograma():
         return redirect(url_for('sst_plan_anual'))
 
 def actualizar_porcentaje_avance(id):
-    """
-    Actualizar automáticamente el porcentaje de avance de una actividad
-    basándose en semanas planificadas vs ejecutadas
-    """
+    """Actualizar automáticamente el porcentaje de avance de una actividad"""
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Nombres de los meses
         meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
                 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
         
-        # Construir lista de columnas planificadas y ejecutadas
         columnas_planificadas = []
         columnas_ejecutadas = []
         
@@ -2607,7 +2528,6 @@ def actualizar_porcentaje_avance(id):
                 columnas_planificadas.append(f'{mes}_semana{semana}_p')
                 columnas_ejecutadas.append(f'{mes}_semana{semana}_e')
         
-        # Contar semanas planificadas (TRUE)
         query_planificadas = f"""
             SELECT 
                 {' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_planificadas])} as total_planificadas
@@ -2618,7 +2538,6 @@ def actualizar_porcentaje_avance(id):
         resultado_p = cursor.fetchone()
         total_planificadas = resultado_p[0] if resultado_p else 0
         
-        # Contar semanas ejecutadas (TRUE)
         query_ejecutadas = f"""
             SELECT 
                 {' + '.join([f'CASE WHEN {col} = TRUE THEN 1 ELSE 0 END' for col in columnas_ejecutadas])} as total_ejecutadas
@@ -2629,12 +2548,10 @@ def actualizar_porcentaje_avance(id):
         resultado_e = cursor.fetchone()
         total_ejecutadas = resultado_e[0] if resultado_e else 0
         
-        # Calcular porcentaje
         porcentaje = 0
         if total_planificadas > 0:
             porcentaje = round((total_ejecutadas / total_planificadas) * 100, 2)
         
-        # Determinar estado automáticamente
         if porcentaje == 100:
             estado = 'completado'
         elif porcentaje > 0:
@@ -2642,7 +2559,6 @@ def actualizar_porcentaje_avance(id):
         else:
             estado = 'pendiente'
         
-        # Actualizar en la base de datos
         cursor.execute("""
             UPDATE plan_anual_trabajo 
             SET porcentaje_avance = %s, 
@@ -2663,12 +2579,11 @@ def actualizar_porcentaje_avance(id):
         return 0, 'pendiente'
 
 def inicializar_plan_anual():
-    """Crear tabla e importar datos del plan anual basados en el Excel"""
+    """Crear tablas del plan anual"""
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Verificar si la tabla existe, si no, crearla con estructura completa
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS plan_anual_trabajo (
                 id SERIAL PRIMARY KEY,
@@ -2680,7 +2595,6 @@ def inicializar_plan_anual():
                 responsables VARCHAR(200),
                 recursos TEXT,
                 
-                -- Enero
                 enero_semana1_p BOOLEAN DEFAULT FALSE,
                 enero_semana1_e BOOLEAN DEFAULT FALSE,
                 enero_semana2_p BOOLEAN DEFAULT FALSE,
@@ -2690,7 +2604,6 @@ def inicializar_plan_anual():
                 enero_semana4_p BOOLEAN DEFAULT FALSE,
                 enero_semana4_e BOOLEAN DEFAULT FALSE,
                 
-                -- Febrero
                 febrero_semana1_p BOOLEAN DEFAULT FALSE,
                 febrero_semana1_e BOOLEAN DEFAULT FALSE,
                 febrero_semana2_p BOOLEAN DEFAULT FALSE,
@@ -2700,7 +2613,6 @@ def inicializar_plan_anual():
                 febrero_semana4_p BOOLEAN DEFAULT FALSE,
                 febrero_semana4_e BOOLEAN DEFAULT FALSE,
                 
-                -- Marzo
                 marzo_semana1_p BOOLEAN DEFAULT FALSE,
                 marzo_semana1_e BOOLEAN DEFAULT FALSE,
                 marzo_semana2_p BOOLEAN DEFAULT FALSE,
@@ -2710,7 +2622,6 @@ def inicializar_plan_anual():
                 marzo_semana4_p BOOLEAN DEFAULT FALSE,
                 marzo_semana4_e BOOLEAN DEFAULT FALSE,
                 
-                -- Abril
                 abril_semana1_p BOOLEAN DEFAULT FALSE,
                 abril_semana1_e BOOLEAN DEFAULT FALSE,
                 abril_semana2_p BOOLEAN DEFAULT FALSE,
@@ -2720,7 +2631,6 @@ def inicializar_plan_anual():
                 abril_semana4_p BOOLEAN DEFAULT FALSE,
                 abril_semana4_e BOOLEAN DEFAULT FALSE,
                 
-                -- Mayo
                 mayo_semana1_p BOOLEAN DEFAULT FALSE,
                 mayo_semana1_e BOOLEAN DEFAULT FALSE,
                 mayo_semana2_p BOOLEAN DEFAULT FALSE,
@@ -2730,7 +2640,6 @@ def inicializar_plan_anual():
                 mayo_semana4_p BOOLEAN DEFAULT FALSE,
                 mayo_semana4_e BOOLEAN DEFAULT FALSE,
                 
-                -- Junio
                 junio_semana1_p BOOLEAN DEFAULT FALSE,
                 junio_semana1_e BOOLEAN DEFAULT FALSE,
                 junio_semana2_p BOOLEAN DEFAULT FALSE,
@@ -2740,7 +2649,6 @@ def inicializar_plan_anual():
                 junio_semana4_p BOOLEAN DEFAULT FALSE,
                 junio_semana4_e BOOLEAN DEFAULT FALSE,
                 
-                -- Julio
                 julio_semana1_p BOOLEAN DEFAULT FALSE,
                 julio_semana1_e BOOLEAN DEFAULT FALSE,
                 julio_semana2_p BOOLEAN DEFAULT FALSE,
@@ -2750,7 +2658,6 @@ def inicializar_plan_anual():
                 julio_semana4_p BOOLEAN DEFAULT FALSE,
                 julio_semana4_e BOOLEAN DEFAULT FALSE,
                 
-                -- Agosto
                 agosto_semana1_p BOOLEAN DEFAULT FALSE,
                 agosto_semana1_e BOOLEAN DEFAULT FALSE,
                 agosto_semana2_p BOOLEAN DEFAULT FALSE,
@@ -2760,7 +2667,6 @@ def inicializar_plan_anual():
                 agosto_semana4_p BOOLEAN DEFAULT FALSE,
                 agosto_semana4_e BOOLEAN DEFAULT FALSE,
                 
-                -- Septiembre
                 septiembre_semana1_p BOOLEAN DEFAULT FALSE,
                 septiembre_semana1_e BOOLEAN DEFAULT FALSE,
                 septiembre_semana2_p BOOLEAN DEFAULT FALSE,
@@ -2769,8 +2675,7 @@ def inicializar_plan_anual():
                 septiembre_semana3_e BOOLEAN DEFAULT FALSE,
                 septiembre_semana4_p BOOLEAN DEFAULT FALSE,
                 septiembre_semana4_e BOOLEAN DEFAULT FALSE,
-                
-                -- Octubre
+            
                 octubre_semana1_p BOOLEAN DEFAULT FALSE,
                 octubre_semana1_e BOOLEAN DEFAULT FALSE,
                 octubre_semana2_p BOOLEAN DEFAULT FALSE,
@@ -2780,7 +2685,6 @@ def inicializar_plan_anual():
                 octubre_semana4_p BOOLEAN DEFAULT FALSE,
                 octubre_semana4_e BOOLEAN DEFAULT FALSE,
                 
-                -- Noviembre
                 noviembre_semana1_p BOOLEAN DEFAULT FALSE,
                 noviembre_semana1_e BOOLEAN DEFAULT FALSE,
                 noviembre_semana2_p BOOLEAN DEFAULT FALSE,
@@ -2790,7 +2694,6 @@ def inicializar_plan_anual():
                 noviembre_semana4_p BOOLEAN DEFAULT FALSE,
                 noviembre_semana4_e BOOLEAN DEFAULT FALSE,
                 
-                -- Diciembre
                 diciembre_semana1_p BOOLEAN DEFAULT FALSE,
                 diciembre_semana1_e BOOLEAN DEFAULT FALSE,
                 diciembre_semana2_p BOOLEAN DEFAULT FALSE,
@@ -2809,7 +2712,6 @@ def inicializar_plan_anual():
             )
         """)
         
-        # Crear tabla de evidencias si no existe
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS plan_evidencias (
                 id SERIAL PRIMARY KEY,
@@ -2825,7 +2727,6 @@ def inicializar_plan_anual():
             )
         """)
         
-        # Crear tabla de seguimiento
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS plan_seguimiento (
                 id SERIAL PRIMARY KEY,
@@ -2838,100 +2739,20 @@ def inicializar_plan_anual():
         """)
         
         conn.commit()
-        
-        # Verificar si ya hay datos
-        cursor.execute("SELECT COUNT(*) FROM plan_anual_trabajo")
-        count = cursor.fetchone()[0]
-        
-        if count == 0:
-            print("📥 Importando datos de ejemplo del plan anual...")
-            
-            # Insertar algunas actividades de ejemplo
-            actividades_ejemplo = [
-                {
-                    'actividad': 'Responsable del Sistema de Gestión de Seguridad y Salud en el Trabajo SG-SST',
-                    'evidencia': 'Documento de asignación del responsable SST',
-                    'ciclo_phva': 'Planear',
-                    'articulos_decreto': '2.2.4.6.8',
-                    'nivel_pesv': 'N/A',
-                    'responsables': 'SST - COPASST - GERENCIA',
-                    'recursos': 'Humanos, Tecnológicos',
-                    'enero_s1_p': True, 'enero_s1_e': True
-                },
-                {
-                    'actividad': 'Política de Seguridad y Salud en el Trabajo SST',
-                    'evidencia': 'Política firmada y comunicada',
-                    'ciclo_phva': 'Planear',
-                    'articulos_decreto': '2.2.4.6.5, 2.2.4.6.6',
-                    'nivel_pesv': 'Paso 3',
-                    'responsables': 'SST - COPASST',
-                    'recursos': 'Humanos',
-                    'enero_s1_p': True, 'enero_s2_p': True, 'enero_s3_p': True
-                },
-                {
-                    'actividad': 'Reuniones mensuales COPASST',
-                    'evidencia': 'Actas de reunión',
-                    'ciclo_phva': 'Hacer',
-                    'articulos_decreto': '2.2.4.6.12',
-                    'nivel_pesv': 'N/A',
-                    'responsables': 'SST - COPASST',
-                    'recursos': 'Humanos',
-                    'enero_s1_p': True, 'febrero_s1_p': True, 'marzo_s1_p': True
-                }
-            ]
-            
-            meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-                    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
-            
-            for act in actividades_ejemplo:
-                columnas = ['actividad', 'evidencia', 'ciclo_phva', 'articulos_decreto',
-                           'nivel_pesv', 'responsables', 'recursos', 'estado']
-                valores = [
-                    act['actividad'], act.get('evidencia', ''), act['ciclo_phva'],
-                    act.get('articulos_decreto', ''), act.get('nivel_pesv', ''),
-                    act.get('responsables', ''), act.get('recursos', ''), 'pendiente'
-                ]
-                
-                for mes in meses:
-                    for semana in range(1, 5):
-                        key_p = f'{mes}_semana{semana}_p'
-                        key_e = f'{mes}_semana{semana}_e'
-                        
-                        columnas.append(key_p)
-                        valores.append(act.get(key_p, False))
-                        
-                        columnas.append(key_e)
-                        valores.append(act.get(key_e, False))
-                
-                placeholders = ', '.join(['%s'] * len(valores))
-                query = f"""
-                    INSERT INTO plan_anual_trabajo ({', '.join(columnas)})
-                    VALUES ({placeholders})
-                """
-                cursor.execute(query, valores)
-            
-            conn.commit()
-            print(f"✅ {len(actividades_ejemplo)} actividades de ejemplo insertadas")
-            
-        else:
-            print(f"✅ Ya existen {count} actividades en el plan anual")
-            
         cursor.close()
         conn.close()
         
+        print("✅ Tablas del plan anual creadas/verificadas")
+        
     except Exception as e:
         print(f"❌ Error al inicializar plan anual: {e}")
-        import traceback
-        traceback.print_exc()
 
-# EN LA SECCIÓN DE INICIALIZACIÓN DEL APP
-if __name__ == '__main__':
+    if name == 'main':
     with app.app_context():
-        print("🚀 Iniciando la aplicación Flask...")
-        print("📊 Creando tablas en la base de datos...")
-        crear_tablas()
-        print("✅ Tablas creadas/verificadas correctamente")
-        
+    print("🚀 Iniciando la aplicación Flask...")
+    print("📊 Creando tablas en la base de datos...")
+    crear_tablas()
+    print("✅ Tablas creadas/verificadas correctamente")
         print("📋 Verificando categorías SST...")
         try:
             verificar_y_crear_categorias_sst()
