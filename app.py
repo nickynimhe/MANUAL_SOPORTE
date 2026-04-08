@@ -2675,7 +2675,7 @@ def inicializar_plan_anual():
                 septiembre_semana3_e BOOLEAN DEFAULT FALSE,
                 septiembre_semana4_p BOOLEAN DEFAULT FALSE,
                 septiembre_semana4_e BOOLEAN DEFAULT FALSE,
-            
+                
                 octubre_semana1_p BOOLEAN DEFAULT FALSE,
                 octubre_semana1_e BOOLEAN DEFAULT FALSE,
                 octubre_semana2_p BOOLEAN DEFAULT FALSE,
@@ -2747,12 +2747,15 @@ def inicializar_plan_anual():
     except Exception as e:
         print(f"❌ Error al inicializar plan anual: {e}")
 
-    if name == 'main':
+
+# ===== INICIALIZACIÓN =====
+if __name__ == '__main__':
     with app.app_context():
-    print("🚀 Iniciando la aplicación Flask...")
-    print("📊 Creando tablas en la base de datos...")
-    crear_tablas()
-    print("✅ Tablas creadas/verificadas correctamente")
+        print("🚀 Iniciando la aplicación Flask...")
+        print("📊 Creando tablas en la base de datos...")
+        crear_tablas()
+        print("✅ Tablas creadas/verificadas correctamente")
+        
         print("📋 Verificando categorías SST...")
         try:
             verificar_y_crear_categorias_sst()
