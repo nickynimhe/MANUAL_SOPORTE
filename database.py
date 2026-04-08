@@ -438,6 +438,35 @@ def verificar_y_crear_categorias_sst():
             
             logger.info(f"✅ {len(categorias)} categorías SST creadas por defecto")
         else:
+            logger.info(f"📊 Categorías SST existentes: {resultado[0][0] if resultado else 0}")
+            
+    except Exception as e:
+        logger.error(f"❌ Error al verificar/crear categorías SST: {e}")
+
+def verificar_y_crear_categorias_sst():
+    """Verificar y crear categorías SST por defecto"""
+    try:
+        resultado = ejecutar_consulta("SELECT COUNT(*) FROM sst_categorias", fetch=True)
+        
+        if resultado and resultado[0][0] == 0:
+            categorias = [
+                ('Videos de Capacitación', '#FF6B6B', 'fas fa-video'),
+                ('Procedimientos de Seguridad', '#4ECDC4', 'fas fa-file-contract'),
+                ('Equipos de Protección Personal', '#FFD166', 'fas fa-hard-hat'),
+                ('Seguridad Industrial', '#06D6A0', 'fas fa-helmet-safety'),
+                ('Prevención de Incendios', '#EF476F', 'fas fa-fire-extinguisher'),
+                ('Normativa Legal', '#118AB2', 'fas fa-gavel')
+            ]
+            
+            for nombre, color, icono in categorias:
+                ejecutar_consulta(
+                    "INSERT INTO sst_categorias (nombre, color, icono) VALUES (%s, %s, %s)",
+                    (nombre, color, icono),
+                    commit=True
+                )
+            
+            logger.info(f"✅ {len(categorias)} categorías SST creadas por defecto")
+        else:
             logger.info(f"📊 Categorías SST existentes: {resultado[0][0]}")
             
     except Exception as e:
