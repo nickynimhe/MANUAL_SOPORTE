@@ -4472,6 +4472,42 @@ def sst_ver_evidencia(id):
         flash(f'Error: {str(e)}', 'error')
         return redirect(url_for('sst_plan_anual_actividades'))
 
+@app.route('/sst/plan-anual/actividad/<int:id>/seguimiento', methods=['POST'])
+@login_required
+def sst_plan_anual_agregar_seguimiento(id):
+    """Agregar seguimiento/comentario a una actividad"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
+    try:
+        comentario = request.form.get('comentario', '').strip()
+        tipo = request.form.get('tipo', 'comentario').strip()
+        
+        if not comentario:
+            flash('❌ El comentario no puede estar vacío', 'error')
+            return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
+        
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            INSERT INTO plan_seguimiento (actividad_id, comentario, tipo, usuario_id, fecha)
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+        """, (id, comentario, tipo, current_user.id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        flash('✅ Seguimiento agregado correctamente', 'success')
+        
+    except Exception as e:
+        flash(f'❌ Error al agregar seguimiento: {str(e)}', 'error')
+        logger.error(f"Error en sst_plan_anual_agregar_seguimiento: {e}")
+    
+    return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
+
 # EN LA SECCIÓN DE INICIALIZACIÓN DEL APP
 if __name__ == '__main__':
     with app.app_context():
