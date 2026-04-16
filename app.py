@@ -4393,6 +4393,85 @@ def actualizar_porcentaje_avance(id):
         logger.error(f"Error al actualizar porcentaje: {e}")
         return 0, 'pendiente'
 
+@app.route('/sst/plan-anual/evidencia/<int:id>/descargar')
+@login_required
+@retry_on_ssl_error(max_retries=2, delay=2)
+def sst_descargar_evidencia(id):
+    """Descargar archivo de una evidencia del plan anual"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT archivo_nombre, archivo_tipo, archivo_data
+            FROM plan_evidencias
+            WHERE id = %s
+        """, (id,))
+        
+        evidencia = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not evidencia or not evidencia[2]:
+            flash('Archivo de evidencia no encontrado', 'error')
+            return redirect(url_for('sst_plan_anual_actividades'))
+        
+        file_data = BytesIO(bytes(evidencia[2]))
+        
+        return send_file(
+            file_data,
+            mimetype=evidencia[1] or 'application/octet-stream',
+            as_attachment=True,
+            download_name=evidencia[0]
+        )
+        
+    except Exception as e:
+        flash(f'Error al descargar evidencia: {str(e)}', 'error')
+        logger.error(f"Error en sst_descargar_evidencia: {e}")
+        return redirect(url_for('sst_plan_anual_actividades'))
+
+@app.route('/sst/plan-anual/evidencia/<int:id>/ver')
+@login_required
+def sst_ver_evidencia(id):
+    """Ver archivo de evidencia en el navegador"""
+    if not current_user.puede('acceder_sst'):
+        return redirect_a_modulo_principal()
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT archivo_nombre, archivo_tipo, archivo_data
+            FROM plan_evidencias
+            WHERE id = %s
+        """, (id,))
+        
+        evidencia = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not evidencia or not evidencia[2]:
+            flash('Archivo no encontrado', 'error')
+            return redirect(url_for('sst_plan_anual_actividades'))
+        
+        file_data = BytesIO(bytes(evidencia[2]))
+        
+        return send_file(
+            file_data,
+            mimetype=evidencia[1] or 'application/octet-stream',
+            as_attachment=False,
+            download_name=evidencia[0]
+        )
+        
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'error')
+        return redirect(url_for('sst_plan_anual_actividades'))
+
 # EN LA SECCIÓN DE INICIALIZACIÓN DEL APP
 if __name__ == '__main__':
     with app.app_context():
