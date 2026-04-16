@@ -4508,6 +4508,45 @@ def sst_plan_anual_agregar_seguimiento(id):
     
     return redirect(url_for('sst_plan_anual_actividad_detalle', id=id))
 
+@app.route('/sst/plan-anual/evidencia/<int:id>/eliminar', methods=['POST'])
+@login_required
+def sst_eliminar_evidencia(id):
+    """Eliminar una evidencia del plan anual"""
+    if not current_user.puede('acceder_sst'):
+        flash('No tienes permisos para acceder al módulo de SST', 'error')
+        return redirect_a_modulo_principal()
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Obtener el plan_id antes de eliminar para redirigir correctamente
+        cursor.execute("SELECT plan_id FROM plan_evidencias WHERE id = %s", (id,))
+        resultado = cursor.fetchone()
+        
+        if not resultado:
+            flash('❌ Evidencia no encontrada', 'error')
+            cursor.close()
+            conn.close()
+            return redirect(url_for('sst_plan_anual_actividades'))
+        
+        plan_id = resultado[0]
+        
+        # Eliminar la evidencia
+        cursor.execute("DELETE FROM plan_evidencias WHERE id = %s", (id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        flash('✅ Evidencia eliminada correctamente', 'success')
+        
+    except Exception as e:
+        flash(f'❌ Error al eliminar evidencia: {str(e)}', 'error')
+        logger.error(f"Error en sst_eliminar_evidencia: {e}")
+        return redirect(url_for('sst_plan_anual_actividades'))
+    
+    return redirect(url_for('sst_plan_anual_actividad_detalle', id=plan_id))
+    
 # EN LA SECCIÓN DE INICIALIZACIÓN DEL APP
 if __name__ == '__main__':
     with app.app_context():
