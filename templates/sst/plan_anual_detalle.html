@@ -445,7 +445,7 @@ function confirmarEliminarEvidencia(evidenciaId) {
     if (confirm('⚠️ ¿Estás seguro de eliminar esta evidencia?\n\nEsta acción no se puede deshacer.')) {
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = '/sst/evidencia/' + evidenciaId + '/eliminar';
+        form.action = '/sst/plan-anual/evidencia/' + evidenciaId + '/eliminar';
         document.body.appendChild(form);
         form.submit();
     }
