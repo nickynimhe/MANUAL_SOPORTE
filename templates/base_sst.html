@@ -14,18 +14,21 @@
     /* ===== VARIABLES CSS ===== */
     :root {
         --primary: #052398;
-      --primary-dark: #03196e;
-      --primary-light: #7b87f5;
-      --secondary: #e0f2fe;
-      --accent: #ff0000;
-      --bg: #f0f4f8;
-      --white: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --radius: 12px;
-      --sidebar-width: 250px;
-      --sidebar-collapsed: 64px;
-      --transition: 0.25s ease;
+        --primary-dark: #03196e;
+        --primary-light: #7b87f5;
+        --secondary: #e0f2fe;
+        --accent: #ff0000;
+        --bg: #f0f4f8;
+        --white: #ffffff;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --radius: 12px;
+        --sidebar-width: 250px;
+        --sidebar-collapsed: 64px;
+        --transition: 0.25s ease;
+        --sst-green: #059669;
+        --sst-green-dark: #047857;
+        --sst-green-light: #d1fae5;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -45,9 +48,8 @@
     }
 
     /* ===== SIDEBAR SST ===== */
-    /* El sidebar SST usa un gradiente verde para diferenciarse del de Soporte */
     .sidebar {
-         position: fixed;
+      position: fixed;
       top: 0;
       left: 0;
       height: 100vh;
@@ -411,22 +413,14 @@
       gap: 10px;
     }
 
-    .sst-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: var(--sst-green-light);
-      color: var(--sst-green-dark);
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 700;
+    /* Logo en topbar */
+    .topbar-logo {
+      transition: all var(--transition);
     }
 
-    .topbar-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
+    .topbar-logo:hover {
+      opacity: 0.85;
+      transform: scale(1.02);
     }
 
     .topbar-right {
@@ -527,6 +521,14 @@
       .topbar { padding: 0 16px; }
       main.page-main { padding: 16px; }
     }
+
+    /* Ajuste responsivo del logo */
+    @media (max-width: 576px) {
+      .topbar-logo {
+        height: 28px !important;
+        min-width: 2.8rem !important;
+      }
+    }
     </style>
 </head>
 <body>
@@ -541,22 +543,13 @@
       <i class="fas fa-chevron-left"></i>
     </button>
 
-        <!-- Marca SST con Logo -->
+    <!-- Marca SST -->
     <a class="sidebar-brand" href="{{ url_for('sst_dashboard') }}">
-        <div class="sidebar-brand-icon">
-            <!-- Logo pequeño para el icono (cuando está colapsado) -->
-            <img src="{{ url_for('static', filename='img/logo-sky-producciones.png') }}" 
-                 alt="Sky Producciones" 
-                 style="width: 28px; height: 28px; object-fit: contain;">
-        </div>
-        <div class="sidebar-brand-texts">
-            <div class="sidebar-brand-title">
-                <img src="{{ url_for('static', filename='img/logo-sky-producciones.png') }}" 
-                     alt="Sky Producciones SAS" 
-                     style="height: 20px; width: auto; max-width: 120px; object-fit: contain;">
-            </div>
-            <div class="sidebar-brand-sub">Seguridad y Salud en el Trabajo</div>
-        </div>
+      <div class="sidebar-brand-icon"><i class="fas fa-shield-alt"></i></div>
+      <div class="sidebar-brand-texts">
+        <div class="sidebar-brand-title">SST</div>
+        <div class="sidebar-brand-sub">Seguridad y Salud en el Trabajo</div>
+      </div>
     </a>
 
     <!-- Volver a Soporte Técnico -->
@@ -717,10 +710,13 @@
         <button class="topbar-btn ghost d-md-none" id="mobileMenuBtn" style="border:none; padding:6px 8px;">
           <i class="fas fa-bars"></i>
         </button>
-        <span class="sst-badge d-none d-sm-inline-flex">
-          <i class="fas fa-shield-alt"></i> SST
-        </span>
-        <span class="topbar-title d-none d-md-block">{% block page_title %}Seguridad y Salud en el Trabajo{% endblock %}</span>
+        <!-- Logo corporativo -->
+        <a href="{{ url_for('sst_dashboard') }}" class="d-flex align-items-center text-decoration-none">
+          <img src="{{ url_for('static', filename='img/logo-sky-producciones.png') }}" 
+               alt="Sky Producciones SAS" 
+               class="topbar-logo"
+               style="height: 32px; width: auto; min-width: 3.5rem; object-fit: contain;">
+        </a>
       </div>
 
       <div class="topbar-right">
