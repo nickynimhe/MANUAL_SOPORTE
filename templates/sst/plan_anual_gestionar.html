@@ -355,7 +355,7 @@ function eliminarSeleccionadas() {
     }
 }
 
-// ===== ELIMINAR INDIVIDUAL CON AJAX =====
+// ===== ELIMINAR INDIVIDUAL =====
 function eliminarActividad(id, nombre) {
     if (!confirm(`¿Eliminar la actividad?\n\n"${nombre}..."\n\nEsta acción no se puede deshacer.`)) {
         return;
@@ -366,13 +366,12 @@ function eliminarActividad(id, nombre) {
     row.style.backgroundColor = '#ffebee';
     row.style.opacity = '0.6';
     
-    // Hacer petición POST
-    fetch(`{{ url_for('sst_plan_anual_eliminar_actividad') }}`, {
+    // Usar la URL con el ID en la ruta
+    fetch(`/sst/plan-anual/actividad/${id}/eliminar`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `actividad_id=${id}`
+        }
     })
     .then(response => response.json())
     .then(data => {
@@ -385,7 +384,7 @@ function eliminarActividad(id, nombre) {
         } else {
             row.style.backgroundColor = '';
             row.style.opacity = '1';
-            mostrarMensaje('error', '❌ Error al eliminar la actividad');
+            mostrarMensaje('error', data.error || '❌ Error al eliminar la actividad');
         }
     })
     .catch(error => {
