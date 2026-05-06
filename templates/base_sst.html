@@ -13,19 +13,22 @@
     <style>
     /* ===== VARIABLES CSS ===== */
     :root {
-         --primary: #052398;
-      --primary-dark: #03196e;
-      --primary-light: #7b87f5;
-      --secondary: #e0f2fe;
-      --accent: #ff0000;
-      --bg: #f0f4f8;
-      --white: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --radius: 12px;
-      --sidebar-width: 250px;
-      --sidebar-collapsed: 64px;
-      --transition: 0.25s ease;
+        --primary: #052398;
+        --primary-dark: #03196e;
+        --primary-light: #7b87f5;
+        --secondary: #e0f2fe;
+        --accent: #ff0000;
+        --bg: #f0f4f8;
+        --white: #ffffff;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --radius: 12px;
+        --sidebar-width: 250px;
+        --sidebar-collapsed: 64px;
+        --transition: 0.25s ease;
+        --sst-green: #059669;
+        --sst-green-dark: #047857;
+        --sst-green-light: #d1fae5;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -391,28 +394,29 @@
 
     .main-content.expanded { margin-left: var(--sidebar-collapsed); }
 
-    /* Topbar */
+    /* Topbar - MEJORADO */
     .topbar {
       background: var(--white);
       border-bottom: 1px solid #e5e7eb;
       padding: 0 24px;
-      height: 52px;
+      height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
     .topbar-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 16px;
     }
 
-    /* Logo en topbar */
+    /* Logo en topbar - MÁS GRANDE */
     .topbar-logo {
       transition: all var(--transition);
+      max-height: 48px;
     }
 
     .topbar-logo:hover {
@@ -423,16 +427,16 @@
     .topbar-right {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
     }
 
     .topbar-btn {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 12px;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 13px;
       font-weight: 500;
       text-decoration: none;
       border: none;
@@ -441,19 +445,27 @@
     }
 
     .topbar-btn.green {
-      background: var(--sst-green);
+      background: linear-gradient(135deg, var(--sst-green) 0%, var(--sst-green-dark) 100%);
       color: white;
     }
 
-    .topbar-btn.green:hover { background: var(--sst-green-dark); color: white; }
+    .topbar-btn.green:hover { 
+      background: linear-gradient(135deg, var(--sst-green-dark) 0%, #065f46 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    }
 
     .topbar-btn.ghost {
       background: transparent;
-      color: var(--muted);
+      color: var(--text);
       border: 1px solid #e5e7eb;
     }
 
-    .topbar-btn.ghost:hover { background: var(--bg); color: var(--text); }
+    .topbar-btn.ghost:hover { 
+      background: var(--bg); 
+      color: var(--primary);
+      border-color: var(--primary-light);
+    }
 
     /* Contenido */
     main.page-main {
@@ -515,15 +527,21 @@
       }
 
       .sidebar-toggle { display: none; }
-      .topbar { padding: 0 16px; }
+      .topbar { padding: 0 16px; height: 56px; }
       main.page-main { padding: 16px; }
     }
 
     /* Ajuste responsivo del logo */
     @media (max-width: 576px) {
       .topbar-logo {
-        height: 28px !important;
-        min-width: 2.8rem !important;
+        max-height: 36px !important;
+        min-width: 3rem !important;
+      }
+      .topbar-btn span.d-none.d-sm-inline {
+        display: none !important;
+      }
+      .topbar-btn {
+        padding: 8px 12px;
       }
     }
     </style>
@@ -540,9 +558,11 @@
       <i class="fas fa-chevron-left"></i>
     </button>
 
-    <!-- Marca SST -->
+    <!-- Marca SST con degradado sutil -->
     <a class="sidebar-brand" href="{{ url_for('sst_dashboard') }}">
-      <div class="sidebar-brand-icon"><i class="fas fa-shield-alt"></i></div>
+      <div class="sidebar-brand-icon">
+        <i class="fas fa-shield-alt"></i>
+      </div>
       <div class="sidebar-brand-texts">
         <div class="sidebar-brand-title">SST</div>
         <div class="sidebar-brand-sub">Seguridad y Salud en el Trabajo</div>
@@ -700,19 +720,19 @@
   <!-- ===== CONTENIDO PRINCIPAL ===== -->
   <div class="main-content" id="mainContent">
 
-    <!-- Topbar -->
+    <!-- Topbar MEJORADO -->
     <div class="topbar">
       <div class="topbar-left">
         <!-- Hamburguesa móvil -->
-        <button class="topbar-btn ghost d-md-none" id="mobileMenuBtn" style="border:none; padding:6px 8px;">
-          <i class="fas fa-bars"></i>
+        <button class="topbar-btn ghost d-md-none" id="mobileMenuBtn" style="border:none; padding:8px 10px;">
+          <i class="fas fa-bars fs-5"></i>
         </button>
-        <!-- Logo corporativo -->
+        <!-- Logo corporativo MÁS GRANDE -->
         <a href="{{ url_for('sst_dashboard') }}" class="d-flex align-items-center text-decoration-none">
           <img src="{{ url_for('static', filename='img/logo-sky-producciones.png') }}" 
                alt="Sky Producciones SAS" 
                class="topbar-logo"
-               style="height: 32px; width: auto; min-width: 3.5rem; object-fit: contain;">
+               style="height: 48px; width: auto; min-width: 3.5rem; object-fit: contain;">
         </a>
       </div>
 
