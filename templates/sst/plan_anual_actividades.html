@@ -3,111 +3,122 @@
 {% block title %}Actividades - Plan Anual PESV{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2><i class="fas fa-tasks"></i> Actividades del Plan Anual</h2>
-                    <p class="text-muted">Gestión de actividades PESV 2026</p>
+<div class="container-fluid px-0 px-md-3">
+
+    <!-- HEADER MEJORADO -->
+    <div class="sst-header bg-gradient-corporate rounded-4 mb-4 p-4 text-white shadow-lg">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+            <div class="mb-3 mb-md-0">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-white rounded-3 p-2 me-3 shadow-sm">
+                        <i class="fas fa-tasks" style="color: #2658A5; font-size: 1.8rem;"></i>
+                    </div>
+                    <div>
+                        <h1 class="h2 fw-bold mb-1">Actividades del Plan Anual</h1>
+                        <p class="text-white-80 mb-0">Gestión de actividades PESV 2026</p>
+                    </div>
                 </div>
-                <div>
-                    <a href="{{ url_for('sst_plan_anual') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left"></i> Volver
-                    </a>
-                </div>
+            </div>
+            <div>
+                <a href="{{ url_for('sst_plan_anual') }}" class="btn btn-light btn-sm fw-medium shadow-sm">
+                    <i class="fas fa-arrow-left me-1"></i> Volver al Dashboard
+                </a>
             </div>
         </div>
     </div>
-    
-    <!-- Botón para importar desde Excel -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div></div>
-        <div>
-            <!-- ✅ CAMBIADO: En lugar de "nueva actividad", botón para importar -->
-            <a href="{{ url_for('sst_importar_desde_excel') }}" class="btn btn-success">
-                <i class="fas fa-file-excel"></i> Importar desde Excel
-            </a>
-            <a href="{{ url_for('sst_plan_anual_cronograma') }}" class="btn btn-info">
-                <i class="fas fa-calendar-alt"></i> Ver Cronograma
-            </a>
+
+    <!-- BOTONES DE ACCIÓN RÁPIDA -->
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <div class="d-flex flex-wrap gap-2 justify-content-end">
+                <a href="{{ url_for('sst_importar_desde_excel') }}" class="btn btn-success shadow-sm" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none;">
+                    <i class="fas fa-file-excel me-1"></i> Importar desde Excel
+                </a>
+                <a href="{{ url_for('sst_plan_anual_cronograma') }}" class="btn btn-info shadow-sm" style="background: linear-gradient(135deg, #17a2b8 0%, #0dcaf0 100%); border: none; color: white;">
+                    <i class="fas fa-calendar-alt me-1"></i> Ver Cronograma
+                </a>
+                <a href="{{ url_for('sst_plan_anual_nueva_actividad') }}" class="btn btn-warning shadow-sm" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%); border: none; color: #282F4B;">
+                    <i class="fas fa-plus me-1"></i> Nueva Actividad
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- Filtros -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="fas fa-filter"></i> Filtros de Búsqueda</h5>
+    <!-- FILTROS REDISEÑADOS -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-filter me-2"></i> Filtros de Búsqueda
+            </h5>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             <form method="GET" action="{{ url_for('sst_plan_anual_actividades') }}">
-                <div class="row">
+                <div class="row g-3">
                     <div class="col-md-3">
-                        <div class="form-group">
-                            <label>Ciclo PHVA</label>
-                            <select name="ciclo" class="form-control">
-                                <option value="">Todos</option>
-                                {% for ciclo in ciclos %}
-                                <option value="{{ ciclo }}" {% if filtro_ciclo == ciclo %}selected{% endif %}>
-                                    {{ ciclo }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-sync-alt me-1" style="color: #2658A5;"></i> Ciclo PHVA
+                        </label>
+                        <select name="ciclo" class="form-select rounded-3">
+                            <option value="">Todos los ciclos</option>
+                            {% for ciclo in ciclos %}
+                            <option value="{{ ciclo }}" {% if filtro_ciclo == ciclo %}selected{% endif %}>
+                                {{ ciclo }}
+                            </option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div class="col-md-3">
-                        <div class="form-group">
-                            <label>Estado</label>
-                            <select name="estado" class="form-control">
-                                <option value="">Todos</option>
-                                <option value="pendiente" {% if filtro_estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
-                                <option value="en_proceso" {% if filtro_estado == 'en_proceso' %}selected{% endif %}>En Proceso</option>
-                                <option value="completado" {% if filtro_estado == 'completado' %}selected{% endif %}>Completado</option>
-                            </select>
-                        </div>
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-chart-line me-1" style="color: #FFCC29;"></i> Estado
+                        </label>
+                        <select name="estado" class="form-select rounded-3">
+                            <option value="">Todos los estados</option>
+                            <option value="pendiente" {% if filtro_estado == 'pendiente' %}selected{% endif %}>⏳ Pendiente</option>
+                            <option value="en_proceso" {% if filtro_estado == 'en_proceso' %}selected{% endif %}>🔄 En Proceso</option>
+                            <option value="completado" {% if filtro_estado == 'completado' %}selected{% endif %}>✅ Completado</option>
+                        </select>
                     </div>
                     <div class="col-md-3">
-                        <div class="form-group">
-                            <label>Responsable</label>
-                            <select name="responsable" class="form-control">
-                                <option value="">Todos</option>
-                                {% for resp in responsables_list %}
-                                <option value="{{ resp }}" {% if filtro_responsable == resp %}selected{% endif %}>
-                                    {{ resp }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-user me-1" style="color: #C23538;"></i> Responsable
+                        </label>
+                        <select name="responsable" class="form-select rounded-3">
+                            <option value="">Todos los responsables</option>
+                            {% for resp in responsables_list %}
+                            <option value="{{ resp }}" {% if filtro_responsable == resp %}selected{% endif %}>
+                                {{ resp }}
+                            </option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div class="col-md-3">
-                        <div class="form-group">
-                            <label>Mes</label>
-                            <select name="mes" class="form-control">
-                                <option value="">Todos</option>
-                                <option value="enero" {% if filtro_mes == 'enero' %}selected{% endif %}>Enero</option>
-                                <option value="febrero" {% if filtro_mes == 'febrero' %}selected{% endif %}>Febrero</option>
-                                <option value="marzo" {% if filtro_mes == 'marzo' %}selected{% endif %}>Marzo</option>
-                                <option value="abril" {% if filtro_mes == 'abril' %}selected{% endif %}>Abril</option>
-                                <option value="mayo" {% if filtro_mes == 'mayo' %}selected{% endif %}>Mayo</option>
-                                <option value="junio" {% if filtro_mes == 'junio' %}selected{% endif %}>Junio</option>
-                                <option value="julio" {% if filtro_mes == 'julio' %}selected{% endif %}>Julio</option>
-                                <option value="agosto" {% if filtro_mes == 'agosto' %}selected{% endif %}>Agosto</option>
-                                <option value="septiembre" {% if filtro_mes == 'septiembre' %}selected{% endif %}>Septiembre</option>
-                                <option value="octubre" {% if filtro_mes == 'octubre' %}selected{% endif %}>Octubre</option>
-                                <option value="noviembre" {% if filtro_mes == 'noviembre' %}selected{% endif %}>Noviembre</option>
-                                <option value="diciembre" {% if filtro_mes == 'diciembre' %}selected{% endif %}>Diciembre</option>
-                            </select>
-                        </div>
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-calendar-alt me-1" style="color: #28a745;"></i> Mes
+                        </label>
+                        <select name="mes" class="form-select rounded-3">
+                            <option value="">Todos los meses</option>
+                            <option value="enero" {% if filtro_mes == 'enero' %}selected{% endif %}>Enero</option>
+                            <option value="febrero" {% if filtro_mes == 'febrero' %}selected{% endif %}>Febrero</option>
+                            <option value="marzo" {% if filtro_mes == 'marzo' %}selected{% endif %}>Marzo</option>
+                            <option value="abril" {% if filtro_mes == 'abril' %}selected{% endif %}>Abril</option>
+                            <option value="mayo" {% if filtro_mes == 'mayo' %}selected{% endif %}>Mayo</option>
+                            <option value="junio" {% if filtro_mes == 'junio' %}selected{% endif %}>Junio</option>
+                            <option value="julio" {% if filtro_mes == 'julio' %}selected{% endif %}>Julio</option>
+                            <option value="agosto" {% if filtro_mes == 'agosto' %}selected{% endif %}>Agosto</option>
+                            <option value="septiembre" {% if filtro_mes == 'septiembre' %}selected{% endif %}>Septiembre</option>
+                            <option value="octubre" {% if filtro_mes == 'octubre' %}selected{% endif %}>Octubre</option>
+                            <option value="noviembre" {% if filtro_mes == 'noviembre' %}selected{% endif %}>Noviembre</option>
+                            <option value="diciembre" {% if filtro_mes == 'diciembre' %}selected{% endif %}>Diciembre</option>
+                        </select>
                     </div>
                 </div>
-                <div class="row">
+                <div class="row mt-4">
                     <div class="col-12">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-search"></i> Buscar
+                        <button type="submit" class="btn btn-primary shadow-sm" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); border: none;">
+                            <i class="fas fa-search me-1"></i> Buscar
                         </button>
-                        <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-secondary">
-                            <i class="fas fa-times"></i> Limpiar Filtros
+                        <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-secondary shadow-sm ms-2">
+                            <i class="fas fa-times me-1"></i> Limpiar Filtros
                         </a>
                     </div>
                 </div>
@@ -115,80 +126,105 @@
         </div>
     </div>
 
-    <!-- Lista de Actividades -->
-    <div class="card">
-        <div class="card-header bg-dark text-white">
-            <h5 class="mb-0">
-                <i class="fas fa-list"></i> 
-                Listado de Actividades 
-                <span class="badge badge-light">{{ actividades|length }} resultados</span>
-            </h5>
+    <!-- LISTA DE ACTIVIDADES REDISEÑADA -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-list me-2"></i> Listado de Actividades
+                </h5>
+                <span class="badge bg-white text-dark rounded-pill px-3 py-2">
+                    <i class="fas fa-database me-1"></i> {{ actividades|length }} resultados
+                </span>
+            </div>
         </div>
-        <div class="card-body">
+        <div class="card-body p-0">
             {% if actividades %}
             <div class="table-responsive">
-                <table class="table table-hover table-striped">
-                    <thead class="thead-dark">
+                <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+                    <thead style="background: #f8f9fc;">
                         <tr>
-                            <th style="width: 5%">#</th>
-                            <th style="width: 40%">Actividad</th>
-                            <th style="width: 10%">Ciclo PHVA</th>
-                            <th style="width: 15%">Responsables</th>
-                            <th style="width: 10%">Nivel</th>
-                            <th style="width: 10%">Estado</th>
-                            <th style="width: 10%">Acciones</th>
+                            <th style="width: 5%; padding: 16px 12px;">#</th>
+                            <th style="width: 35%; padding: 16px 12px;">Actividad</th>
+                            <th style="width: 10%; padding: 16px 12px;">Ciclo PHVA</th>
+                            <th style="width: 15%; padding: 16px 12px;">Responsables</th>
+                            <th style="width: 10%; padding: 16px 12px;">Nivel</th>
+                            <th style="width: 15%; padding: 16px 12px;">Estado / Avance</th>
+                            <th style="width: 10%; padding: 16px 12px;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for act in actividades %}
-                        <tr>
-                            <td>{{ act[0] }}</td>
-                            <td>
-                                <strong>{{ act[1][:100] }}</strong>
-                                {% if act[1]|length > 100 %}...{% endif %}
+                        <tr style="transition: all 0.2s ease;">
+                            <td class="align-middle text-muted">{{ loop.index }}</td>
+                            <td class="align-middle">
+                                <strong style="color: #2658A5;">{{ act[1][:80] }}</strong>
+                                {% if act[1]|length > 80 %}...{% endif %}
                                 {% if act[2] %}
-                                <br><small class="text-muted"><i class="fas fa-file-alt"></i> {{ act[2][:80] }}</small>
+                                <div class="small text-muted mt-1">
+                                    <i class="fas fa-file-alt me-1"></i> {{ act[2][:60] }}
+                                </div>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="align-middle">
                                 {% if act[3] == 'Planear' %}
-                                <span class="badge badge-primary badge-pill">{{ act[3] }}</span>
+                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
+                                    <i class="fas fa-bullseye me-1"></i> Planear
+                                </span>
                                 {% elif act[3] == 'Hacer' %}
-                                <span class="badge badge-success badge-pill">{{ act[3] }}</span>
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-hammer me-1"></i> Hacer
+                                </span>
                                 {% elif act[3] == 'Verificar' %}
-                                <span class="badge badge-warning badge-pill">{{ act[3] }}</span>
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-search me-1"></i> Verificar
+                                </span>
                                 {% elif act[3] == 'Actuar' %}
-                                <span class="badge badge-danger badge-pill">{{ act[3] }}</span>
+                                <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">
+                                    <i class="fas fa-chart-line me-1"></i> Actuar
+                                </span>
                                 {% else %}
-                                <span class="badge badge-secondary badge-pill">N/A</span>
+                                <span class="badge rounded-pill px-3 py-2" style="background: #6c757d;">
+                                    N/A
+                                </span>
                                 {% endif %}
                             </td>
-                            <td>
-                                <small>{{ act[4][:30] if act[4] else 'N/A' }}</small>
+                            <td class="align-middle">
+                                <small>{{ act[4][:40] if act[4] else 'No asignado' }}</small>
                             </td>
-                            <td>
+                            <td class="align-middle">
                                 <small>{{ act[7][:20] if act[7] else 'N/A' }}</small>
                             </td>
-                            <td>
-                                {% if act[5] == 'completado' %}
-                                <span class="badge badge-success">
-                                    <i class="fas fa-check-circle"></i> Completado
-                                </span>
-                                {% elif act[5] == 'en_proceso' %}
-                                <span class="badge badge-warning">
-                                    <i class="fas fa-spinner"></i> En Proceso
-                                </span>
-                                {% else %}
-                                <span class="badge badge-secondary">
-                                    <i class="fas fa-clock"></i> Pendiente
-                                </span>
-                                {% endif %}
-                                <br>
-                                <small class="text-muted">Avance: {{ act[6] }}%</small>
+                            <td class="align-middle">
+                                <div class="d-flex flex-column gap-1">
+                                    {% if act[5] == 'completado' %}
+                                    <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                        <i class="fas fa-check-circle me-1"></i> Completado
+                                    </span>
+                                    {% elif act[5] == 'en_proceso' %}
+                                    <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                        <i class="fas fa-spinner me-1"></i> En Proceso
+                                    </span>
+                                    {% else %}
+                                    <span class="badge rounded-pill px-3 py-2" style="background: #6c757d;">
+                                        <i class="fas fa-clock me-1"></i> Pendiente
+                                    </span>
+                                    {% endif %}
+                                    <div class="d-flex align-items-center gap-2">
+                                        <small class="text-muted">Avance:</small>
+                                        <div class="progress flex-grow-1" style="height: 6px;">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: {{ act[6] }}%; background: linear-gradient(90deg, #2658A5, #28a745);"
+                                                 aria-valuenow="{{ act[6] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <small class="fw-bold">{{ act[6] }}%</small>
+                                    </div>
+                                </div>
                             </td>
-                            <td>
+                            <td class="align-middle">
                                 <a href="{{ url_for('sst_plan_anual_actividad_detalle', id=act[0]) }}" 
-                                   class="btn btn-sm btn-info" 
+                                   class="btn btn-sm rounded-3" 
+                                   style="background: #2658A5; color: white;"
                                    title="Ver detalle">
                                     <i class="fas fa-eye"></i>
                                 </a>
@@ -199,12 +235,14 @@
                 </table>
             </div>
             {% else %}
-            <div class="alert alert-info text-center">
-                <i class="fas fa-info-circle fa-3x mb-3"></i>
-                <h5>No se encontraron actividades</h5>
-                <p>Importa el Excel del Plan Anual o ajusta los filtros de búsqueda</p>
-                <a href="{{ url_for('sst_importar_desde_excel') }}" class="btn btn-primary mt-2">
-                    <i class="fas fa-file-excel"></i> Importar desde Excel
+            <div class="text-center py-5">
+                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+                    <i class="fas fa-inbox fa-3x" style="color: #C23538;"></i>
+                </div>
+                <h5 class="fw-semibold text-muted">No se encontraron actividades</h5>
+                <p class="text-muted">Importa el Excel del Plan Anual o ajusta los filtros de búsqueda</p>
+                <a href="{{ url_for('sst_importar_desde_excel') }}" class="btn btn-primary mt-2 shadow-sm" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); border: none;">
+                    <i class="fas fa-file-excel me-2"></i> Importar desde Excel
                 </a>
             </div>
             {% endif %}
@@ -213,9 +251,100 @@
 </div>
 
 <style>
-.badge-pill {
-    padding: 0.4em 0.8em;
-    font-size: 0.9em;
+/* Estilos adicionales */
+.sst-header {
+    position: relative;
+    overflow: hidden;
+}
+
+.sst-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8f9fc !important;
+    transform: scale(1.01);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.form-select, .form-control {
+    border-color: #e5e7eb;
+    transition: all 0.2s ease;
+}
+
+.form-select:focus, .form-control:focus {
+    border-color: #2658A5;
+    box-shadow: 0 0 0 3px rgba(38,88,165,0.15);
+}
+
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Animación de entrada */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeIn 0.4s ease;
+}
+
+/* Badge personalizado para cada ciclo */
+.badge-pill-custom {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Tabla responsiva */
+@media (max-width: 768px) {
+    .table thead {
+        display: none;
+    }
+    .table tbody tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 12px;
+    }
+    .table tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        border: none;
+    }
+    .table tbody td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        width: 40%;
+        color: #2658A5;
+    }
 }
 </style>
 
