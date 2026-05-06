@@ -1,0 +1,230 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Dashboard RH - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Estadísticas rápidas -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="rounded-3 p-3" style="background: linear-gradient(135deg, rgba(38,88,165,0.1) 0%, rgba(40,47,75,0.1) 100%);">
+                            <i class="fas fa-users" style="color: #2658A5; font-size: 1.8rem;"></i>
+                        </div>
+                        <span class="badge rounded-pill px-3 py-1" style="background: rgba(38,88,165,0.15); color: #2658A5;">Total</span>
+                    </div>
+                    <h2 class="fw-bold display-5 mb-2" style="color: #2658A5;">{{ total_empleados|default(0) }}</h2>
+                    <p class="text-muted mb-0">Empleados activos</p>
+                    <div class="mt-3 pt-3 border-top">
+                        <small class="text-muted">
+                            <i class="fas fa-chart-line me-1" style="color: #28a745;"></i>
+                            <span style="color: #28a745;">+5%</span> vs mes anterior
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="rounded-3 p-3" style="background: linear-gradient(135deg, rgba(255,204,41,0.15) 0%, rgba(255,165,0,0.1) 100%);">
+                            <i class="fas fa-calendar-plus" style="color: #FFCC29; font-size: 1.8rem;"></i>
+                        </div>
+                        <span class="badge rounded-pill px-3 py-1" style="background: rgba(255,204,41,0.2); color: #D4A000;">Mes actual</span>
+                    </div>
+                    <h2 class="fw-bold display-5 mb-2" style="color: #FFCC29;">{{ ingresos_mes|default(0) }}</h2>
+                    <p class="text-muted mb-0">Nuevos ingresos</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="rounded-3 p-3" style="background: linear-gradient(135deg, rgba(194,53,56,0.1) 0%, rgba(167,51,53,0.1) 100%);">
+                            <i class="fas fa-calendar-times" style="color: #C23538; font-size: 1.8rem;"></i>
+                        </div>
+                        <span class="badge rounded-pill px-3 py-1" style="background: rgba(194,53,56,0.15); color: #C23538;">Salidas</span>
+                    </div>
+                    <h2 class="fw-bold display-5 mb-2" style="color: #C23538;">{{ retiros_mes|default(0) }}</h2>
+                    <p class="text-muted mb-0">Retiros del mes</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="rounded-3 p-3" style="background: linear-gradient(135deg, rgba(40,167,69,0.1) 0%, rgba(32,201,151,0.1) 100%);">
+                            <i class="fas fa-percent" style="color: #28a745; font-size: 1.8rem;"></i>
+                        </div>
+                        <span class="badge rounded-pill px-3 py-1" style="background: rgba(40,167,69,0.15); color: #28a745;">Rotación</span>
+                    </div>
+                    <h2 class="fw-bold display-5 mb-2" style="color: #28a745;">{{ rotacion_personal|default(0) }}%</h2>
+                    <p class="text-muted mb-0">Rotación anual</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Módulos RH -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-user-tie me-2"></i> Gestión de Personal
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted small">Administración completa del talento humano</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('rh_empleados') }}" class="btn btn-outline-primary rounded-3">
+                            <i class="fas fa-address-card me-2"></i> Empleados
+                        </a>
+                        <a href="{{ url_for('rh_contratos') }}" class="btn btn-outline-primary rounded-3">
+                            <i class="fas fa-file-contract me-2"></i> Contratos
+                        </a>
+                        <a href="{{ url_for('rh_cargos') }}" class="btn btn-outline-primary rounded-3">
+                            <i class="fas fa-briefcase me-2"></i> Cargos y Salarios
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-graduation-cap me-2"></i> Desarrollo Organizacional
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted small">Capacitación y crecimiento profesional</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('rh_capacitaciones') }}" class="btn btn-outline-success rounded-3">
+                            <i class="fas fa-chalkboard-user me-2"></i> Capacitaciones
+                        </a>
+                        <a href="{{ url_for('rh_evaluaciones') }}" class="btn btn-outline-success rounded-3">
+                            <i class="fas fa-star me-2"></i> Evaluaciones de Desempeño
+                        </a>
+                        <a href="{{ url_for('rh_ascensos') }}" class="btn btn-outline-success rounded-3">
+                            <i class="fas fa-arrow-up me-2"></i> Ascensos y Promociones
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-gavel me-2"></i> Aspectos Legales
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted small">Normatividad y cumplimiento legal</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('rh_normativas') }}" class="btn btn-outline-danger rounded-3">
+                            <i class="fas fa-book me-2"></i> Normativa Laboral
+                        </a>
+                        <a href="{{ url_for('rh_sanciones') }}" class="btn btn-outline-danger rounded-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i> Sanciones y Procesos
+                        </a>
+                        <a href="{{ url_for('rh_contratos') }}" class="btn btn-outline-danger rounded-3">
+                            <i class="fas fa-stamp me-2"></i> Documentación Legal
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de procesos RH (reemplaza el gráfico) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-semibold text-white">
+                            <i class="fas fa-chalkboard-user me-2"></i> Procesos Activos
+                        </h5>
+                        <a href="{{ url_for('rh_procesos') }}" class="btn btn-light btn-sm shadow-sm">
+                            <i class="fas fa-eye me-1"></i> Ver Todos
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead style="background: #f8f9fc;">
+                                <tr>
+                                    <th style="padding: 16px 12px;">Proceso</th>
+                                    <th style="padding: 16px 12px;">Responsable</th>
+                                    <th style="padding: 16px 12px;">Estado</th>
+                                    <th style="padding: 16px 12px;">Avance</th>
+                                    <th style="padding: 16px 12px;">Fecha Límite</th>
+                                    <th style="padding: 16px 12px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for proceso in procesos_activos %}
+                                <tr class="proceso-fila">
+                                    <td class="align-middle">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fas {{ proceso.icono }}" style="color: {{ proceso.color }};"></i>
+                                            <span class="fw-semibold">{{ proceso.nombre }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle">{{ proceso.responsable }}</td>
+                                    <td class="align-middle">
+                                        <span class="badge rounded-pill px-3 py-2" style="background: {{ proceso.color_estado }}; color: white;">
+                                            <i class="fas {{ proceso.icono_estado }} me-1"></i> {{ proceso.estado }}
+                                        </span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="progress flex-grow-1" style="height: 6px;">
+                                                <div class="progress-bar" role="progressbar" 
+                                                     style="width: {{ proceso.avance }}%; background: linear-gradient(90deg, #2658A5, #28a745);"></div>
+                                            </div>
+                                            <small class="fw-bold">{{ proceso.avance }}%</small>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle">
+                                        <small class="text-muted">{{ proceso.fecha_limite }}</small>
+                                    </td>
+                                    <td class="align-middle">
+                                        <a href="{{ url_for('rh_ver_proceso', id=proceso.id) }}" class="btn btn-sm rounded-3" style="background: #2658A5; color: white;">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.proceso-fila {
+    transition: all 0.2s ease;
+}
+.proceso-fila:hover {
+    background-color: #f8f9fc;
+}
+</style>
+{% endblock %}
