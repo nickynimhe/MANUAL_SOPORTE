@@ -14,16 +14,23 @@
     /* ===== VARIABLES CSS ===== */
     :root {
       --primary: #052398;
+      --primary-dark: #03196e;
+      --primary-light: #7b87f5;
       --secondary: #e0f2fe;
       --accent: #ff0000;
-      --bg: #f9fafb;
+      --bg: #f0f4f8;
       --white: #ffffff;
       --text: #1f2937;
       --muted: #6b7280;
       --radius: 12px;
+      --sidebar-width: 240px;
+      --sidebar-collapsed: 64px;
+      --transition: 0.25s ease;
     }
 
-    /* ===== ESTILOS BASE ===== */
+    /* ===== RESET BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; }
+
     html, body {
       height: 100%;
       margin: 0;
@@ -31,104 +38,400 @@
     }
 
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Segoe UI', system-ui, sans-serif;
       background-color: var(--bg);
       color: var(--text);
       display: flex;
-      flex-direction: column;
       min-height: 100vh;
     }
 
-    /* ===== NAVBAR OPTIMIZADA ===== */
-    .custom-navbar {
-      background: var(--white);
-      padding: 10px 0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: var(--sidebar-width);
+      background: linear-gradient(180deg, var(--primary-dark) 0%, var(--primary) 100%);
+      display: flex;
+      flex-direction: column;
+      z-index: 1000;
+      transition: width var(--transition);
+      overflow: hidden;
+      box-shadow: 4px 0 20px rgba(5, 35, 152, 0.2);
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed);
+    }
+
+    /* Marca / Logo */
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 20px 16px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      text-decoration: none;
+      min-height: 64px;
       flex-shrink: 0;
     }
 
-    .navbar-content {
+    .sidebar-brand-icon {
+      width: 32px;
+      height: 32px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: white;
+      font-size: 14px;
+    }
+
+    .sidebar-brand-text {
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.2;
+      white-space: nowrap;
+      opacity: 1;
+      transition: opacity var(--transition);
+    }
+
+    .sidebar.collapsed .sidebar-brand-text { opacity: 0; width: 0; overflow: hidden; }
+
+    /* Botón colapsar */
+    .sidebar-toggle {
+      position: absolute;
+      top: 16px;
+      right: -14px;
+      width: 28px;
+      height: 28px;
+      background: var(--white);
+      border: 2px solid #e5e7eb;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 10px;
+      color: var(--primary);
+      z-index: 1001;
+      transition: all var(--transition);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .sidebar-toggle:hover { background: var(--primary); color: white; border-color: var(--primary); }
+    .sidebar.collapsed .sidebar-toggle i { transform: rotate(180deg); }
+    .sidebar-toggle i { transition: transform var(--transition); }
+
+    /* Nav items */
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 12px 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.2) transparent;
+    }
+
+    .sidebar-nav::-webkit-scrollbar { width: 4px; }
+    .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.4);
+      padding: 12px 18px 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      transition: opacity var(--transition);
+    }
+
+    .sidebar.collapsed .nav-label { opacity: 0; }
+
+    .nav-item-sidebar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      margin: 2px 8px;
+      border-radius: 10px;
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all var(--transition);
+      white-space: nowrap;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      width: calc(100% - 16px);
+      text-align: left;
+    }
+
+    .nav-item-sidebar:hover {
+      background: rgba(255,255,255,0.12);
+      color: white;
+    }
+
+    .nav-item-sidebar.active {
+      background: rgba(255,255,255,0.18);
+      color: white;
+      font-weight: 600;
+    }
+
+    .nav-item-sidebar.accent {
+      background: rgba(255, 0, 0, 0.15);
+      color: #ff8080;
+    }
+
+    .nav-item-sidebar.accent:hover {
+      background: rgba(255, 0, 0, 0.25);
+      color: #ffaaaa;
+    }
+
+    .nav-item-icon {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      flex-shrink: 0;
+      font-size: 14px;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .nav-item-sidebar.active .nav-item-icon {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .nav-item-text {
+      opacity: 1;
+      transition: opacity var(--transition);
+      overflow: hidden;
+    }
+
+    .sidebar.collapsed .nav-item-text { opacity: 0; width: 0; }
+
+    /* Tooltip en modo colapsado */
+    .sidebar.collapsed .nav-item-sidebar {
+      position: relative;
+    }
+
+    .sidebar.collapsed .nav-item-sidebar:hover::after {
+      content: attr(data-tooltip);
+      position: fixed;
+      left: calc(var(--sidebar-collapsed) + 8px);
+      background: var(--primary-dark);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      z-index: 9999;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    /* Submenú desplegable (VLANS) */
+    .submenu {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease;
+    }
+
+    .submenu.open { max-height: 500px; }
+
+    .sidebar.collapsed .submenu { display: none; }
+
+    .submenu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px 6px 52px;
+      margin: 1px 8px;
+      border-radius: 8px;
+      color: rgba(255,255,255,0.6);
+      font-size: 12px;
+      text-decoration: none;
+      transition: all var(--transition);
+    }
+
+    .submenu-item:hover { color: white; background: rgba(255,255,255,0.08); }
+
+    .submenu-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.8);
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* Chevron de submenú */
+    .nav-item-chevron {
+      margin-left: auto;
+      font-size: 10px;
+      transition: transform var(--transition);
+      opacity: 0.6;
+    }
+
+    .nav-item-sidebar[aria-expanded="true"] .nav-item-chevron {
+      transform: rotate(180deg);
+    }
+
+    .sidebar.collapsed .nav-item-chevron { display: none; }
+
+    /* Footer sidebar */
+    .sidebar-footer {
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding: 12px 8px;
+      flex-shrink: 0;
+    }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.08);
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+
+    .user-card:hover { background: rgba(255,255,255,0.14); }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .user-details { overflow: hidden; transition: opacity var(--transition); }
+    .sidebar.collapsed .user-details { opacity: 0; width: 0; }
+
+    .user-name {
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-role {
+      color: rgba(255,255,255,0.5);
+      font-size: 10px;
+    }
+
+    /* ===== LAYOUT PRINCIPAL ===== */
+    .layout-wrapper {
+      display: flex;
+      width: 100%;
+      min-height: 100vh;
+    }
+
+    .main-content {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      transition: margin-left var(--transition);
+    }
+
+    .main-content.expanded { margin-left: var(--sidebar-collapsed); }
+
+    /* Topbar superior (pequeña barra de contexto) */
+    .topbar {
+      background: var(--white);
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0 24px;
+      height: 52px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .navbar-brand {
-      font-weight: 700;
-      font-size: 18px;
-      color: var(--primary);
-      text-decoration: none;
-      white-space: nowrap;
       flex-shrink: 0;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     }
 
-    .navbar-brand i {
-      margin-right: 6px;
-    }
-
-    .navbar-actions {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 6px;
-      flex: 1;
-      justify-content: flex-end;
-    }
-
-    .nav-btn {
-      text-decoration: none;
-      padding: 6px 10px;
-      border-radius: var(--radius);
-      font-weight: 500;
-      font-size: 13px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      transition: all 0.2s ease;
-      border: none;
-      cursor: pointer;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    .nav-btn.primary {
-      background-color: var(--accent);
-      color: white;
-    }
-
-    .nav-btn.primary:hover {
-      background-color: #dc2626;
-    }
-
-    .nav-btn.secondary {
-      background-color: var(--secondary);
+    .topbar-title {
+      font-size: 14px;
+      font-weight: 600;
       color: var(--text);
     }
 
-    .nav-btn.secondary:hover {
-      background-color: #bae6fd;
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    /* Estado activo para botones de navegación */
-    .nav-btn.active {
-      background-color: var(--primary);
+    .topbar-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .topbar-btn.primary {
+      background: var(--primary);
       color: white;
     }
 
-    /* Menú compacto para elementos secundarios */
-    .compact-menu .nav-btn {
-      padding: 5px 8px;
-      font-size: 12px;
+    .topbar-btn.primary:hover { background: var(--primary-dark); color: white; }
+
+    .topbar-btn.ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid #e5e7eb;
     }
 
-    /* ===== CONTENIDO PRINCIPAL ===== */
-    main.main-container {
-      flex: 1 0 auto;
-      padding: 30px 0;
+    .topbar-btn.ghost:hover { background: var(--bg); color: var(--text); }
+
+    /* ===== CONTENIDO ===== */
+    main.page-main {
+      flex: 1;
+      padding: 28px 24px;
     }
 
+    /* ===== FOOTER ===== */
+    footer.page-footer {
+      background: var(--white);
+      border-top: 1px solid #e5e7eb;
+      padding: 12px 24px;
+      text-align: center;
+    }
+
+    footer.page-footer p {
+      margin: 0;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* ===== ALERTAS ===== */
     .alert {
       border-radius: var(--radius);
       padding: 12px 16px;
@@ -137,445 +440,338 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
-    /* ===== DROPDOWN DE COBERTURAS COMPACTO ===== */
-    .coberturas-dropdown {
-      min-width: 350px;
-      max-height: 350px;
-      overflow-y: auto;
-      font-size: 13px;
-    }
-
-    .coberturas-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 6px;
-      padding: 6px;
-    }
-
-    .cobertura-dropdown-item {
-      padding: 6px 8px;
-      border-radius: 6px;
-      border-left: 3px solid var(--primary);
-      background-color: var(--white);
-      transition: background-color 0.2s ease;
-      font-size: 12px;
-    }
-
-    .cobertura-location {
-      font-weight: 600;
-      color: var(--primary);
-      font-size: 12px;
-      margin-bottom: 1px;
-    }
-
-    .cobertura-details {
-      font-size: 10px;
-      color: var(--muted);
-      line-height: 1.2;
-    }
-
-    .dropdown-header {
-      background-color: var(--secondary);
-      font-weight: 600;
-      color: var(--primary);
-      padding: 8px 12px;
-      border-bottom: 1px solid #e5e7eb;
-      font-size: 13px;
-    }
-
-    /* ===== MENÚ DE USUARIO COMPACTO ===== */
-    .user-menu {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
-    .user-info {
-      font-size: 12px;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      white-space: nowrap;
-    }
-
-    .user-badge {
-      background-color: var(--secondary);
-      color: var(--primary);
-      padding: 3px 6px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-
-    /* ===== GRUPOS DE NAVEGACIÓN ===== */
-    .nav-group {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    /* ===== MENÚ DESPLEGABLE PARA ELEMENTOS SECUNDARIOS ===== */
-    .more-menu .dropdown-toggle::after {
-      margin-left: 2px;
-    }
-
-    /* ===== RESPONSIVIDAD MEJORADA ===== */
-    @media (max-width: 1200px) {
-      .navbar-brand {
-        font-size: 16px;
-      }
-      
-      .nav-btn {
-        padding: 5px 8px;
-        font-size: 12px;
-      }
-      
-      .coberturas-dropdown {
-        min-width: 300px;
-      }
-    }
-
-    @media (max-width: 992px) {
-      .navbar-content {
-        gap: 8px;
-      }
-      
-      .nav-group {
-        gap: 4px;
-      }
-      
-      .nav-btn {
-        padding: 4px 6px;
-        font-size: 11px;
-      }
-      
-      /* Ocultar elementos menos importantes en tablets */
-      .nav-btn .btn-text {
-        display: none;
-      }
-      
-      .nav-btn i {
-        margin-right: 0;
-      }
-      
-      .user-info .username {
-        display: none;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .navbar-content {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-      }
-
-      .navbar-actions {
-        flex-direction: column;
-        gap: 6px;
-      }
-
-      .nav-group {
-        justify-content: center;
-        gap: 4px;
-      }
-
-      .nav-btn {
-        flex: 1;
-        justify-content: center;
-        min-width: 60px;
-      }
-
-      .user-menu {
-        justify-content: center;
-        width: 100%;
-      }
-
-      .coberturas-dropdown {
-        min-width: 280px;
-        right: 0 !important;
-        left: auto !important;
-      }
-      
-      /* Mostrar texto en móviles */
-      .nav-btn .btn-text {
-        display: inline;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .coberturas-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .nav-btn {
-        padding: 6px 8px;
-        font-size: 12px;
-      }
-    }
-
-    /* ===== ESTILOS PARA ICONOS SOLOS ===== */
-    .icon-only .btn-text {
+    /* ===== OVERLAY MÓVIL ===== */
+    .sidebar-overlay {
       display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 999;
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+
+    /* ===== RESPONSIVIDAD ===== */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: var(--sidebar-width) !important;
+        transform: translateX(-100%);
+        transition: transform var(--transition);
+      }
+
+      .sidebar.mobile-open {
+        transform: translateX(0);
+      }
+
+      .sidebar-overlay.active {
+        display: block;
+        opacity: 1;
+      }
+
+      .main-content,
+      .main-content.expanded {
+        margin-left: 0 !important;
+      }
+
+      .sidebar-toggle { display: none; }
+
+      .topbar { padding: 0 16px; }
+
+      main.page-main { padding: 16px; }
     }
     </style>
 </head>
 <body>
-    <!-- ===== NAVBAR OPTIMIZADA ===== -->
-    <nav class="custom-navbar">
-        <div class="container">
-            <div class="navbar-content">
-                <a class="navbar-brand" href="{{ url_for('index') }}">
-                    <i class="fas fa-tools"></i>
-                    Soporte Técnico
-                </a>
-                
-                <div class="navbar-actions">
-                    {% if current_user.is_authenticated %}
-                    <!-- Grupo de navegación principal - Más compacto -->
-                    <div class="nav-group">
-                        <!-- Navegación esencial -->
-                        <a class="nav-btn secondary {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">
-                            <i class="fas fa-home"></i>
-                            <span class="btn-text">Inicio</span>
-                        </a>
 
-                        <a class="nav-btn secondary" href="{{ url_for('soluciones_visuales') }}">
-                            <i class="fas fa-images"></i>
-                            <span class="btn-text">Soluciones</span>
-                        </a>
+<div class="layout-wrapper">
 
-                        <!-- Información General - Agregado aquí -->
-                        <a class="nav-btn secondary {% if request.endpoint == 'informacion_general' %}active{% endif %}" href="{{ url_for('informacion_general') }}">
-                            <i class="fas fa-info-circle"></i>
-                            <span class="btn-text">Información</span>
-                        </a>
+  <!-- ===== SIDEBAR LATERAL ===== -->
+  <aside class="sidebar" id="sidebar">
+    <!-- Botón colapsar (solo desktop) -->
+    <button class="sidebar-toggle" id="sidebarToggle" title="Colapsar menú">
+      <i class="fas fa-chevron-left"></i>
+    </button>
 
-                        <!-- Agregar en el nav-group, después del botón de Información -->
-                        <a class="nav-btn secondary {% if request.endpoint and 'sst' in request.endpoint %}active{% endif %}" href="{{ url_for('sst_dashboard') }}">
-                            <i class="fas fa-shield-alt"></i>
-                            <span class="btn-text">SST</span>
-                        </a>
+    <!-- Marca -->
+    <a class="sidebar-brand" href="{{ url_for('index') }}">
+      <div class="sidebar-brand-icon"><i class="fas fa-tools"></i></div>
+      <span class="sidebar-brand-text">Soporte Técnico</span>
+    </a>
 
-                        <!-- === BOTÓN PDF CORREGIDO PARA RENDER === -->
-                        <a class="nav-btn primary" href="{{ url_for('static', filename='documentos/politicas-seguridad-crm-softv.pdf') }}" target="_blank">
-                            <i class="fas fa-file-pdf"></i>
-                            <span class="btn-text">Políticas PDF</span>
-                        </a>
+    <!-- Navegación -->
+    <nav class="sidebar-nav" id="sidebarNav">
+      {% if current_user.is_authenticated %}
 
-                        <!-- Menú desplegable para elementos adicionales -->
-                        <div class="dropdown more-menu">
-                            <button class="nav-btn secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-th"></i>
-                                <span class="btn-text">Más</span>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" href="{{ url_for('atencion_telefonica') }}">
-                                        <i class="fas fa-headset me-2"></i>Atención Telefónica
-                                    </a>
-                                </li>
-                                {% if tiene_permiso('agregar_fichas') %}
-                                <li>
-                                    <a class="dropdown-item" href="{{ url_for('agregar_ficha') }}">
-                                        <i class="fas fa-plus me-2"></i>Agregar Ficha
-                                    </a>
-                                </li>
-                                {% endif %}
-                                {% if current_user.rol == 'admin' %}
-                                <li>
-                                    <a class="dropdown-item" href="{{ url_for('gestion_usuarios') }}">
-                                        <i class="fas fa-users me-2"></i>Gestionar Usuarios
-                                    </a>
-                                </li>
-                                {% endif %}
-                            </ul>
-                        </div>
+      <div class="nav-label">Principal</div>
 
-                        <!-- Dropdown de VLANS - Siempre visible -->
-                        <div class="dropdown">
-                            <button class="nav-btn secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-map-marker-alt"></i>
-                                <span class="btn-text">VLANS</span>
-                            </button>
-                            <div class="dropdown-menu coberturas-dropdown">
-                                <div class="dropdown-header">
-                                    <i class="fas fa-satellite-dish me-2"></i>
-                                    VLANS por Ubicación
-                                </div>
-                                <div class="coberturas-grid">
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">Faca 1</div>
-                                        <div class="cobertura-details">1100 y 1200</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">Faca 2</div>
-                                        <div class="cobertura-details">1100 y 1200</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">Rosal</div>
-                                        <div class="cobertura-details">158</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">Cachipay/Anolaima</div>
-                                        <div class="cobertura-details">200 y 201</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">Girardot</div>
-                                        <div class="cobertura-details">2000</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">La Mesa/Tocaima</div>
-                                        <div class="cobertura-details">300</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">Mesitas</div>
-                                        <div class="cobertura-details">400 y 401</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">Santandercito</div>
-                                        <div class="cobertura-details">402</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">Bojacá</div>
-                                        <div class="cobertura-details">600</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">Alban</div>
-                                        <div class="cobertura-details">1100</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">Villeta</div>
-                                        <div class="cobertura-details">1800</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">Viotá</div>
-                                        <div class="cobertura-details">1500</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">Madrid</div>
-                                        <div class="cobertura-details">700</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">Quipile</div>
-                                        <div class="cobertura-details">301</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">Sasaima</div>
-                                        <div class="cobertura-details">1300</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">Guamal</div>
-                                        <div class="cobertura-details">334</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">San Martin</div>
-                                        <div class="cobertura-details">330 - 333</div>
-                                    </div>
-                                    <div class="cobertura-dropdown-item">
-                                        <div class="cobertura-location">Acacias</div>
-                                        <div class="cobertura-details">666</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Menú de usuario compacto -->
-                    <div class="user-menu">
-                        <div class="user-info">
-                            <i class="fas fa-user-circle"></i>
-                            <span class="username">{{ current_user.usuario }}</span>
-                            <span class="user-badge">{{ current_user.rol|title }}</span>
-                        </div>
-                        
-                        <div class="dropdown">
-                            <button class="nav-btn secondary dropdown-toggle icon-only" type="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-cog"></i>
-                                <span class="btn-text">Config</span>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <span class="dropdown-item-text">
-                                        <small>Conectado como</small>
-                                        <br>
-                                        <strong>{{ current_user.usuario }}</strong>
-                                    </span>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ url_for('cambiar_password') }}">
-                                        <i class="fas fa-key me-2"></i>Cambiar Contraseña
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
-                                        <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    {% else %}
-                    <a class="nav-btn primary" href="{{ url_for('login') }}">
-                        <i class="fas fa-sign-in-alt"></i>
-                        <span class="btn-text">Iniciar Sesión</span>
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+      <a class="nav-item-sidebar {% if request.endpoint == 'index' %}active{% endif %}"
+         href="{{ url_for('index') }}" data-tooltip="Inicio">
+        <div class="nav-item-icon"><i class="fas fa-home"></i></div>
+        <span class="nav-item-text">Inicio</span>
+      </a>
+
+      <a class="nav-item-sidebar {% if request.endpoint == 'buscar' %}active{% endif %}"
+         href="{{ url_for('buscar') }}" data-tooltip="Búsqueda Avanzada">
+        <div class="nav-item-icon"><i class="fas fa-search"></i></div>
+        <span class="nav-item-text">Búsqueda Avanzada</span>
+      </a>
+
+      <a class="nav-item-sidebar {% if request.endpoint == 'soluciones_visuales' %}active{% endif %}"
+         href="{{ url_for('soluciones_visuales') }}" data-tooltip="Soluciones Visuales">
+        <div class="nav-item-icon"><i class="fas fa-images"></i></div>
+        <span class="nav-item-text">Soluciones Visuales</span>
+      </a>
+
+      <a class="nav-item-sidebar {% if request.endpoint == 'informacion_general' %}active{% endif %}"
+         href="{{ url_for('informacion_general') }}" data-tooltip="Información General">
+        <div class="nav-item-icon"><i class="fas fa-info-circle"></i></div>
+        <span class="nav-item-text">Información General</span>
+      </a>
+
+      <a class="nav-item-sidebar {% if request.endpoint == 'atencion_telefonica' %}active{% endif %}"
+         href="{{ url_for('atencion_telefonica') }}" data-tooltip="Atención Telefónica">
+        <div class="nav-item-icon"><i class="fas fa-headset"></i></div>
+        <span class="nav-item-text">Atención Telefónica</span>
+      </a>
+
+      <div class="nav-label">Seguridad</div>
+
+      <a class="nav-item-sidebar {% if request.endpoint and 'sst' in request.endpoint %}active{% endif %}"
+         href="{{ url_for('sst_dashboard') }}" data-tooltip="SST">
+        <div class="nav-item-icon"><i class="fas fa-shield-alt"></i></div>
+        <span class="nav-item-text">SST</span>
+      </a>
+
+      <a class="nav-item-sidebar accent"
+         href="{{ url_for('static', filename='documentos/politicas-seguridad-crm-softv.pdf') }}"
+         target="_blank" data-tooltip="Políticas PDF">
+        <div class="nav-item-icon"><i class="fas fa-file-pdf"></i></div>
+        <span class="nav-item-text">Políticas PDF</span>
+      </a>
+
+      <!-- VLANS con submenú -->
+      <div class="nav-label">Red</div>
+
+      <button class="nav-item-sidebar" id="vlansToggle"
+              aria-expanded="false" data-tooltip="VLANS"
+              onclick="toggleSubmenu('vlansMenu', this)">
+        <div class="nav-item-icon"><i class="fas fa-map-marker-alt"></i></div>
+        <span class="nav-item-text">VLANS</span>
+        <i class="fas fa-chevron-down nav-item-chevron"></i>
+      </button>
+
+      <div class="submenu" id="vlansMenu">
+        <span class="submenu-item"><span>Faca 1</span><span class="submenu-badge">1100/1200</span></span>
+        <span class="submenu-item"><span>Faca 2</span><span class="submenu-badge">1100/1200</span></span>
+        <span class="submenu-item"><span>Rosal</span><span class="submenu-badge">158</span></span>
+        <span class="submenu-item"><span>Cachipay/Anolaima</span><span class="submenu-badge">200/201</span></span>
+        <span class="submenu-item"><span>Girardot</span><span class="submenu-badge">2000</span></span>
+        <span class="submenu-item"><span>La Mesa/Tocaima</span><span class="submenu-badge">300</span></span>
+        <span class="submenu-item"><span>Mesitas</span><span class="submenu-badge">400/401</span></span>
+        <span class="submenu-item"><span>Santandercito</span><span class="submenu-badge">402</span></span>
+        <span class="submenu-item"><span>Bojacá</span><span class="submenu-badge">600</span></span>
+        <span class="submenu-item"><span>Alban</span><span class="submenu-badge">1100</span></span>
+        <span class="submenu-item"><span>Villeta</span><span class="submenu-badge">1800</span></span>
+        <span class="submenu-item"><span>Viotá</span><span class="submenu-badge">1500</span></span>
+        <span class="submenu-item"><span>Madrid</span><span class="submenu-badge">700</span></span>
+        <span class="submenu-item"><span>Quipile</span><span class="submenu-badge">301</span></span>
+        <span class="submenu-item"><span>Sasaima</span><span class="submenu-badge">1300</span></span>
+        <span class="submenu-item"><span>Guamal</span><span class="submenu-badge">334</span></span>
+        <span class="submenu-item"><span>San Martín</span><span class="submenu-badge">330-333</span></span>
+        <span class="submenu-item"><span>Acacias</span><span class="submenu-badge">666</span></span>
+      </div>
+
+      {% if tiene_permiso('agregar_fichas') %}
+      <div class="nav-label">Administración</div>
+      <a class="nav-item-sidebar {% if request.endpoint == 'agregar_ficha' %}active{% endif %}"
+         href="{{ url_for('agregar_ficha') }}" data-tooltip="Agregar Ficha">
+        <div class="nav-item-icon"><i class="fas fa-plus"></i></div>
+        <span class="nav-item-text">Agregar Ficha</span>
+      </a>
+      {% endif %}
+
+      {% if current_user.rol == 'admin' %}
+      <a class="nav-item-sidebar {% if request.endpoint == 'gestion_usuarios' %}active{% endif %}"
+         href="{{ url_for('gestion_usuarios') }}" data-tooltip="Gestionar Usuarios">
+        <div class="nav-item-icon"><i class="fas fa-users"></i></div>
+        <span class="nav-item-text">Gestionar Usuarios</span>
+      </a>
+      {% endif %}
+
+      {% endif %}{# end is_authenticated #}
     </nav>
 
-    <!-- ===== CONTENIDO PRINCIPAL ===== -->
-    <main class="main-container">
-        <div class="container">
-            <!-- Mensajes flash -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show mb-4" role="alert">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
-                                <span>{{ message }}</span>
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            <!-- Contenido de la página -->
-            {% block content %}{% endblock %}
+    <!-- Footer del sidebar: info de usuario -->
+    {% if current_user.is_authenticated %}
+    <div class="sidebar-footer">
+      <div class="dropdown">
+        <div class="user-card" data-bs-toggle="dropdown">
+          <div class="user-avatar"><i class="fas fa-user"></i></div>
+          <div class="user-details">
+            <div class="user-name">{{ current_user.usuario }}</div>
+            <div class="user-role">{{ current_user.rol|title }}</div>
+          </div>
         </div>
+        <ul class="dropdown-menu dropdown-menu-end mb-1" style="min-width:180px; font-size:13px;">
+          <li>
+            <span class="dropdown-item-text">
+              <small class="text-muted">Conectado como</small><br>
+              <strong>{{ current_user.usuario }}</strong>
+            </span>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item" href="{{ url_for('cambiar_password') }}">
+              <i class="fas fa-key me-2"></i>Cambiar Contraseña
+            </a>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+              <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+  </aside>
+
+  <!-- Overlay para cerrar en móvil -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- ===== CONTENIDO PRINCIPAL ===== -->
+  <div class="main-content" id="mainContent">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <!-- Botón hamburguesa (visible solo en móvil) -->
+      <button class="topbar-btn ghost d-md-none" id="mobileMenuBtn" style="border:none;">
+        <i class="fas fa-bars"></i>
+      </button>
+      <span class="topbar-title d-none d-md-block">{% block page_title %}Sistema de Soporte Técnico{% endblock %}</span>
+
+      <div class="topbar-right">
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('buscar') }}" class="topbar-btn ghost">
+          <i class="fas fa-search"></i>
+          <span class="d-none d-sm-inline">Buscar</span>
+        </a>
+        {% if tiene_permiso('agregar_fichas') %}
+        <a href="{{ url_for('agregar_ficha') }}" class="topbar-btn primary">
+          <i class="fas fa-plus"></i>
+          <span class="d-none d-sm-inline">Nueva Ficha</span>
+        </a>
+        {% endif %}
+        {% else %}
+        <a href="{{ url_for('login') }}" class="topbar-btn primary">
+          <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Mensajes flash -->
+    <div style="padding: 0 24px; padding-top: 16px;">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show mb-3" role="alert">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                <span>{{ message }}</span>
+              </div>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+
+    <!-- Contenido de página -->
+    <main class="page-main">
+      {% block content %}{% endblock %}
     </main>
 
-    <!-- ===== PIE DE PÁGINA ===== -->
-    <footer class="mt-auto py-3">
-        <div class="container text-center">
-            <p class="mb-0 text-muted" style="font-size: 12px;">&copy; 2024 Soporte Técnico. Todos los derechos reservados.</p>
-        </div>
+    <!-- Footer -->
+    <footer class="page-footer">
+      <p>&copy; 2024 Soporte Técnico. Todos los derechos reservados.</p>
     </footer>
 
-    <!-- ===== SCRIPTS ===== -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Auto-cierre de alertas después de 5 segundos
-            setTimeout(function() {
-                const alerts = document.querySelectorAll('.alert');
-                alerts.forEach(function(alert) {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                });
-            }, 5000);
-        });
-    </script>
+  </div>{# end main-content #}
+</div>{# end layout-wrapper #}
+
+<!-- ===== SCRIPTS ===== -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // ── Colapsar / expandir sidebar (desktop) ──
+  const sidebar     = document.getElementById('sidebar');
+  const mainContent = document.getElementById('mainContent');
+  const toggleBtn   = document.getElementById('sidebarToggle');
+
+  const COLLAPSED_KEY = 'sidebar_collapsed';
+  let collapsed = localStorage.getItem(COLLAPSED_KEY) === 'true';
+
+  function applyCollapsed() {
+    sidebar.classList.toggle('collapsed', collapsed);
+    mainContent.classList.toggle('expanded', collapsed);
+  }
+
+  applyCollapsed();
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      collapsed = !collapsed;
+      localStorage.setItem(COLLAPSED_KEY, collapsed);
+      applyCollapsed();
+    });
+  }
+
+  // ── Menú móvil ──
+  const mobileBtn  = document.getElementById('mobileMenuBtn');
+  const overlay    = document.getElementById('sidebarOverlay');
+
+  function openMobile() {
+    sidebar.classList.add('mobile-open');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMobile() {
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  if (mobileBtn) mobileBtn.addEventListener('click', openMobile);
+  if (overlay)   overlay.addEventListener('click', closeMobile);
+
+  // ── Submenús ──
+  function toggleSubmenu(id, btn) {
+    const menu = document.getElementById(id);
+    if (!menu) return;
+    const isOpen = menu.classList.contains('open');
+    // cerrar todos
+    document.querySelectorAll('.submenu.open').forEach(m => m.classList.remove('open'));
+    document.querySelectorAll('.nav-item-sidebar[aria-expanded="true"]').forEach(b => b.setAttribute('aria-expanded','false'));
+    if (!isOpen) {
+      menu.classList.add('open');
+      btn.setAttribute('aria-expanded','true');
+    }
+  }
+
+  // ── Auto-cierre de alertas ──
+  setTimeout(() => {
+    document.querySelectorAll('.alert').forEach(a => {
+      try { new bootstrap.Alert(a).close(); } catch(e) {}
+    });
+  }, 5000);
+
+  // ── Inicializar tooltips Bootstrap ──
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+    new bootstrap.Tooltip(el);
+  });
+</script>
 </body>
 </html>
-
