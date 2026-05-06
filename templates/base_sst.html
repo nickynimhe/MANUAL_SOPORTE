@@ -541,13 +541,22 @@
       <i class="fas fa-chevron-left"></i>
     </button>
 
-    <!-- Marca SST -->
+        <!-- Marca SST con Logo -->
     <a class="sidebar-brand" href="{{ url_for('sst_dashboard') }}">
-      <div class="sidebar-brand-icon"><i class="fas fa-shield-alt"></i></div>
-      <div class="sidebar-brand-texts">
-        <div class="sidebar-brand-title">SST</div>
-        <div class="sidebar-brand-sub">Seguridad y Salud en el Trabajo</div>
-      </div>
+        <div class="sidebar-brand-icon">
+            <!-- Logo pequeño para el icono (cuando está colapsado) -->
+            <img src="{{ url_for('static', filename='img/logo-sky-producciones.png') }}" 
+                 alt="Sky Producciones" 
+                 style="width: 28px; height: 28px; object-fit: contain;">
+        </div>
+        <div class="sidebar-brand-texts">
+            <div class="sidebar-brand-title">
+                <img src="{{ url_for('static', filename='img/logo-sky-producciones.png') }}" 
+                     alt="Sky Producciones SAS" 
+                     style="height: 20px; width: auto; max-width: 120px; object-fit: contain;">
+            </div>
+            <div class="sidebar-brand-sub">Seguridad y Salud en el Trabajo</div>
+        </div>
     </a>
 
     <!-- Volver a Soporte Técnico -->
