@@ -3,122 +3,160 @@
 {% block title %}Editar Contenido SST{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- ENCABEZADO -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0">
-                <i class="fas fa-edit text-primary"></i> 
-                Editar Contenido SST
-            </h1>
-            <p class="text-muted mb-0">Modificar contenido del sistema de seguridad</p>
-        </div>
-        <div>
-            <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Volver al Listado
-            </a>
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- HEADER CON EFECTO SHIMMER -->
+    <div class="sst-header bg-gradient-corporate rounded-4 mb-4 p-4 text-white shadow-lg">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+            <div class="mb-3 mb-md-0">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-white rounded-3 p-2 me-3 shadow-sm">
+                        <i class="fas fa-edit" style="color: #2658A5; font-size: 1.8rem;"></i>
+                    </div>
+                    <div>
+                        <h1 class="h2 fw-bold mb-1 text-white">Editar Contenido SST</h1>
+                        <p class="text-white-80 mb-0">Modificar contenido del sistema de seguridad</p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <a href="{{ url_for('sst_contenido') }}" class="btn btn-light btn-sm fw-medium shadow-sm">
+                    <i class="fas fa-arrow-left me-1"></i> Volver al Listado
+                </a>
+            </div>
         </div>
     </div>
 
+    <!-- MENSAJES FLASH -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <div class="alert alert-custom fade-in mb-4" style="border-left: 4px solid {% if category == 'error' %}#C23538{% elif category == 'success' %}#28a745{% else %}#2658A5{% endif %}; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 12px 16px;">
+                    <div class="d-flex align-items-center">
+                        <i class="fas {% if category == 'error' %}fa-exclamation-circle{% elif category == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} me-2" style="color: {% if category == 'error' %}#C23538{% elif category == 'success' %}#28a745{% else %}#2658A5{% endif %};"></i>
+                        <span>{{ message }}</span>
+                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                    </div>
                 </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
 
     <!-- INFORMACIÓN DEL CONTENIDO -->
-    <div class="card mb-4">
-        <div class="card-header bg-secondary text-white">
-            <h6 class="mb-0"><i class="fas fa-info-circle"></i> Información del Contenido</h6>
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
+            <h6 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-info-circle me-2"></i> Información del Contenido
+            </h6>
         </div>
-        <div class="card-body">
-            <div class="row">
+        <div class="card-body p-4">
+            <div class="row g-3">
                 <div class="col-md-6">
-                    <p><strong>ID:</strong> {{ contenido.id }}</p>
-                    <p><strong>Estado:</strong> 
-                        <span class="badge {% if contenido.tiene_archivo %}bg-success{% else %}bg-warning{% endif %}">
+                    <div class="d-flex align-items-start gap-3 py-2">
+                        <i class="fas fa-id-card mt-1" style="color: #2658A5;"></i>
+                        <div>
+                            <small class="text-muted d-block">ID</small>
+                            <span class="fw-semibold">{{ contenido.id }}</span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3 py-2">
+                        <i class="fas fa-database mt-1" style="color: #28a745;"></i>
+                        <div>
+                            <small class="text-muted d-block">Estado</small>
                             {% if contenido.tiene_archivo %}
-                                <i class="fas fa-check"></i> Con archivo
+                            <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">
+                                <i class="fas fa-check me-1"></i> Con archivo
+                            </span>
                             {% else %}
-                                <i class="fas fa-exclamation"></i> Sin archivo
+                            <span class="badge rounded-pill px-2 py-1" style="background: #FFCC29; color: #282F4B;">
+                                <i class="fas fa-exclamation me-1"></i> Sin archivo
+                            </span>
                             {% endif %}
-                        </span>
-                    </p>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-6">
-                    <p><strong>Estado:</strong> 
-                        <span class="badge {% if contenido.es_obligatorio %}bg-warning{% else %}bg-info{% endif %}">
+                    <div class="d-flex align-items-start gap-3 py-2">
+                        <i class="fas fa-flag mt-1" style="color: #C23538;"></i>
+                        <div>
+                            <small class="text-muted d-block">Requerimiento</small>
                             {% if contenido.es_obligatorio %}
-                                <i class="fas fa-exclamation-circle"></i> Obligatorio
+                            <span class="badge rounded-pill px-2 py-1" style="background: #C23538; color: white;">
+                                <i class="fas fa-exclamation-circle me-1"></i> Obligatorio
+                            </span>
                             {% else %}
-                                <i class="fas fa-check-circle"></i> Opcional
+                            <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">
+                                <i class="fas fa-check-circle me-1"></i> Opcional
+                            </span>
                             {% endif %}
-                        </span>
-                    </p>
-                    
+                        </div>
+                    </div>
                     {% if contenido.archivo_nombre and contenido.archivo_nombre != 'Sin archivo' %}
-                    <p><strong>Archivo actual:</strong> 
-                        <small class="text-muted">{{ contenido.archivo_nombre }}</small>
-                    </p>
+                    <div class="d-flex align-items-start gap-3 py-2">
+                        <i class="fas fa-file mt-1" style="color: #2658A5;"></i>
+                        <div>
+                            <small class="text-muted d-block">Archivo actual</small>
+                            <span class="fw-semibold small">{{ contenido.archivo_nombre }}</span>
+                        </div>
+                    </div>
                     {% endif %}
-                    
                     {% if contenido.archivo_tamano and contenido.archivo_tamano > 0 %}
-                    <p><strong>Tamaño:</strong> 
-                        <small class="text-muted">
-                            {% if contenido.tipo == 'video' or contenido.archivo_tamano > 1048576 %}
-                                {{ (contenido.archivo_tamano / 1024 / 1024)|round(2) }} MB
-                            {% else %}
-                                {{ (contenido.archivo_tamano / 1024)|round(1) }} KB
-                            {% endif %}
-                        </small>
-                    </p>
+                    <div class="d-flex align-items-start gap-3 py-2">
+                        <i class="fas fa-weight-hanging mt-1" style="color: #FFCC29;"></i>
+                        <div>
+                            <small class="text-muted d-block">Tamaño</small>
+                            <span class="fw-semibold small">
+                                {% if contenido.tipo == 'video' or contenido.archivo_tamano > 1048576 %}
+                                    {{ (contenido.archivo_tamano / 1024 / 1024)|round(2) }} MB
+                                {% else %}
+                                    {{ (contenido.archivo_tamano / 1024)|round(1) }} KB
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- FORMULARIO DE EDICIÓN (ESTO ES LO QUE FALTA) -->
-    <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="fas fa-edit"></i> Formulario de Edición</h5>
+    <!-- FORMULARIO DE EDICIÓN -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-edit me-2"></i> Formulario de Edición
+            </h5>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             <form method="POST" enctype="multipart/form-data" id="formEditarContenido">
-                <!-- Campo: Título -->
-                <div class="mb-3">
-                    <label for="titulo" class="form-label">
-                        <strong>Título *</strong>
-                        <small class="text-muted">(Nombre descriptivo del contenido)</small>
+                
+                <!-- Título -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-heading me-1" style="color: #C23538;"></i> Título *
                     </label>
-                    <input type="text" class="form-control" id="titulo" name="titulo" 
+                    <input type="text" class="form-control rounded-3" id="titulo" name="titulo" 
                            value="{{ contenido.titulo }}" required maxlength="200">
-                    <div class="form-text">Máximo 200 caracteres</div>
+                    <small class="text-muted">Máximo 200 caracteres</small>
                 </div>
 
-                <!-- Campo: Descripción -->
-                <div class="mb-3">
-                    <label for="descripcion" class="form-label">
-                        <strong>Descripción</strong>
-                        <small class="text-muted">(Opcional)</small>
+                <!-- Descripción -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-align-left me-1" style="color: #28a745;"></i> Descripción
                     </label>
-                    <textarea class="form-control" id="descripcion" name="descripcion" 
+                    <textarea class="form-control rounded-3" id="descripcion" name="descripcion" 
                               rows="3" maxlength="500">{{ contenido.descripcion }}</textarea>
-                    <div class="form-text">Describe el contenido (máximo 500 caracteres)</div>
+                    <small class="text-muted">Describe el contenido (máximo 500 caracteres)</small>
                 </div>
 
-                <div class="row">
-                    <!-- Campo: Tipo -->
-                    <div class="col-md-6 mb-3">
-                        <label for="tipo" class="form-label">
-                            <strong>Tipo de Contenido *</strong>
+                <div class="row g-3">
+                    <!-- Tipo -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-tag me-1" style="color: #FFCC29;"></i> Tipo de Contenido *
                         </label>
-                        <select class="form-select" id="tipo" name="tipo" required>
+                        <select class="form-select rounded-3" id="tipo" name="tipo" required>
                             <option value="">Seleccione un tipo...</option>
                             <option value="documento" {% if contenido.tipo == 'documento' %}selected{% endif %}>📄 Documento</option>
                             <option value="video" {% if contenido.tipo == 'video' %}selected{% endif %}>🎬 Video</option>
@@ -126,113 +164,107 @@
                             <option value="enlace" {% if contenido.tipo == 'enlace' %}selected{% endif %}>🔗 Enlace</option>
                             <option value="presentacion" {% if contenido.tipo == 'presentacion' %}selected{% endif %}>📊 Presentación</option>
                         </select>
-                        <div class="form-text">Selecciona el tipo de contenido</div>
                     </div>
 
-                    <!-- Campo: Categoría -->
-                    <div class="col-md-6 mb-3">
-                        <label for="categoria_id" class="form-label">
-                            <strong>Categoría *</strong>
+                    <!-- Categoría -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-folder me-1" style="color: #2658A5;"></i> Categoría *
                         </label>
-                        <select class="form-select" id="categoria_id" name="categoria_id" required>
+                        <select class="form-select rounded-3" id="categoria_id" name="categoria_id" required>
                             <option value="">Seleccione una categoría...</option>
                             {% for cat in categorias %}
                             <option value="{{ cat.id }}" 
-                                    {% if contenido.categoria_id == cat.id %}selected{% endif %}
-                                    style="color: {{ cat.color }};">
+                                    {% if contenido.categoria_id == cat.id %}selected{% endif %}>
                                 {{ cat.nombre }}
                             </option>
                             {% endfor %}
                         </select>
-                        <div class="form-text">Organiza por categorías</div>
                     </div>
                 </div>
 
                 <!-- Campos dinámicos según tipo -->
-                <div id="camposDinamicos">
+                <div id="camposDinamicos" class="mt-4">
                     <!-- Archivo Local -->
-                    <div class="mb-3" id="campoArchivoLocal">
-                        <label for="archivo_local" class="form-label">
-                            <strong>Subir Archivo</strong>
-                            <small class="text-muted">(Opcional - reemplaza el actual)</small>
+                    <div class="mb-4" id="campoArchivoLocal">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-upload me-1" style="color: #28a745;"></i> Subir Archivo
                         </label>
-                        <input type="file" class="form-control" id="archivo_local" name="archivo_local">
-                        <div class="form-text">
+                        <input type="file" class="form-control rounded-3" id="archivo_local" name="archivo_local">
+                        <small class="text-muted">
                             Extensiones permitidas: PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, JPG, JPEG, PNG, GIF, MP4, AVI, MP3
                             <br>Máximo: 50MB
-                        </div>
+                        </small>
                         {% if contenido.tiene_archivo %}
-                        <div class="alert alert-warning mt-2">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Al subir un nuevo archivo, el archivo actual será reemplazado.
+                        <div class="alert mt-2" style="background: rgba(255,204,41,0.1); border-left: 4px solid #FFCC29;">
+                            <i class="fas fa-exclamation-triangle" style="color: #FFCC29;"></i>
+                            <span class="fw-semibold" style="color: #D4A000;">Al subir un nuevo archivo, el archivo actual será reemplazado.</span>
                         </div>
                         {% endif %}
                     </div>
 
                     <!-- URL de Archivo -->
-                    <div class="mb-3" id="campoArchivoURL">
-                        <label for="archivo_url" class="form-label">
-                            <strong>URL del Archivo</strong>
-                            <small class="text-muted">(Opcional - enlace externo)</small>
+                    <div class="mb-4" id="campoArchivoURL">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-link me-1" style="color: #2658A5;"></i> URL del Archivo
                         </label>
-                        <input type="url" class="form-control" id="archivo_url" name="archivo_url"
+                        <input type="url" class="form-control rounded-3" id="archivo_url" name="archivo_url"
                                value="{{ contenido.archivo_url if contenido.archivo_url else '' }}"
                                placeholder="https://ejemplo.com/archivo.pdf">
-                        <div class="form-text">Enlace a archivo externo (Google Drive, Dropbox, etc.)</div>
+                        <small class="text-muted">Enlace a archivo externo (Google Drive, Dropbox, etc.)</small>
                     </div>
 
                     <!-- URL de Video -->
-                    <div class="mb-3" id="campoVideoURL">
-                        <label for="video_url" class="form-label">
-                            <strong>URL de Video</strong>
-                            <small class="text-muted">(YouTube, Vimeo, etc.)</small>
+                    <div class="mb-4" id="campoVideoURL">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-video me-1" style="color: #C23538;"></i> URL de Video
                         </label>
-                        <input type="url" class="form-control" id="video_url" name="video_url"
+                        <input type="url" class="form-control rounded-3" id="video_url" name="video_url"
                                value="{{ contenido.video_url if contenido.video_url else '' }}"
                                placeholder="https://youtube.com/watch?v=...">
-                        <div class="form-text">Solo para contenido tipo video</div>
+                        <small class="text-muted">Solo para contenido tipo video (YouTube, Vimeo, etc.)</small>
                     </div>
                 </div>
 
-                <div class="row">
-                    <!-- Campo: Tags -->
-                    <div class="col-md-8 mb-3">
-                        <label for="tags" class="form-label">
-                            <strong>Etiquetas</strong>
-                            <small class="text-muted">(Opcional)</small>
+                <div class="row g-3 mt-2">
+                    <!-- Tags -->
+                    <div class="col-md-8">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-hashtag me-1" style="color: #28a745;"></i> Etiquetas
                         </label>
-                        <input type="text" class="form-control" id="tags" name="tags"
+                        <input type="text" class="form-control rounded-3" id="tags" name="tags"
                                value="{{ contenido.tags }}"
                                placeholder="seguridad, proteccion, equipo, emergencia">
-                        <div class="form-text">Separa con comas (ej: seguridad,proteccion,equipo)</div>
+                        <small class="text-muted">Separa con comas (ej: seguridad,proteccion,equipo)</small>
                     </div>
 
-                    <!-- Campo: Obligatorio -->
-                    <div class="col-md-4 mb-3">
-                        <div class="form-check form-switch mt-4">
+                    <!-- Obligatorio -->
+                    <div class="col-md-4">
+                        <div class="form-check form-switch mt-4 pt-2">
                             <input class="form-check-input" type="checkbox" id="es_obligatorio" 
-                                   name="es_obligatorio" {% if contenido.es_obligatorio %}checked{% endif %}>
-                            <label class="form-check-label" for="es_obligatorio">
-                                <strong>Contenido Obligatorio</strong>
+                                   name="es_obligatorio" {% if contenido.es_obligatorio %}checked{% endif %}
+                                   style="cursor: pointer;">
+                            <label class="form-check-label fw-semibold" for="es_obligatorio" style="color: #C23538;">
+                                <i class="fas fa-star-of-life me-1"></i> Contenido Obligatorio
                             </label>
+                            <div class="small text-muted">Los usuarios deben ver este contenido</div>
                         </div>
-                        <div class="form-text">Los usuarios deben completar este contenido</div>
                     </div>
                 </div>
 
                 <!-- Botones de acción -->
-                <div class="d-flex justify-content-between mt-4">
+                <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
                     <div>
-                        <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times"></i> Cancelar
+                        <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-secondary rounded-3 px-4">
+                            <i class="fas fa-times me-1"></i> Cancelar
                         </a>
                     </div>
-                    <div>
-                        <button type="button" class="btn btn-warning me-2" onclick="restaurarOriginal()">
-                            <i class="fas fa-undo"></i> Restaurar Original
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn rounded-3 px-4" onclick="restaurarOriginal()" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%); border: none; color: #282F4B;">
+                            <i class="fas fa-undo me-1"></i> Restaurar Original
                         </button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Guardar Cambios
+                        <button type="submit" class="btn rounded-3 px-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; color: white;">
+                            <i class="fas fa-save me-1"></i> Guardar Cambios
                         </button>
                     </div>
                 </div>
@@ -241,7 +273,6 @@
     </div>
 </div>
 
-<!-- JavaScript para manejar campos dinámicos -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const tipoSelect = document.getElementById('tipo');
@@ -251,21 +282,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const archivoURLInput = document.getElementById('archivo_url');
     const videoURLInput = document.getElementById('video_url');
 
-    // Estado inicial
-    actualizarCampos();
-
-    // Cambiar campos cuando cambia el tipo
-    tipoSelect.addEventListener('change', actualizarCampos);
-
     function actualizarCampos() {
         const tipo = tipoSelect.value;
         
-        // Ocultar todos primero
         campoArchivoLocal.style.display = 'block';
         campoArchivoURL.style.display = 'block';
         campoVideoURL.style.display = 'block';
         
-        // Mostrar según tipo
         switch(tipo) {
             case 'video':
                 campoVideoURL.style.display = 'block';
@@ -294,11 +317,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
                 
             default:
-                // Por defecto mostrar todos
                 archivoURLInput.required = false;
                 videoURLInput.required = false;
         }
     }
+
+    tipoSelect.addEventListener('change', actualizarCampos);
+    actualizarCampos();
 
     // Validación antes de enviar
     document.getElementById('formEditarContenido').addEventListener('submit', function(e) {
@@ -309,7 +334,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let error = '';
         
-        // Validaciones específicas por tipo
         if (tipo === 'video') {
             if (!videoURL && !archivoLocal) {
                 error = 'Para video debe proporcionar una URL de video o subir un archivo';
@@ -331,7 +355,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Función para restaurar valores originales
 function restaurarOriginal() {
     if (confirm('¿Estás seguro de que quieres restaurar los valores originales? Se perderán todos los cambios no guardados.')) {
         location.reload();
@@ -340,23 +363,80 @@ function restaurarOriginal() {
 </script>
 
 <style>
-/* Estilos para mejorar la interfaz */
-.form-label strong {
-    color: #2c3e50;
+/* Efecto shimmer para el header */
+.bg-gradient-corporate {
+    background: linear-gradient(135deg, #2658A5 0%, #1a3f73 50%, #282F4B 100%) !important;
+    position: relative;
+    overflow: hidden;
 }
 
-.form-switch .form-check-input:checked {
-    background-color: #198754;
-    border-color: #198754;
+.bg-gradient-corporate::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    animation: shimmer 8s infinite linear;
+}
+
+@keyframes shimmer {
+    0% { transform: translate(-30%, -30%) rotate(0deg); }
+    100% { transform: translate(30%, 30%) rotate(360deg); }
+}
+
+/* Formulario */
+.form-control, .form-select {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #2658A5;
+    box-shadow: 0 0 0 3px rgba(38,88,165,0.15);
+}
+
+.form-check-input:checked {
+    background-color: #C23538;
+    border-color: #C23538;
+}
+
+.btn {
+    transition: all 0.2s ease;
+    border-radius: 12px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .card {
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    animation: fadeIn 0.4s ease;
 }
 
-.card-header {
-    border-radius: 10px 10px 0 0 !important;
+.fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .d-flex.gap-2 {
+        justify-content: center;
+    }
 }
 </style>
 {% endblock %}
