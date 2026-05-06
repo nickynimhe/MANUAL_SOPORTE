@@ -3,96 +3,136 @@
 {% block title %}Editar Actividad - Plan Anual PESV{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2><i class="fas fa-edit text-warning"></i> Editar Actividad</h2>
-                <a href="{{ url_for('sst_plan_anual_actividad_detalle', id=actividad.id) }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Cancelar
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- HEADER CON EFECTO SHIMMER -->
+    <div class="sst-header bg-gradient-corporate rounded-4 mb-4 p-4 text-white shadow-lg">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+            <div class="mb-3 mb-md-0">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-white rounded-3 p-2 me-3 shadow-sm">
+                        <i class="fas fa-edit" style="color: #2658A5; font-size: 1.8rem;"></i>
+                    </div>
+                    <div>
+                        <h1 class="h2 fw-bold mb-1 text-white">Editar Actividad</h1>
+                        <p class="text-white-80 mb-0">{{ actividad.actividad[:60] if actividad.actividad else 'Modifique los campos necesarios' }}</p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <a href="{{ url_for('sst_plan_anual_actividad_detalle', id=actividad.id) }}" class="btn btn-light btn-sm fw-medium shadow-sm">
+                    <i class="fas fa-arrow-left me-1"></i> Cancelar
                 </a>
             </div>
         </div>
     </div>
 
+    <!-- MENSAJES FLASH -->
+    <div id="flashMessages"></div>
+
     <form method="POST">
-        <div class="row">
+        <div class="row g-4">
             <!-- COLUMNA IZQUIERDA: DATOS BÁSICOS -->
             <div class="col-lg-6">
-                <div class="card mb-3">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="fas fa-info-circle"></i> Información Básica</h5>
+                <div class="card border-0 shadow-sm overflow-hidden">
+                    <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                        <h5 class="mb-0 fw-semibold text-white">
+                            <i class="fas fa-info-circle me-2"></i> Información Básica
+                        </h5>
                     </div>
-                    <div class="card-body">
+                    <div class="card-body p-4">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Actividad *</label>
-                            <textarea name="actividad" class="form-control" rows="3" required>{{ actividad.actividad }}</textarea>
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-tasks me-1" style="color: #C23538;"></i> Actividad *
+                            </label>
+                            <textarea name="actividad" class="form-control rounded-3" rows="3" required>{{ actividad.actividad }}</textarea>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Evidencia</label>
-                            <input type="text" name="evidencia" class="form-control" 
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-file-alt me-1" style="color: #FFCC29;"></i> Evidencia
+                            </label>
+                            <input type="text" name="evidencia" class="form-control rounded-3" 
                                    value="{{ actividad.evidencia or '' }}" maxlength="500">
+                            <small class="text-muted">Documento o registro que soporta la actividad</small>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Ciclo PHVA *</label>
-                            <select name="ciclo_phva" class="form-select" required>
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-sync-alt me-1" style="color: #2658A5;"></i> Ciclo PHVA *
+                            </label>
+                            <select name="ciclo_phva" class="form-select rounded-3" required>
                                 <option value="">Seleccionar...</option>
-                                <option value="Planear" {% if actividad.ciclo_phva == 'Planear' %}selected{% endif %}>Planear</option>
-                                <option value="Hacer" {% if actividad.ciclo_phva == 'Hacer' %}selected{% endif %}>Hacer</option>
-                                <option value="Verificar" {% if actividad.ciclo_phva == 'Verificar' %}selected{% endif %}>Verificar</option>
-                                <option value="Actuar" {% if actividad.ciclo_phva == 'Actuar' %}selected{% endif %}>Actuar</option>
+                                <option value="Planear" {% if actividad.ciclo_phva == 'Planear' %}selected{% endif %}>📋 Planear</option>
+                                <option value="Hacer" {% if actividad.ciclo_phva == 'Hacer' %}selected{% endif %}>🔨 Hacer</option>
+                                <option value="Verificar" {% if actividad.ciclo_phva == 'Verificar' %}selected{% endif %}>🔍 Verificar</option>
+                                <option value="Actuar" {% if actividad.ciclo_phva == 'Actuar' %}selected{% endif %}>📈 Actuar</option>
                             </select>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Artículos del Decreto 1072</label>
-                            <input type="text" name="articulos_decreto" class="form-control" 
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-book me-1" style="color: #28a745;"></i> Artículos del Decreto 1072
+                            </label>
+                            <input type="text" name="articulos_decreto" class="form-control rounded-3" 
                                    value="{{ actividad.articulos_decreto or '' }}" maxlength="200">
+                            <small class="text-muted">Ej: 2.2.4.6.8, 2.2.4.6.9</small>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Nivel PESV</label>
-                            <input type="text" name="nivel_pesv" class="form-control" 
-                                   value="{{ actividad.nivel_pesv or '' }}" maxlength="100">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Responsables</label>
-                            <input type="text" name="responsables" class="form-control" 
-                                   value="{{ actividad.responsables or '' }}" maxlength="200">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Recursos</label>
-                            <input type="text" name="recursos" class="form-control" 
-                                   value="{{ actividad.recursos or '' }}" maxlength="200">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Estado</label>
-                            <select name="estado" class="form-select">
-                                <option value="pendiente" {% if actividad.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
-                                <option value="en_proceso" {% if actividad.estado == 'en_proceso' %}selected{% endif %}>En Proceso</option>
-                                <option value="completado" {% if actividad.estado == 'completado' %}selected{% endif %}>Completado</option>
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-chart-line me-1" style="color: #C23538;"></i> Nivel PESV
+                            </label>
+                            <select name="nivel_pesv" class="form-select rounded-3">
+                                <option value="">Seleccionar...</option>
+                                <option value="Estándar" {% if actividad.nivel_pesv == 'Estándar' %}selected{% endif %}>📊 Estándar</option>
+                                <option value="Avanzado" {% if actividad.nivel_pesv == 'Avanzado' %}selected{% endif %}>🚀 Avanzado</option>
+                                <option value="Todos los niveles" {% if actividad.nivel_pesv == 'Todos los niveles' %}selected{% endif %}>🌐 Todos los niveles</option>
+                                <option value="N/A" {% if actividad.nivel_pesv == 'N/A' %}selected{% endif %}>N/A</option>
                             </select>
                         </div>
 
-                        <!-- BUSCA ESTA SECCIÓN EN tu plan_anual_editar.html -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-user-tie me-1" style="color: #FFCC29;"></i> Responsables
+                            </label>
+                            <input type="text" name="responsables" class="form-control rounded-3" 
+                                   value="{{ actividad.responsables or '' }}" maxlength="200">
+                            <small class="text-muted">Ej: SST, Gerencia, COPASST, Comité de Seguridad Vial</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-boxes me-1" style="color: #28a745;"></i> Recursos
+                            </label>
+                            <input type="text" name="recursos" class="form-control rounded-3" 
+                                   value="{{ actividad.recursos or '' }}" maxlength="200">
+                            <small class="text-muted">Ej: Tecnológicos, Infraestructura, Humanos, Financieros</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-flag me-1" style="color: #C23538;"></i> Estado
+                            </label>
+                            <select name="estado" class="form-select rounded-3">
+                                <option value="pendiente" {% if actividad.estado == 'pendiente' %}selected{% endif %}>⏳ Pendiente</option>
+                                <option value="en_proceso" {% if actividad.estado == 'en_proceso' %}selected{% endif %}>🔄 En Proceso</option>
+                                <option value="completado" {% if actividad.estado == 'completado' %}selected{% endif %}>✅ Completado</option>
+                            </select>
+                        </div>
 
                         <!-- Observaciones -->
-                        <div class="mb-4">
-                            <h5><i class="fas fa-clipboard text-info"></i> Observaciones</h5>
-                            <hr>
+                        <div class="mt-4 pt-2">
+                            <h6 class="fw-semibold mb-3" style="color: #2658A5;">
+                                <i class="fas fa-clipboard me-2"></i> Observaciones
+                            </h6>
                             <div class="mb-3">
-                                <label class="form-label"><strong>Observaciones / Notas</strong></label>
                                 <textarea name="observaciones" 
-                                          class="form-control" 
+                                          class="form-control rounded-3" 
                                           rows="4" 
                                           placeholder="Escribe aquí cualquier observación o nota importante sobre esta actividad">{{ actividad.observaciones if actividad.observaciones else '' }}</textarea>
                                 <small class="text-muted">
-                                    <i class="fas fa-info-circle"></i> 
+                                    <i class="fas fa-info-circle me-1"></i> 
                                     Espacio para comentarios, actualizaciones, problemas encontrados, etc.
                                 </small>
                             </div>
@@ -103,33 +143,45 @@
 
             <!-- COLUMNA DERECHA: PROGRAMACIÓN MENSUAL -->
             <div class="col-lg-6">
-                <div class="card mb-3">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0"><i class="fas fa-calendar"></i> Programación Mensual 2026</h5>
+                <div class="card border-0 shadow-sm overflow-hidden">
+                    <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                        <h5 class="mb-0 fw-semibold text-white">
+                            <i class="fas fa-calendar-alt me-2"></i> Programación Mensual 2026
+                        </h5>
                     </div>
-                    <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                    <div class="card-body p-4" style="max-height: 550px; overflow-y: auto;">
                         {% set meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
                                        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'] %}
+                        {% set meses_nombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                                                'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'] %}
                         
-                        {% for mes in meses %}
-                        <div class="mb-3 border-bottom pb-2">
-                            <h6 class="text-primary mb-2">{{ mes|title }}</h6>
-                            <div class="row">
-                                {% for semana_data in actividad.programacion[mes] %}
-                                <div class="col-6 mb-2">
-                                    <div class="border rounded p-2 bg-light">
-                                        <strong>Semana {{ semana_data.semana }}</strong>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" 
-                                                   name="{{ mes }}_semana{{ semana_data.semana }}_p" 
-                                                   {% if semana_data.planificado %}checked{% endif %}>
-                                            <label class="form-check-label small">Planificado</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" 
-                                                   name="{{ mes }}_semana{{ semana_data.semana }}_e"
-                                                   {% if semana_data.ejecutado %}checked{% endif %}>
-                                            <label class="form-check-label small">Ejecutado</label>
+                        {% for idx in range(12) %}
+                        <div class="mes-card mb-4">
+                            <h6 class="fw-semibold mb-3 pb-2" style="color: #2658A5; border-bottom: 2px solid #2658A5;">
+                                <i class="fas fa-calendar-week me-2"></i> {{ meses_nombres[idx] }}
+                            </h6>
+                            <div class="row g-2">
+                                {% set semana_data = actividad.programacion[meses[idx]] %}
+                                {% for semana_num in range(1, 5) %}
+                                {% set semana = semana_data[loop.index0] if semana_data else {'planificado': false, 'ejecutado': false} %}
+                                <div class="col-6 col-md-3">
+                                    <div class="semana-card rounded-3 p-2 text-center">
+                                        <div class="fw-semibold small mb-2" style="color: #2658A5;">Semana {{ semana_num }}</div>
+                                        <div class="d-flex justify-content-center gap-3">
+                                            <label class="d-flex flex-column align-items-center gap-1">
+                                                <input type="checkbox" 
+                                                       name="{{ meses[idx] }}_semana{{ semana_num }}_p" 
+                                                       class="form-check-input"
+                                                       {% if semana.planificado %}checked{% endif %}>
+                                                <span class="badge" style="background: #2658A5; color: white; font-size: 10px;">P</span>
+                                            </label>
+                                            <label class="d-flex flex-column align-items-center gap-1">
+                                                <input type="checkbox" 
+                                                       name="{{ meses[idx] }}_semana{{ semana_num }}_e"
+                                                       class="form-check-input"
+                                                       {% if semana.ejecutado %}checked{% endif %}>
+                                                <span class="badge" style="background: #28a745; color: white; font-size: 10px;">E</span>
+                                            </label>
                                         </div>
                                     </div>
                                 </div>
@@ -143,16 +195,187 @@
         </div>
 
         <!-- BOTONES DE ACCIÓN -->
-        <div class="row mt-3 mb-4">
+        <div class="row mt-4">
             <div class="col-12 text-center">
-                <button type="submit" class="btn btn-success btn-lg">
-                    <i class="fas fa-save"></i> Guardar Cambios
+                <button type="submit" class="btn btn-success btn-lg px-5 shadow-sm" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none;">
+                    <i class="fas fa-save me-2"></i> Guardar Cambios
                 </button>
-                <a href="{{ url_for('sst_plan_anual_actividad_detalle', id=actividad.id) }}" class="btn btn-secondary btn-lg">
-                    <i class="fas fa-times"></i> Cancelar
+                <a href="{{ url_for('sst_plan_anual_actividad_detalle', id=actividad.id) }}" class="btn btn-secondary btn-lg px-5 ms-2">
+                    <i class="fas fa-times me-2"></i> Cancelar
                 </a>
             </div>
         </div>
     </form>
 </div>
+
+<script>
+// Validación del formulario antes de enviar
+document.querySelector('form').addEventListener('submit', function(e) {
+    const actividad = document.querySelector('textarea[name="actividad"]').value.trim();
+    const ciclo = document.querySelector('select[name="ciclo_phva"]').value;
+    
+    if (!actividad) {
+        e.preventDefault();
+        mostrarMensaje('error', '❌ El campo "Actividad" es obligatorio');
+        return;
+    }
+    
+    if (!ciclo) {
+        e.preventDefault();
+        mostrarMensaje('error', '❌ Debes seleccionar un ciclo PHVA');
+        return;
+    }
+    
+    // Mostrar mensaje de carga
+    const btn = document.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Guardando...';
+});
+
+// Función para mostrar mensajes
+function mostrarMensaje(tipo, mensaje) {
+    const container = document.getElementById('flashMessages');
+    if (!container) return;
+    
+    const colores = { success: '#28a745', error: '#C23538', warning: '#FFCC29', info: '#2658A5' };
+    const iconos = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+    
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-custom fade-in';
+    alert.style.cssText = `border-left: 4px solid ${colores[tipo]}; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 16px; padding: 12px 16px;`;
+    alert.innerHTML = `<div class="d-flex align-items-center">
+        <i class="fas ${iconos[tipo]} me-2" style="color: ${colores[tipo]};"></i>
+        <strong style="color: ${colores[tipo]};">${mensaje}</strong>
+        <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+    </div>`;
+    container.appendChild(alert);
+    
+    setTimeout(() => {
+        if (alert && alert.parentElement) {
+            alert.style.opacity = '0';
+            alert.style.transition = 'opacity 0.3s';
+            setTimeout(() => alert.remove(), 300);
+        }
+    }, 5000);
+}
+</script>
+
+<style>
+/* Efecto shimmer para el header */
+.bg-gradient-corporate {
+    background: linear-gradient(135deg, #2658A5 0%, #1a3f73 50%, #282F4B 100%) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.bg-gradient-corporate::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    animation: shimmer 8s infinite linear;
+}
+
+@keyframes shimmer {
+    0% { transform: translate(-30%, -30%) rotate(0deg); }
+    100% { transform: translate(30%, 30%) rotate(360deg); }
+}
+
+/* Estilos de formulario */
+.form-control, .form-select {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #2658A5;
+    box-shadow: 0 0 0 3px rgba(38,88,165,0.15);
+}
+
+/* Semanas */
+.mes-card {
+    background: #f8f9fc;
+    border-radius: 16px;
+    padding: 15px;
+    transition: all 0.3s ease;
+}
+
+.mes-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.semana-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+}
+
+.semana-card:hover {
+    border-color: #2658A5;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(38,88,165,0.1);
+}
+
+/* Checkboxes */
+.form-check-input:checked {
+    background-color: #2658A5;
+    border-color: #2658A5;
+}
+
+/* Botones */
+.btn {
+    transition: all 0.2s ease;
+    border-radius: 12px;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    animation: fadeIn 0.4s ease;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Scroll personalizado */
+.card-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.card-body::-webkit-scrollbar-track {
+    background: #e5e7eb;
+    border-radius: 10px;
+}
+
+.card-body::-webkit-scrollbar-thumb {
+    background: #2658A5;
+    border-radius: 10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .semana-card {
+        padding: 10px;
+    }
+    
+    .btn-lg {
+        padding: 8px 20px;
+        font-size: 14px;
+    }
+}
+</style>
 {% endblock %}
