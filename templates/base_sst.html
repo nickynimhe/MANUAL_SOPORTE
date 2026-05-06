@@ -13,12 +13,9 @@
     <style>
     /* ===== VARIABLES CSS ===== */
     :root {
-      --primary: #052398;
+        --primary: #052398;
       --primary-dark: #03196e;
       --primary-light: #7b87f5;
-      --sst-green: #16a34a;
-      --sst-green-dark: #0f7535;
-      --sst-green-light: #bbf7d0;
       --secondary: #e0f2fe;
       --accent: #ff0000;
       --bg: #f0f4f8;
@@ -26,7 +23,7 @@
       --text: #1f2937;
       --muted: #6b7280;
       --radius: 12px;
-      --sidebar-width: 250px;
+      --sidebar-width: 240px;
       --sidebar-collapsed: 64px;
       --transition: 0.25s ease;
     }
@@ -50,18 +47,18 @@
     /* ===== SIDEBAR SST ===== */
     /* El sidebar SST usa un gradiente verde para diferenciarse del de Soporte */
     .sidebar {
-      position: fixed;
+         position: fixed;
       top: 0;
       left: 0;
       height: 100vh;
       width: var(--sidebar-width);
-      background: linear-gradient(180deg, #0f4c24 0%, var(--sst-green) 100%);
+      background: linear-gradient(180deg, var(--primary-dark) 0%, var(--primary) 100%);
       display: flex;
       flex-direction: column;
       z-index: 1000;
       transition: width var(--transition);
       overflow: hidden;
-      box-shadow: 4px 0 20px rgba(22, 163, 74, 0.25);
+      box-shadow: 4px 0 20px rgba(5, 35, 152, 0.2);
     }
 
     .sidebar.collapsed {
