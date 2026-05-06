@@ -626,10 +626,6 @@
            href="{{ url_for('sst_plan_anual_actividades') }}">
           <i class="fas fa-tasks"></i> Ver Actividades
         </a>
-        <a class="submenu-item {% if request.endpoint == 'sst_plan_anual_cronograma' %}active{% endif %}"
-           href="{{ url_for('sst_plan_anual_cronograma') }}">
-          <i class="fas fa-chart-gantt"></i> Cronograma Gantt
-        </a>
         <a class="submenu-item {% if request.endpoint == 'sst_plan_anual_gestionar' %}active{% endif %}"
            href="{{ url_for('sst_plan_anual_gestionar') }}">
           <i class="fas fa-cog"></i> Gestionar Actividades
