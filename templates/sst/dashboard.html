@@ -4,13 +4,13 @@
 
 {% block content %}
 <div class="container-fluid px-0 px-md-3">
-    <!-- Header Principal Mejorado -->
-    <div class="sst-header bg-gradient-primary rounded-4 mb-4 p-4 text-white">
+    <!-- Header Principal Mejorado con color corporativo -->
+    <div class="sst-header bg-gradient-corporate rounded-4 mb-4 p-4 text-white shadow-lg">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
             <div class="mb-3 mb-md-0">
                 <div class="d-flex align-items-center mb-2">
-                    <div class="sst-icon-header bg-white rounded-3 p-2 me-3">
-                        <i class="fas fa-shield-alt text-primary fs-4"></i>
+                    <div class="sst-icon-header bg-white rounded-3 p-2 me-3 shadow-sm">
+                        <i class="fas fa-shield-alt" style="color: #2658A5; font-size: 1.8rem;"></i>
                     </div>
                     <div>
                         <h1 class="h2 fw-bold mb-1 text-white">Dashboard SST</h1>
@@ -19,15 +19,14 @@
                 </div>
             </div>
             <div class="d-flex flex-wrap gap-2">
-                <!-- ← NUEVO: ENLACE AL PLAN ANUAL -->
-                <a href="{{ url_for('sst_plan_anual') }}" class="btn btn-success btn-sm fw-medium">
+                <a href="{{ url_for('sst_plan_anual') }}" class="btn btn-success btn-sm fw-medium shadow-sm" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none;">
                     <i class="fas fa-calendar-alt me-1"></i>Plan Anual PESV
                 </a>
-                <a href="{{ url_for('sst_contenido') }}" class="btn btn-light btn-sm fw-medium">
+                <a href="{{ url_for('sst_contenido') }}" class="btn btn-light btn-sm fw-medium shadow-sm" style="background: white; color: #2658A5; border: 1px solid rgba(38,88,165,0.2);">
                     <i class="fas fa-list me-1"></i>Ver Contenido
                 </a>
                {% if current_user.rol in ['admin', 'sst'] %}
-                <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-warning btn-sm fw-medium">
+                <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-warning btn-sm fw-medium shadow-sm" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%); border: none; color: #282F4B;">
                     <i class="fas fa-plus-circle me-1"></i>Nuevo Contenido
                 </a>
                {% endif %}
@@ -35,40 +34,40 @@
         </div>
     </div>
 
-    <!-- ← NUEVA SECCIÓN: ACCESO RÁPIDO AL PLAN ANUAL -->
+    <!-- SECCIÓN PLAN ANUAL con colores corporativos -->
     <div class="row g-3 mb-4">
         <div class="col-12">
-            <div class="card border-0 bg-gradient-success text-white shadow-lg">
+            <div class="card border-0 shadow-lg overflow-hidden" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%); color: white;">
                 <div class="card-body p-4">
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <div class="d-flex align-items-center mb-3">
-                                <div class="bg-white rounded-circle p-3 me-3">
-                                    <i class="fas fa-calendar-check text-success fa-2x"></i>
+                                <div class="bg-white rounded-circle p-3 me-3 shadow-sm" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-calendar-check" style="color: #2658A5; font-size: 2rem;"></i>
                                 </div>
                                 <div>
                                     <h3 class="fw-bold mb-1">Plan Anual de Trabajo PESV 2026</h3>
-                                    <p class="mb-0 opacity-75">Plan Estratégico de Seguridad Vial</p>
+                                    <p class="mb-0" style="opacity: 0.9;">Plan Estratégico de Seguridad Vial</p>
                                 </div>
                             </div>
-                            <p class="mb-3">
+                            <p class="mb-3" style="opacity: 0.95;">
                                 Gestiona y da seguimiento a todas las actividades del Plan Estratégico de Seguridad Vial.
                                 Cronograma completo, evidencias y reportes de avance.
                             </p>
                             <div class="d-flex gap-2 flex-wrap">
-                                <a href="{{ url_for('sst_plan_anual') }}" class="btn btn-light">
+                                <a href="{{ url_for('sst_plan_anual') }}" class="btn btn-light shadow-sm" style="background: white; color: #2658A5; font-weight: 500;">
                                     <i class="fas fa-tachometer-alt me-2"></i>Dashboard Plan Anual
                                 </a>
-                                <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-outline-light">
+                                <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-outline-light" style="border-color: rgba(255,255,255,0.5); color: white;">
                                     <i class="fas fa-tasks me-2"></i>Ver Actividades
                                 </a>
-                                <a href="{{ url_for('sst_plan_anual_cronograma') }}" class="btn btn-outline-light">
+                                <a href="{{ url_for('sst_plan_anual_cronograma') }}" class="btn btn-outline-light" style="border-color: rgba(255,255,255,0.5); color: white;">
                                     <i class="fas fa-chart-gantt me-2"></i>Cronograma Gantt
                                 </a>
                             </div>
                         </div>
                         <div class="col-md-4 text-center d-none d-md-block">
-                            <i class="fas fa-clipboard-check" style="font-size: 8rem; opacity: 0.2;"></i>
+                            <i class="fas fa-clipboard-check" style="font-size: 8rem; opacity: 0.15;"></i>
                         </div>
                     </div>
                 </div>
@@ -76,43 +75,45 @@
         </div>
     </div>
 
-    <!-- Estadísticas Principales Mejoradas -->
+    <!-- Estadísticas Principales MEJORADAS -->
     <div class="row g-3 mb-4">
+        <!-- Tarjeta Total Contenido -->
         <div class="col-xl-3 col-md-6">
-            <div class="card sst-card h-100 border-0">
+            <div class="card sst-card h-100 border-0 shadow-sm hover-lift" style="transition: transform 0.3s ease, box-shadow 0.3s ease;">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div class="sst-icon-stat bg-primary bg-opacity-10 rounded-3 p-3">
-                            <i class="fas fa-folder-open text-primary fs-4"></i>
+                        <div class="rounded-3 p-3" style="background: linear-gradient(135deg, rgba(38,88,165,0.1) 0%, rgba(40,47,75,0.1) 100%);">
+                            <i class="fas fa-folder-open" style="color: #2658A5; font-size: 1.8rem;"></i>
                         </div>
-                        <span class="badge rounded-pill bg-primary bg-opacity-25 text-primary fw-medium">Total</span>
+                        <span class="badge rounded-pill px-3 py-1" style="background: rgba(38,88,165,0.2); color: #2658A5; font-weight: 500;">Total</span>
                     </div>
-                    <h2 class="fw-bold display-6 mb-2">{{ total_contenido }}</h2>
+                    <h2 class="fw-bold display-6 mb-2" style="color: #2658A5;">{{ total_contenido }}</h2>
                     <p class="text-muted mb-0">Elementos de capacitación</p>
                     <div class="mt-3 pt-3 border-top">
                         <small class="text-muted">
-                            <i class="fas fa-arrow-up text-success me-1"></i>
-                            <span class="text-success">+12%</span> vs mes anterior
+                            <i class="fas fa-arrow-up" style="color: #28a745;"></i>
+                            <span style="color: #28a745;">+12%</span> vs mes anterior
                         </small>
                     </div>
                 </div>
             </div>
         </div>
         
+        <!-- Tarjeta Videos -->
         <div class="col-xl-3 col-md-6">
-            <div class="card sst-card h-100 border-0">
+            <div class="card sst-card h-100 border-0 shadow-sm hover-lift" style="transition: transform 0.3s ease, box-shadow 0.3s ease;">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div class="sst-icon-stat bg-success bg-opacity-10 rounded-3 p-3">
-                            <i class="fas fa-film text-success fs-4"></i>
+                        <div class="rounded-3 p-3" style="background: linear-gradient(135deg, rgba(255,204,41,0.15) 0%, rgba(255,165,0,0.1) 100%);">
+                            <i class="fas fa-film" style="color: #FFCC29; font-size: 1.8rem;"></i>
                         </div>
-                        <span class="badge rounded-pill bg-success bg-opacity-25 text-success fw-medium">Videos</span>
+                        <span class="badge rounded-pill px-3 py-1" style="background: rgba(255,204,41,0.2); color: #D4A000; font-weight: 500;">Videos</span>
                     </div>
-                    <h2 class="fw-bold display-6 mb-2">{{ total_videos }}</h2>
+                    <h2 class="fw-bold display-6 mb-2" style="color: #FFCC29;">{{ total_videos }}</h2>
                     <p class="text-muted mb-0">Recursos multimedia</p>
                     <div class="mt-3 pt-3 border-top">
                         <small class="text-muted">
-                            <i class="fas fa-clock text-warning me-1"></i>
+                            <i class="fas fa-clock" style="color: #FFCC29;"></i>
                             Actualizado hoy
                         </small>
                     </div>
@@ -120,20 +121,21 @@
             </div>
         </div>
         
+        <!-- Tarjeta Documentos -->
         <div class="col-xl-3 col-md-6">
-            <div class="card sst-card h-100 border-0">
+            <div class="card sst-card h-100 border-0 shadow-sm hover-lift" style="transition: transform 0.3s ease, box-shadow 0.3s ease;">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div class="sst-icon-stat bg-warning bg-opacity-10 rounded-3 p-3">
-                            <i class="fas fa-file-pdf text-warning fs-4"></i>
+                        <div class="rounded-3 p-3" style="background: linear-gradient(135deg, rgba(194,53,56,0.1) 0%, rgba(128,0,0,0.08) 100%);">
+                            <i class="fas fa-file-pdf" style="color: #C23538; font-size: 1.8rem;"></i>
                         </div>
-                        <span class="badge rounded-pill bg-warning bg-opacity-25 text-warning fw-medium">Documentos</span>
+                        <span class="badge rounded-pill px-3 py-1" style="background: rgba(194,53,56,0.2); color: #C23538; font-weight: 500;">Documentos</span>
                     </div>
-                    <h2 class="fw-bold display-6 mb-2">{{ total_documentos }}</h2>
+                    <h2 class="fw-bold display-6 mb-2" style="color: #C23538;">{{ total_documentos }}</h2>
                     <p class="text-muted mb-0">Archivos formativos</p>
                     <div class="mt-3 pt-3 border-top">
                         <small class="text-muted">
-                            <i class="fas fa-users text-info me-1"></i>
+                            <i class="fas fa-users" style="color: #2658A5;"></i>
                             Más consultados
                         </small>
                     </div>
@@ -141,25 +143,26 @@
             </div>
         </div>
         
+        <!-- Tarjeta Crítico -->
         <div class="col-xl-3 col-md-6">
-            <div class="card sst-card h-100 border-0">
+            <div class="card sst-card h-100 border-0 shadow-sm hover-lift" style="transition: transform 0.3s ease, box-shadow 0.3s ease;">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div class="sst-icon-stat bg-danger bg-opacity-10 rounded-3 p-3">
-                            <i class="fas fa-exclamation-triangle text-danger fs-4"></i>
+                        <div class="rounded-3 p-3" style="background: rgba(167,51,53,0.1);">
+                            <i class="fas fa-exclamation-triangle" style="color: #A73335; font-size: 1.8rem;"></i>
                         </div>
-                        <span class="badge rounded-pill bg-danger bg-opacity-25 text-danger fw-medium">Crítico</span>
+                        <span class="badge rounded-pill px-3 py-1" style="background: rgba(167,51,53,0.2); color: #A73335; font-weight: 500;">Crítico</span>
                     </div>
-                    <h2 class="fw-bold display-6 mb-2">{{ total_obligatorios }}</h2>
+                    <h2 class="fw-bold display-6 mb-2" style="color: #A73335;">{{ total_obligatorios }}</h2>
                     <p class="text-muted mb-0">Contenido obligatorio</p>
                     <div class="mt-3 pt-3 border-top">
                         <small class="text-muted">
                             {% if contenido_obligatorio|length > 0 %}
-                            <i class="fas fa-exclamation-circle text-danger me-1"></i>
-                            <span class="text-danger">{{ contenido_obligatorio|length }} pendientes</span>
+                            <i class="fas fa-exclamation-circle" style="color: #C23538;"></i>
+                            <span style="color: #C23538;">{{ contenido_obligatorio|length }} pendientes</span>
                             {% else %}
-                            <i class="fas fa-check-circle text-success me-1"></i>
-                            <span class="text-success">Todo al día</span>
+                            <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                            <span style="color: #28a745;">Todo al día</span>
                             {% endif %}
                         </small>
                     </div>
@@ -168,23 +171,195 @@
         </div>
     </div>
 
-    <!-- Resto del dashboard igual... -->
-    <!-- (Copiar desde la línea 126 hasta el final de tu archivo original) -->
+    <!-- El resto de tu contenido igual... -->
+    <!-- (Aquí va el resto del código de tu dashboard) -->
     
 </div>
 
-<!-- Estilos igual que el original -->
+<!-- Estilos MEJORADOS con tu colorimetría -->
 <style>
-/* ... (todos los estilos originales) ... */
+/* ===== ESTILOS CORPORATIVOS MEJORADOS ===== */
 
-/* ← NUEVO ESTILO PARA LA CARD DEL PLAN ANUAL */
-.bg-gradient-success {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+/* Degradado corporativo principal (Azul empresa) */
+.bg-gradient-corporate {
+    background: linear-gradient(135deg, #2658A5 0%, #1a3f73 50%, #282F4B 100%) !important;
+    position: relative;
+    overflow: hidden;
 }
+
+/* Efecto de brillo en el header */
+.bg-gradient-corporate::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: shimmer 8s infinite linear;
+}
+
+@keyframes shimmer {
+    0% { transform: translate(-30%, -30%) rotate(0deg); }
+    100% { transform: translate(30%, 30%) rotate(360deg); }
+}
+
+/* Tarjetas con efecto hover */
+.hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12) !important;
+}
+
+/* Badges personalizados para cada categoría */
+.badge-corporate {
+    background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-weight: 500;
+}
+
+/* Botón primario corporativo */
+.btn-corporate-primary {
+    background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-corporate-primary:hover {
+    background: linear-gradient(135deg, #1a3f73 0%, #0f2647 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(38,88,165,0.3);
+}
+
+/* Botón secundario corporativo */
+.btn-corporate-secondary {
+    background: linear-gradient(135deg, #C23538 0%, #A73335 100%);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-corporate-secondary:hover {
+    background: linear-gradient(135deg, #A73335 0%, #8a2022 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(194,53,56,0.3);
+}
+
+/* Botón de advertencia corporativo */
+.btn-corporate-warning {
+    background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%);
+    color: #282F4B;
+    border: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-corporate-warning:hover {
+    background: linear-gradient(135deg, #FFA500 0%, #FF8C00 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255,204,41,0.4);
+    color: #282F4B;
+}
+
+/* Texto con gradiente */
+.text-gradient-primary {
+    background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Bordes decorativos */
+.border-corporate-left {
+    border-left: 4px solid #2658A5;
+}
+
+.border-corporate-bottom {
+    border-bottom: 3px solid #2658A5;
+}
+
+/* Sombra corporativa */
+.shadow-corporate {
+    box-shadow: 0 5px 20px rgba(38,88,165,0.15);
+}
+
+/* Iconos circulares con gradiente */
+.icon-circle-gradient {
+    background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+/* Cards con borde superior corporativo */
+.card-corporate {
+    border-top: 4px solid #2658A5;
+    transition: all 0.3s ease;
+}
+
+.card-corporate:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(38,88,165,0.15);
+}
+
+/* Alertas personalizadas */
+.alert-corporate-info {
+    background: linear-gradient(135deg, rgba(38,88,165,0.1) 0%, rgba(40,47,75,0.05) 100%);
+    border-left: 4px solid #2658A5;
+    color: #2658A5;
+}
+
+.alert-corporate-danger {
+    background: linear-gradient(135deg, rgba(194,53,56,0.1) 0%, rgba(167,51,53,0.05) 100%);
+    border-left: 4px solid #C23538;
+    color: #C23538;
+}
+
+.alert-corporate-warning {
+    background: linear-gradient(135deg, rgba(255,204,41,0.1) 0%, rgba(255,165,0,0.05) 100%);
+    border-left: 4px solid #FFCC29;
+    color: #D4A000;
+}
+
+/* ===== FIN ESTILOS CORPORATIVOS ===== */
 </style>
 
-<!-- Scripts igual que el original -->
 <script>
-/* ... (todos los scripts originales) ... */
+// Scripts mejorados con animaciones suaves
+document.addEventListener('DOMContentLoaded', function() {
+    // Animación de conteo para las estadísticas (opcional)
+    const counters = document.querySelectorAll('.display-6');
+    counters.forEach(counter => {
+        const target = parseInt(counter.innerText);
+        if (!isNaN(target)) {
+            let current = 0;
+            const increment = target / 30;
+            const updateCounter = () => {
+                if (current < target) {
+                    current += increment;
+                    counter.innerText = Math.ceil(current);
+                    setTimeout(updateCounter, 50);
+                } else {
+                    counter.innerText = target;
+                }
+            };
+            updateCounter();
+        }
+    });
+    
+    // Efecto hover sutil en todas las cards
+    const cards = document.querySelectorAll('.sst-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transition = 'all 0.3s ease';
+        });
+    });
+});
 </script>
 {% endblock %}
