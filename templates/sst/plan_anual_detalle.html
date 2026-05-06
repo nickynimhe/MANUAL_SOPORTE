@@ -3,104 +3,136 @@
 {% block title %}Detalle de Actividad - Plan Anual PESV{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>
-            <i class="fas fa-file-alt text-primary"></i>
-            Detalle de Actividad
-        </h2>
-        <div>
-            {% if current_user.puede('gestionar_plan_anual') %}
-            <a href="{{ url_for('sst_plan_anual_editar_actividad', id=actividad.id) }}" 
-               class="btn btn-warning">
-                <i class="fas fa-edit"></i> Editar
-            </a>
-            {% endif %}
-            <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Volver
-            </a>
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- HEADER CON EFECTO SHIMMER -->
+    <div class="sst-header bg-gradient-corporate rounded-4 mb-4 p-4 text-white shadow-lg">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+            <div class="mb-3 mb-md-0">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-white rounded-3 p-2 me-3 shadow-sm">
+                        <i class="fas fa-file-alt" style="color: #2658A5; font-size: 1.8rem;"></i>
+                    </div>
+                    <div>
+                        <h1 class="h2 fw-bold mb-1 text-white">Detalle de Actividad</h1>
+                        <p class="text-white-80 mb-0">{{ actividad.actividad[:80] if actividad.actividad else 'Información completa de la actividad' }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                {% if current_user.puede('gestionar_plan_anual') %}
+                <a href="{{ url_for('sst_plan_anual_editar_actividad', id=actividad.id) }}" 
+                   class="btn btn-warning shadow-sm" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%); border: none; color: #282F4B;">
+                    <i class="fas fa-edit me-1"></i> Editar
+                </a>
+                {% endif %}
+                <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-light btn-sm fw-medium shadow-sm">
+                    <i class="fas fa-arrow-left me-1"></i> Volver
+                </a>
+            </div>
         </div>
     </div>
 
-    <div class="row">
+    <div class="row g-4">
         <!-- COLUMNA IZQUIERDA -->
         <div class="col-lg-8">
             <!-- INFORMACIÓN BÁSICA -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-info-circle"></i> Información de la Actividad
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h5 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-info-circle me-2"></i> Información de la Actividad
                     </h5>
                 </div>
-                <div class="card-body">
-                    <h4 class="mb-3">{{ actividad.actividad }}</h4>
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-4" style="color: #2658A5;">{{ actividad.actividad }}</h4>
 
-                    <div class="row mb-3">
+                    <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <strong>Ciclo PHVA:</strong>
-                            <span class="badge 
-                                {% if actividad.ciclo_phva == 'Planear' %}bg-info
-                                {% elif actividad.ciclo_phva == 'Hacer' %}bg-success
-                                {% elif actividad.ciclo_phva == 'Verificar' %}bg-warning
-                                {% elif actividad.ciclo_phva == 'Actuar' %}bg-danger
-                                {% endif %}">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fas fa-sync-alt" style="color: #2658A5;"></i>
+                                <strong>Ciclo PHVA:</strong>
+                            </div>
+                            <span class="badge rounded-pill px-3 py-2 mt-1" 
+                                {% if actividad.ciclo_phva == 'Planear' %}style="background: #2658A5; color: white;"
+                                {% elif actividad.ciclo_phva == 'Hacer' %}style="background: #28a745; color: white;"
+                                {% elif actividad.ciclo_phva == 'Verificar' %}style="background: #FFCC29; color: #282F4B;"
+                                {% elif actividad.ciclo_phva == 'Actuar' %}style="background: #C23538; color: white;"
+                                {% endif %}>
+                                <i class="fas fa-{% if actividad.ciclo_phva == 'Planear' %}bullseye{% elif actividad.ciclo_phva == 'Hacer' %}hammer{% elif actividad.ciclo_phva == 'Verificar' %}search{% else %}chart-line{% endif %} me-1"></i>
                                 {{ actividad.ciclo_phva }}
                             </span>
                         </div>
                         <div class="col-md-6">
-                            <strong>Estado:</strong>
-                            <span class="badge 
-                                {% if actividad.estado == 'completado' %}bg-success
-                                {% elif actividad.estado == 'en_proceso' %}bg-warning
-                                {% else %}bg-secondary
-                                {% endif %}">
-                                {{ actividad.estado|upper }}
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fas fa-flag" style="color: #FFCC29;"></i>
+                                <strong>Estado:</strong>
+                            </div>
+                            <span class="badge rounded-pill px-3 py-2 mt-1" 
+                                {% if actividad.estado == 'completado' %}style="background: #28a745; color: white;"
+                                {% elif actividad.estado == 'en_proceso' %}style="background: #FFCC29; color: #282F4B;"
+                                {% else %}style="background: #6c757d; color: white;"
+                                {% endif %}>
+                                {% if actividad.estado == 'completado' %}
+                                <i class="fas fa-check-circle me-1"></i> Completado
+                                {% elif actividad.estado == 'en_proceso' %}
+                                <i class="fas fa-spinner me-1"></i> En Proceso
+                                {% else %}
+                                <i class="fas fa-clock me-1"></i> Pendiente
+                                {% endif %}
                             </span>
                         </div>
                     </div>
 
-                    <div class="row mb-3">
+                    <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <strong>Responsables:</strong>
-                            <p class="mb-0">{{ actividad.responsables or 'No especificado' }}</p>
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fas fa-user-tie" style="color: #28a745;"></i>
+                                <strong>Responsables:</strong>
+                            </div>
+                            <p class="mb-0 text-muted">{{ actividad.responsables or 'No especificado' }}</p>
                         </div>
                         <div class="col-md-6">
-                            <strong>Recursos:</strong>
-                            <p class="mb-0">{{ actividad.recursos or 'No especificado' }}</p>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <strong>Artículos Decreto:</strong>
-                            <p class="mb-0">{{ actividad.articulos_decreto or 'N/A' }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <strong>Nivel PESV:</strong>
-                            <p class="mb-0">{{ actividad.nivel_pesv or 'N/A' }}</p>
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fas fa-boxes" style="color: #C23538;"></i>
+                                <strong>Recursos:</strong>
+                            </div>
+                            <p class="mb-0 text-muted">{{ actividad.recursos or 'No especificado' }}</p>
                         </div>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-12">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fas fa-book" style="color: #2658A5;"></i>
+                                <strong>Artículos Decreto:</strong>
+                            </div>
+                            <p class="mb-0 text-muted">{{ actividad.articulos_decreto or 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fas fa-chart-line" style="color: #FFCC29;"></i>
+                                <strong>Nivel PESV:</strong>
+                            </div>
+                            <p class="mb-0 text-muted">{{ actividad.nivel_pesv or 'N/A' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fas fa-file-alt" style="color: #C23538;"></i>
                             <strong>Evidencia:</strong>
-                            <p class="mb-0">{{ actividad.evidencia or 'No especificada' }}</p>
                         </div>
+                        <p class="mb-0 text-muted">{{ actividad.evidencia or 'No especificada' }}</p>
                     </div>
 
                     {% if actividad.observaciones %}
-                    <div class="row">
-                        <div class="col-12">
-                            <h6 class="mb-2">
-                                <i class="fas fa-clipboard text-info"></i> 
-                                <strong>Observaciones:</strong>
-                            </h6>
-                            <div class="card border-info">
-                                <div class="card-body bg-light">
-                                    <p class="mb-0" style="white-space: pre-wrap;">{{ actividad.observaciones }}</p>
-                                </div>
-                            </div>
+                    <div class="mt-3">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <i class="fas fa-clipboard" style="color: #28a745;"></i>
+                            <strong>Observaciones:</strong>
+                        </div>
+                        <div class="bg-light rounded-3 p-3" style="background: #f8f9fc !important;">
+                            <p class="mb-0" style="white-space: pre-wrap;">{{ actividad.observaciones }}</p>
                         </div>
                     </div>
                     {% endif %}
@@ -108,42 +140,42 @@
             </div>
 
             <!-- CRONOGRAMA -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-calendar-alt"></i> Cronograma de Ejecución
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
+                    <h5 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-calendar-alt me-2"></i> Cronograma de Ejecución
                     </h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     <div class="table-responsive">
-                        <table class="table table-bordered table-sm">
-                            <thead class="table-light">
+                        <table class="table table-bordered cronograma-table">
+                            <thead style="background: #f8f9fc;">
                                 <tr>
-                                    <th style="width: 120px;">Mes</th>
-                                    <th class="text-center">S1</th>
-                                    <th class="text-center">S2</th>
-                                    <th class="text-center">S3</th>
-                                    <th class="text-center">S4</th>
+                                    <th style="width: 100px;">Mes</th>
+                                    <th class="text-center">Semana 1</th>
+                                    <th class="text-center">Semana 2</th>
+                                    <th class="text-center">Semana 3</th>
+                                    <th class="text-center">Semana 4</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for mes, semanas in actividad.programacion.items() %}
                                 <tr>
-                                    <td><strong>{{ mes|capitalize }}</strong></td>
+                                    <td class="fw-semibold" style="background: #f8f9fc;">{{ mes|capitalize }}</td>
                                     {% for sem in semanas %}
-                                    <td class="text-center" style="padding: 15px;">
+                                    <td class="text-center semana-cell">
                                         {% if sem.planificado %}
                                             {% if sem.ejecutado %}
-                                                <i class="fas fa-check-circle text-success" 
-                                                   title="✅ Ejecutado"
-                                                   style="font-size: 1.8rem;"></i>
+                                                <div class="gantt-bar bg-success rounded-2 mx-auto" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="fas fa-check-circle text-white fs-5"></i>
+                                                </div>
                                             {% else %}
-                                                <i class="fas fa-exclamation-circle text-warning" 
-                                                   title="⏳ Pendiente"
-                                                   style="font-size: 1.8rem;"></i>
+                                                <div class="gantt-bar bg-warning rounded-2 mx-auto" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="fas fa-clock text-dark fs-5"></i>
+                                                </div>
                                             {% endif %}
                                         {% else %}
-                                            <span class="text-muted" style="font-size: 1.5rem;">-</span>
+                                            <div class="text-muted" style="font-size: 1.2rem;">—</div>
                                         {% endif %}
                                     </td>
                                     {% endfor %}
@@ -153,21 +185,27 @@
                         </table>
                     </div>
 
-                    <!-- LEYENDA -->
-                    <div class="mt-3 p-3 bg-light rounded">
-                        <h6 class="mb-2"><i class="fas fa-info-circle"></i> Leyenda:</h6>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <i class="fas fa-check-circle text-success" style="font-size: 1.5rem;"></i>
-                                <strong class="ms-2">Ejecutado</strong>
+                    <!-- LEYENDA MEJORADA -->
+                    <div class="mt-4 p-3 bg-light rounded-3">
+                        <h6 class="mb-3 fw-semibold" style="color: #2658A5;">
+                            <i class="fas fa-info-circle me-2"></i> Leyenda
+                        </h6>
+                        <div class="d-flex flex-wrap gap-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-success rounded-2" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-check-circle text-white fs-6"></i>
+                                </div>
+                                <strong>Ejecutado</strong>
                             </div>
-                            <div class="col-md-4">
-                                <i class="fas fa-exclamation-circle text-warning" style="font-size: 1.5rem;"></i>
-                                <strong class="ms-2">Pendiente</strong>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-warning rounded-2" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-clock text-dark fs-6"></i>
+                                </div>
+                                <strong>Pendiente</strong>
                             </div>
-                            <div class="col-md-4">
-                                <span class="text-muted" style="font-size: 1.5rem;">-</span>
-                                <strong class="ms-2">No aplica</strong>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="text-muted" style="font-size: 1.2rem;">—</div>
+                                <strong>No aplica</strong>
                             </div>
                         </div>
                     </div>
@@ -175,51 +213,55 @@
             </div>
 
             <!-- EVIDENCIAS -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-info text-white">
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="fas fa-paperclip"></i> Evidencias</h5>
+                        <h5 class="mb-0 fw-semibold text-white">
+                            <i class="fas fa-paperclip me-2"></i> Evidencias
+                        </h5>
                         {% if current_user.puede('gestionar_plan_anual') %}
-                        <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalAgregarEvidencia">
-                            <i class="fas fa-plus"></i> Agregar
+                        <button class="btn btn-light btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAgregarEvidencia">
+                            <i class="fas fa-plus me-1"></i> Agregar
                         </button>
                         {% endif %}
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     {% if evidencias %}
-                    <div class="list-group">
+                    <div class="list-group list-group-flush">
                         {% for ev in evidencias %}
-                        <div class="list-group-item">
+                        <div class="list-group-item p-3 hover-lift">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-1">
-                                        <i class="fas fa-file-alt text-primary"></i> 
-                                        {{ ev[1] }}
+                                    <h6 class="mb-1 fw-semibold" style="color: #2658A5;">
+                                        <i class="fas fa-file-alt me-2"></i> {{ ev[1] }}
                                     </h6>
                                     {% if ev[2] %}
                                     <p class="mb-1 text-muted small">{{ ev[2] }}</p>
                                     {% endif %}
                                     <small class="text-muted">
-                                        <i class="fas fa-calendar"></i> 
+                                        <i class="fas fa-calendar-alt me-1"></i> 
                                         {{ ev[4].strftime('%d/%m/%Y %H:%M') if ev[4] else 'Sin fecha' }}
                                         {% if ev[3] %}
-                                        | <i class="fas fa-file"></i> {{ ev[3] }}
+                                        | <i class="fas fa-file me-1"></i> {{ ev[3].split('/')[-1] if '/' in ev[3] else ev[3].split('\\')[-1] if '\\' in ev[3] else ev[3] }}
                                         {% endif %}
                                     </small>
                                 </div>
                                 <div class="btn-group ms-2">
                                     {% if ev[3] %}
                                     <a href="{{ url_for('sst_descargar_evidencia', id=ev[0]) }}" 
-                                       class="btn btn-sm btn-primary">
+                                       class="btn btn-sm rounded-3" 
+                                       style="background: #2658A5; color: white;"
+                                       title="Descargar">
                                         <i class="fas fa-download"></i>
                                     </a>
                                     {% endif %}
-                                    
                                     {% if current_user.puede('gestionar_plan_anual') %}
                                     <button type="button" 
-                                            class="btn btn-sm btn-danger" 
-                                            onclick="confirmarEliminarEvidencia({{ ev[0] }})">
+                                            class="btn btn-sm rounded-3" 
+                                            style="background: #C23538; color: white;"
+                                            onclick="confirmarEliminarEvidencia({{ ev[0] }})"
+                                            title="Eliminar">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                     {% endif %}
@@ -229,9 +271,12 @@
                         {% endfor %}
                     </div>
                     {% else %}
-                    <div class="alert alert-warning text-center mb-0">
-                        <i class="fas fa-exclamation-triangle"></i> 
-                        No hay evidencias cargadas
+                    <div class="text-center py-5">
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 70px; height: 70px;">
+                            <i class="fas fa-paperclip fa-2x" style="color: #C23538;"></i>
+                        </div>
+                        <h6 class="fw-semibold text-muted">No hay evidencias cargadas</h6>
+                        <p class="text-muted small">Agrega archivos como soporte de la actividad</p>
                     </div>
                     {% endif %}
                 </div>
@@ -241,129 +286,128 @@
         <!-- COLUMNA DERECHA -->
         <div class="col-lg-4">
             <!-- PROGRESO -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-warning text-dark">
-                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Progreso</h5>
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h5 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-line me-2"></i> Progreso
+                    </h5>
                 </div>
-                <div class="card-body text-center">
-                    <h1 class="display-3 mb-3">{{ "%.0f"|format(actividad.porcentaje_avance) }}%</h1>
-                    
-                    <div class="progress mb-3" style="height: 30px;">
-                        <div class="progress-bar 
-                            {% if actividad.porcentaje_avance == 100 %}bg-success
-                            {% elif actividad.porcentaje_avance > 0 %}bg-warning
-                            {% else %}bg-secondary
-                            {% endif %}"
-                            style="width: {{ actividad.porcentaje_avance }}%">
-                            {{ "%.0f"|format(actividad.porcentaje_avance) }}%
+                <div class="card-body text-center p-4">
+                    <div class="position-relative d-inline-block mx-auto mb-3">
+                        <div class="progress-circle" style="--value: {{ actividad.porcentaje_avance }}; --size: 140px;">
+                            <span class="progress-value display-4 fw-bold" style="color: #2658A5;">{{ "%.0f"|format(actividad.porcentaje_avance) }}%</span>
                         </div>
                     </div>
 
-                    <div class="mt-3">
+                    <div class="mt-2">
                         {% if actividad.porcentaje_avance == 100 %}
-                        <p class="text-success mb-0">
-                            <i class="fas fa-check-circle"></i> 
-                            <strong>¡Completada!</strong>
-                        </p>
+                        <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                            <i class="fas fa-check-circle me-1"></i> ¡Completada!
+                        </span>
                         {% elif actividad.porcentaje_avance > 0 %}
-                        <p class="text-warning mb-0">
-                            <i class="fas fa-sync"></i> 
-                            <strong>En Progreso</strong>
-                        </p>
+                        <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                            <i class="fas fa-spinner me-1"></i> En Progreso
+                        </span>
                         {% else %}
-                        <p class="text-secondary mb-0">
-                            <i class="fas fa-clock"></i> 
-                            <strong>Pendiente</strong>
-                        </p>
+                        <span class="badge rounded-pill px-3 py-2" style="background: #6c757d;">
+                            <i class="fas fa-clock me-1"></i> Pendiente
+                        </span>
                         {% endif %}
                     </div>
                 </div>
             </div>
 
             <!-- ESTADÍSTICAS -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-dark text-white">
-                    <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Estadísticas</h5>
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
+                    <h5 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-pie me-2"></i> Estadísticas de Ejecución
+                    </h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span><i class="fas fa-calendar-check text-info"></i> Planificadas:</span>
-                            <span class="badge bg-info">{{ actividad.semanas_planificadas }}</span>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-calendar-check me-1" style="color: #2658A5;"></i> Planificadas:</span>
+                            <span class="fw-bold" style="color: #2658A5;">{{ actividad.semanas_planificadas }}</span>
                         </div>
                         <div class="progress" style="height: 8px;">
-                            <div class="progress-bar bg-info" style="width: 100%"></div>
+                            <div class="progress-bar" style="width: 100%; background: #2658A5;"></div>
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span><i class="fas fa-check-circle text-success"></i> Ejecutadas:</span>
-                            <span class="badge bg-success">{{ actividad.semanas_ejecutadas }}</span>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-check-circle me-1" style="color: #28a745;"></i> Ejecutadas:</span>
+                            <span class="fw-bold" style="color: #28a745;">{{ actividad.semanas_ejecutadas }}</span>
                         </div>
                         <div class="progress" style="height: 8px;">
-                            <div class="progress-bar bg-success" 
-                                 style="width: {{ (actividad.semanas_ejecutadas / actividad.semanas_planificadas * 100) if actividad.semanas_planificadas > 0 else 0 }}%"></div>
+                            <div class="progress-bar" style="width: {{ (actividad.semanas_ejecutadas / actividad.semanas_planificadas * 100) if actividad.semanas_planificadas > 0 else 0 }}%; background: #28a745;"></div>
                         </div>
                     </div>
                     
                     <div>
                         {% set pendientes = actividad.semanas_planificadas - actividad.semanas_ejecutadas %}
-                        <div class="d-flex justify-content-between mb-1">
-                            <span><i class="fas fa-hourglass-half text-warning"></i> Pendientes:</span>
-                            <span class="badge bg-warning text-dark">{{ pendientes if pendientes > 0 else 0 }}</span>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><i class="fas fa-hourglass-half me-1" style="color: #FFCC29;"></i> Pendientes:</span>
+                            <span class="fw-bold" style="color: #D4A000;">{{ pendientes if pendientes > 0 else 0 }}</span>
                         </div>
                         <div class="progress" style="height: 8px;">
-                            <div class="progress-bar bg-warning" 
-                                 style="width: {{ (pendientes / actividad.semanas_planificadas * 100) if actividad.semanas_planificadas > 0 and pendientes > 0 else 0 }}%"></div>
+                            <div class="progress-bar" style="width: {{ (pendientes / actividad.semanas_planificadas * 100) if actividad.semanas_planificadas > 0 and pendientes > 0 else 0 }}%; background: #FFCC29;"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- SEGUIMIENTO -->
-            <div class="card shadow-sm">
-                <div class="card-header bg-secondary text-white">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="fas fa-comments"></i> Seguimiento</h5>
+                        <h5 class="mb-0 fw-semibold text-white">
+                            <i class="fas fa-comments me-2"></i> Seguimiento
+                        </h5>
                         {% if current_user.puede('gestionar_plan_anual') %}
-                        <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalAgregarSeguimiento">
-                            <i class="fas fa-plus"></i>
+                        <button class="btn btn-light btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAgregarSeguimiento">
+                            <i class="fas fa-plus me-1"></i>
                         </button>
                         {% endif %}
                     </div>
                 </div>
-                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
                     {% if seguimientos %}
                     {% for seg in seguimientos %}
-                    <div class="mb-3 pb-3 border-bottom">
+                    <div class="p-3 border-bottom hover-lift">
                         <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h6 class="mb-0">
-                                <i class="fas fa-user-circle text-secondary"></i> 
-                                {{ seg[4] if seg[4] else 'Usuario' }}
-                            </h6>
-                            <small class="text-muted">
-                                {{ seg[3].strftime('%d/%m/%Y') if seg[3] else 'N/A' }}
-                            </small>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-user-circle" style="color: #2658A5;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-semibold" style="color: #2658A5;">{{ seg[4] if seg[4] else 'Usuario' }}</h6>
+                                    <small class="text-muted">{{ seg[3].strftime('%d/%m/%Y %H:%M') if seg[3] else 'N/A' }}</small>
+                                </div>
+                            </div>
+                            {% if seg[2] %}
+                            <span class="badge rounded-pill px-2 py-1 
+                                {% if seg[2] == 'alerta' %}bg-danger
+                                {% elif seg[2] == 'completado' %}bg-success
+                                {% elif seg[2] == 'observacion' %}" style="background: #FFCC29; color: #282F4B;
+                                {% else %}" style="background: #2658A5; color: white;
+                                {% endif %}">
+                                {{ seg[2]|title }}
+                            </span>
+                            {% endif %}
                         </div>
-                        <p class="mb-2">{{ seg[1] }}</p>
-                        {% if seg[2] %}
-                        <span class="badge 
-                            {% if seg[2] == 'alerta' %}bg-danger
-                            {% elif seg[2] == 'completado' %}bg-success
-                            {% elif seg[2] == 'observacion' %}bg-warning
-                            {% else %}bg-info
-                            {% endif %}">
-                            {{ seg[2]|title }}
-                        </span>
-                        {% endif %}
+                        <p class="mb-0 text-muted small">{{ seg[1] }}</p>
                     </div>
                     {% endfor %}
                     {% else %}
-                    <p class="text-muted text-center my-4">
-                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                        No hay seguimientos
-                    </p>
+                    <div class="text-center py-5">
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                            <i class="fas fa-comments fa-2x" style="color: #C23538;"></i>
+                        </div>
+                        <h6 class="fw-semibold text-muted">No hay seguimientos</h6>
+                        <p class="text-muted small">Agrega comentarios sobre el avance</p>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -373,31 +417,34 @@
 
 <!-- MODAL AGREGAR EVIDENCIA -->
 <div class="modal fade" id="modalAgregarEvidencia" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
             <form method="POST" action="{{ url_for('sst_plan_anual_agregar_evidencia', id=actividad.id) }}" enctype="multipart/form-data">
-                <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title"><i class="fas fa-paperclip"></i> Agregar Evidencia</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h5 class="modal-title text-white">
+                        <i class="fas fa-paperclip me-2"></i> Agregar Evidencia
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label class="form-label">Título *</label>
-                        <input type="text" name="titulo" class="form-control" required>
+                        <label class="form-label fw-semibold">Título *</label>
+                        <input type="text" name="titulo" class="form-control rounded-3" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Descripción</label>
-                        <textarea name="descripcion" class="form-control" rows="3"></textarea>
+                        <label class="form-label fw-semibold">Descripción</label>
+                        <textarea name="descripcion" class="form-control rounded-3" rows="3"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Archivo</label>
-                        <input type="file" name="archivo" class="form-control">
+                        <label class="form-label fw-semibold">Archivo</label>
+                        <input type="file" name="archivo" class="form-control rounded-3">
+                        <small class="text-muted">Formatos permitidos: PDF, DOC, XLS, JPG, PNG</small>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer border-0 pt-0 pb-4 px-4">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-info">
-                        <i class="fas fa-save"></i> Guardar
+                    <button type="submit" class="btn" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; color: white;">
+                        <i class="fas fa-save me-1"></i> Guardar
                     </button>
                 </div>
             </form>
@@ -407,32 +454,34 @@
 
 <!-- MODAL AGREGAR SEGUIMIENTO -->
 <div class="modal fade" id="modalAgregarSeguimiento" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
             <form method="POST" action="{{ url_for('sst_plan_anual_agregar_seguimiento', id=actividad.id) }}">
-                <div class="modal-header bg-secondary text-white">
-                    <h5 class="modal-title"><i class="fas fa-comments"></i> Agregar Comentario</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+                    <h5 class="modal-title text-white">
+                        <i class="fas fa-comments me-2"></i> Agregar Comentario
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label class="form-label">Comentario *</label>
-                        <textarea name="comentario" class="form-control" rows="4" required></textarea>
+                        <label class="form-label fw-semibold">Comentario *</label>
+                        <textarea name="comentario" class="form-control rounded-3" rows="4" required></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Tipo</label>
-                        <select name="tipo" class="form-select">
-                            <option value="seguimiento">Seguimiento</option>
-                            <option value="observacion">Observación</option>
-                            <option value="alerta">Alerta</option>
-                            <option value="completado">Completado</option>
+                        <label class="form-label fw-semibold">Tipo</label>
+                        <select name="tipo" class="form-select rounded-3">
+                            <option value="seguimiento">📋 Seguimiento</option>
+                            <option value="observacion">👁️ Observación</option>
+                            <option value="alerta">⚠️ Alerta</option>
+                            <option value="completado">✅ Completado</option>
                         </select>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer border-0 pt-0 pb-4 px-4">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Guardar
+                    <button type="submit" class="btn" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); border: none; color: white;">
+                        <i class="fas fa-save me-1"></i> Guardar
                     </button>
                 </div>
             </form>
@@ -453,20 +502,122 @@ function confirmarEliminarEvidencia(evidenciaId) {
 </script>
 
 <style>
+/* Efecto shimmer para el header */
+.bg-gradient-corporate {
+    background: linear-gradient(135deg, #2658A5 0%, #1a3f73 50%, #282F4B 100%) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.bg-gradient-corporate::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    animation: shimmer 8s infinite linear;
+}
+
+@keyframes shimmer {
+    0% { transform: translate(-30%, -30%) rotate(0deg); }
+    100% { transform: translate(30%, 30%) rotate(360deg); }
+}
+
+/* Hover lift */
+.hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+.hover-lift:hover {
+    background-color: #f8f9fc !important;
+}
+
+/* Cronograma */
+.cronograma-table {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.cronograma-table th, .cronograma-table td {
+    vertical-align: middle;
+    padding: 12px 8px;
+}
+
+.semana-cell {
+    transition: background-color 0.2s ease;
+}
+
+.semana-cell:hover {
+    background-color: rgba(38, 88, 165, 0.05);
+}
+
+.gantt-bar {
+    transition: transform 0.2s ease;
+}
+
+.gantt-bar:hover {
+    transform: scale(1.1);
+}
+
+/* Progress circle */
+.progress-circle {
+    --size: 140px;
+    --value: 0;
+    width: var(--size);
+    height: var(--size);
+    border-radius: 50%;
+    background: radial-gradient(closest-side, white 80%, transparent 81% 100%),
+                conic-gradient(#2658A5 calc(var(--value) * 1%), #e9ecef 0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.progress-value {
+    position: absolute;
+}
+
+/* Cards */
 .card {
-    border-radius: 10px;
+    border-radius: 16px;
 }
 
 .card-header {
-    border-radius: 10px 10px 0 0 !important;
+    border-radius: 16px 16px 0 0 !important;
 }
 
-.progress {
+/* Botones */
+.btn {
+    transition: all 0.2s ease;
     border-radius: 10px;
 }
 
-.progress-bar {
-    transition: width 0.6s ease;
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    animation: fadeIn 0.4s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .progress-circle {
+        --size: 100px;
+    }
+    .progress-value {
+        font-size: 1.5rem !important;
+    }
 }
 </style>
 {% endblock %}
