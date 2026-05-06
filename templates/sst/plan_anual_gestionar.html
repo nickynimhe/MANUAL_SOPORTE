@@ -355,46 +355,52 @@ function eliminarSeleccionadas() {
     }
 }
 
-// ===== ELIMINAR INDIVIDUAL =====
+// ===== ELIMINAR INDIVIDUAL CORREGIDO =====
 function eliminarActividad(id, nombre) {
     if (!confirm(`¿Eliminar la actividad?\n\n"${nombre}..."\n\nEsta acción no se puede deshacer.`)) {
         return;
     }
     
     const row = document.getElementById(`row-${id}`);
-    row.style.transition = 'all 0.3s';
-    row.style.backgroundColor = '#ffebee';
-    row.style.opacity = '0.6';
+    if (row) {
+        row.style.transition = 'all 0.3s';
+        row.style.backgroundColor = '#ffebee';
+        row.style.opacity = '0.6';
+    }
     
-    // Usar la URL con el ID en la ruta
+    // URL CORRECTA con el ID en la ruta
     fetch(`/sst/plan-anual/actividad/${id}/eliminar`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Type': 'application/json',
         }
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             setTimeout(() => {
-                row.remove();
+                if (row) row.remove();
                 mostrarMensaje('success', '✅ Actividad eliminada correctamente');
-                actualizarEstadisticas();
+                setTimeout(() => location.reload(), 1000);
             }, 300);
         } else {
-            row.style.backgroundColor = '';
-            row.style.opacity = '1';
+            if (row) {
+                row.style.backgroundColor = '';
+                row.style.opacity = '1';
+            }
             mostrarMensaje('error', data.error || '❌ Error al eliminar la actividad');
         }
     })
     .catch(error => {
-        row.style.backgroundColor = '';
-        row.style.opacity = '1';
+        if (row) {
+            row.style.backgroundColor = '';
+            row.style.opacity = '1';
+        }
         mostrarMensaje('error', '❌ Error de conexión');
     });
 }
 
-// ===== MOSTRAR MENSAJES FLASH ANIMADOS =====
+// ===== MOSTRAR MENSAJES =====
 function mostrarMensaje(tipo, mensaje) {
     const container = document.getElementById('flashMessages');
     if (!container) return;
@@ -440,7 +446,7 @@ function actualizarEstadisticas() {
     location.reload();
 }
 
-// Animación de entrada para las filas
+// Animación de entrada
 document.addEventListener('DOMContentLoaded', function() {
     const rows = document.querySelectorAll('.actividad-fila');
     rows.forEach((row, index) => {
