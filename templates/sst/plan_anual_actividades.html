@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container-fluid px-0 px-md-3">
 
-    <!-- HEADER MEJORADO -->
+    <!-- HEADER CON MISMO EFECTO QUE DASHBOARD SST -->
     <div class="sst-header bg-gradient-corporate rounded-4 mb-4 p-4 text-white shadow-lg">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
             <div class="mb-3 mb-md-0">
@@ -14,8 +14,8 @@
                         <i class="fas fa-tasks" style="color: #2658A5; font-size: 1.8rem;"></i>
                     </div>
                     <div>
-                        <h1 class="h2 fw-bold mb-1">Actividades del Plan Anual</h1>
-                        <p class="text-white-80 mb-0">Gestión de actividades PESV 2026</p>
+                        <h1 class="h2 fw-bold mb-1 text-white">Actividades del Plan Anual</h1>
+                        <p class="text-white-80 mb-0">Cobertura de actividades P.E.S.V. 2026</p>
                     </div>
                 </div>
             </div>
@@ -44,7 +44,7 @@
         </div>
     </div>
 
-    <!-- FILTROS REDISEÑADOS -->
+    <!-- FILTROS -->
     <div class="card border-0 shadow-sm mb-4 overflow-hidden">
         <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
             <h5 class="mb-0 fw-semibold text-white">
@@ -126,7 +126,7 @@
         </div>
     </div>
 
-    <!-- LISTA DE ACTIVIDADES REDISEÑADA -->
+    <!-- LISTA DE ACTIVIDADES -->
     <div class="card border-0 shadow-sm overflow-hidden">
         <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
             <div class="d-flex justify-content-between align-items-center">
@@ -141,7 +141,7 @@
         <div class="card-body p-0">
             {% if actividades %}
             <div class="table-responsive">
-                <table class="table table-hover mb-0" style="border-collapse: separate; border-spacing: 0;">
+                <table class="table table-hover mb-0">
                     <thead style="background: #f8f9fc;">
                         <tr>
                             <th style="width: 5%; padding: 16px 12px;">#</th>
@@ -251,13 +251,14 @@
 </div>
 
 <style>
-/* Estilos adicionales */
-.sst-header {
+/* Efecto shimmer para el header (mismo que dashboard) */
+.bg-gradient-corporate {
+    background: linear-gradient(135deg, #2658A5 0%, #1a3f73 50%, #282F4B 100%) !important;
     position: relative;
     overflow: hidden;
 }
 
-.sst-header::before {
+.bg-gradient-corporate::before {
     content: '';
     position: absolute;
     top: -50%;
@@ -266,17 +267,25 @@
     height: 200%;
     background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
     pointer-events: none;
+    animation: shimmer 8s infinite linear;
+}
+
+@keyframes shimmer {
+    0% { transform: translate(-30%, -30%) rotate(0deg); }
+    100% { transform: translate(30%, 30%) rotate(360deg); }
+}
+
+.hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.12) !important;
 }
 
 .table-hover tbody tr:hover {
     background-color: #f8f9fc !important;
-    transform: scale(1.01);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-.badge {
-    font-weight: 500;
-    letter-spacing: 0.3px;
 }
 
 .form-select, .form-control {
@@ -313,14 +322,7 @@
     animation: fadeIn 0.4s ease;
 }
 
-/* Badge personalizado para cada ciclo */
-.badge-pill-custom {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-/* Tabla responsiva */
+/* Responsive */
 @media (max-width: 768px) {
     .table thead {
         display: none;
