@@ -21,7 +21,7 @@
             </div>
             <div>
                 <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-light btn-sm fw-medium shadow-sm">
-                    <i class="fas fa-arrow-left me-1"></i> Volver a Actividades
+                    <i class="fas fa-arrow-left me-1"></i> Volver
                 </a>
             </div>
         </div>
@@ -30,194 +30,94 @@
     <!-- MENSAJES FLASH -->
     <div id="flashMessages"></div>
 
-    <!-- FORMULARIO PRINCIPAL -->
+    <!-- FORMULARIO -->
     <div class="card border-0 shadow-sm overflow-hidden">
         <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
             <h5 class="mb-0 fw-semibold text-white">
-                <i class="fas fa-edit me-2"></i> Formulario de Registro
+                <i class="fas fa-edit me-2"></i> Datos de la Actividad
             </h5>
         </div>
         <div class="card-body p-4">
-            <form id="formAgregarActividad" method="POST" action="{{ url_for('sst_plan_anual_nueva_actividad') }}">
+            <form method="POST" action="{{ url_for('sst_plan_anual_nueva_actividad') }}">
                 
-                <!-- SECCIÓN 1: INFORMACIÓN BÁSICA -->
-                <div class="form-section mb-4">
-                    <h5 class="fw-semibold mb-3" style="color: #2658A5;">
-                        <i class="fas fa-info-circle me-2"></i> Información Básica
-                    </h5>
-                    <div class="row g-3">
-                        <div class="col-md-8">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-tasks me-1" style="color: #C23538;"></i> Actividad *
-                            </label>
-                            <input type="text" name="actividad" class="form-control rounded-3" 
-                                   placeholder="Ej: Conformación del Comité de Seguridad Vial" required>
-                            <small class="text-muted">Nombre descriptivo de la actividad</small>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-sync-alt me-1" style="color: #2658A5;"></i> Ciclo PHVA *
-                            </label>
-                            <select name="ciclo" class="form-select rounded-3" required>
-                                <option value="">Seleccionar ciclo</option>
-                                <option value="Planear">📋 Planear</option>
-                                <option value="Hacer">🔨 Hacer</option>
-                                <option value="Verificar">🔍 Verificar</option>
-                                <option value="Actuar">📈 Actuar</option>
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-file-alt me-1" style="color: #FFCC29;"></i> Evidencia / Descripción
-                            </label>
-                            <textarea name="evidencia" class="form-control rounded-3" rows="3" 
-                                      placeholder="Documento en el que consta la asignación, descripción detallada de la actividad..."></textarea>
-                        </div>
-                    </div>
+                <!-- Actividad -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-tasks me-1" style="color: #C23538;"></i> Actividad *
+                    </label>
+                    <input type="text" name="actividad" class="form-control rounded-3" 
+                           placeholder="Nombre de la actividad" required>
                 </div>
 
-                <!-- SECCIÓN 2: MARCO NORMATIVO -->
-                <div class="form-section mb-4">
-                    <h5 class="fw-semibold mb-3" style="color: #2658A5;">
-                        <i class="fas fa-gavel me-2"></i> Marco Normativo y Aplicación
-                    </h5>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-book me-1" style="color: #28a745;"></i> Artículo Decreto 1072 de 2015
-                            </label>
-                            <input type="text" name="articulo" class="form-control rounded-3" 
-                                   placeholder="Ej: 2.2.4.6.8">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-chart-line me-1" style="color: #C23538;"></i> Nivel PESV
-                            </label>
-                            <select name="nivel" class="form-select rounded-3">
-                                <option value="todos">Todos los niveles</option>
-                                <option value="estandar">Estándar</option>
-                                <option value="avanzado">Avanzado</option>
-                                <option value="na">N/A</option>
-                            </select>
-                        </div>
-                    </div>
+                <!-- Evidencia -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-file-alt me-1" style="color: #FFCC29;"></i> Evidencia / Descripción
+                    </label>
+                    <textarea name="evidencia" class="form-control rounded-3" rows="3" 
+                              placeholder="Descripción detallada de la actividad..."></textarea>
                 </div>
 
-                <!-- SECCIÓN 3: RESPONSABLES Y RECURSOS -->
-                <div class="form-section mb-4">
-                    <h5 class="fw-semibold mb-3" style="color: #2658A5;">
-                        <i class="fas fa-users me-2"></i> Responsables y Recursos
-                    </h5>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-user-tie me-1" style="color: #FFCC29;"></i> Responsables
-                            </label>
-                            <select name="responsables" class="form-select rounded-3" multiple size="4">
-                                <option value="SST">SST</option>
-                                <option value="COPASST">COPASST</option>
-                                <option value="Gerencia">Gerencia</option>
-                                <option value="Comité de Seguridad Vial">Comité de Seguridad Vial</option>
-                                <option value="Talento Humano">Talento Humano</option>
-                                <option value="Administrativa">Administrativa</option>
-                            </select>
-                            <small class="text-muted">Mantén Ctrl (Windows) o Cmd (Mac) para seleccionar varios</small>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold mb-2">
-                                <i class="fas fa-boxes me-1" style="color: #28a745;"></i> Recursos
-                            </label>
-                            <div class="row">
-                                <div class="col-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="recursos" value="tecnologicos" id="rec_tec">
-                                        <label class="form-check-label" for="rec_tec">💻 Tecnológicos</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="recursos" value="infraestructura" id="rec_inf">
-                                        <label class="form-check-label" for="rec_inf">🏗️ Infraestructura</label>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="recursos" value="humanos" id="rec_hum">
-                                        <label class="form-check-label" for="rec_hum">👥 Humanos</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="recursos" value="financieros" id="rec_fin">
-                                        <label class="form-check-label" for="rec_fin">💰 Financieros</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Ciclo PHVA -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-sync-alt me-1" style="color: #2658A5;"></i> Ciclo PHVA *
+                    </label>
+                    <select name="ciclo" class="form-select rounded-3" required>
+                        <option value="">Seleccionar</option>
+                        <option value="Planear">📋 Planear</option>
+                        <option value="Hacer">🔨 Hacer</option>
+                        <option value="Verificar">🔍 Verificar</option>
+                        <option value="Actuar">📈 Actuar</option>
+                    </select>
                 </div>
 
-                <!-- SECCIÓN 4: CRONOGRAMA MENSUAL -->
-                <div class="form-section mb-4">
-                    <h5 class="fw-semibold mb-3" style="color: #2658A5;">
-                        <i class="fas fa-calendar-alt me-2"></i> Cronograma Mensual
-                    </h5>
-                    <p class="text-muted small mb-3">
-                        <i class="fas fa-info-circle me-1"></i> Selecciona las semanas donde se programará (P) y ejecutará (E) la actividad.
-                    </p>
-                    
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-sm cronograma-table">
-                            <thead style="background: #f8f9fc;">
-                                <tr>
-                                    <th style="width: 100px;">Mes</th>
-                                    <th class="text-center">Semana 1</th>
-                                    <th class="text-center">Semana 2</th>
-                                    <th class="text-center">Semana 3</th>
-                                    <th class="text-center">Semana 4</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for mes in ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'] %}
-                                <tr>
-                                    <td class="fw-semibold" style="background: #f8f9fc;">{{ mes }}</td>
-                                    {% for semana in range(1, 5) %}
-                                    <td class="text-center semana-cell">
-                                        <div class="d-flex justify-content-center gap-2">
-                                            <label class="d-flex align-items-center gap-1">
-                                                <input type="checkbox" name="{{ mes.lower() }}_s{{ semana }}_p" value="1" class="form-check-input">
-                                                <span class="badge" style="background: #2658A5; color: white; font-size: 10px;">P</span>
-                                            </label>
-                                            <label class="d-flex align-items-center gap-1">
-                                                <input type="checkbox" name="{{ mes.lower() }}_s{{ semana }}_e" value="1" class="form-check-input">
-                                                <span class="badge" style="background: #28a745; color: white; font-size: 10px;">E</span>
-                                            </label>
-                                        </div>
-                                    </td>
-                                    {% endfor %}
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    <small class="text-muted">
-                        <span class="badge" style="background: #2658A5;">P</span> = Programado &nbsp;&nbsp;
-                        <span class="badge" style="background: #28a745;">E</span> = Ejecutado
-                    </small>
+                <!-- Responsables -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-user-tie me-1" style="color: #28a745;"></i> Responsables
+                    </label>
+                    <input type="text" name="responsables" class="form-control rounded-3" 
+                           placeholder="Ej: SST, Gerencia, COPASST">
                 </div>
 
-                <!-- SECCIÓN 5: OBSERVACIONES -->
-                <div class="form-section mb-4">
-                    <h5 class="fw-semibold mb-3" style="color: #2658A5;">
-                        <i class="fas fa-pen-alt me-2"></i> Observaciones
-                    </h5>
-                    <textarea name="observaciones" class="form-control rounded-3" rows="3" 
-                              placeholder="Notas adicionales, observaciones relevantes..."></textarea>
+                <!-- Nivel -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-chart-line me-1" style="color: #C23538;"></i> Nivel
+                    </label>
+                    <input type="text" name="nivel" class="form-control rounded-3" 
+                           placeholder="Ej: Estándar, Avanzado, N/A">
                 </div>
 
-                <!-- BOTONES DE ACCIÓN -->
-                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                <!-- Estado -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-flag me-1" style="color: #FFCC29;"></i> Estado
+                    </label>
+                    <select name="estado" class="form-select rounded-3">
+                        <option value="pendiente">⏳ Pendiente</option>
+                        <option value="en_proceso">🔄 En Proceso</option>
+                        <option value="completado">✅ Completado</option>
+                    </select>
+                </div>
+
+                <!-- Avance -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-chart-simple me-1" style="color: #2658A5;"></i> Avance (%)
+                    </label>
+                    <input type="number" name="avance" class="form-control rounded-3" 
+                           value="0" min="0" max="100">
+                </div>
+
+                <!-- Botones -->
+                <div class="d-flex justify-content-between pt-3 border-top">
                     <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-secondary px-4">
                         <i class="fas fa-times me-1"></i> Cancelar
                     </a>
                     <button type="submit" class="btn btn-primary px-5" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none;">
-                        <i class="fas fa-save me-2"></i> Guardar Actividad
+                        <i class="fas fa-save me-2"></i> Guardar
                     </button>
                 </div>
             </form>
@@ -225,85 +125,7 @@
     </div>
 </div>
 
-<script>
-// Validación del formulario antes de enviar
-document.getElementById('formAgregarActividad').addEventListener('submit', function(e) {
-    const actividad = document.querySelector('input[name="actividad"]').value.trim();
-    const ciclo = document.querySelector('select[name="ciclo"]').value;
-    
-    if (!actividad) {
-        e.preventDefault();
-        mostrarMensaje('error', '❌ El campo "Actividad" es obligatorio');
-        return;
-    }
-    
-    if (!ciclo) {
-        e.preventDefault();
-        mostrarMensaje('error', '❌ Debes seleccionar un ciclo PHVA');
-        return;
-    }
-    
-    // Si todo está bien, mostrar mensaje de carga
-    const btn = document.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Guardando...';
-});
-
-// Función para mostrar mensajes
-function mostrarMensaje(tipo, mensaje) {
-    const container = document.getElementById('flashMessages');
-    if (!container) return;
-    
-    const iconos = {
-        success: 'fa-check-circle',
-        error: 'fa-exclamation-circle',
-        warning: 'fa-exclamation-triangle',
-        info: 'fa-info-circle'
-    };
-    
-    const colores = {
-        success: '#28a745',
-        error: '#C23538',
-        warning: '#FFCC29',
-        info: '#2658A5'
-    };
-    
-    const alert = document.createElement('div');
-    alert.className = 'alert alert-custom fade-in';
-    alert.style.cssText = `border-left: 4px solid ${colores[tipo]}; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 16px; padding: 12px 16px;`;
-    alert.innerHTML = `
-        <div class="d-flex align-items-center">
-            <i class="fas ${iconos[tipo]} me-2" style="color: ${colores[tipo]}; font-size: 1.2rem;"></i>
-            <strong style="color: ${colores[tipo]};">${mensaje}</strong>
-            <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
-        </div>
-    `;
-    
-    container.appendChild(alert);
-    
-    setTimeout(() => {
-        if (alert && alert.parentElement) {
-            alert.style.opacity = '0';
-            alert.style.transition = 'opacity 0.3s';
-            setTimeout(() => alert.remove(), 300);
-        }
-    }, 5000);
-}
-
-// Efecto visual al hacer hover en celdas del cronograma
-document.querySelectorAll('.semana-cell').forEach(cell => {
-    cell.addEventListener('mouseenter', function() {
-        this.style.backgroundColor = 'rgba(38, 88, 165, 0.05)';
-        this.style.transition = 'background-color 0.2s';
-    });
-    cell.addEventListener('mouseleave', function() {
-        this.style.backgroundColor = '';
-    });
-});
-</script>
-
 <style>
-/* Efecto shimmer para el header */
 .bg-gradient-corporate {
     background: linear-gradient(135deg, #2658A5 0%, #1a3f73 50%, #282F4B 100%) !important;
     position: relative;
@@ -327,18 +149,6 @@ document.querySelectorAll('.semana-cell').forEach(cell => {
     100% { transform: translate(30%, 30%) rotate(360deg); }
 }
 
-/* Estilos del formulario */
-.form-section {
-    background: #f8f9fc;
-    border-radius: 16px;
-    padding: 20px;
-    transition: all 0.3s ease;
-}
-
-.form-section:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
 .form-control, .form-select {
     border: 1px solid #e5e7eb;
     transition: all 0.2s ease;
@@ -349,48 +159,6 @@ document.querySelectorAll('.semana-cell').forEach(cell => {
     box-shadow: 0 0 0 3px rgba(38,88,165,0.15);
 }
 
-/* Tabla del cronograma */
-.cronograma-table {
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.cronograma-table th, .cronograma-table td {
-    vertical-align: middle;
-    padding: 10px 8px;
-}
-
-.semana-cell {
-    transition: background-color 0.2s ease;
-}
-
-/* Checkboxes personalizados */
-.form-check-input:checked {
-    background-color: #2658A5;
-    border-color: #2658A5;
-}
-
-/* Animaciones */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.card {
-    animation: fadeIn 0.4s ease;
-}
-
-.fade-in {
-    animation: fadeIn 0.3s ease;
-}
-
-/* Botones */
 .btn {
     transition: all 0.2s ease;
     border-radius: 10px;
@@ -400,31 +168,13 @@ document.querySelectorAll('.semana-cell').forEach(cell => {
     transform: translateY(-2px);
 }
 
-.btn-primary {
-    background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%);
-    border: none;
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.btn-primary:hover {
-    background: linear-gradient(135deg, #1a3f73 0%, #0f2647 100%);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .form-section {
-        padding: 15px;
-    }
-    
-    .cronograma-table {
-        font-size: 12px;
-    }
-    
-    .cronograma-table .d-flex {
-        flex-direction: column;
-        align-items: center;
-        gap: 4px !important;
-    }
+.card {
+    animation: fadeIn 0.4s ease;
 }
 </style>
-
 {% endblock %}
