@@ -3,117 +3,197 @@
 {% block title %}Nueva Actividad - Plan Anual PESV{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2><i class="fas fa-plus-circle"></i> Nueva Actividad PESV</h2>
-                    <p class="text-muted">Agregar actividad al Plan Anual 2026</p>
+<div class="container-fluid px-0 px-md-3">
+
+    <!-- HEADER CON EFECTO SHIMMER -->
+    <div class="sst-header bg-gradient-corporate rounded-4 mb-4 p-4 text-white shadow-lg">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+            <div class="mb-3 mb-md-0">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-white rounded-3 p-2 me-3 shadow-sm">
+                        <i class="fas fa-plus-circle" style="color: #2658A5; font-size: 1.8rem;"></i>
+                    </div>
+                    <div>
+                        <h1 class="h2 fw-bold mb-1 text-white">Nueva Actividad PESV</h1>
+                        <p class="text-white-80 mb-0">Agregar actividad al Plan Anual 2026</p>
+                    </div>
                 </div>
-                <div>
-                    <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left"></i> Cancelar
-                    </a>
-                </div>
+            </div>
+            <div>
+                <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-light btn-sm fw-medium shadow-sm">
+                    <i class="fas fa-arrow-left me-1"></i> Cancelar
+                </a>
             </div>
         </div>
     </div>
 
+    <!-- MENSAJES FLASH -->
+    <div id="flashMessages"></div>
+
     <div class="row">
-        <div class="col-lg-8 mx-auto">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Formulario de Actividad</h5>
+        <div class="col-lg-10 mx-auto">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h5 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-clipboard-list me-2"></i> Formulario de Actividad
+                    </h5>
                 </div>
-                <div class="card-body">
-                    <form id="formNuevaActividad">
-                        <!-- Información Básica -->
+                <div class="card-body p-4">
+                    <form id="formNuevaActividad" method="POST" action="{{ url_for('sst_plan_anual_nueva_actividad') }}">
+                        
+                        <!-- SECCIÓN 1: INFORMACIÓN BÁSICA -->
                         <div class="form-section mb-4">
-                            <h5 class="border-bottom pb-2">📌 Información Básica</h5>
-                            <div class="form-group">
-                                <label for="actividad">Actividad *</label>
-                                <input type="text" id="actividad" class="form-control" required 
+                            <h5 class="fw-semibold mb-3" style="color: #2658A5;">
+                                <i class="fas fa-info-circle me-2"></i> Información Básica
+                            </h5>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="fas fa-tasks me-1" style="color: #C23538;"></i> Actividad *
+                                </label>
+                                <input type="text" id="actividad" name="actividad" class="form-control rounded-3" required 
                                        placeholder="Ej: Conformación Comité de Seguridad Vial">
                             </div>
-                            <div class="form-group">
-                                <label for="evidencia">Evidencia Requerida</label>
-                                <textarea id="evidencia" class="form-control" rows="3" 
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="fas fa-file-alt me-1" style="color: #FFCC29;"></i> Evidencia Requerida
+                                </label>
+                                <textarea id="evidencia" name="evidencia" class="form-control rounded-3" rows="3" 
                                           placeholder="Documento en el que consta la asignación..."></textarea>
                             </div>
                         </div>
 
-                        <!-- Ciclo y Normativa -->
+                        <!-- SECCIÓN 2: MARCO NORMATIVO -->
                         <div class="form-section mb-4">
-                            <h5 class="border-bottom pb-2">🏛️ Marco Normativo</h5>
-                            <div class="row">
+                            <h5 class="fw-semibold mb-3" style="color: #2658A5;">
+                                <i class="fas fa-gavel me-2"></i> Marco Normativo
+                            </h5>
+                            <div class="row g-3">
                                 <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="ciclo">Ciclo PHVA *</label>
-                                        <select id="ciclo" class="form-control" required>
-                                            <option value="">Seleccionar...</option>
-                                            <option value="Planear">Planear</option>
-                                            <option value="Hacer">Hacer</option>
-                                            <option value="Verificar">Verificar</option>
-                                            <option value="Actuar">Actuar</option>
-                                        </select>
-                                    </div>
+                                    <label class="form-label fw-semibold">
+                                        <i class="fas fa-sync-alt me-1" style="color: #2658A5;"></i> Ciclo PHVA *
+                                    </label>
+                                    <select id="ciclo" name="ciclo_phva" class="form-select rounded-3" required>
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Planear">📋 Planear</option>
+                                        <option value="Hacer">🔨 Hacer</option>
+                                        <option value="Verificar">🔍 Verificar</option>
+                                        <option value="Actuar">📈 Actuar</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="articulo">Artículo Decreto 1072</label>
-                                        <input type="text" id="articulo" class="form-control" 
-                                               placeholder="Ej: 2.2.4.6.8">
-                                    </div>
+                                    <label class="form-label fw-semibold">
+                                        <i class="fas fa-book me-1" style="color: #28a745;"></i> Artículo Decreto 1072
+                                    </label>
+                                    <input type="text" id="articulo" name="articulos_decreto" class="form-control rounded-3" 
+                                           placeholder="Ej: 2.2.4.6.8">
                                 </div>
-                            </div>
-                            <div class="row">
                                 <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="nivel">Nivel PESV</label>
-                                        <select id="nivel" class="form-control">
-                                            <option value="">Seleccionar...</option>
-                                            <option value="Todos los niveles">Todos los niveles</option>
-                                            <option value="Estándar">Estándar</option>
-                                            <option value="Avanzado">Avanzado</option>
-                                            <option value="N/A">N/A</option>
-                                        </select>
-                                    </div>
+                                    <label class="form-label fw-semibold">
+                                        <i class="fas fa-chart-line me-1" style="color: #C23538;"></i> Nivel PESV
+                                    </label>
+                                    <select id="nivel" name="nivel_pesv" class="form-select rounded-3">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Todos los niveles">🌐 Todos los niveles</option>
+                                        <option value="Estándar">📊 Estándar</option>
+                                        <option value="Avanzado">🚀 Avanzado</option>
+                                        <option value="N/A">N/A</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Responsables y Recursos -->
+                        <!-- SECCIÓN 3: RESPONSABLES Y RECURSOS -->
                         <div class="form-section mb-4">
-                            <h5 class="border-bottom pb-2">👥 Responsables y Recursos</h5>
-                            <div class="form-group">
-                                <label for="responsables">Responsables *</label>
-                                <input type="text" id="responsables" class="form-control" required 
-                                       placeholder="Ej: SST - GERENCIA - COMITÉ DE SEGURIDAD VIAL">
-                            </div>
-                            <div class="form-group">
-                                <label for="recursos">Recursos</label>
-                                <input type="text" id="recursos" class="form-control" 
-                                       placeholder="Ej: Tecnologicos, Infraestructura, Humanos, Financieros">
+                            <h5 class="fw-semibold mb-3" style="color: #2658A5;">
+                                <i class="fas fa-users me-2"></i> Responsables y Recursos
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">
+                                        <i class="fas fa-user-tie me-1" style="color: #FFCC29;"></i> Responsables *
+                                    </label>
+                                    <input type="text" id="responsables" name="responsables" class="form-control rounded-3" required 
+                                           placeholder="Ej: SST - GERENCIA - COMITÉ DE SEGURIDAD VIAL">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">
+                                        <i class="fas fa-boxes me-1" style="color: #28a745;"></i> Recursos
+                                    </label>
+                                    <input type="text" id="recursos" name="recursos" class="form-control rounded-3" 
+                                           placeholder="Ej: Tecnológicos, Infraestructura, Humanos, Financieros">
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Observaciones -->
+                        <!-- SECCIÓN 4: CRONOGRAMA MENSUAL (OPCIONAL) -->
                         <div class="form-section mb-4">
-                            <h5 class="border-bottom pb-2">📝 Observaciones</h5>
-                            <div class="form-group">
-                                <textarea id="observaciones" class="form-control" rows="3" 
-                                          placeholder="Notas adicionales..."></textarea>
+                            <h5 class="fw-semibold mb-3" style="color: #2658A5;">
+                                <i class="fas fa-calendar-alt me-2"></i> Programación Mensual (Opcional)
+                            </h5>
+                            <p class="text-muted small mb-3">
+                                <i class="fas fa-info-circle me-1"></i> Selecciona las semanas donde se programará la actividad.
+                            </p>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm cronograma-table">
+                                    <thead style="background: #f8f9fc;">
+                                        <tr>
+                                            <th style="width: 100px;">Mes</th>
+                                            <th class="text-center">Semana 1</th>
+                                            <th class="text-center">Semana 2</th>
+                                            <th class="text-center">Semana 3</th>
+                                            <th class="text-center">Semana 4</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% set meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'] %}
+                                        {% set meses_nombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'] %}
+                                        {% for idx in range(12) %}
+                                        <tr>
+                                            <td class="fw-semibold" style="background: #f8f9fc;">{{ meses_nombres[idx] }}</td>
+                                            {% for semana in range(1, 5) %}
+                                            <td class="text-center semana-cell">
+                                                <div class="d-flex justify-content-center gap-2">
+                                                    <label class="d-flex align-items-center gap-1">
+                                                        <input type="checkbox" name="{{ meses[idx] }}_semana{{ semana }}_p" value="on" class="form-check-input">
+                                                        <span class="badge" style="background: #2658A5; color: white; font-size: 10px;">P</span>
+                                                    </label>
+                                                    <label class="d-flex align-items-center gap-1">
+                                                        <input type="checkbox" name="{{ meses[idx] }}_semana{{ semana }}_e" value="on" class="form-check-input">
+                                                        <span class="badge" style="background: #28a745; color: white; font-size: 10px;">E</span>
+                                                    </label>
+                                                </div>
+                                            </td>
+                                            {% endfor %}
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
+                            <small class="text-muted">
+                                <span class="badge" style="background: #2658A5;">P</span> = Programado &nbsp;&nbsp;
+                                <span class="badge" style="background: #28a745;">E</span> = Ejecutado
+                            </small>
                         </div>
 
-                        <!-- Botones -->
-                        <div class="d-flex justify-content-between">
-                            <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-secondary">
-                                Cancelar
+                        <!-- SECCIÓN 5: OBSERVACIONES -->
+                        <div class="form-section mb-4">
+                            <h5 class="fw-semibold mb-3" style="color: #2658A5;">
+                                <i class="fas fa-pen-alt me-2"></i> Observaciones
+                            </h5>
+                            <textarea id="observaciones" name="observaciones" class="form-control rounded-3" rows="3" 
+                                      placeholder="Notas adicionales..."></textarea>
+                        </div>
+
+                        <!-- Estado oculto -->
+                        <input type="hidden" name="estado" value="pendiente">
+
+                        <!-- BOTONES -->
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a href="{{ url_for('sst_plan_anual_actividades') }}" class="btn btn-secondary px-4">
+                                <i class="fas fa-times me-1"></i> Cancelar
                             </a>
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-save"></i> Guardar Actividad
+                            <button type="submit" class="btn btn-primary px-5" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none;">
+                                <i class="fas fa-save me-2"></i> Guardar Actividad
                             </button>
                         </div>
                     </form>
@@ -123,50 +203,178 @@
     </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/pesv_data.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    inicializarDatosEjemplo();
+    const form = document.getElementById('formNuevaActividad');
     
-    document.getElementById('formNuevaActividad').addEventListener('submit', function(e) {
-        e.preventDefault();
+    // Validación antes de enviar
+    form.addEventListener('submit', function(e) {
+        const actividad = document.getElementById('actividad').value.trim();
+        const ciclo = document.getElementById('ciclo').value;
         
-        if (typeof guardarActividad !== 'function') {
-            alert('Error: No se puede guardar. Recarga la página.');
+        if (!actividad) {
+            e.preventDefault();
+            mostrarMensaje('error', '❌ El campo "Actividad" es obligatorio');
             return;
         }
         
-        const datos = {
-            actividad: document.getElementById('actividad').value,
-            evidencia: document.getElementById('evidencia').value,
-            ciclo: document.getElementById('ciclo').value,
-            articulo: document.getElementById('articulo').value,
-            nivel: document.getElementById('nivel').value,
-            responsables: document.getElementById('responsables').value,
-            recursos: document.getElementById('recursos').value,
-            observaciones: document.getElementById('observaciones').value,
-            estado: 'pendiente',
-            avance: 0
-        };
-        
-        const id = guardarActividad(datos);
-        
-        if (id) {
-            alert('✅ Actividad guardada exitosamente (ID: ' + id + ')');
-            window.location.href = "{{ url_for('sst_plan_anual_actividades') }}";
-        } else {
-            alert('❌ Error al guardar la actividad');
+        if (!ciclo) {
+            e.preventDefault();
+            mostrarMensaje('error', '❌ Debes seleccionar un ciclo PHVA');
+            return;
         }
+        
+        // Mostrar mensaje de carga
+        const btn = form.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Guardando...';
     });
+    
+    // Función para mostrar mensajes
+    function mostrarMensaje(tipo, mensaje) {
+        const container = document.getElementById('flashMessages');
+        if (!container) return;
+        
+        const colores = { success: '#28a745', error: '#C23538', warning: '#FFCC29', info: '#2658A5' };
+        const iconos = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+        
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-custom fade-in';
+        alert.style.cssText = `border-left: 4px solid ${colores[tipo]}; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 16px; padding: 12px 16px;`;
+        alert.innerHTML = `<div class="d-flex align-items-center">
+            <i class="fas ${iconos[tipo]} me-2" style="color: ${colores[tipo]};"></i>
+            <strong style="color: ${colores[tipo]};">${mensaje}</strong>
+            <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+        </div>`;
+        container.appendChild(alert);
+        
+        setTimeout(() => {
+            if (alert && alert.parentElement) {
+                alert.style.opacity = '0';
+                alert.style.transition = 'opacity 0.3s';
+                setTimeout(() => alert.remove(), 300);
+            }
+        }, 5000);
+    }
 });
 </script>
 
 <style>
+/* Efecto shimmer para el header */
+.bg-gradient-corporate {
+    background: linear-gradient(135deg, #2658A5 0%, #1a3f73 50%, #282F4B 100%) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.bg-gradient-corporate::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    animation: shimmer 8s infinite linear;
+}
+
+@keyframes shimmer {
+    0% { transform: translate(-30%, -30%) rotate(0deg); }
+    100% { transform: translate(30%, 30%) rotate(360deg); }
+}
+
+/* Estilos de secciones */
 .form-section {
-    background: #f8f9fa;
+    background: #f8f9fc;
+    border-radius: 16px;
     padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.form-section:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* Estilos de formulario */
+.form-control, .form-select {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #2658A5;
+    box-shadow: 0 0 0 3px rgba(38,88,165,0.15);
+}
+
+/* Tabla del cronograma */
+.cronograma-table {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.cronograma-table th, .cronograma-table td {
+    vertical-align: middle;
+    padding: 10px 8px;
+}
+
+.semana-cell {
+    transition: background-color 0.2s ease;
+}
+
+.semana-cell:hover {
+    background-color: rgba(38, 88, 165, 0.05);
+}
+
+/* Checkboxes */
+.form-check-input:checked {
+    background-color: #2658A5;
+    border-color: #2658A5;
+}
+
+/* Botones */
+.btn {
+    transition: all 0.2s ease;
+    border-radius: 10px;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeIn 0.4s ease;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .form-section {
+        padding: 15px;
+    }
+    
+    .cronograma-table .d-flex {
+        flex-direction: column;
+        align-items: center;
+        gap: 4px !important;
+    }
 }
 </style>
+
 {% endblock %}
