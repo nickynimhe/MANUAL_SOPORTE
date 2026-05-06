@@ -3,288 +3,177 @@
 {% block title %}Cronograma Gantt - Plan Anual PESV{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
+<div class="container-fluid px-0 px-md-3">
+
+    <!-- HEADER CON EFECTO SHIMMER -->
+    <div class="sst-header bg-gradient-corporate rounded-4 mb-4 p-4 text-white shadow-lg">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+            <div class="mb-3 mb-md-0">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-white rounded-3 p-2 me-3 shadow-sm">
+                        <i class="fas fa-chart-gantt" style="color: #2658A5; font-size: 1.8rem;"></i>
+                    </div>
+                    <div>
+                        <h1 class="h2 fw-bold mb-1 text-white">Cronograma Gantt 2026</h1>
+                        <p class="text-white-80 mb-0">Vista general del Plan Anual de Trabajo PESV</p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <a href="{{ url_for('sst_plan_anual') }}" class="btn btn-light btn-sm fw-medium shadow-sm">
+                    <i class="fas fa-arrow-left me-1"></i> Volver
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTROS Y LEYENDA -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body py-3">
+                    <div class="d-flex flex-wrap gap-3 align-items-center">
+                        <span class="fw-semibold small">Filtrar por ciclo:</span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-primary active" data-filtro="todos">Todos</button>
+                            <button class="btn btn-outline-primary" data-filtro="Planear">📋 Planear</button>
+                            <button class="btn btn-outline-success" data-filtro="Hacer">🔨 Hacer</button>
+                            <button class="btn btn-outline-warning" data-filtro="Verificar">🔍 Verificar</button>
+                            <button class="btn btn-outline-danger" data-filtro="Actuar">📈 Actuar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex gap-3">
+                            <div><span class="badge" style="background: #2658A5;">&nbsp;&nbsp;</span> <small>Planificada</small></div>
+                            <div><span class="badge" style="background: #FFCC29;">&nbsp;&nbsp;</span> <small>En Proceso</small></div>
+                            <div><span class="badge" style="background: #28a745;">&nbsp;&nbsp;</span> <small>Completada</small></div>
+                        </div>
+                        <button onclick="toggleExpand()" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-compress-arrows-alt me-1"></i> Colapsar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CRONOGRAMA GANTT -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
             <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2><i class="fas fa-calendar-week"></i> Cronograma Gantt 2026</h2>
-                    <p class="text-muted">Vista general del Plan Anual de Trabajo PESV</p>
-                </div>
-                <div>
-                    <a href="{{ url_for('sst_plan_anual') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left"></i> Volver
-                    </a>
-                </div>
+                <h5 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-calendar-alt me-2"></i> Diagrama de Gantt - Actividades 2026
+                </h5>
+                <span class="badge bg-white text-dark rounded-pill px-3 py-2">
+                    <i class="fas fa-tasks me-1"></i> {{ actividades|length }} actividades
+                </span>
             </div>
         </div>
-    </div>
-
-    <!-- Leyenda -->
-    <div class="card mb-3">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-auto">
-                    <span class="badge badge-primary">P</span> = Planificado
-                </div>
-                <div class="col-auto">
-                    <span class="badge badge-success">E</span> = Ejecutado
-                </div>
-                <div class="col-auto">
-                    <span class="text-muted">-</span> = Sin actividad
-                </div>
-                <div class="col-auto ml-auto">
-                    <button onclick="toggleTodos()" class="btn btn-sm btn-outline-secondary">
-                        <i class="fas fa-compress-arrows-alt"></i> Colapsar/Expandir
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Cronograma -->
-    <div class="card">
         <div class="card-body p-0">
-            <div style="overflow-x: auto;">
-                <table class="table table-bordered table-sm mb-0" style="font-size: 0.85em;">
-                    <thead class="thead-dark" style="position: sticky; top: 0; z-index: 10;">
+            <div style="overflow-x: auto;" class="gantt-container">
+                <table class="table table-hover mb-0 gantt-table" style="min-width: 1000px;">
+                    <thead style="background: #f8f9fc; position: sticky; top: 0; z-index: 10;">
                         <tr>
-                            <th style="width: 30%; position: sticky; left: 0; background: #343a40; z-index: 11;">
-                                Actividad
+                            <th style="width: 30%; position: sticky; left: 0; background: #f8f9fc; z-index: 11; padding: 16px 12px;">
+                                <i class="fas fa-tasks me-1" style="color: #2658A5;"></i> Actividad
                             </th>
-                            <th class="text-center" style="width: 5%">Ciclo</th>
-                            {% for mes in ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'] %}
-                            <th colspan="4" class="text-center" style="width: 5%">{{ mes }}</th>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th style="position: sticky; left: 0; background: #343a40; z-index: 11;"></th>
-                            <th></th>
-                            {% for mes in range(12) %}
-                            <th class="text-center p-1" style="font-size: 0.75em;">1</th>
-                            <th class="text-center p-1" style="font-size: 0.75em;">2</th>
-                            <th class="text-center p-1" style="font-size: 0.75em;">3</th>
-                            <th class="text-center p-1" style="font-size: 0.75em;">4</th>
+                            <th style="width: 8%; padding: 16px 12px;">
+                                <i class="fas fa-sync-alt me-1" style="color: #2658A5;"></i> Ciclo
+                            </th>
+                            <th style="width: 10%; padding: 16px 12px;">
+                                <i class="fas fa-chart-line me-1" style="color: #28a745;"></i> Avance
+                            </th>
+                            <th style="width: 10%; padding: 16px 12px;">
+                                <i class="fas fa-user me-1" style="color: #FFCC29;"></i> Responsable
+                            </th>
+                            {% for mes in ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'] %}
+                            <th class="text-center" style="padding: 16px 8px; min-width: 70px;">{{ mes }}</th>
                             {% endfor %}
                         </tr>
                     </thead>
                     <tbody>
                         {% if actividades %}
                         {% for act in actividades %}
-                        <tr class="actividad-row">
-                            <td style="position: sticky; left: 0; background: white; z-index: 5;">
+                        <tr class="actividad-row" data-ciclo="{{ act[3] }}">
+                            <td style="position: sticky; left: 0; background: white; z-index: 5; padding: 12px;">
                                 <a href="{{ url_for('sst_plan_anual_actividad_detalle', id=act[0]) }}" 
-                                   class="text-dark" 
+                                   class="text-decoration-none fw-semibold" 
+                                   style="color: #2658A5;"
                                    title="{{ act[1] }}">
-                                    <small>
-                                        <strong>{{ loop.index }}.</strong> 
-                                        {{ act[1][:60] }}{% if act[1]|length > 60 %}...{% endif %}
-                                    </small>
+                                    {{ loop.index }}. {{ act[1][:55] }}{% if act[1]|length > 55 %}...{% endif %}
                                 </a>
-                                <br>
-                                <small class="text-muted">{{ act[3] if act[3] else 'N/A' }}</small>
-                            </td>
-                            <td class="text-center align-middle">
-                                {% if act[2] == 'Planear' %}
-                                <span class="badge badge-primary badge-sm">P</span>
-                                {% elif act[2] == 'Hacer' %}
-                                <span class="badge badge-success badge-sm">H</span>
-                                {% elif act[2] == 'Verificar' %}
-                                <span class="badge badge-warning badge-sm">V</span>
-                                {% elif act[2] == 'Actuar' %}
-                                <span class="badge badge-danger badge-sm">A</span>
+                                {% if act[2] %}
+                                <div class="small text-muted mt-1">
+                                    <i class="fas fa-file-alt me-1"></i> {{ act[2][:40] }}
+                                </div>
                                 {% endif %}
                             </td>
-                            
-                            {# Enero: columnas 5-12 #}
-                            {% for i in range(5, 13, 2) %}
-                            <td class="text-center p-1 align-middle cell-semana" 
-                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
-                                {% if act[i] %}
-                                    {% if act[i+1] %}
-                                    <span class="badge badge-success badge-sm">E</span>
-                                    {% else %}
-                                    <span class="badge badge-primary badge-sm">P</span>
-                                    {% endif %}
+                            <td class="align-middle">
+                                {% if act[3] == 'Planear' %}
+                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
+                                    <i class="fas fa-bullseye me-1"></i> Planear
+                                </span>
+                                {% elif act[3] == 'Hacer' %}
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-hammer me-1"></i> Hacer
+                                </span>
+                                {% elif act[3] == 'Verificar' %}
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-search me-1"></i> Verificar
+                                </span>
+                                {% elif act[3] == 'Actuar' %}
+                                <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">
+                                    <i class="fas fa-chart-line me-1"></i> Actuar
+                                </span>
                                 {% else %}
-                                <span class="text-muted">-</span>
+                                <span class="badge rounded-pill px-3 py-2" style="background: #6c757d;">
+                                    N/A
+                                </span>
                                 {% endif %}
                             </td>
-                            {% endfor %}
-                            
-                            {# Febrero: columnas 13-20 #}
-                            {% for i in range(13, 21, 2) %}
-                            <td class="text-center p-1 align-middle cell-semana" 
-                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
-                                {% if act[i] %}
-                                    {% if act[i+1] %}
-                                    <span class="badge badge-success badge-sm">E</span>
-                                    {% else %}
-                                    <span class="badge badge-primary badge-sm">P</span>
-                                    {% endif %}
-                                {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
+                            <td class="align-middle" style="min-width: 100px;">
+                                <div class="d-flex flex-column gap-1">
+                                    <div class="d-flex justify-content-between small">
+                                        <span class="text-muted">{{ act[5]|replace('_', ' ')|title }}</span>
+                                        <span class="fw-bold" style="color: #2658A5;">{{ act[6] }}%</span>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar" role="progressbar" 
+                                             style="width: {{ act[6] }}%; background: linear-gradient(90deg, #2658A5, #28a745);">
+                                        </div>
+                                    </div>
+                                </div>
                             </td>
-                            {% endfor %}
-                            
-                            {# Marzo: columnas 21-28 #}
-                            {% for i in range(21, 29, 2) %}
-                            <td class="text-center p-1 align-middle cell-semana" 
-                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
-                                {% if act[i] %}
-                                    {% if act[i+1] %}
-                                    <span class="badge badge-success badge-sm">E</span>
-                                    {% else %}
-                                    <span class="badge badge-primary badge-sm">P</span>
-                                    {% endif %}
-                                {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
+                            <td class="align-middle">
+                                <small>{{ act[4][:25] if act[4] else 'No asignado' }}</small>
                             </td>
-                            {% endfor %}
                             
-                            {# Abril: columnas 29-36 #}
-                            {% for i in range(29, 37, 2) %}
-                            <td class="text-center p-1 align-middle cell-semana" 
-                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
-                                {% if act[i] %}
-                                    {% if act[i+1] %}
-                                    <span class="badge badge-success badge-sm">E</span>
+                            <!-- BARRAS DE MES (Gantt visual) -->
+                            {% for mes_num in range(1, 13) %}
+                            <td class="gantt-cell align-middle text-center p-2" data-mes="{{ mes_num }}">
+                                {% set mes_actividad = act[8 + mes_num] if act|length > 8 + mes_num else none %}
+                                {% if mes_actividad %}
+                                    {% if mes_actividad == 'completado' %}
+                                    <div class="gantt-bar bg-success rounded-2 mx-auto" style="width: 100%; height: 24px; max-width: 50px;">
+                                        <i class="fas fa-check-circle text-white small" style="line-height: 24px;"></i>
+                                    </div>
+                                    {% elif mes_actividad == 'en_proceso' %}
+                                    <div class="gantt-bar bg-warning rounded-2 mx-auto" style="width: 100%; height: 24px; max-width: 50px;">
+                                        <i class="fas fa-spinner text-dark small" style="line-height: 24px;"></i>
+                                    </div>
                                     {% else %}
-                                    <span class="badge badge-primary badge-sm">P</span>
+                                    <div class="gantt-bar bg-primary rounded-2 mx-auto" style="width: 100%; height: 24px; max-width: 50px; opacity: 0.7;">
+                                        <i class="fas fa-calendar-day text-white small" style="line-height: 24px;"></i>
+                                    </div>
                                     {% endif %}
                                 {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            {% endfor %}
-                            
-                            {# Mayo: columnas 37-44 #}
-                            {% for i in range(37, 45, 2) %}
-                            <td class="text-center p-1 align-middle cell-semana" 
-                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
-                                {% if act[i] %}
-                                    {% if act[i+1] %}
-                                    <span class="badge badge-success badge-sm">E</span>
-                                    {% else %}
-                                    <span class="badge badge-primary badge-sm">P</span>
-                                    {% endif %}
-                                {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            {% endfor %}
-                            
-                            {# Junio: columnas 45-52 #}
-                            {% for i in range(45, 53, 2) %}
-                            <td class="text-center p-1 align-middle cell-semana" 
-                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
-                                {% if act[i] %}
-                                    {% if act[i+1] %}
-                                    <span class="badge badge-success badge-sm">E</span>
-                                    {% else %}
-                                    <span class="badge badge-primary badge-sm">P</span>
-                                    {% endif %}
-                                {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            {% endfor %}
-                            
-                            {# Julio: columnas 53-60 #}
-                            {% for i in range(53, 61, 2) %}
-                            <td class="text-center p-1 align-middle cell-semana" 
-                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
-                                {% if act[i] %}
-                                    {% if act[i+1] %}
-                                    <span class="badge badge-success badge-sm">E</span>
-                                    {% else %}
-                                    <span class="badge badge-primary badge-sm">P</span>
-                                    {% endif %}
-                                {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            {% endfor %}
-                            
-                            {# Agosto: columnas 61-68 #}
-                            {% for i in range(61, 69, 2) %}
-                            <td class="text-center p-1 align-middle cell-semana" 
-                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
-                                {% if act[i] %}
-                                    {% if act[i+1] %}
-                                    <span class="badge badge-success badge-sm">E</span>
-                                    {% else %}
-                                    <span class="badge badge-primary badge-sm">P</span>
-                                    {% endif %}
-                                {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            {% endfor %}
-                            
-                            {# Septiembre: columnas 69-76 #}
-                            {% for i in range(69, 77, 2) %}
-                            <td class="text-center p-1 align-middle cell-semana" 
-                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
-                                {% if act[i] %}
-                                    {% if act[i+1] %}
-                                    <span class="badge badge-success badge-sm">E</span>
-                                    {% else %}
-                                    <span class="badge badge-primary badge-sm">P</span>
-                                    {% endif %}
-                                {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            {% endfor %}
-                            
-                            {# Octubre: columnas 77-84 #}
-                            {% for i in range(77, 85, 2) %}
-                            <td class="text-center p-1 align-middle cell-semana" 
-                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
-                                {% if act[i] %}
-                                    {% if act[i+1] %}
-                                    <span class="badge badge-success badge-sm">E</span>
-                                    {% else %}
-                                    <span class="badge badge-primary badge-sm">P</span>
-                                    {% endif %}
-                                {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            {% endfor %}
-                            
-                            {# Noviembre: columnas 85-92 #}
-                            {% for i in range(85, 93, 2) %}
-                            <td class="text-center p-1 align-middle cell-semana" 
-                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
-                                {% if act[i] %}
-                                    {% if act[i+1] %}
-                                    <span class="badge badge-success badge-sm">E</span>
-                                    {% else %}
-                                    <span class="badge badge-primary badge-sm">P</span>
-                                    {% endif %}
-                                {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            {% endfor %}
-                            
-                            {# Diciembre: columnas 93-100 #}
-                            {% for i in range(93, 101, 2) %}
-                            <td class="text-center p-1 align-middle cell-semana" 
-                                style="background-color: {% if act[i] %}#e3f2fd{% else %}#f5f5f5{% endif %}">
-                                {% if act[i] %}
-                                    {% if act[i+1] %}
-                                    <span class="badge badge-success badge-sm">E</span>
-                                    {% else %}
-                                    <span class="badge badge-primary badge-sm">P</span>
-                                    {% endif %}
-                                {% else %}
-                                <span class="text-muted">-</span>
+                                <div class="text-muted small">—</div>
                                 {% endif %}
                             </td>
                             {% endfor %}
@@ -292,10 +181,15 @@
                         {% endfor %}
                         {% else %}
                         <tr>
-                            <td colspan="50" class="text-center">
-                                <div class="alert alert-info">
-                                    No hay actividades para mostrar
+                            <td colspan="16" class="text-center py-5">
+                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+                                    <i class="fas fa-chart-gantt fa-3x" style="color: #C23538;"></i>
                                 </div>
+                                <h5 class="fw-semibold text-muted">No hay actividades para mostrar</h5>
+                                <p class="text-muted">Importa el Excel del Plan Anual para ver el cronograma</p>
+                                <a href="{{ url_for('sst_importar_desde_excel') }}" class="btn btn-primary mt-2">
+                                    <i class="fas fa-file-excel me-2"></i> Importar desde Excel
+                                </a>
                             </td>
                         </tr>
                         {% endif %}
@@ -305,59 +199,205 @@
         </div>
     </div>
 
-    <!-- Nota -->
-    <div class="alert alert-info mt-3">
-        <i class="fas fa-info-circle"></i> 
-        <strong>Nota:</strong> Se muestran las primeras 50 actividades. 
-        Para ver el cronograma completo de una actividad específica, accede a su detalle.
+    <!-- ESTADÍSTICAS RÁPIDAS -->
+    <div class="row mt-4 g-3">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+                <i class="fas fa-calendar-check fa-2x mb-2" style="color: #28a745;"></i>
+                <h6 class="mb-0">Actividades Q1</h6>
+                <small class="text-muted">Enero - Marzo</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+                <i class="fas fa-calendar-week fa-2x mb-2" style="color: #FFCC29;"></i>
+                <h6 class="mb-0">Actividades Q2</h6>
+                <small class="text-muted">Abril - Junio</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+                <i class="fas fa-calendar-alt fa-2x mb-2" style="color: #2658A5;"></i>
+                <h6 class="mb-0">Actividades Q3</h6>
+                <small class="text-muted">Julio - Septiembre</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3">
+                <i class="fas fa-calendar-plus fa-2x mb-2" style="color: #C23538;"></i>
+                <h6 class="mb-0">Actividades Q4</h6>
+                <small class="text-muted">Octubre - Diciembre</small>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-let collapsed = false;
+// Filtro por ciclo PHVA
+document.querySelectorAll('[data-filtro]').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const filtro = this.dataset.filtro;
+        
+        // Actualizar estado activo de los botones
+        document.querySelectorAll('[data-filtro]').forEach(b => {
+            b.classList.remove('active');
+        });
+        this.classList.add('active');
+        
+        // Filtrar filas
+        const rows = document.querySelectorAll('.actividad-row');
+        rows.forEach(row => {
+            if (filtro === 'todos') {
+                row.style.display = '';
+            } else {
+                const ciclo = row.dataset.ciclo;
+                if (ciclo === filtro) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
+    });
+});
 
-function toggleTodos() {
+// Expandir/Colapsar (mostrar solo primeras 10)
+let expanded = true;
+
+function toggleExpand() {
     const rows = document.querySelectorAll('.actividad-row');
-    collapsed = !collapsed;
+    const btn = document.querySelector('[onclick="toggleExpand()"]');
+    
+    expanded = !expanded;
     
     rows.forEach((row, index) => {
-        if (collapsed && index >= 10) {
+        if (!expanded && index >= 10) {
             row.style.display = 'none';
         } else {
             row.style.display = '';
         }
     });
+    
+    if (btn) {
+        btn.innerHTML = expanded ? '<i class="fas fa-compress-arrows-alt me-1"></i> Colapsar' : '<i class="fas fa-expand-arrows-alt me-1"></i> Expandir';
+    }
 }
 
-// Highlight al pasar el mouse sobre celdas
-document.querySelectorAll('.cell-semana').forEach(cell => {
+// Tooltips en celdas Gantt
+document.querySelectorAll('.gantt-cell').forEach(cell => {
     cell.addEventListener('mouseenter', function() {
-        this.style.transform = 'scale(1.1)';
-        this.style.transition = 'transform 0.2s';
+        const mes = this.dataset.mes;
+        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        this.setAttribute('title', meses[mes - 1]);
     });
-    
-    cell.addEventListener('mouseleave', function() {
+});
+
+// Hover en barras
+document.querySelectorAll('.gantt-bar').forEach(bar => {
+    bar.addEventListener('mouseenter', function() {
+        this.style.transform = 'scale(1.05)';
+        this.style.transition = 'transform 0.2s';
+        this.style.cursor = 'pointer';
+    });
+    bar.addEventListener('mouseleave', function() {
         this.style.transform = 'scale(1)';
     });
 });
 </script>
 
 <style>
-.badge-sm {
-    font-size: 0.7em;
-    padding: 0.2em 0.4em;
+/* Efecto shimmer para el header */
+.bg-gradient-corporate {
+    background: linear-gradient(135deg, #2658A5 0%, #1a3f73 50%, #282F4B 100%) !important;
+    position: relative;
+    overflow: hidden;
 }
 
-.table td, .table th {
-    vertical-align: middle;
+.bg-gradient-corporate::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    animation: shimmer 8s infinite linear;
 }
 
-.cell-semana {
-    cursor: pointer;
+@keyframes shimmer {
+    0% { transform: translate(-30%, -30%) rotate(0deg); }
+    100% { transform: translate(30%, 30%) rotate(360deg); }
 }
 
+/* Estilos Gantt */
+.gantt-container {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.gantt-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.gantt-table th {
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.gantt-bar {
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 40px;
+}
+
+.gantt-cell {
+    transition: background-color 0.2s ease;
+}
+
+.gantt-cell:hover {
+    background-color: rgba(38, 88, 165, 0.05);
+}
+
+/* Animación de entrada */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeIn 0.4s ease;
+}
+
+/* Hover en filas */
 .actividad-row:hover {
-    background-color: #f8f9fa;
+    background-color: #f8f9fc;
+}
+
+.actividad-row:hover td:first-child {
+    background-color: #f8f9fc;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .btn-group {
+        flex-wrap: wrap;
+    }
+    
+    .gantt-container {
+        max-height: 400px;
+    }
 }
 </style>
+
 {% endblock %}
