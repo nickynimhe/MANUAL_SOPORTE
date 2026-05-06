@@ -30,154 +30,221 @@
     </div>
 
     <div class="row g-4">
-        <!-- COLUMNA PRINCIPAL -->
         <div class="col-lg-8">
-            <!-- REPRODUCTOR DE VIDEO -->
-            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+            <div class="card border-0 shadow-sm overflow-hidden">
                 <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-semibold text-white">
-                            <i class="fas fa-play-circle me-2"></i> Reproductor de Video
-                        </h5>
-                        <div class="d-flex gap-2">
-                            <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
-                                <i class="fas fa-database me-1"></i> Almacenado en BD
-                            </span>
-                            {% if video.es_obligatorio %}
-                            <span class="badge rounded-pill px-3 py-2" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%); color: white;">
-                                <i class="fas fa-star-of-life me-1"></i> Obligatorio
-                            </span>
-                            {% endif %}
+                        <div>
+                            <h4 class="mb-0 fw-semibold text-white">{{ video.titulo }}</h4>
+                            <small>
+                                <span class="badge rounded-pill px-3 py-1 mt-2" style="background: #2658A5; color: white;">
+                                    <i class="fas fa-tag me-1"></i> {{ video.categoria_nombre }}
+                                </span>
+                                <span class="text-white-80 ms-2">
+                                    <i class="fas fa-calendar-alt me-1"></i> {{ video.fecha_publicacion|format_date('%d/%m/%Y') }}
+                                </span>
+                            </small>
                         </div>
+                        {% if current_user.rol == 'admin' %}
+                        <div>
+                            <a href="{{ url_for('sst_editar_contenido', id=video.id) }}" 
+                               class="btn btn-light btn-sm">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
-                <div class="card-body p-0">
-                    <!-- REPRODUCTOR -->
-                    <div class="video-player-container bg-black">
-                        <div class="video-wrapper">
-                            <video id="mainVideoPlayer" 
-                                   controls 
-                                   class="w-100"
-                                   style="background: #000; max-height: 70vh; width: 100%;"
-                                   preload="auto">
-                                <source src="{{ url_for('sst_descargar_archivo', id=video.id) }}" 
-                                        type="video/mp4">
-                                Tu navegador no soporta videos HTML5.
-                                <br>
-                                <a href="{{ url_for('sst_descargar_archivo', id=video.id) }}" download>
-                                    Descargar video
-                                </a>
-                            </video>
+                
+                <div class="card-body p-4">
+                    {% if video.descripcion %}
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <div class="rounded-circle p-1" style="background: rgba(38,88,165,0.1);">
+                                <i class="fas fa-align-left" style="color: #2658A5;"></i>
+                            </div>
+                            <h6 class="fw-semibold mb-0" style="color: #2658A5;">Descripción</h6>
                         </div>
+                        <p class="text-muted">{{ video.descripcion }}</p>
                     </div>
-                    
-                    <!-- CONTROLES DEL VIDEO -->
-                    <div class="video-controls p-3" style="background: #f8f9fc; border-top: 3px solid #2658A5;">
-                        <div class="row align-items-center g-2">
-                            <div class="col-md-6">
-                                <div class="d-flex align-items-center gap-2">
-                                    <i class="fas fa-info-circle" style="color: #2658A5;"></i>
-                                    <div>
-                                        <small class="text-muted d-block">Información del archivo</small>
-                                        <small>
-                                            {% if video.archivo_nombre %}
-                                                {{ video.archivo_nombre[:40] }}{% if video.archivo_nombre|length > 40 %}...{% endif %} • 
-                                            {% endif %}
-                                            {% if video.archivo_tamano %}
-                                                {{ (video.archivo_tamano / 1024 / 1024)|round(2) }} MB • 
-                                            {% endif %}
-                                            Video local
-                                        </small>
+                    {% endif %}
+
+                    <!-- REPRODUCTOR DE VIDEO -->
+                    <div class="video-player-container mb-4">
+                        {% if video.tipo == 'video' %}
+                            <div class="alert mb-3" style="background: rgba(38,88,165,0.1); border-left: 4px solid #2658A5;">
+                                <i class="fas fa-video" style="color: #2658A5;"></i> 
+                                <span class="fw-semibold" style="color: #2658A5;">Video almacenado en la base de datos</span>
+                            </div>
+                            
+                            <div class="video-wrapper rounded-3 overflow-hidden shadow-sm">
+                                <video id="mainVideoPlayer" 
+                                       controls 
+                                       class="w-100"
+                                       style="background: #000; max-height: 70vh;"
+                                       preload="auto">
+                                    <source src="{{ url_for('sst_descargar_archivo', id=video.id) }}" 
+                                            type="video/mp4">
+                                    Tu navegador no soporta videos HTML5.
+                                    <br>
+                                    <a href="{{ url_for('sst_descargar_archivo', id=video.id) }}" download>
+                                        Descargar video
+                                    </a>
+                                </video>
+                            </div>
+                            
+                            <div class="video-controls mt-3 p-3 rounded-3" style="background: #f8f9fc; border-left: 3px solid #2658A5;">
+                                <div class="row align-items-center g-2">
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fas fa-info-circle" style="color: #2658A5;"></i>
+                                            <div>
+                                                <h6 class="mb-0 fw-semibold" style="color: #2658A5;">Información</h6>
+                                                <small class="text-muted">
+                                                    {% if video.archivo_nombre %}
+                                                        {{ video.archivo_nombre }} • 
+                                                    {% endif %}
+                                                    {% if video.archivo_tamano %}
+                                                        {{ (video.archivo_tamano / 1024 / 1024)|round(2) }} MB • 
+                                                    {% endif %}
+                                                    Video local
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+                                            <button class="btn btn-sm rounded-3" onclick="toggleFullScreen()" style="background: #2658A5; color: white;">
+                                                <i class="fas fa-expand me-1"></i> Pantalla completa
+                                            </button>
+                                            <a href="{{ url_for('sst_descargar_archivo', id=video.id) }}" 
+                                               class="btn btn-sm rounded-3" style="background: #28a745; color: white;" download>
+                                                <i class="fas fa-download me-1"></i> Descargar
+                                            </a>
+                                            <button class="btn btn-sm rounded-3" onclick="restartVideo()" style="background: #FFCC29; color: #282F4B;">
+                                                <i class="fas fa-redo me-1"></i> Reiniciar
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="d-flex flex-wrap gap-2 justify-content-md-end">
-                                    <button class="btn btn-sm rounded-3" onclick="toggleFullScreen()" style="background: #2658A5; color: white;">
-                                        <i class="fas fa-expand me-1"></i> Pantalla completa
-                                    </button>
+                        
+                        {% else %}
+                            <div class="alert text-center py-5" style="background: rgba(255,204,41,0.1); border-left: 4px solid #FFCC29;">
+                                <i class="fas fa-video-slash fa-3x mb-3" style="color: #FFCC29;"></i>
+                                <h4 class="fw-semibold" style="color: #D4A000;">Este contenido no es un video</h4>
+                                <p class="mb-3">Tipo: {{ video.tipo|title }}</p>
+                                
+                                {% if video.tipo == 'imagen' and video.tiene_archivo %}
+                                <div class="mt-3">
+                                    <img src="{{ url_for('sst_descargar_archivo', id=video.id) }}" 
+                                         alt="{{ video.titulo }}"
+                                         class="img-fluid rounded shadow-sm" style="max-height: 400px;">
+                                </div>
+                                {% elif video.tipo == 'documento' and video.tiene_archivo %}
+                                <div class="mt-3">
                                     <a href="{{ url_for('sst_descargar_archivo', id=video.id) }}" 
-                                       class="btn btn-sm rounded-3" style="background: #28a745; color: white;" download>
-                                        <i class="fas fa-download me-1"></i> Descargar
+                                       class="btn rounded-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); color: white;" download>
+                                        <i class="fas fa-download me-2"></i> Descargar Documento
                                     </a>
-                                    <button class="btn btn-sm rounded-3" onclick="restartVideo()" style="background: #FFCC29; color: #282F4B;">
-                                        <i class="fas fa-redo me-1"></i> Reiniciar
-                                    </button>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="mt-3">
+                                    <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-secondary rounded-3">
+                                        <i class="fas fa-arrow-left me-1"></i> Volver al listado
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- INFORMACIÓN DEL ARCHIVO -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                            <h6 class="mb-0 fw-semibold text-white">
+                                <i class="fas fa-info-circle me-2"></i> Detalles del Archivo
+                            </h6>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-start gap-3 py-2">
+                                        <i class="fas fa-tag mt-1" style="color: #2658A5;"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Tipo de contenido</small>
+                                            <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">{{ video.tipo|title }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-start gap-3 py-2">
+                                        <i class="fas fa-folder mt-1" style="color: #FFCC29;"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Categoría</small>
+                                            <span class="fw-semibold">{{ video.categoria_nombre }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-start gap-3 py-2">
+                                        <i class="fas fa-calendar mt-1" style="color: #28a745;"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Publicado</small>
+                                            <span class="fw-semibold">{{ video.fecha_publicacion|format_date('%d/%m/%Y %H:%M') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-start gap-3 py-2">
+                                        <i class="fas fa-database mt-1" style="color: #C23538;"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Almacenamiento</small>
+                                            <span class="fw-semibold">Base de Datos</span>
+                                        </div>
+                                    </div>
+                                    {% if video.archivo_nombre %}
+                                    <div class="d-flex align-items-start gap-3 py-2">
+                                        <i class="fas fa-file mt-1" style="color: #2658A5;"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Nombre del archivo</small>
+                                            <span class="fw-semibold">{{ video.archivo_nombre }}</span>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    {% if video.archivo_tamano %}
+                                    <div class="d-flex align-items-start gap-3 py-2">
+                                        <i class="fas fa-weight-hanging mt-1" style="color: #C23538;"></i>
+                                        <div>
+                                            <small class="text-muted d-block">Tamaño</small>
+                                            <span class="fw-semibold">{{ (video.archivo_tamano / 1024 / 1024)|round(2) }} MB</span>
+                                        </div>
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- DESCRIPCIÓN -->
-            {% if video.descripcion %}
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
-                    <h5 class="mb-0 fw-semibold text-white">
-                        <i class="fas fa-align-left me-2"></i> Descripción
-                    </h5>
-                </div>
-                <div class="card-body p-4">
-                    <p class="text-muted mb-0" style="line-height: 1.6;">{{ video.descripcion }}</p>
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- DETALLES DEL ARCHIVO -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-                    <h5 class="mb-0 fw-semibold text-white">
-                        <i class="fas fa-info-circle me-2"></i> Detalles del Archivo
-                    </h5>
-                </div>
-                <div class="card-body p-4">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="info-item d-flex align-items-start gap-3 py-2">
-                                <i class="fas fa-tag mt-1" style="color: #2658A5;"></i>
-                                <div>
-                                    <small class="text-muted d-block">Tipo de contenido</small>
-                                    <span class="fw-semibold">{{ video.tipo|title }}</span>
-                                </div>
-                            </div>
-                            <div class="info-item d-flex align-items-start gap-3 py-2">
-                                <i class="fas fa-folder mt-1" style="color: #FFCC29;"></i>
-                                <div>
-                                    <small class="text-muted d-block">Categoría</small>
-                                    <span class="fw-semibold">{{ video.categoria_nombre }}</span>
-                                </div>
-                            </div>
-                            <div class="info-item d-flex align-items-start gap-3 py-2">
-                                <i class="fas fa-calendar mt-1" style="color: #28a745;"></i>
-                                <div>
-                                    <small class="text-muted d-block">Publicado</small>
-                                    <span class="fw-semibold">{{ video.fecha_publicacion|format_date('%d/%m/%Y %H:%M') }}</span>
-                                </div>
-                            </div>
+                    
+                    <!-- BOTONES DE ACCIÓN -->
+                    <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                        <div>
+                            <a href="{{ url_for('sst_contenido') }}" class="btn btn-outline-secondary rounded-3">
+                                <i class="fas fa-arrow-left me-1"></i> Volver al Listado
+                            </a>
                         </div>
-                        <div class="col-md-6">
-                            <div class="info-item d-flex align-items-start gap-3 py-2">
-                                <i class="fas fa-file mt-1" style="color: #C23538;"></i>
-                                <div>
-                                    <small class="text-muted d-block">Nombre del archivo</small>
-                                    <span class="fw-semibold">{{ video.archivo_nombre if video.archivo_nombre else 'No disponible' }}</span>
-                                </div>
-                            </div>
-                            <div class="info-item d-flex align-items-start gap-3 py-2">
-                                <i class="fas fa-weight-hanging mt-1" style="color: #FFCC29;"></i>
-                                <div>
-                                    <small class="text-muted d-block">Tamaño</small>
-                                    <span class="fw-semibold">{{ (video.archivo_tamano / 1024 / 1024)|round(2) if video.archivo_tamano else 'N/A' }} MB</span>
-                                </div>
-                            </div>
-                            <div class="info-item d-flex align-items-start gap-3 py-2">
-                                <i class="fas fa-user mt-1" style="color: #2658A5;"></i>
-                                <div>
-                                    <small class="text-muted d-block">Creador</small>
-                                    <span class="fw-semibold">{{ video.creador_nombre|default('Administrador') }}</span>
-                                </div>
-                            </div>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('sst_descargar_archivo', id=video.id) }}" 
+                               class="btn rounded-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;" download>
+                                <i class="fas fa-download me-1"></i> Descargar Video
+                            </a>
+                            
+                            {% if current_user.rol == 'admin' %}
+                            <a href="{{ url_for('sst_editar_contenido', id=video.id) }}" 
+                               class="btn rounded-3" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%); color: #282F4B;">
+                                <i class="fas fa-edit me-1"></i> Editar
+                            </a>
+                            <button type="button" class="btn rounded-3" style="background: linear-gradient(135deg, #dc3545 0%, #C23538 100%); color: white;" 
+                                    data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fas fa-trash me-1"></i> Eliminar
+                            </button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -190,7 +257,7 @@
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
                     <h6 class="mb-0 fw-semibold text-white">
-                        <i class="fas fa-play-circle me-2"></i> Controles Rápidos
+                        <i class="fas fa-play-circle me-2"></i> Reproduciendo Video
                     </h6>
                 </div>
                 <div class="card-body p-3">
@@ -212,6 +279,7 @@
                     {% endif %}
                     
                     <div class="mt-2">
+                        <h6 class="fw-semibold mb-2" style="color: #2658A5;">Controles rápidos</h6>
                         <div class="d-grid gap-2">
                             <button class="btn rounded-3" onclick="togglePlayPause()" style="background: #2658A5; color: white;">
                                 <i class="fas fa-play me-2"></i> Play / Pause
@@ -237,21 +305,27 @@
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
                     <h6 class="mb-0 fw-semibold text-white">
-                        <i class="fas fa-chart-line me-2"></i> Estadísticas
+                        <i class="fas fa-info-circle me-2"></i> Información Adicional
                     </h6>
                 </div>
                 <div class="card-body p-3">
                     <div class="d-flex justify-content-between py-2 border-bottom">
-                        <span class="text-muted"><i class="fas fa-id-card me-2"></i> ID del contenido</span>
-                        <span class="badge rounded-pill" style="background: #2658A5; color: white;">#{{ video.id }}</span>
+                        <span class="text-muted"><i class="fas fa-id-card me-2"></i> ID</span>
+                        <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">{{ video.id }}</span>
                     </div>
                     <div class="d-flex justify-content-between py-2 border-bottom">
-                        <span class="text-muted"><i class="fas fa-clock me-2"></i> Duración del video</span>
+                        <span class="text-muted"><i class="fas fa-user me-2"></i> Creador</span>
+                        <span class="fw-semibold">{{ video.creador_nombre|default('Administrador') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted"><i class="fas fa-clock me-2"></i> Duración</span>
                         <span class="fw-semibold" id="videoDuration">Cargando...</span>
                     </div>
                     <div class="d-flex justify-content-between py-2">
-                        <span class="text-muted"><i class="fas fa-database me-2"></i> Almacenamiento</span>
-                        <span class="fw-semibold">Base de Datos</span>
+                        <span class="text-muted"><i class="fas fa-code me-2"></i> URL del video</span>
+                        <small class="text-truncate" style="max-width: 150px;">
+                            {{ url_for('sst_descargar_archivo', id=video.id, _external=True) }}
+                        </small>
                     </div>
                 </div>
             </div>
@@ -266,37 +340,37 @@
                 <div class="card-body p-3">
                     <div class="row g-2">
                         <div class="col-6">
-                            <div class="shortcut-card text-center p-2 rounded-3" style="background: #f8f9fc;">
+                            <div class="text-center p-2 rounded-3" style="background: #f8f9fc;">
                                 <kbd class="bg-dark text-white px-2 py-1 rounded">Espacio</kbd>
                                 <small class="d-block mt-1 text-muted">Play/Pause</small>
                             </div>
                         </div>
                         <div class="col-6">
-                            <div class="shortcut-card text-center p-2 rounded-3" style="background: #f8f9fc;">
+                            <div class="text-center p-2 rounded-3" style="background: #f8f9fc;">
                                 <kbd class="bg-dark text-white px-2 py-1 rounded">F</kbd>
                                 <small class="d-block mt-1 text-muted">Pantalla completa</small>
                             </div>
                         </div>
                         <div class="col-6">
-                            <div class="shortcut-card text-center p-2 rounded-3" style="background: #f8f9fc;">
+                            <div class="text-center p-2 rounded-3" style="background: #f8f9fc;">
                                 <kbd class="bg-dark text-white px-2 py-1 rounded">←</kbd>
                                 <small class="d-block mt-1 text-muted">-10 segundos</small>
                             </div>
                         </div>
                         <div class="col-6">
-                            <div class="shortcut-card text-center p-2 rounded-3" style="background: #f8f9fc;">
+                            <div class="text-center p-2 rounded-3" style="background: #f8f9fc;">
                                 <kbd class="bg-dark text-white px-2 py-1 rounded">→</kbd>
                                 <small class="d-block mt-1 text-muted">+10 segundos</small>
                             </div>
                         </div>
                         <div class="col-6">
-                            <div class="shortcut-card text-center p-2 rounded-3" style="background: #f8f9fc;">
+                            <div class="text-center p-2 rounded-3" style="background: #f8f9fc;">
                                 <kbd class="bg-dark text-white px-2 py-1 rounded">M</kbd>
                                 <small class="d-block mt-1 text-muted">Silenciar</small>
                             </div>
                         </div>
                         <div class="col-6">
-                            <div class="shortcut-card text-center p-2 rounded-3" style="background: #f8f9fc;">
+                            <div class="text-center p-2 rounded-3" style="background: #f8f9fc;">
                                 <kbd class="bg-dark text-white px-2 py-1 rounded">0</kbd>
                                 <small class="d-block mt-1 text-muted">Reiniciar</small>
                             </div>
@@ -304,25 +378,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- BOTONES DE ACCIÓN -->
-            {% if current_user.rol == 'admin' %}
-            <div class="card border-0 shadow-sm mt-4">
-                <div class="card-body p-3">
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('sst_editar_contenido', id=video.id) }}" 
-                           class="btn btn-warning rounded-3" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%); border: none; color: #282F4B;">
-                            <i class="fas fa-edit me-2"></i> Editar Contenido
-                        </a>
-                        <button type="button" class="btn btn-danger rounded-3" 
-                                data-bs-toggle="modal" data-bs-target="#deleteModal"
-                                style="background: linear-gradient(135deg, #dc3545 0%, #C23538 100%); border: none;">
-                            <i class="fas fa-trash me-2"></i> Eliminar Video
-                        </button>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
         </div>
     </div>
 </div>
@@ -332,7 +387,7 @@
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+            <div class="modal-header rounded-4" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
                 <h5 class="modal-title text-white" id="deleteModalLabel">
                     <i class="fas fa-trash me-2"></i> Eliminar Video
                 </h5>
@@ -352,7 +407,7 @@
             <div class="modal-footer border-0 pt-0 pb-4 px-4">
                 <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
                 <form action="{{ url_for('sst_eliminar_contenido', id=video.id) }}" method="POST" class="d-inline">
-                    <button type="submit" class="btn btn-danger rounded-3" style="background: linear-gradient(135deg, #dc3545 0%, #C23538 100%); border: none;">
+                    <button type="submit" class="btn rounded-3" style="background: linear-gradient(135deg, #dc3545 0%, #C23538 100%); color: white;">
                         <i class="fas fa-trash me-2"></i> Eliminar Permanentemente
                     </button>
                 </form>
@@ -361,122 +416,6 @@
     </div>
 </div>
 {% endif %}
-
-<script>
-// Variables
-let video = document.getElementById('mainVideoPlayer');
-
-// Inicializar
-document.addEventListener('DOMContentLoaded', function() {
-    if (video) {
-        video.addEventListener('loadedmetadata', function() {
-            document.getElementById('videoDuration').textContent = formatTime(video.duration);
-        });
-        
-        video.addEventListener('error', function(e) {
-            console.error('Error al cargar video:', e);
-            showError('Error al cargar el video. Intenta descargarlo.');
-        });
-    }
-});
-
-// Funciones de control
-function togglePlayPause() {
-    if (video) {
-        if (video.paused) {
-            video.play();
-        } else {
-            video.pause();
-        }
-    }
-}
-
-function toggleFullScreen() {
-    if (!video) return;
-    
-    if (!document.fullscreenElement) {
-        if (video.requestFullscreen) {
-            video.requestFullscreen();
-        } else if (video.webkitRequestFullscreen) {
-            video.webkitRequestFullscreen();
-        } else if (video.msRequestFullscreen) {
-            video.msRequestFullscreen();
-        }
-    } else {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        }
-    }
-}
-
-function restartVideo() {
-    if (video) {
-        video.currentTime = 0;
-        video.play();
-    }
-}
-
-function skipBackward() {
-    if (video) {
-        video.currentTime = Math.max(0, video.currentTime - 10);
-    }
-}
-
-function skipForward() {
-    if (video) {
-        video.currentTime = Math.min(video.duration, video.currentTime + 10);
-    }
-}
-
-function formatTime(seconds) {
-    if (isNaN(seconds)) return "0:00";
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-}
-
-function showError(message) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
-    alertDiv.innerHTML = `
-        <i class="fas fa-exclamation-circle me-2"></i>
-        <strong>Error:</strong> ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    document.querySelector('.video-player-container').appendChild(alertDiv);
-}
-
-// Teclas de acceso rápido
-document.addEventListener('keydown', function(e) {
-    if (!video) return;
-    
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-        return;
-    }
-    
-    switch(e.key.toLowerCase()) {
-        case ' ':
-            e.preventDefault();
-            togglePlayPause();
-            break;
-        case 'f':
-            toggleFullScreen();
-            break;
-        case 'm':
-            if (video) video.muted = !video.muted;
-            break;
-        case 'arrowleft':
-            skipBackward();
-            break;
-        case 'arrowright':
-            skipForward();
-            break;
-        case '0':
-            restartVideo();
-            break;
-    }
-});
-</script>
 
 <style>
 /* Efecto shimmer para el header */
@@ -524,26 +463,22 @@ document.addEventListener('keydown', function(e) {
     border-top: 3px solid #2658A5;
 }
 
-/* Info items */
-.info-item {
-    transition: all 0.2s ease;
-    border-radius: 8px;
+/* Estilos para el reproductor */
+#mainVideoPlayer {
+    outline: none;
 }
 
-.info-item:hover {
-    background: #f8f9fc;
+#mainVideoPlayer::-webkit-media-controls-panel {
+    background: rgba(0, 0, 0, 0.7);
 }
 
-/* Shortcut cards */
-.shortcut-card {
-    transition: all 0.2s ease;
+#mainVideoPlayer::-webkit-media-controls-play-button,
+#mainVideoPlayer::-webkit-media-controls-volume-slider,
+#mainVideoPlayer::-webkit-media-controls-mute-button {
+    filter: invert(1);
 }
 
-.shortcut-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
+/* Estilos de teclas */
 kbd {
     background-color: #282F4B;
     color: white;
@@ -563,26 +498,130 @@ kbd {
     animation: fadeIn 0.4s ease;
 }
 
-/* Botones */
 .btn {
     transition: all 0.2s ease;
-    border-radius: 10px;
 }
 
 .btn:hover {
     transform: translateY(-1px);
 }
+</style>
 
-/* Responsive */
-@media (max-width: 768px) {
-    .video-controls .row {
-        text-align: center;
+<script>
+// Variables
+let video = document.getElementById('mainVideoPlayer');
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    if (video) {
+        video.addEventListener('loadedmetadata', function() {
+            document.getElementById('videoDuration').textContent = formatTime(video.duration);
+        });
+        
+        video.addEventListener('error', function(e) {
+            console.error('Error al cargar video:', e);
+            showError('Error al cargar el video. Intenta descargarlo.');
+        });
     }
-    
-    .video-controls .justify-content-md-end {
-        justify-content: center !important;
-        margin-top: 10px;
+});
+
+// Funciones de control
+function togglePlayPause() {
+    if (video) {
+        if (video.paused) {
+            video.play();
+        } else {
+            video.pause();
+        }
     }
 }
-</style>
+
+function toggleFullScreen() {
+    if (!video) return;
+    
+    if (!document.fullscreenElement) {
+        if (video.requestFullscreen) {
+            video.requestFullscreen();
+        } else if (video.mozRequestFullScreen) {
+            video.mozRequestFullScreen();
+        } else if (video.webkitRequestFullscreen) {
+            video.webkitRequestFullscreen();
+        } else if (video.msRequestFullscreen) {
+            video.msRequestFullscreen();
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+function restartVideo() {
+    if (video) {
+        video.currentTime = 0;
+        video.play();
+    }
+}
+
+function skipBackward() {
+    if (video) {
+        video.currentTime = Math.max(0, video.currentTime - 10);
+    }
+}
+
+function skipForward() {
+    if (video) {
+        video.currentTime = Math.min(video.duration, video.currentTime + 10);
+    }
+}
+
+function formatTime(seconds) {
+    if (isNaN(seconds)) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+function showError(message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+    alertDiv.innerHTML = `
+        <i class="fas fa-exclamation-circle"></i>
+        <strong>Error:</strong> ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.video-player-container').appendChild(alertDiv);
+}
+
+// Teclas de acceso rápido
+document.addEventListener('keydown', function(e) {
+    if (!video) return;
+    
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return;
+    }
+    
+    switch(e.key.toLowerCase()) {
+        case ' ':
+            e.preventDefault();
+            togglePlayPause();
+            break;
+        case 'f':
+            toggleFullScreen();
+            break;
+        case 'm':
+            if (video) video.muted = !video.muted;
+            break;
+        case 'arrowleft':
+            skipBackward();
+            break;
+        case 'arrowright':
+            skipForward();
+            break;
+        case '0':
+            restartVideo();
+            break;
+    }
+});
+</script>
 {% endblock %}
