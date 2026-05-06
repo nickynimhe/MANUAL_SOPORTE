@@ -738,12 +738,6 @@
 
       <div class="topbar-right">
         {% if current_user.is_authenticated %}
-        {% if current_user.rol == 'admin' %}
-        <a href="{{ url_for('sst_agregar_contenido') }}" class="topbar-btn green">
-          <i class="fas fa-plus"></i>
-          <span class="d-none d-sm-inline">Nuevo Contenido</span>
-        </a>
-        {% endif %}
         <a href="{{ url_for('sst_plan_anual_nueva_actividad') }}" class="topbar-btn ghost">
           <i class="fas fa-calendar-plus"></i>
           <span class="d-none d-sm-inline">Nueva Actividad</span>
