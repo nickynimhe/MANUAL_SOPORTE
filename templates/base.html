@@ -1,205 +1,812 @@
-{% extends "base_admin.html" %}
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Panel Administrador{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+    /* ===== VARIABLES CSS - ADMIN (tonos corporativos) ===== */
+    :root {
+      --primary: #2658A5;
+      --primary-dark: #1a3f73;
+      --primary-light: #7b87f5;
+      --secondary: #282F4B;
+      --accent: #FFCC29;
+      --accent-dark: #e6b800;
+      --danger: #C23538;
+      --success: #28a745;
+      --bg: #f0f4f8;
+      --white: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --radius: 12px;
+      --sidebar-width: 280px;
+      --sidebar-collapsed: 75px;
+      --transition: 0.25s ease;
+    }
 
-{% block title %}Dashboard Administrador{% endblock %}
+    /* ===== RESET BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; }
 
-{% block page_title %}Panel de Control{% endblock %}
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
 
-{% block breadcrumb %}
-<span class="text-muted mx-1">/</span>
-<span class="text-muted">Dashboard</span>
-{% endblock %}
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
 
-{% block admin_content %}
-<div class="container-fluid px-0">
-    <!-- Header -->
-    <div class="admin-header bg-gradient-admin rounded-4 mb-4 p-4 text-white shadow-sm">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
-            <div>
-                <h1 class="h2 fw-bold mb-1">¡Bienvenido, {{ current_user.usuario }}!</h1>
-                <p class="text-white-80 mb-0">Panel de administración del sistema integrado</p>
-            </div>
-            <div class="mt-3 mt-md-0">
-                <div class="d-flex gap-2">
-                    <span class="badge bg-light text-dark px-3 py-2 rounded-pill">
-                        <i class="fas fa-calendar-alt me-1" style="color: #2658A5;"></i> {{ now.strftime('%d/%m/%Y') }}
-                    </span>
-                </div>
-            </div>
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      width: var(--sidebar-width);
+      background: linear-gradient(180deg, var(--secondary) 0%, var(--primary-dark) 100%);
+      display: flex;
+      flex-direction: column;
+      z-index: 1000;
+      transition: width var(--transition);
+      overflow: hidden;
+      box-shadow: 4px 0 20px rgba(40, 47, 75, 0.3);
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed);
+    }
+
+    /* Marca / Logo */
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 16px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      text-decoration: none;
+      min-height: 70px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-brand-icon {
+      width: 38px;
+      height: 38px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--accent);
+      font-size: 18px;
+    }
+
+    .sidebar-brand-text {
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.2;
+      white-space: nowrap;
+      opacity: 1;
+      transition: opacity var(--transition);
+    }
+
+    .sidebar-brand-sub {
+      font-size: 10px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 2px;
+    }
+
+    .sidebar.collapsed .sidebar-brand-text { opacity: 0; width: 0; overflow: hidden; }
+    .sidebar.collapsed .sidebar-brand-sub { display: none; }
+
+    /* Botón colapsar */
+    .sidebar-toggle {
+      position: absolute;
+      top: 22px;
+      right: -14px;
+      width: 28px;
+      height: 28px;
+      background: var(--white);
+      border: 2px solid #e5e7eb;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 10px;
+      color: var(--primary);
+      z-index: 1001;
+      transition: all var(--transition);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .sidebar-toggle:hover { background: var(--primary); color: white; border-color: var(--primary); }
+    .sidebar.collapsed .sidebar-toggle i { transform: rotate(180deg); }
+    .sidebar-toggle i { transition: transform var(--transition); }
+
+    /* Nav items */
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 16px 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.2) transparent;
+    }
+
+    .sidebar-nav::-webkit-scrollbar { width: 4px; }
+    .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.45);
+      padding: 12px 18px 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      transition: opacity var(--transition);
+    }
+
+    .sidebar.collapsed .nav-label { opacity: 0; }
+
+    .nav-item-sidebar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      margin: 2px 10px;
+      border-radius: 10px;
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all var(--transition);
+      white-space: nowrap;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      width: calc(100% - 20px);
+      text-align: left;
+    }
+
+    .nav-item-sidebar:hover {
+      background: rgba(255,255,255,0.12);
+      color: white;
+    }
+
+    .nav-item-sidebar.active {
+      background: linear-gradient(90deg, rgba(255,204,41,0.2), rgba(255,204,41,0.05));
+      color: var(--accent);
+      font-weight: 600;
+      border-left: 3px solid var(--accent);
+    }
+
+    .nav-item-sidebar.danger {
+      color: #ff8080;
+    }
+
+    .nav-item-sidebar.danger:hover {
+      background: rgba(194,53,56,0.2);
+      color: #ffaaaa;
+    }
+
+    .nav-item-icon {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      flex-shrink: 0;
+      font-size: 14px;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .nav-item-sidebar.active .nav-item-icon {
+      background: rgba(255,204,41,0.2);
+      color: var(--accent);
+    }
+
+    .nav-item-text {
+      opacity: 1;
+      transition: opacity var(--transition);
+      overflow: hidden;
+    }
+
+    .sidebar.collapsed .nav-item-text { opacity: 0; width: 0; }
+
+    /* Tooltip en modo colapsado */
+    .sidebar.collapsed .nav-item-sidebar {
+      position: relative;
+    }
+
+    .sidebar.collapsed .nav-item-sidebar:hover::after {
+      content: attr(data-tooltip);
+      position: fixed;
+      left: calc(var(--sidebar-collapsed) + 10px);
+      background: var(--secondary);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      white-space: nowrap;
+      z-index: 9999;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    /* Submenú desplegable */
+    .submenu {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease;
+    }
+
+    .submenu.open { max-height: 500px; }
+
+    .sidebar.collapsed .submenu { display: none; }
+
+    .submenu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px 8px 52px;
+      margin: 1px 10px;
+      border-radius: 8px;
+      color: rgba(255,255,255,0.65);
+      font-size: 12px;
+      text-decoration: none;
+      transition: all var(--transition);
+    }
+
+    .submenu-item:hover { color: white; background: rgba(255,255,255,0.08); }
+
+    .submenu-badge {
+      margin-left: auto;
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.8);
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* Chevron de submenú */
+    .nav-item-chevron {
+      margin-left: auto;
+      font-size: 10px;
+      transition: transform var(--transition);
+      opacity: 0.6;
+    }
+
+    .nav-item-sidebar[aria-expanded="true"] .nav-item-chevron {
+      transform: rotate(180deg);
+    }
+
+    .sidebar.collapsed .nav-item-chevron { display: none; }
+
+    /* Footer sidebar */
+    .sidebar-footer {
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding: 12px 12px;
+      flex-shrink: 0;
+    }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.08);
+      cursor: pointer;
+      transition: background var(--transition);
+    }
+
+    .user-card:hover { background: rgba(255,255,255,0.14); }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .user-details { overflow: hidden; transition: opacity var(--transition); }
+    .sidebar.collapsed .user-details { opacity: 0; width: 0; }
+
+    .user-name {
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-role {
+      color: rgba(255,255,255,0.55);
+      font-size: 10px;
+    }
+
+    /* ===== LAYOUT PRINCIPAL ===== */
+    .layout-wrapper {
+      display: flex;
+      width: 100%;
+      min-height: 100vh;
+    }
+
+    .main-content {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      transition: margin-left var(--transition);
+    }
+
+    .main-content.expanded { margin-left: var(--sidebar-collapsed); }
+
+    /* Topbar superior */
+    .topbar {
+      background: var(--white);
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .topbar-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .topbar-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .topbar-breadcrumb a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .topbar-breadcrumb a:hover { text-decoration: underline; }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .topbar-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .topbar-btn.primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .topbar-btn.primary:hover { background: var(--primary-dark); }
+
+    .topbar-btn.ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid #e5e7eb;
+    }
+
+    .topbar-btn.ghost:hover { background: var(--bg); color: var(--text); }
+
+    /* ===== CONTENIDO ===== */
+    main.page-main {
+      flex: 1;
+      padding: 28px 24px;
+    }
+
+    /* ===== FOOTER ===== */
+    footer.page-footer {
+      background: var(--white);
+      border-top: 1px solid #e5e7eb;
+      padding: 12px 24px;
+      text-align: center;
+    }
+
+    footer.page-footer p {
+      margin: 0;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* ===== ALERTAS ===== */
+    .alert {
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 14px;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    /* ===== OVERLAY MÓVIL ===== */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 999;
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+
+    /* ===== RESPONSIVIDAD ===== */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: var(--sidebar-width) !important;
+        transform: translateX(-100%);
+        transition: transform var(--transition);
+      }
+
+      .sidebar.mobile-open {
+        transform: translateX(0);
+      }
+
+      .sidebar-overlay.active {
+        display: block;
+        opacity: 1;
+      }
+
+      .main-content,
+      .main-content.expanded {
+        margin-left: 0 !important;
+      }
+
+      .sidebar-toggle { display: none; }
+
+      .topbar { padding: 0 16px; }
+
+      main.page-main { padding: 16px; }
+    }
+
+    /* ===== ESTILOS ADICIONALES ===== */
+    .hover-lift {
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .hover-lift:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.12) !important;
+    }
+
+    .stats-card {
+      transition: all 0.2s ease;
+    }
+
+    .stats-card:hover {
+      transform: scale(1.02);
+      box-shadow: 0 8px 20px rgba(38,88,165,0.15) !important;
+    }
+
+    .bg-gradient-admin {
+      background: linear-gradient(135deg, var(--secondary) 0%, var(--primary-dark) 100%) !important;
+    }
+    </style>
+</head>
+<body>
+
+<div class="layout-wrapper">
+
+  <!-- ===== SIDEBAR ADMIN ===== -->
+  <aside class="sidebar" id="sidebar">
+    <button class="sidebar-toggle" id="sidebarToggle" title="Colapsar menú">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+
+    <a class="sidebar-brand" href="{{ url_for('dashboard_admin') }}">
+      <div class="sidebar-brand-icon"><i class="fas fa-crown"></i></div>
+      <div>
+        <div class="sidebar-brand-text">Admin Panel</div>
+        <div class="sidebar-brand-sub">Control Total</div>
+      </div>
+    </a>
+
+    <nav class="sidebar-nav" id="sidebarNav">
+      {% if current_user.is_authenticated %}
+
+      <div class="nav-label">Principal</div>
+
+      <a class="nav-item-sidebar {% if request.endpoint == 'dashboard_admin' %}active{% endif %}"
+         href="{{ url_for('dashboard_admin') }}" data-tooltip="Dashboard Admin">
+        <div class="nav-item-icon"><i class="fas fa-tachometer-alt"></i></div>
+        <span class="nav-item-text">Dashboard Admin</span>
+      </a>
+
+      <div class="nav-label">Módulos del Sistema</div>
+
+      <!-- Soporte Técnico -->
+      <a class="nav-item-sidebar"
+         href="{{ url_for('index') }}" data-tooltip="Soporte Técnico">
+        <div class="nav-item-icon"><i class="fas fa-headset"></i></div>
+        <span class="nav-item-text">Soporte Técnico</span>
+      </a>
+
+      <!-- SST -->
+      <a class="nav-item-sidebar"
+         href="{{ url_for('sst_dashboard') }}" data-tooltip="SST">
+        <div class="nav-item-icon"><i class="fas fa-hard-hat"></i></div>
+        <span class="nav-item-text">SST</span>
+      </a>
+
+      <!-- Recursos Humanos -->
+      <a class="nav-item-sidebar"
+         href="{{ url_for('rh_dashboard') }}" data-tooltip="Recursos Humanos">
+        <div class="nav-item-icon"><i class="fas fa-users"></i></div>
+        <span class="nav-item-text">Recursos Humanos</span>
+      </a>
+
+      <div class="nav-label">Gestión de Usuarios</div>
+
+      <!-- Usuarios con submenú -->
+      <button class="nav-item-sidebar" id="usuariosToggle"
+              aria-expanded="false" data-tooltip="Usuarios"
+              onclick="toggleSubmenu('usuariosMenu', this)">
+        <div class="nav-item-icon"><i class="fas fa-users-gear"></i></div>
+        <span class="nav-item-text">Usuarios</span>
+        <i class="fas fa-chevron-down nav-item-chevron"></i>
+      </button>
+
+      <div class="submenu" id="usuariosMenu">
+        <a href="{{ url_for('gestion_usuarios') }}" class="submenu-item">
+          <i class="fas fa-list me-2"></i> Listado de Usuarios
+        </a>
+        <a href="{{ url_for('agregar_usuario') }}" class="submenu-item">
+          <i class="fas fa-user-plus me-2"></i> Agregar Usuario
+        </a>
+      </div>
+
+      <div class="nav-label">Sistema</div>
+
+      <!-- Configuración -->
+      <a class="nav-item-sidebar"
+         href="#" data-tooltip="Configuración (Próximamente)">
+        <div class="nav-item-icon"><i class="fas fa-cog"></i></div>
+        <span class="nav-item-text">Configuración</span>
+      </a>
+
+      <!-- Logs -->
+      <a class="nav-item-sidebar"
+         href="#" data-tooltip="Logs del Sistema (Próximamente)">
+        <div class="nav-item-icon"><i class="fas fa-history"></i></div>
+        <span class="nav-item-text">Logs del Sistema</span>
+      </a>
+
+      <div class="nav-label">Seguridad</div>
+
+      <!-- Cambiar contraseña -->
+      <a class="nav-item-sidebar"
+         href="{{ url_for('cambiar_password') }}" data-tooltip="Cambiar Contraseña">
+        <div class="nav-item-icon"><i class="fas fa-key"></i></div>
+        <span class="nav-item-text">Cambiar Contraseña</span>
+      </a>
+
+      <!-- Cerrar sesión -->
+      <a class="nav-item-sidebar danger"
+         href="{{ url_for('logout') }}" data-tooltip="Cerrar Sesión">
+        <div class="nav-item-icon"><i class="fas fa-sign-out-alt"></i></div>
+        <span class="nav-item-text">Cerrar Sesión</span>
+      </a>
+
+      {% endif %}
+    </nav>
+
+    <!-- Footer sidebar: info usuario -->
+    {% if current_user.is_authenticated %}
+    <div class="sidebar-footer">
+      <div class="dropdown">
+        <div class="user-card" data-bs-toggle="dropdown">
+          <div class="user-avatar"><i class="fas fa-user-shield"></i></div>
+          <div class="user-details">
+            <div class="user-name">{{ current_user.usuario }}</div>
+            <div class="user-role">Administrador</div>
+          </div>
         </div>
+        <ul class="dropdown-menu dropdown-menu-end mb-1" style="min-width:180px; font-size:13px;">
+          <li>
+            <span class="dropdown-item-text">
+              <small class="text-muted">Conectado como</small><br>
+              <strong>{{ current_user.usuario }}</strong>
+            </span>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item" href="{{ url_for('cambiar_password') }}">
+              <i class="fas fa-key me-2"></i> Cambiar Contraseña
+            </a>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+              <i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+  </aside>
+
+  <!-- Overlay móvil -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- ===== CONTENIDO PRINCIPAL ===== -->
+  <div class="main-content" id="mainContent">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="d-flex align-items-center gap-3">
+        <button class="topbar-btn ghost d-md-none" id="mobileMenuBtn" style="border:none;">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="topbar-breadcrumb d-none d-md-flex">
+          <i class="fas fa-crown" style="color: var(--accent);"></i>
+          <span>Panel Administrador</span>
+          {% block breadcrumb %}{% endblock %}
+        </div>
+      </div>
+      <div class="topbar-title d-none d-md-block">{% block page_title %}Panel de Control{% endblock %}</div>
+
+      <div class="topbar-right">
+        <a href="{{ url_for('gestion_usuarios') }}" class="topbar-btn ghost">
+          <i class="fas fa-users-gear"></i>
+          <span class="d-none d-sm-inline">Usuarios</span>
+        </a>
+        <a href="{{ url_for('agregar_usuario') }}" class="topbar-btn primary">
+          <i class="fas fa-user-plus"></i>
+          <span class="d-none d-sm-inline">Nuevo Usuario</span>
+        </a>
+      </div>
     </div>
 
-    <!-- Tarjetas de estadísticas -->
-    <div class="row g-4 mb-4">
-        <div class="col-md-6 col-lg-3">
-            <div class="stats-card bg-white rounded-4 p-3 shadow-sm border-0 h-100 hover-lift">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-muted small">Usuarios Totales</span>
-                        <h2 class="fw-bold mb-0" style="color: #2658A5;">{{ stats.total_usuarios|default(0) }}</h2>
-                    </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: rgba(38,88,165,0.1);">
-                        <i class="fas fa-users fa-2x" style="color: #2658A5;"></i>
-                    </div>
-                </div>
-                <div class="mt-2">
-                    <small class="text-muted">
-                        <i class="fas fa-headset text-info me-1"></i> Soporte: {{ stats.usuarios_soporte|default(0) }}
-                    </small>
-                </div>
+    <!-- Mensajes flash -->
+    <div style="padding: 0 24px; padding-top: 16px;">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show mb-3" role="alert">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                <span>{{ message }}</span>
+              </div>
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-        </div>
-
-        <div class="col-md-6 col-lg-3">
-            <div class="stats-card bg-white rounded-4 p-3 shadow-sm border-0 h-100 hover-lift">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-muted small">Fichas de Soporte</span>
-                        <h2 class="fw-bold mb-0" style="color: #28a745;">{{ stats.total_fichas|default(0) }}</h2>
-                    </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: rgba(40,167,69,0.1);">
-                        <i class="fas fa-file-alt fa-2x" style="color: #28a745;"></i>
-                    </div>
-                </div>
-                <div class="mt-2">
-                    <small class="text-muted">
-                        <i class="fas fa-database me-1"></i> Base de conocimientos
-                    </small>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-lg-3">
-            <div class="stats-card bg-white rounded-4 p-3 shadow-sm border-0 h-100 hover-lift">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-muted small">Contenido SST</span>
-                        <h2 class="fw-bold mb-0" style="color: #FFCC29;">{{ stats.total_contenido_sst|default(0) }}</h2>
-                    </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: rgba(255,204,41,0.15);">
-                        <i class="fas fa-hard-hat fa-2x" style="color: #FFCC29;"></i>
-                    </div>
-                </div>
-                <div class="mt-2">
-                    <small class="text-muted">
-                        <i class="fas fa-folder-open me-1"></i> Documentos y videos
-                    </small>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-lg-3">
-            <div class="stats-card bg-white rounded-4 p-3 shadow-sm border-0 h-100 hover-lift">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-muted small">Empleados Activos</span>
-                        <h2 class="fw-bold mb-0" style="color: #C23538;">{{ stats.total_empleados_activos|default(0) }}</h2>
-                    </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: rgba(194,53,56,0.1);">
-                        <i class="fas fa-user-check fa-2x" style="color: #C23538;"></i>
-                    </div>
-                </div>
-                <div class="mt-2">
-                    <small class="text-muted">
-                        <i class="fas fa-chart-line me-1"></i> Gestión RH
-                    </small>
-                </div>
-            </div>
-        </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
     </div>
 
-    <!-- Acceso rápido a módulos -->
-    <div class="row g-4 mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-header bg-white py-3 border-0">
-                    <h6 class="mb-0 fw-semibold" style="color: #2658A5;">
-                        <i class="fas fa-th me-2"></i>Acceso Rápido a Módulos
-                    </h6>
-                </div>
-                <div class="card-body pt-0">
-                    <div class="row g-3">
-                        <div class="col-md-3 col-6">
-                            <a href="{{ url_for('index') }}" class="text-decoration-none">
-                                <div class="p-3 text-center rounded-3 border hover-lift" style="background: #f8f9fc;">
-                                    <i class="fas fa-headset fa-2x mb-2" style="color: #2658A5;"></i>
-                                    <div class="small fw-semibold" style="color: #2658A5;">Soporte Técnico</div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-md-3 col-6">
-                            <a href="{{ url_for('sst_dashboard') }}" class="text-decoration-none">
-                                <div class="p-3 text-center rounded-3 border hover-lift" style="background: #f8f9fc;">
-                                    <i class="fas fa-hard-hat fa-2x mb-2" style="color: #28a745;"></i>
-                                    <div class="small fw-semibold" style="color: #28a745;">SST</div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-md-3 col-6">
-                            <a href="{{ url_for('rh_dashboard') }}" class="text-decoration-none">
-                                <div class="p-3 text-center rounded-3 border hover-lift" style="background: #f8f9fc;">
-                                    <i class="fas fa-users fa-2x mb-2" style="color: #C23538;"></i>
-                                    <div class="small fw-semibold" style="color: #C23538;">Recursos Humanos</div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-md-3 col-6">
-                            <a href="{{ url_for('gestion_usuarios') }}" class="text-decoration-none">
-                                <div class="p-3 text-center rounded-3 border hover-lift" style="background: #f8f9fc;">
-                                    <i class="fas fa-users-gear fa-2x mb-2" style="color: #6c757d;"></i>
-                                    <div class="small fw-semibold" style="color: #6c757d;">Gestionar Usuarios</div>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Contenido de página -->
+    <main class="page-main">
+      {% block admin_content %}{% endblock %}
+    </main>
 
-    <!-- Últimas actividades -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 fw-semibold" style="color: #2658A5;">
-                        <i class="fas fa-clock me-2"></i>Últimas Actividades
-                    </h6>
-                    <span class="badge bg-secondary">Próximamente</span>
-                </div>
-                <div class="card-body pt-0">
-                    <div class="text-center text-muted py-5">
-                        <i class="fas fa-chart-line fa-3x mb-3 d-block" style="color: #e5e7eb;"></i>
-                        <p>Módulo de auditoría en desarrollo</p>
-                        <small>Pronto podrás ver el historial de actividades del sistema</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Footer -->
+    <footer class="page-footer">
+      <p>&copy; 2024 Sistema Integrado de Gestión - Todos los derechos reservados</p>
+    </footer>
+
+  </div>
 </div>
 
-<style>
-.bg-gradient-admin {
-    background: linear-gradient(135deg, var(--secondary) 0%, var(--primary-dark) 100%) !important;
-    position: relative;
-    overflow: hidden;
-}
+<!-- ===== SCRIPTS ===== -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-.bg-gradient-admin::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
-    pointer-events: none;
-    animation: shimmer 8s infinite linear;
-}
+<script>
+  // Colapsar / expandir sidebar (desktop)
+  const sidebar     = document.getElementById('sidebar');
+  const mainContent = document.getElementById('mainContent');
+  const toggleBtn   = document.getElementById('sidebarToggle');
 
-@keyframes shimmer {
-    0% { transform: translate(-30%, -30%) rotate(0deg); }
-    100% { transform: translate(30%, 30%) rotate(360deg); }
-}
-</style>
-{% endblock %}
+  const COLLAPSED_KEY = 'admin_sidebar_collapsed';
+  let collapsed = localStorage.getItem(COLLAPSED_KEY) === 'true';
+
+  function applyCollapsed() {
+    sidebar.classList.toggle('collapsed', collapsed);
+    mainContent.classList.toggle('expanded', collapsed);
+  }
+
+  applyCollapsed();
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      collapsed = !collapsed;
+      localStorage.setItem(COLLAPSED_KEY, collapsed);
+      applyCollapsed();
+    });
+  }
+
+  // Menú móvil
+  const mobileBtn  = document.getElementById('mobileMenuBtn');
+  const overlay    = document.getElementById('sidebarOverlay');
+
+  function openMobile() {
+    sidebar.classList.add('mobile-open');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMobile() {
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  if (mobileBtn) mobileBtn.addEventListener('click', openMobile);
+  if (overlay)   overlay.addEventListener('click', closeMobile);
+
+  // Submenús
+  function toggleSubmenu(id, btn) {
+    const menu = document.getElementById(id);
+    if (!menu) return;
+    const isOpen = menu.classList.contains('open');
+    document.querySelectorAll('.submenu.open').forEach(m => m.classList.remove('open'));
+    document.querySelectorAll('.nav-item-sidebar[aria-expanded="true"]').forEach(b => b.setAttribute('aria-expanded','false'));
+    if (!isOpen) {
+      menu.classList.add('open');
+      btn.setAttribute('aria-expanded','true');
+    }
+  }
+
+  // Auto-cierre de alertas
+  setTimeout(() => {
+    document.querySelectorAll('.alert').forEach(a => {
+      try { new bootstrap.Alert(a).close(); } catch(e) {}
+    });
+  }, 5000);
+
+  // Tooltips Bootstrap
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+    new bootstrap.Tooltip(el);
+  });
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>
