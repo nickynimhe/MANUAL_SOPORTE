@@ -1,0 +1,663 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Departamentos - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-building fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">Departamentos</h4>
+                        <p class="text-white-80 mb-0 small">Estructura organizacional de la empresa</p>
+                    </div>
+                </div>
+                <button class="btn btn-light btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoDepartamento">
+                    <i class="fas fa-plus me-1"></i> Nuevo Departamento
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-filter me-2"></i> Filtros de Búsqueda
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;">
+                            <i class="fas fa-search" style="color: #2658A5;"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control border-start-0 rounded-3" 
+                               placeholder="Buscar por nombre de departamento..." 
+                               value="{{ request.args.get('q', '') }}"
+                               style="border-radius: 0 12px 12px 0;">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="estado" class="form-select rounded-3">
+                        <option value="">Todos los estados</option>
+                        <option value="activo">✅ Activo</option>
+                        <option value="inactivo">⏸️ Inactivo</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="nivel" class="form-select rounded-3">
+                        <option value="">Todos los niveles</option>
+                        <option value="1">Nivel 1 - Dirección</option>
+                        <option value="2">Nivel 2 - Gerencia</option>
+                        <option value="3">Nivel 3 - Subgerencia</option>
+                        <option value="4">Nivel 4 - Coordinación</option>
+                        <option value="5">Nivel 5 - Operativo</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 rounded-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); border: none;">
+                        <i class="fas fa-search me-1"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(38,88,165,0.1);">
+                    <i class="fas fa-building" style="color: #2658A5;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #2658A5;">{{ total_departamentos|default(12) }}</h5>
+                <small class="text-muted">Total Departamentos</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                    <i class="fas fa-users" style="color: #28a745;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #28a745;">{{ total_empleados|default(48) }}</h5>
+                <small class="text-muted">Empleados Totales</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(255,204,41,0.15);">
+                    <i class="fas fa-chart-line" style="color: #FFCC29;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #FFCC29;">4.2</h5>
+                <small class="text-muted">Promedio x Depto</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(194,53,56,0.1);">
+                    <i class="fas fa-user-plus" style="color: #C23538;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #C23538;">{{ vacantes|default(8) }}</h5>
+                <small class="text-muted">Vacantes Abiertas</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Organigrama visual simplificado -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-sitemap me-2"></i> Organigrama de la Empresa
+                </h6>
+                <button class="btn btn-light btn-sm shadow-sm" onclick="toggleOrganigrama()">
+                    <i class="fas fa-expand me-1"></i> Expandir
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <div class="organigrama-container" id="organigrama">
+                <!-- Nivel 1 - Dirección General -->
+                <div class="text-center mb-4">
+                    <div class="org-nivel1">
+                        <div class="org-card direccion">
+                            <i class="fas fa-crown fa-2x mb-2"></i>
+                            <h6 class="mb-0">Dirección General</h6>
+                            <small>Juan Pablo Méndez</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Línea conectora -->
+                    <div class="org-lineas my-3">
+                        <div class="d-flex justify-content-center gap-5">
+                            <span class="linea-horizontal"></span>
+                            <span class="linea-horizontal"></span>
+                            <span class="linea-horizontal"></span>
+                            <span class="linea-horizontal"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Nivel 2 - Gerencias -->
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="org-card gerencia">
+                                <i class="fas fa-briefcase fa-2x mb-2"></i>
+                                <h6 class="mb-0">Gerencia General</h6>
+                                <small>María González</small>
+                                <span class="badge mt-2">5 empleados</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="org-card gerencia">
+                                <i class="fas fa-chart-line fa-2x mb-2"></i>
+                                <h6 class="mb-0">Gerencia Comercial</h6>
+                                <small>Carlos López</small>
+                                <span class="badge mt-2">8 empleados</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="org-card gerencia">
+                                <i class="fas fa-cogs fa-2x mb-2"></i>
+                                <h6 class="mb-0">Gerencia Operaciones</h6>
+                                <small>Ana Ramírez</small>
+                                <span class="badge mt-2">12 empleados</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="org-card gerencia">
+                                <i class="fas fa-shield-alt fa-2x mb-2"></i>
+                                <h6 class="mb-0">Gerencia SST</h6>
+                                <small>Carlos Rodríguez</small>
+                                <span class="badge mt-2">4 empleados</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botón ver organigrama completo -->
+                <div class="text-center mt-4">
+                    <button class="btn btn-outline-primary btn-sm rounded-3" onclick="verOrganigramaCompleto()">
+                        <i class="fas fa-sitemap me-1"></i> Ver Organigrama Completo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Listado de Departamentos -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-list me-2"></i> Listado de Departamentos
+                    <span class="badge bg-white text-dark rounded-pill ms-2 px-3">{{ departamentos|default(12) }}</span>
+                </h5>
+                <div class="btn-group">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="exportarDepartamentos()">
+                        <i class="fas fa-file-excel me-1"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead style="background: #f8f9fc;">
+                        <tr>
+                            <th style="padding: 16px 12px;">#</th>
+                            <th style="padding: 16px 12px;">Departamento</th>
+                            <th style="padding: 16px 12px;">Nivel</th>
+                            <th style="padding: 16px 12px;">Director/Jefe</th>
+                            <th style="padding: 16px 12px;">Empleados</th>
+                            <th style="padding: 16px 12px;">Presupuesto</th>
+                            <th style="padding: 16px 12px;">Estado</th>
+                            <th style="padding: 16px 12px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Departamento 1 - Dirección General -->
+                        <tr class="depto-fila">
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-crown" style="color: #C23538;"></i>
+                                    <span class="fw-semibold">Dirección General</span>
+                                </div>
+                                <small class="text-muted d-block">Nivel estratégico</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">
+                                    Nivel 1
+                                </span>
+                            </td>
+                            <td class="align-middle">Juan Pablo Méndez</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #2658A5; color: white;">1</span>
+                            </td>
+                            <td class="align-middle">-</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Activo
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verDepartamento(1)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarDepartamento(1)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Departamento 2 - Gerencia General -->
+                        <tr class="depto-fila">
+                            <td class="align-middle">2</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-briefcase" style="color: #C23538;"></i>
+                                    <span class="fw-semibold">Gerencia General</span>
+                                </div>
+                                <small class="text-muted d-block">Gestión ejecutiva</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">
+                                    Nivel 2
+                                </span>
+                            </td>
+                            <td class="align-middle">María González</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">1</span>
+                            </td>
+                            <td class="align-middle">-</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">Activo</span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verDepartamento(2)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarDepartamento(2)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                             </td>
+                         </tr>
+
+                        <!-- Departamento 3 - Recursos Humanos -->
+                        <tr class="depto-fila">
+                            <td class="align-middle">3</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-users" style="color: #2658A5;"></i>
+                                    <span class="fw-semibold">Recursos Humanos</span>
+                                </div>
+                                <small class="text-muted d-block">Gestión del talento humano</small>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    Nivel 3
+                                </span>
+                             </td>
+                            <td class="align-middle">Laura Sánchez</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">4</span>
+                             </td>
+                            <td class="align-middle">$ 45,000,000</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">Activo</span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verDepartamento(3)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarDepartamento(3)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                             </td>
+                         </tr>
+
+                        <!-- Departamento 4 - SST -->
+                        <tr class="depto-fila">
+                            <td class="align-middle">4</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-shield-alt" style="color: #28a745;"></i>
+                                    <span class="fw-semibold">Seguridad y Salud en el Trabajo</span>
+                                </div>
+                                <small class="text-muted d-block">SST</small>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    Nivel 3
+                                </span>
+                             </td>
+                            <td class="align-middle">Carlos Rodríguez</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">3</span>
+                             </td>
+                            <td class="align-middle">$ 28,000,000</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">Activo</span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verDepartamento(4)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarDepartamento(4)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                             </td>
+                         </tr>
+
+                        <!-- Departamento 5 - Operaciones -->
+                        <tr class="depto-fila">
+                            <td class="align-middle">5</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-cogs" style="color: #FFCC29;"></i>
+                                    <span class="fw-semibold">Operaciones</span>
+                                </div>
+                                <small class="text-muted d-block">Gestión operativa</small>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    Nivel 3
+                                </span>
+                             </td>
+                            <td class="align-middle">Jorge Ramírez</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">15</span>
+                             </td>
+                            <td class="align-middle">$ 120,000,000</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">Activo</span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verDepartamento(5)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarDepartamento(5)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                             </td>
+                         </tr>
+
+                        <!-- Departamento 6 - Comercial -->
+                        <tr class="depto-fila">
+                            <td class="align-middle">6</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-chart-line" style="color: #2658A5;"></i>
+                                    <span class="fw-semibold">Comercial</span>
+                                </div>
+                                <small class="text-muted d-block">Ventas y mercadeo</small>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    Nivel 3
+                                </span>
+                             </td>
+                            <td class="align-middle">Ana Martínez</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">8</span>
+                             </td>
+                            <td class="align-middle">$ 95,000,000</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">Activo</span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verDepartamento(6)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarDepartamento(6)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                             </td>
+                         </tr>
+
+                        <!-- Departamento 7 - Tecnología -->
+                        <tr class="depto-fila">
+                            <td class="align-middle">7</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-laptop-code" style="color: #28a745;"></i>
+                                    <span class="fw-semibold">Tecnología</span>
+                                </div>
+                                <small class="text-muted d-block">Sistemas e informática</small>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    Nivel 3
+                                </span>
+                             </td>
+                            <td class="align-middle">Andrés Pérez</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">6</span>
+                             </td>
+                            <td class="align-middle">$ 65,000,000</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">Activo</span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verDepartamento(7)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarDepartamento(7)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                             </td>
+                         </tr>
+
+                        <!-- Departamento 8 - Financiero -->
+                        <tr class="depto-fila">
+                            <td class="align-middle">8</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-chart-pie" style="color: #C23538;"></i>
+                                    <span class="fw-semibold">Financiero</span>
+                                </div>
+                                <small class="text-muted d-block">Contabilidad y finanzas</small>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    Nivel 3
+                                </span>
+                             </td>
+                            <td class="align-middle">Patricia Rojas</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">5</span>
+                             </td>
+                            <td class="align-middle">$ 52,000,000</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">Activo</span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verDepartamento(8)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarDepartamento(8)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                             </td>
+                         </tr>
+                    </tbody>
+                 </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Departamento -->
+<div class="modal fade" id="modalNuevoDepartamento" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-building me-2"></i> Nuevo Departamento
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formNuevoDepartamento" method="POST" action="{{ url_for('rh_departamento_guardar') }}">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Nombre del Departamento *</label>
+                            <input type="text" name="nombre" class="form-control rounded-3" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nivel Jerárquico *</label>
+                            <select name="nivel" class="form-select rounded-3" required>
+                                <option value="">Seleccionar nivel...</option>
+                                <option value="1">Nivel 1 - Dirección</option>
+                                <option value="2">Nivel 2 - Gerencia</option>
+                                <option value="3">Nivel 3 - Subgerencia</option>
+                                <option value="4">Nivel 4 - Coordinación</option>
+                                <option value="5">Nivel 5 - Operativo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Director / Jefe</label>
+                            <select name="jefe_id" class="form-select rounded-3">
+                                <option value="">Seleccionar jefe...</option>
+                                <option value="1">Juan Pablo Méndez</option>
+                                <option value="2">María González</option>
+                                <option value="3">Carlos Rodríguez</option>
+                                <option value="4">Laura Sánchez</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Departamento Padre</label>
+                            <select name="padre_id" class="form-select rounded-3">
+                                <option value="">Ninguno (Nivel superior)</option>
+                                <option value="1">Dirección General</option>
+                                <option value="2">Gerencia General</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Presupuesto Anual</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="presupuesto" class="form-control rounded-3" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Descripción</label>
+                            <textarea name="descripcion" class="form-control rounded-3" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Ubicación</label>
+                            <input type="text" name="ubicacion" class="form-control rounded-3" placeholder="Oficina, piso, edificio">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formNuevoDepartamento" class="btn rounded-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                    <i class="fas fa-save me-2"></i> Guardar Departamento
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function verDepartamento(id) {
+    window.location.href = "/rh/departamento/" + id;
+}
+
+function editarDepartamento(id) {
+    window.location.href = "/rh/departamento/" + id + "/editar";
+}
+
+function exportarDepartamentos() {
+    alert('Exportando listado de departamentos...');
+}
+
+function toggleOrganigrama() {
+    const container = document.getElementById('organigrama');
+    container.classList.toggle('expandido');
+}
+
+function verOrganigramaCompleto() {
+    window.location.href = "/rh/organigrama";
+}
+</script>
+
+<style>
+.depto-fila {
+    transition: all 0.2s ease;
+}
+.depto-fila:hover {
+    background-color: #f8f9fc;
+}
+.hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+}
+.org-card {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.2s ease;
+}
+.org-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+.org-card.direccion {
+    background: linear-gradient(135deg, #C23538 0%, #A73335 100%);
+    color: white;
+}
+.org-card.gerencia {
+    background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%);
+    color: white;
+}
+.org-card .badge {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+.org-nivel1 {
+    display: flex;
+    justify-content: center;
+}
+.org-nivel1 .org-card {
+    min-width: 200px;
+}
+.linea-horizontal {
+    width: 80px;
+    height: 2px;
+    background: #cbd5e1;
+    display: inline-block;
+}
+</style>
+{% endblock %}
