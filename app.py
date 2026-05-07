@@ -186,9 +186,14 @@ class User(UserMixin):
         self.rol = self._normalizar_rol(rol)
         self.modulo_principal = modulo_principal if modulo_principal else 'soporte'
         self.redireccionar_sst = False
+        # Primero los permisos de BD, luego el rol base rellena las claves que falten
+        permisos_bd = permisos or {}
         self.permisos = self._obtener_permisos_base()
-        if permisos:
-            self.permisos.update(permisos)
+        # Solo se sobreescriben las claves que YA existen en los permisos base;
+        # claves nuevas del rol (ver_rh, gestionar_rh, etc.) nunca se pierden.
+        for clave, valor in permisos_bd.items():
+            if clave in self.permisos:
+                self.permisos[clave] = valor
 
     def _normalizar_rol(self, rol):
         if not rol:
