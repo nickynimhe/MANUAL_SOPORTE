@@ -1,0 +1,577 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Ascensos y Promociones - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-arrow-up fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">Ascensos y Promociones</h4>
+                        <p class="text-white-80 mb-0 small">Gestión de crecimiento profesional</p>
+                    </div>
+                </div>
+                <button class="btn btn-light btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoAscenso">
+                    <i class="fas fa-plus me-1"></i> Solicitar Ascenso
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-filter me-2"></i> Filtros de Búsqueda
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;">
+                            <i class="fas fa-search" style="color: #2658A5;"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control border-start-0 rounded-3" 
+                               placeholder="Buscar por empleado o cargo..." 
+                               value="{{ request.args.get('q', '') }}"
+                               style="border-radius: 0 12px 12px 0;">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="estado" class="form-select rounded-3">
+                        <option value="">Todos los estados</option>
+                        <option value="propuesto">📋 Propuesto</option>
+                        <option value="aprobado">✅ Aprobado</option>
+                        <option value="rechazado">❌ Rechazado</option>
+                        <option value="ejecutado">🎉 Ejecutado</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="year" class="form-select rounded-3">
+                        <option value="">Todos los años</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 rounded-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); border: none;">
+                        <i class="fas fa-search me-1"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(38,88,165,0.1);">
+                    <i class="fas fa-chart-line" style="color: #2658A5;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #2658A5;">{{ total_ascensos|default(24) }}</h5>
+                <small class="text-muted">Total Ascensos</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                    <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #28a745;">{{ ejecutados|default(18) }}</h5>
+                <small class="text-muted">Ejecutados</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(255,204,41,0.15);">
+                    <i class="fas fa-hourglass-half" style="color: #FFCC29;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #FFCC29;">{{ pendientes|default(4) }}</h5>
+                <small class="text-muted">En Proceso</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                    <i class="fas fa-chart-simple" style="color: #28a745;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #28a745;">12<span style="font-size: 14px;">%</span></h5>
+                <small class="text-muted">Incremento Salarial Promedio</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Listado de Ascensos -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-list me-2"></i> Historial de Ascensos
+                    <span class="badge bg-white text-dark rounded-pill ms-2 px-3">{{ ascensos|default(12) }}</span>
+                </h5>
+                <div class="btn-group">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="exportarAscensos()">
+                        <i class="fas fa-file-excel me-1"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead style="background: #f8f9fc;">
+                        <tr>
+                            <th style="padding: 16px 12px;">#</th>
+                            <th style="padding: 16px 12px;">Empleado</th>
+                            <th style="padding: 16px 12px;">Cargo Anterior</th>
+                            <th style="padding: 16px 12px;">Cargo Nuevo</th>
+                            <th style="padding: 16px 12px;">Fecha</th>
+                            <th style="padding: 16px 12px;">Incremento</th>
+                            <th style="padding: 16px 12px;">Estado</th>
+                            <th style="padding: 16px 12px;">Acciones</th>
+                        </td>
+                    </thead>
+                    <tbody>
+                        <!-- Ascenso 1 - Ejecutado -->
+                        <tr class="ascenso-fila">
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-user-circle" style="color: #28a745;"></i>
+                                    <span class="fw-semibold">María González López</span>
+                                </div>
+                            </td>
+                            <td class="align-middle">Analista RH</td>
+                            <td class="align-middle">
+                                <span class="fw-semibold" style="color: #28a745;">Coordinadora RH</span>
+                            </td>
+                            <td class="align-middle small">15/03/2024</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">
+                                    <i class="fas fa-chart-line me-1"></i> +15%
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Ejecutado
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verAscenso(1)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="generarActa(1)">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Ascenso 2 - Aprobado -->
+                        <tr class="ascenso-fila">
+                            <td class="align-middle">2</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-user-circle" style="color: #2658A5;"></i>
+                                    <span class="fw-semibold">Carlos Rodríguez Pérez</span>
+                                </div>
+                            </td>
+                            <td class="align-middle">Técnico SST</td>
+                            <td class="align-middle">
+                                <span class="fw-semibold" style="color: #2658A5;">Coordinador SST</span>
+                            </td>
+                            <td class="align-middle small">10/06/2024</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-chart-line me-1"></i> +12%
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Aprobado
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verAscenso(2)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="ejecutarAscenso(2)">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Ascenso 3 - Propuesto -->
+                        <tr class="ascenso-fila">
+                            <td class="align-middle">3</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-user-circle" style="color: #FFCC29;"></i>
+                                    <span class="fw-semibold">Ana Martínez Suárez</span>
+                                </div>
+                            </td>
+                            <td class="align-middle">Asistente Administrativo</td>
+                            <td class="align-middle">
+                                <span class="fw-semibold" style="color: #FFCC29;">Analista Administrativo</span>
+                            </td>
+                            <td class="align-middle small">Propuesto: 01/07/2024</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-chart-line me-1"></i> +10%
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-clock me-1"></i> Propuesto
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verAscenso(3)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="aprobarAscenso(3)">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #C23538; color: white;" onclick="rechazarAscenso(3)">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Ascenso 4 - Rechazado -->
+                        <tr class="ascenso-fila">
+                            <td class="align-middle">4</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-user-circle" style="color: #C23538;"></i>
+                                    <span class="fw-semibold">Jorge Ramírez Castro</span>
+                                </div>
+                            </td>
+                            <td class="align-middle">Operador</td>
+                            <td class="align-middle">
+                                <span class="fw-semibold" style="color: #C23538;">Supervisor</span>
+                            </td>
+                            <td class="align-middle small">Rechazado: 20/05/2024</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #6c757d; color: white;">
+                                    <i class="fas fa-chart-line me-1"></i> +8%
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">
+                                    <i class="fas fa-times-circle me-1"></i> Rechazado
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verAscenso(4)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Ascenso 5 - Ejecutado -->
+                        <tr class="ascenso-fila">
+                            <td class="align-middle">5</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-user-circle" style="color: #28a745;"></i>
+                                    <span class="fw-semibold">Laura Sánchez Mendoza</span>
+                                </div>
+                            </td>
+                            <td class="align-middle">Auxiliar RH</td>
+                            <td class="align-middle">
+                                <span class="fw-semibold" style="color: #28a745;">Analista RH</span>
+                            </td>
+                            <td class="align-middle small">10/02/2024</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">
+                                    <i class="fas fa-chart-line me-1"></i> +18%
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Ejecutado
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verAscenso(5)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="generarActa(5)">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Ascenso 6 - Propuesto -->
+                        <tr class="ascenso-fila">
+                            <td class="align-middle">6</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-user-circle" style="color: #FFCC29;"></i>
+                                    <span class="fw-semibold">Andrés Felipe Méndez</span>
+                                </div>
+                            </td>
+                            <td class="align-middle">Aprendiz SST</td>
+                            <td class="align-middle">
+                                <span class="fw-semibold" style="color: #FFCC29;">Auxiliar SST</span>
+                            </td>
+                            <td class="align-middle small">Propuesto: 01/08/2024</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-chart-line me-1"></i> +25%
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-clock me-1"></i> Propuesto
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verAscenso(6)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="aprobarAscenso(6)">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de ascensos por año -->
+    <div class="row mt-4 g-3">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-bar me-2"></i> Ascensos por Año
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="ascensosChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-pie me-2"></i> Distribución por Departamento
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="departamentosChart" height="200"></canvas>
+                    <div class="mt-3">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <span class="badge" style="background: #2658A5;">&nbsp;</span>
+                                <small class="d-block">RH</small>
+                            </div>
+                            <div class="col-4">
+                                <span class="badge" style="background: #28a745;">&nbsp;</span>
+                                <small class="d-block">SST</small>
+                            </div>
+                            <div class="col-4">
+                                <span class="badge" style="background: #FFCC29;">&nbsp;</span>
+                                <small class="d-block">Operaciones</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Solicitud de Ascenso -->
+<div class="modal fade" id="modalNuevoAscenso" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-plus-circle me-2"></i> Solicitar Ascenso
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formNuevoAscenso" method="POST" action="{{ url_for('rh_ascenso_guardar') }}">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Empleado *</label>
+                            <select name="empleado_id" class="form-select rounded-3" required>
+                                <option value="">Seleccionar empleado...</option>
+                                <option value="1">María González López - Gerente RH</option>
+                                <option value="2">Carlos Rodríguez Pérez - Coordinador SST</option>
+                                <option value="3">Ana Martínez Suárez - Analista SST</option>
+                                <option value="4">Jorge Ramírez Castro - Operador</option>
+                                <option value="5">Laura Sánchez Mendoza - Asistente RH</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Cargo Actual</label>
+                            <input type="text" id="cargo_actual" class="form-control rounded-3" readonly>
+                            <small class="text-muted">Se cargará automáticamente</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Cargo al que aspira *</label>
+                            <input type="text" name="cargo_nuevo" class="form-control rounded-3" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Salario Actual</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="text" id="salario_actual" class="form-control rounded-3" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Salario Propuesto *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="salario_nuevo" class="form-control rounded-3" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Justificación</label>
+                            <textarea name="justificacion" class="form-control rounded-3" rows="3" 
+                                      placeholder="Describa los motivos del ascenso, logros y desempeño del empleado..."></textarea>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Observaciones</label>
+                            <textarea name="observaciones" class="form-control rounded-3" rows="2"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formNuevoAscenso" class="btn rounded-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                    <i class="fas fa-save me-2"></i> Enviar Solicitud
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function verAscenso(id) {
+    window.location.href = "/rh/ascenso/" + id;
+}
+
+function aprobarAscenso(id) {
+    if (confirm('¿Aprobar este ascenso?')) {
+        window.location.href = "/rh/ascenso/" + id + "/aprobar";
+    }
+}
+
+function rechazarAscenso(id) {
+    if (confirm('¿Rechazar este ascenso?')) {
+        window.location.href = "/rh/ascenso/" + id + "/rechazar";
+    }
+}
+
+function ejecutarAscenso(id) {
+    if (confirm('¿Ejecutar este ascenso? Se actualizará el cargo y salario del empleado.')) {
+        window.location.href = "/rh/ascenso/" + id + "/ejecutar";
+    }
+}
+
+function generarActa(id) {
+    alert('Generando acta de ascenso...');
+}
+
+function exportarAscensos() {
+    alert('Exportando listado de ascensos...');
+}
+
+// Gráfico de ascensos por año
+const ctxAscensos = document.getElementById('ascensosChart')?.getContext('2d');
+if (ctxAscensos) {
+    new Chart(ctxAscensos, {
+        type: 'bar',
+        data: {
+            labels: ['2021', '2022', '2023', '2024'],
+            datasets: [{
+                label: 'Número de Ascensos',
+                data: [4, 6, 8, 12],
+                backgroundColor: '#2658A5',
+                borderRadius: 8,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top' }
+            }
+        }
+    });
+}
+
+// Gráfico de distribución por departamento
+const ctxDeptos = document.getElementById('departamentosChart')?.getContext('2d');
+if (ctxDeptos) {
+    new Chart(ctxDeptos, {
+        type: 'doughnut',
+        data: {
+            labels: ['Recursos Humanos', 'SST', 'Operaciones'],
+            datasets: [{
+                data: [8, 6, 10],
+                backgroundColor: ['#2658A5', '#28a745', '#FFCC29'],
+                borderWidth: 0,
+                cutout: '60%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+}
+</script>
+
+<style>
+.ascenso-fila {
+    transition: all 0.2s ease;
+}
+.ascenso-fila:hover {
+    background-color: #f8f9fc;
+}
+.hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+}
+</style>
+{% endblock %}
