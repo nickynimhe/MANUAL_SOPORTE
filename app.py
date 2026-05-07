@@ -2401,10 +2401,10 @@ def rh_contrato_nuevo():
 
 
 # -------------------- PROCESOS RH --------------------
-@app.route('/rh/procesos')
+@app.route('/rh')
 @login_required
-def rh_procesos():
-    """Listado de procesos RH"""
+def rh_dashboard():
+    """Dashboard principal de Recursos Humanos"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
@@ -2412,17 +2412,29 @@ def rh_procesos():
         conn = crear_conexion()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, nombre, descripcion, tipo, responsable, prioridad, estado,
-                   fecha_inicio, fecha_limite, avance
-            FROM rh_procesos ORDER BY fecha_limite ASC, prioridad DESC
+            SELECT
+                (SELECT COUNT(*) FROM rh_empleados WHERE estado = 'activo') as total_empleados,
+                (SELECT COUNT(*) FROM rh_empleados WHERE fecha_ingreso >= DATE_TRUNC('month', CURRENT_DATE)) as ingresos_mes,
+                (SELECT COUNT(*) FROM rh_empleados WHERE fecha_retiro >= DATE_TRUNC('month', CURRENT_DATE)) as retiros_mes
+        """)
+        stats = cursor.fetchone()
+        # CORREGIDO: usar responsable_id en lugar de responsable
+        cursor.execute("""
+            SELECT id, nombre, responsable_id, estado, avance, fecha_limite
+            FROM rh_procesos WHERE estado != 'completado' ORDER BY fecha_limite ASC LIMIT 5
         """)
         procesos = cursor.fetchall()
         cursor.close()
         conn.close()
-        return render_template('rh/rh_procesos.html', procesos=procesos)
+        return render_template('rh/rh_dashboard.html',
+                             total_empleados=stats[0] if stats else 0,
+                             ingresos_mes=stats[1] if stats else 0,
+                             retiros_mes=stats[2] if stats else 0,
+                             procesos_activos=procesos)
     except Exception as e:
-        logger.error(f"Error en rh_procesos: {e}")
-        return render_template('rh/rh_procesos.html', procesos=[])
+        logger.error(f"Error en rh_dashboard: {e}")
+        return render_template('rh/rh_dashboard.html',
+                             total_empleados=0, ingresos_mes=0, retiros_mes=0, procesos_activos=[])
 
 
 @app.route('/rh/proceso/<int:id>')
@@ -2821,6 +2833,38 @@ def rh_reporte_rotacion():
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
     return render_template('rh/rh_reporte_rotacion.html')
+
+@app.route('/rh/normativas')
+@login_required
+def rh_normativas():
+    """Listado de normativas laborales"""
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos para acceder a Recursos Humanos', 'error')
+        return redirect(url_for('index'))
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Intentar obtener normativas de la base de datos
+        try:
+            cursor.execute("""
+                SELECT id, titulo, descripcion, tipo, fecha_publicacion, url
+                FROM rh_normativas ORDER BY fecha_publicacion DESC
+            """)
+            normativas = cursor.fetchall()
+        except Exception as e:
+            logger.warning(f"Tabla rh_normativas no existe: {e}")
+            normativas = []
+        
+        cursor.close()
+        conn.close()
+        
+        return render_template('rh/rh_normativas.html', normativas=normativas)
+    except Exception as e:
+        logger.error(f"Error en rh_normativas: {e}")
+        flash('Error al cargar las normativas', 'error')
+        return redirect(url_for('rh_dashboard'))
 
 
 # ==========================================
