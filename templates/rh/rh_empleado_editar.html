@@ -1,0 +1,273 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Editar Empleado - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header con información del empleado -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-user-edit fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">Editar Empleado</h4>
+                        <p class="text-white-80 mb-0 small">
+                            <i class="fas fa-id-card me-1"></i> Modificando información de {{ empleado.primer_nombre }} {{ empleado.primer_apellido }}
+                        </p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="window.location.href='{{ url_for('rh_empleado_detalle', id=empleado.id) }}'">
+                        <i class="fas fa-eye me-1"></i> Ver Detalle
+                    </button>
+                    <button class="btn btn-outline-light btn-sm" onclick="window.location.href='{{ url_for('rh_empleados') }}'">
+                        <i class="fas fa-arrow-left me-1"></i> Volver
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de Edición -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%);">
+            <h5 class="mb-0 fw-semibold" style="color: #282F4B;">
+                <i class="fas fa-edit me-2"></i> Formulario de Edición
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="POST" id="formEditarEmpleado" action="{{ url_for('rh_empleado_actualizar', id=empleado.id) }}">
+                
+                <!-- SECCIÓN 1: INFORMACIÓN PERSONAL -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #2658A5;">
+                        <i class="fas fa-user-circle me-2"></i> Información Personal
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Tipo Documento</label>
+                            <select name="tipo_documento" class="form-select rounded-3">
+                                <option value="CC" {% if empleado.tipo_documento == 'CC' %}selected{% endif %}>Cédula de Ciudadanía</option>
+                                <option value="CE" {% if empleado.tipo_documento == 'CE' %}selected{% endif %}>Cédula de Extranjería</option>
+                                <option value="PEP" {% if empleado.tipo_documento == 'PEP' %}selected{% endif %}>Pasaporte</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Número Documento *</label>
+                            <input type="text" name="documento" class="form-control rounded-3" value="{{ empleado.documento }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Primer Nombre *</label>
+                            <input type="text" name="primer_nombre" class="form-control rounded-3" value="{{ empleado.primer_nombre }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Segundo Nombre</label>
+                            <input type="text" name="segundo_nombre" class="form-control rounded-3" value="{{ empleado.segundo_nombre or '' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Primer Apellido *</label>
+                            <input type="text" name="primer_apellido" class="form-control rounded-3" value="{{ empleado.primer_apellido }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Segundo Apellido</label>
+                            <input type="text" name="segundo_apellido" class="form-control rounded-3" value="{{ empleado.segundo_apellido or '' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Fecha de Nacimiento</label>
+                            <input type="date" name="fecha_nacimiento" class="form-control rounded-3" value="{{ empleado.fecha_nacimiento }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Tipo de Sangre</label>
+                            <select name="tipo_sangre" class="form-select rounded-3">
+                                <option value="">Seleccionar...</option>
+                                <option value="A+" {% if empleado.tipo_sangre == 'A+' %}selected{% endif %}>A+</option>
+                                <option value="A-" {% if empleado.tipo_sangre == 'A-' %}selected{% endif %}>A-</option>
+                                <option value="B+" {% if empleado.tipo_sangre == 'B+' %}selected{% endif %}>B+</option>
+                                <option value="B-" {% if empleado.tipo_sangre == 'B-' %}selected{% endif %}>B-</option>
+                                <option value="AB+" {% if empleado.tipo_sangre == 'AB+' %}selected{% endif %}>AB+</option>
+                                <option value="AB-" {% if empleado.tipo_sangre == 'AB-' %}selected{% endif %}>AB-</option>
+                                <option value="O+" {% if empleado.tipo_sangre == 'O+' %}selected{% endif %}>O+</option>
+                                <option value="O-" {% if empleado.tipo_sangre == 'O-' %}selected{% endif %}>O-</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 2: INFORMACIÓN DE CONTACTO -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #28a745;">
+                        <i class="fas fa-address-card me-2"></i> Información de Contacto
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Correo Electrónico *</label>
+                            <input type="email" name="email" class="form-control rounded-3" value="{{ empleado.email }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Teléfono</label>
+                            <input type="text" name="telefono" class="form-control rounded-3" value="{{ empleado.telefono or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Celular</label>
+                            <input type="text" name="celular" class="form-control rounded-3" value="{{ empleado.celular or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Dirección</label>
+                            <input type="text" name="direccion" class="form-control rounded-3" value="{{ empleado.direccion or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">EPS</label>
+                            <input type="text" name="eps" class="form-control rounded-3" value="{{ empleado.eps or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">ARL</label>
+                            <input type="text" name="arl" class="form-control rounded-3" value="{{ empleado.arl or '' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 3: INFORMACIÓN LABORAL -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #2658A5;">
+                        <i class="fas fa-briefcase me-2"></i> Información Laboral
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Cargo *</label>
+                            <input type="text" name="cargo" class="form-control rounded-3" value="{{ empleado.cargo }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Departamento</label>
+                            <select name="departamento" class="form-select rounded-3">
+                                <option value="Administrativo" {% if empleado.departamento == 'Administrativo' %}selected{% endif %}>Administrativo</option>
+                                <option value="Operaciones" {% if empleado.departamento == 'Operaciones' %}selected{% endif %}>Operaciones</option>
+                                <option value="Comercial" {% if empleado.departamento == 'Comercial' %}selected{% endif %}>Comercial</option>
+                                <option value="Tecnología" {% if empleado.departamento == 'Tecnología' %}selected{% endif %}>Tecnología</option>
+                                <option value="SST" {% if empleado.departamento == 'SST' %}selected{% endif %}>SST</option>
+                                <option value="Recursos Humanos" {% if empleado.departamento == 'Recursos Humanos' %}selected{% endif %}>Recursos Humanos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Fecha de Ingreso</label>
+                            <input type="date" name="fecha_ingreso" class="form-control rounded-3" value="{{ empleado.fecha_ingreso }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Salario Base</label>
+                            <input type="number" name="salario" class="form-control rounded-3" step="0.01" value="{{ empleado.salario }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Tipo de Contrato</label>
+                            <select name="tipo_contrato" class="form-select rounded-3">
+                                <option value="Término Indefinido" {% if empleado.tipo_contrato == 'Término Indefinido' %}selected{% endif %}>Término Indefinido</option>
+                                <option value="Término Fijo" {% if empleado.tipo_contrato == 'Término Fijo' %}selected{% endif %}>Término Fijo</option>
+                                <option value="Obra o Labor" {% if empleado.tipo_contrato == 'Obra o Labor' %}selected{% endif %}>Obra o Labor</option>
+                                <option value="Aprendizaje" {% if empleado.tipo_contrato == 'Aprendizaje' %}selected{% endif %}>Aprendizaje</option>
+                                <option value="Prestación de Servicios" {% if empleado.tipo_contrato == 'Prestación de Servicios' %}selected{% endif %}>Prestación de Servicios</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Jefe Inmediato</label>
+                            <input type="text" name="jefe_inmediato" class="form-control rounded-3" value="{{ empleado.jefe_inmediato or '' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 4: ESTADO -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #FFCC29;">
+                        <i class="fas fa-flag me-2"></i> Estado del Empleado
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Estado Laboral</label>
+                            <select name="estado" class="form-select rounded-3">
+                                <option value="activo" {% if empleado.estado == 'activo' %}selected{% endif %}>✅ Activo</option>
+                                <option value="vacaciones" {% if empleado.estado == 'vacaciones' %}selected{% endif %}>🏖️ Vacaciones</option>
+                                <option value="incapacidad" {% if empleado.estado == 'incapacidad' %}selected{% endif %}>🏥 Incapacidad</option>
+                                <option value="inactivo" {% if empleado.estado == 'inactivo' %}selected{% endif %}>⏸️ Inactivo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fecha de Retiro</label>
+                            <input type="date" name="fecha_retiro" class="form-control rounded-3" value="{{ empleado.fecha_retiro or '' }}">
+                            <small class="text-muted">Solo si aplica</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOTONES DE ACCIÓN -->
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                    <div>
+                        <a href="{{ url_for('rh_empleado_detalle', id=empleado.id) }}" class="btn btn-outline-secondary rounded-3 px-4">
+                            <i class="fas fa-times me-1"></i> Cancelar
+                        </a>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn rounded-3 px-4" onclick="restaurarOriginal()" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%); border: none; color: #282F4B;">
+                            <i class="fas fa-undo me-1"></i> Restaurar
+                        </button>
+                        <button type="submit" form="formEditarEmpleado" class="btn rounded-3 px-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; color: white;">
+                            <i class="fas fa-save me-1"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function restaurarOriginal() {
+    if (confirm('¿Estás seguro de que quieres restaurar los valores originales? Se perderán todos los cambios no guardados.')) {
+        location.reload();
+    }
+}
+
+// Validación del formulario
+document.getElementById('formEditarEmpleado').addEventListener('submit', function(e) {
+    const documento = document.querySelector('input[name="documento"]').value.trim();
+    const primerNombre = document.querySelector('input[name="primer_nombre"]').value.trim();
+    const primerApellido = document.querySelector('input[name="primer_apellido"]').value.trim();
+    const email = document.querySelector('input[name="email"]').value.trim();
+    const cargo = document.querySelector('input[name="cargo"]').value.trim();
+    
+    let error = '';
+    
+    if (!documento) error = 'El número de documento es obligatorio';
+    else if (!primerNombre) error = 'El primer nombre es obligatorio';
+    else if (!primerApellido) error = 'El primer apellido es obligatorio';
+    else if (!email) error = 'El correo electrónico es obligatorio';
+    else if (!cargo) error = 'El cargo es obligatorio';
+    
+    if (error) {
+        e.preventDefault();
+        alert('❌ ' + error);
+    }
+});
+</script>
+
+<style>
+.form-section {
+    background: #f8f9fc;
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+.form-section:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.form-control, .form-select {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #2658A5;
+    box-shadow: 0 0 0 3px rgba(38,88,165,0.15);
+}
+</style>
+{% endblock %}
