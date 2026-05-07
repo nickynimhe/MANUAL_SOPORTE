@@ -1,0 +1,622 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Evaluaciones de Desempeño - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-star fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">Evaluaciones de Desempeño</h4>
+                        <p class="text-white-80 mb-0 small">Gestión de evaluaciones y calificaciones</p>
+                    </div>
+                </div>
+                <button class="btn btn-light btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevaEvaluacion">
+                    <i class="fas fa-plus me-1"></i> Nueva Evaluación
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-filter me-2"></i> Filtros de Búsqueda
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;">
+                            <i class="fas fa-search" style="color: #2658A5;"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control border-start-0 rounded-3" 
+                               placeholder="Buscar por empleado o evaluador..." 
+                               value="{{ request.args.get('q', '') }}"
+                               style="border-radius: 0 12px 12px 0;">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="periodo" class="form-select rounded-3">
+                        <option value="">Todos los periodos</option>
+                        <option value="2024-1">Ene-Jun 2024</option>
+                        <option value="2024-2">Jul-Dic 2024</option>
+                        <option value="2023-1">Ene-Jun 2023</option>
+                        <option value="2023-2">Jul-Dic 2023</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="estado" class="form-select rounded-3">
+                        <option value="">Todos los estados</option>
+                        <option value="pendiente">⏳ Pendiente</option>
+                        <option value="completada">✅ Completada</option>
+                        <option value="revisada">📋 Revisada</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 rounded-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); border: none;">
+                        <i class="fas fa-search me-1"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(38,88,165,0.1);">
+                    <i class="fas fa-chart-line" style="color: #2658A5;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #2658A5;">{{ total_evaluaciones|default(156) }}</h5>
+                <small class="text-muted">Total Evaluaciones</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                    <i class="fas fa-trophy" style="color: #28a745;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #28a745;">88<span style="font-size: 14px;">/100</span></h5>
+                <small class="text-muted">Promedio General</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                    <i class="fas fa-award" style="color: #28a745;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #28a745;">32</h5>
+                <small class="text-muted">Destacados (>90%)</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(255,204,41,0.15);">
+                    <i class="fas fa-chart-simple" style="color: #FFCC29;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #FFCC29;">12%</h5>
+                <small class="text-muted">Mejora vs periodo anterior</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Listado de Evaluaciones -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-list me-2"></i> Registro de Evaluaciones
+                    <span class="badge bg-white text-dark rounded-pill ms-2 px-3">{{ evaluaciones|default(12) }}</span>
+                </h5>
+                <div class="btn-group">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="exportarEvaluaciones()">
+                        <i class="fas fa-file-excel me-1"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead style="background: #f8f9fc;">
+                        <tr>
+                            <th style="padding: 16px 12px;">#</th>
+                            <th style="padding: 16px 12px;">Empleado</th>
+                            <th style="padding: 16px 12px;">Evaluador</th>
+                            <th style="padding: 16px 12px;">Periodo</th>
+                            <th style="padding: 16px 12px;">Puntaje</th>
+                            <th style="padding: 16px 12px;">Calificación</th>
+                            <th style="padding: 16px 12px;">Fecha</th>
+                            <th style="padding: 16px 12px;">Estado</th>
+                            <th style="padding: 16px 12px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Evaluación 1 -->
+                        <tr class="evaluacion-fila">
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-user-circle" style="color: #2658A5;"></i>
+                                    <span class="fw-semibold">María González López</span>
+                                </div>
+                            </td>
+                            <td class="align-middle">Carlos Rodríguez</td>
+                            <td class="align-middle">Ene-Jun 2024</td>
+                            <td class="align-middle">
+                                <span class="fw-bold" style="color: #28a745;">95/100</span>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-star me-1"></i> Excelente
+                                </span>
+                             </td>
+                            <td class="align-middle small">30/06/2024</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Completada
+                                </span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verEvaluacion(1)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarEvaluacion(1)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="generarCertificado(1)">
+                                        <i class="fas fa-certificate"></i>
+                                    </button>
+                                </div>
+                             </td>
+                         </tr>
+
+                        <!-- Evaluación 2 -->
+                        <tr class="evaluacion-fila">
+                            <td class="align-middle">2</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-user-circle" style="color: #28a745;"></i>
+                                    <span class="fw-semibold">Carlos Rodríguez Pérez</span>
+                                </div>
+                             </td>
+                            <td class="align-middle">María González</td>
+                            <td class="align-middle">Ene-Jun 2024</td>
+                            <td class="align-middle">
+                                <span class="fw-bold" style="color: #28a745;">88/100</span>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
+                                    <i class="fas fa-thumbs-up me-1"></i> Sobresaliente
+                                </span>
+                             </td>
+                            <td class="align-middle small">28/06/2024</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Completada
+                                </span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verEvaluacion(2)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarEvaluacion(2)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="generarCertificado(2)">
+                                        <i class="fas fa-certificate"></i>
+                                    </button>
+                                </div>
+                             </td>
+                         </tr>
+
+                        <!-- Evaluación 3 -->
+                        <tr class="evaluacion-fila">
+                            <td class="align-middle">3</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-user-circle" style="color: #FFCC29;"></i>
+                                    <span class="fw-semibold">Ana Martínez Suárez</span>
+                                </div>
+                             </td>
+                            <td class="align-middle">María González</td>
+                            <td class="align-middle">Ene-Jun 2024</td>
+                            <td class="align-middle">
+                                <span class="fw-bold" style="color: #28a745;">92/100</span>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-star me-1"></i> Excelente
+                                </span>
+                             </td>
+                            <td class="align-middle small">29/06/2024</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Completada
+                                </span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verEvaluacion(3)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarEvaluacion(3)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="generarCertificado(3)">
+                                        <i class="fas fa-certificate"></i>
+                                    </button>
+                                </div>
+                             </td>
+                         </tr>
+
+                        <!-- Evaluación 4 - Pendiente -->
+                        <tr class="evaluacion-fila">
+                            <td class="align-middle">4</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-user-circle" style="color: #C23538;"></i>
+                                    <span class="fw-semibold">Jorge Ramírez Castro</span>
+                                </div>
+                             </td>
+                            <td class="align-middle">Pendiente</td>
+                            <td class="align-middle">Jul-Dic 2024</td>
+                            <td class="align-middle">
+                                <span class="text-muted">-</span>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-clock me-1"></i> Pendiente
+                                </span>
+                             </td>
+                            <td class="align-middle small">-</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-spinner me-1"></i> Pendiente
+                                </span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="iniciarEvaluacion(4)">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarEvaluacion(4)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #6c757d; color: white;" disabled>
+                                        <i class="fas fa-certificate"></i>
+                                    </button>
+                                </div>
+                             </td>
+                         </tr>
+
+                        <!-- Evaluación 5 -->
+                        <tr class="evaluacion-fila">
+                            <td class="align-middle">5</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-user-circle" style="color: #28a745;"></i>
+                                    <span class="fw-semibold">Laura Sánchez Mendoza</span>
+                                </div>
+                             </td>
+                            <td class="align-middle">Carlos Rodríguez</td>
+                            <td class="align-middle">Ene-Jun 2024</td>
+                            <td class="align-middle">
+                                <span class="fw-bold" style="color: #28a745;">85/100</span>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
+                                    <i class="fas fa-thumbs-up me-1"></i> Sobresaliente
+                                </span>
+                             </td>
+                            <td class="align-middle small">27/06/2024</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Completada
+                                </span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verEvaluacion(5)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarEvaluacion(5)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="generarCertificado(5)">
+                                        <i class="fas fa-certificate"></i>
+                                    </button>
+                                </div>
+                             </td>
+                         </tr>
+
+                        <!-- Evaluación 6 - Revisada -->
+                        <tr class="evaluacion-fila">
+                            <td class="align-middle">6</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-user-circle" style="color: #2658A5;"></i>
+                                    <span class="fw-semibold">Andrés Felipe Méndez</span>
+                                </div>
+                             </td>
+                            <td class="align-middle">María González</td>
+                            <td class="align-middle">Jul-Dic 2023</td>
+                            <td class="align-middle">
+                                <span class="fw-bold" style="color: #28a745;">90/100</span>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-star me-1"></i> Excelente
+                                </span>
+                             </td>
+                            <td class="align-middle small">15/12/2023</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
+                                    <i class="fas fa-clipboard-list me-1"></i> Revisada
+                                </span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verEvaluacion(6)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarEvaluacion(6)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="generarCertificado(6)">
+                                        <i class="fas fa-certificate"></i>
+                                    </button>
+                                </div>
+                             </td>
+                         </tr>
+                    </tbody>
+                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de distribución de calificaciones -->
+    <div class="row mt-4 g-3">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-bar me-2"></i> Distribución de Calificaciones
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="distribucionChart" height="200"></canvas>
+                    <div class="mt-3">
+                        <div class="row text-center">
+                            <div class="col-3">
+                                <span class="badge" style="background: #C23538;">&nbsp;</span>
+                                <small class="d-block">Insuficiente<br>&lt;60</small>
+                            </div>
+                            <div class="col-3">
+                                <span class="badge" style="background: #FFCC29;">&nbsp;</span>
+                                <small class="d-block">Básico<br>60-74</small>
+                            </div>
+                            <div class="col-3">
+                                <span class="badge" style="background: #2658A5;">&nbsp;</span>
+                                <small class="d-block">Sobresaliente<br>75-89</small>
+                            </div>
+                            <div class="col-3">
+                                <span class="badge" style="background: #28a745;">&nbsp;</span>
+                                <small class="d-block">Excelente<br>90-100</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-line me-2"></i> Evolución de Calificaciones
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="evolucionChart" height="200"></canvas>
+                    <div class="mt-3 text-center">
+                        <small class="text-muted">Comparativa semestral de calificaciones</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Evaluación -->
+<div class="modal fade" id="modalNuevaEvaluacion" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-plus-circle me-2"></i> Nueva Evaluación de Desempeño
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formNuevaEvaluacion" method="POST" action="{{ url_for('rh_evaluacion_guardar') }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Empleado *</label>
+                            <select name="empleado_id" class="form-select rounded-3" required>
+                                <option value="">Seleccionar empleado...</option>
+                                <option value="1">María González López - CC 12345678</option>
+                                <option value="2">Carlos Rodríguez Pérez - CC 87654321</option>
+                                <option value="3">Ana Martínez Suárez - CC 11223344</option>
+                                <option value="4">Jorge Ramírez Castro - CC 55667788</option>
+                                <option value="5">Laura Sánchez Mendoza - CC 99887766</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Evaluador *</label>
+                            <select name="evaluador_id" class="form-select rounded-3" required>
+                                <option value="">Seleccionar evaluador...</option>
+                                <option value="1">María González López</option>
+                                <option value="2">Carlos Rodríguez Pérez</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Periodo *</label>
+                            <select name="periodo" class="form-select rounded-3" required>
+                                <option value="">Seleccionar periodo...</option>
+                                <option value="2024-1">Enero - Junio 2024</option>
+                                <option value="2024-2">Julio - Diciembre 2024</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fecha Evaluación *</label>
+                            <input type="date" name="fecha_evaluacion" class="form-control rounded-3" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h6 class="fw-semibold mb-3" style="color: #2658A5;">Criterios de Evaluación</h6>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Cumplimiento de objetivos (0-100)</label>
+                                <input type="number" name="puntaje_cumplimiento" class="form-control rounded-3" min="0" max="100" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Trabajo en equipo (0-100)</label>
+                                <input type="number" name="puntaje_trabajo_equipo" class="form-control rounded-3" min="0" max="100" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Iniciativa y proactividad (0-100)</label>
+                                <input type="number" name="puntaje_iniciativa" class="form-control rounded-3" min="0" max="100" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Calidad del trabajo (0-100)</label>
+                                <input type="number" name="puntaje_calidad" class="form-control rounded-3" min="0" max="100" required>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label">Observaciones</label>
+                            <textarea name="observaciones" class="form-control rounded-3" rows="3"></textarea>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label">Plan de mejora (si aplica)</label>
+                            <textarea name="plan_mejora" class="form-control rounded-3" rows="2"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formNuevaEvaluacion" class="btn rounded-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                    <i class="fas fa-save me-2"></i> Guardar Evaluación
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function verEvaluacion(id) {
+    window.location.href = "/rh/evaluacion/" + id;
+}
+
+function editarEvaluacion(id) {
+    window.location.href = "/rh/evaluacion/" + id + "/editar";
+}
+
+function iniciarEvaluacion(id) {
+    window.location.href = "/rh/evaluacion/" + id + "/iniciar";
+}
+
+function generarCertificado(id) {
+    alert('Generando certificado de desempeño...');
+}
+
+function exportarEvaluaciones() {
+    alert('Exportando listado de evaluaciones...');
+}
+
+// Gráfico de distribución
+const ctxDistribucion = document.getElementById('distribucionChart')?.getContext('2d');
+if (ctxDistribucion) {
+    new Chart(ctxDistribucion, {
+        type: 'bar',
+        data: {
+            labels: ['Insuficiente', 'Básico', 'Sobresaliente', 'Excelente'],
+            datasets: [{
+                label: 'Cantidad de empleados',
+                data: [2, 8, 25, 15],
+                backgroundColor: ['#C23538', '#FFCC29', '#2658A5', '#28a745'],
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top' }
+            }
+        }
+    });
+}
+
+// Gráfico de evolución
+const ctxEvolucion = document.getElementById('evolucionChart')?.getContext('2d');
+if (ctxEvolucion) {
+    new Chart(ctxEvolucion, {
+        type: 'line',
+        data: {
+            labels: ['2022-1', '2022-2', '2023-1', '2023-2', '2024-1'],
+            datasets: [{
+                label: 'Calificación Promedio',
+                data: [82, 84, 85, 87, 88],
+                borderColor: '#2658A5',
+                backgroundColor: 'rgba(38, 88, 165, 0.05)',
+                borderWidth: 3,
+                pointBackgroundColor: '#2658A5',
+                pointBorderColor: '#fff',
+                pointRadius: 5,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top' }
+            }
+        }
+    });
+}
+</script>
+
+<style>
+.evaluacion-fila {
+    transition: all 0.2s ease;
+}
+.evaluacion-fila:hover {
+    background-color: #f8f9fc;
+}
+.hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+}
+</style>
+{% endblock %}
