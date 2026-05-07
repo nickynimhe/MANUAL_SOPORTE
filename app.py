@@ -2102,41 +2102,6 @@ def sst_eliminar_evidencia(id):
 def rh_dashboard_redirect():
     """Redirección a /rh para compatibilidad"""
     return redirect(url_for('rh_dashboard'))
-    
-@app.route('/rh')
-@login_required
-def rh_dashboard():
-    """Dashboard principal de Recursos Humanos"""
-    if not current_user.puede('ver_rh'):
-        flash('No tienes permisos para acceder a Recursos Humanos', 'error')
-        return redirect(url_for('index'))
-    try:
-        conn = crear_conexion()
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT
-                (SELECT COUNT(*) FROM rh_empleados WHERE estado = 'activo') as total_empleados,
-                (SELECT COUNT(*) FROM rh_empleados WHERE fecha_ingreso >= DATE_TRUNC('month', CURRENT_DATE)) as ingresos_mes,
-                (SELECT COUNT(*) FROM rh_empleados WHERE fecha_retiro >= DATE_TRUNC('month', CURRENT_DATE)) as retiros_mes
-        """)
-        stats = cursor.fetchone()
-        cursor.execute("""
-            SELECT id, nombre, responsable, estado, avance, fecha_limite
-            FROM rh_procesos WHERE estado != 'completado' ORDER BY fecha_limite ASC LIMIT 5
-        """)
-        procesos = cursor.fetchall()
-        cursor.close()
-        conn.close()
-        return render_template('rh/rh_dashboard.html',
-                             total_empleados=stats[0] if stats else 0,
-                             ingresos_mes=stats[1] if stats else 0,
-                             retiros_mes=stats[2] if stats else 0,
-                             procesos_activos=procesos)
-    except Exception as e:
-        logger.error(f"Error en rh_dashboard: {e}")
-        return render_template('rh/rh_dashboard.html',
-                             total_empleados=0, ingresos_mes=0, retiros_mes=0, procesos_activos=[])
-
 
 # -------------------- GESTIÓN DE EMPLEADOS --------------------
 @app.route('/rh/empleados')
