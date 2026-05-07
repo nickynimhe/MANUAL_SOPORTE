@@ -32,7 +32,6 @@
             z-index: 1030;
         }
         
-        /* Logo */
         .navbar-brand {
             font-weight: 700;
             font-size: 1.2rem;
@@ -40,9 +39,10 @@
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            text-decoration: none;
         }
         
-        /* Selector de módulos */
+        /* Selector de módulos - SOLO visible para admin */
         .module-selector {
             background: #f8f9fa;
             border-radius: 12px;
@@ -56,6 +56,7 @@
             font-weight: 500;
             transition: all 0.2s;
             color: #6c757d;
+            text-decoration: none;
         }
         
         .module-btn.active {
@@ -69,27 +70,6 @@
             color: #2658A5;
         }
         
-        /* Botón de acceso rápido */
-        .quick-access {
-            background: #f8f9fa;
-            border-radius: 40px;
-            padding: 6px 14px;
-            font-size: 0.8rem;
-            transition: all 0.2s;
-            color: #495057;
-            text-decoration: none;
-        }
-        
-        .quick-access:hover {
-            background: #e9ecef;
-            color: #2658A5;
-        }
-        
-        .quick-access i {
-            margin-right: 6px;
-        }
-        
-        /* Menú de usuario */
         .user-menu {
             cursor: pointer;
             padding: 6px 12px;
@@ -114,7 +94,7 @@
             font-weight: bold;
         }
         
-        /* Toast notifications */
+        /* Toast */
         .toast-container {
             position: fixed;
             top: 80px;
@@ -122,41 +102,40 @@
             z-index: 9999;
         }
         
-        /* Animaciones */
         @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
         
         .toast {
             animation: slideIn 0.3s ease;
         }
         
-        /* Dropdown personalizado */
-        .dropdown-menu {
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        /* Botón colapsar sidebar (solo visible cuando hay sidebar) */
+        .btn-collapse-sidebar {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            z-index: 1040;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #2658A5;
+            color: white;
             border: none;
-            padding: 8px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
         }
         
-        .dropdown-item {
-            padding: 8px 20px;
-            font-size: 0.85rem;
+        .btn-collapse-sidebar:hover {
+            background: #1a3f73;
         }
         
-        .dropdown-item:hover {
-            background: #f8f9fc;
-        }
-        
-        .dropdown-divider {
-            margin: 6px 0;
+        body.has-sidebar .btn-collapse-sidebar {
+            display: flex;
         }
     </style>
     
@@ -164,116 +143,53 @@
 </head>
 <body>
 
-<!-- Barra superior común para TODOS los módulos -->
-<nav class="navbar-top d-flex justify-content-between align-items-center flex-wrap flex-md-nowrap gap-2">
+<!-- Barra superior -->
+<nav class="navbar-top d-flex justify-content-between align-items-center">
     <div class="d-flex align-items-center gap-3">
-        <!-- Logo / Marca -->
         <a href="{% if current_user.rol == 'admin' %}{{ url_for('dashboard_admin') }}{% else %}{{ url_for('index') }}{% endif %}" class="text-decoration-none">
             <span class="navbar-brand">
                 <i class="fas fa-network-wired me-2"></i>Sistema Integrado
             </span>
         </a>
         
-        <!-- Selector de módulos -->
+        <!-- Selector de módulos - SOLO visible para ADMIN -->
+        {% if current_user.rol == 'admin' %}
         <div class="module-selector d-none d-md-flex">
-            <a href="{{ url_for('index') }}" class="module-btn text-decoration-none me-1 
-                {% if request.endpoint == 'index' or request.endpoint in ['buscar', 'agregar_ficha', 'editar_ficha', 'ver_ficha', 'soluciones_visuales', 'atencion_telefonica', 'informacion_general'] %}active{% endif %}">
+            <a href="{{ url_for('index') }}" class="module-btn me-1 {% if request.endpoint == 'index' or request.endpoint in ['buscar', 'agregar_ficha', 'editar_ficha', 'ver_ficha', 'soluciones_visuales', 'atencion_telefonica', 'informacion_general'] %}active{% endif %}">
                 <i class="fas fa-headset me-1"></i> Soporte
             </a>
-            <a href="{{ url_for('sst_dashboard') }}" class="module-btn text-decoration-none me-1 
-                {% if request.endpoint.startswith('sst_') %}active{% endif %}">
+            <a href="{{ url_for('sst_dashboard') }}" class="module-btn me-1 {% if request.endpoint.startswith('sst_') %}active{% endif %}">
                 <i class="fas fa-hard-hat me-1"></i> SST
             </a>
-            <a href="{{ url_for('rh_dashboard') }}" class="module-btn text-decoration-none me-1 
-                {% if request.endpoint.startswith('rh_') %}active{% endif %}">
+            <a href="{{ url_for('rh_dashboard') }}" class="module-btn me-1 {% if request.endpoint.startswith('rh_') %}active{% endif %}">
                 <i class="fas fa-users me-1"></i> RH
             </a>
-            {% if current_user.rol == 'admin' %}
-            <a href="{{ url_for('dashboard_admin') }}" class="module-btn text-decoration-none 
-                {% if request.endpoint == 'dashboard_admin' or request.endpoint in ['gestion_usuarios', 'agregar_usuario', 'editar_usuario'] %}active{% endif %}">
+            <a href="{{ url_for('dashboard_admin') }}" class="module-btn {% if request.endpoint == 'dashboard_admin' or request.endpoint in ['gestion_usuarios', 'agregar_usuario', 'editar_usuario'] %}active{% endif %}">
                 <i class="fas fa-crown me-1"></i> Admin
             </a>
-            {% endif %}
         </div>
         
-        <!-- Selector responsive para móvil -->
+        <!-- Selector responsive móvil -->
         <div class="dropdown d-md-none">
             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                 <i class="fas fa-th me-1"></i> Módulo
             </button>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="{{ url_for('index') }}">
-                    <i class="fas fa-headset me-2"></i> Soporte
-                </a></li>
-                <li><a class="dropdown-item" href="{{ url_for('sst_dashboard') }}">
-                    <i class="fas fa-hard-hat me-2"></i> SST
-                </a></li>
-                <li><a class="dropdown-item" href="{{ url_for('rh_dashboard') }}">
-                    <i class="fas fa-users me-2"></i> RH
-                </a></li>
-                {% if current_user.rol == 'admin' %}
+                <li><a class="dropdown-item" href="{{ url_for('index') }}"><i class="fas fa-headset me-2"></i> Soporte</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('sst_dashboard') }}"><i class="fas fa-hard-hat me-2"></i> SST</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('rh_dashboard') }}"><i class="fas fa-users me-2"></i> RH</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="{{ url_for('dashboard_admin') }}">
-                    <i class="fas fa-crown me-2"></i> Admin
-                </a></li>
-                {% endif %}
+                <li><a class="dropdown-item" href="{{ url_for('dashboard_admin') }}"><i class="fas fa-crown me-2"></i> Admin</a></li>
             </ul>
         </div>
+        {% endif %}
     </div>
     
-    <div class="d-flex align-items-center gap-2 gap-md-3">
-        <!-- Atajos rápidos (según el módulo actual) -->
-        <div class="dropdown d-none d-md-block">
-            <button class="quick-access" data-bs-toggle="dropdown">
-                <i class="fas fa-bolt"></i> Acceso Rápido
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                {% if request.endpoint == 'index' or request.endpoint.startswith('ver_ficha') or request.endpoint == 'buscar' %}
-                <li><a class="dropdown-item" href="{{ url_for('buscar') }}">
-                    <i class="fas fa-search me-2"></i> Buscar solución
-                </a></li>
-                <li><a class="dropdown-item" href="{{ url_for('agregar_ficha') }}">
-                    <i class="fas fa-plus me-2"></i> Nueva ficha
-                </a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="{{ url_for('soluciones_visuales') }}">
-                    <i class="fas fa-chalkboard-user me-2"></i> Soluciones visuales
-                </a></li>
-                {% elif request.endpoint.startswith('sst_') %}
-                <li><a class="dropdown-item" href="{{ url_for('sst_agregar_contenido') }}">
-                    <i class="fas fa-plus me-2"></i> Nuevo contenido
-                </a></li>
-                <li><a class="dropdown-item" href="{{ url_for('sst_plan_anual') }}">
-                    <i class="fas fa-calendar me-2"></i> Plan anual
-                </a></li>
-                {% elif request.endpoint.startswith('rh_') %}
-                <li><a class="dropdown-item" href="{{ url_for('rh_empleados') }}">
-                    <i class="fas fa-users me-2"></i> Ver empleados
-                </a></li>
-                <li><a class="dropdown-item" href="{{ url_for('rh_empleado_nuevo') }}">
-                    <i class="fas fa-user-plus me-2"></i> Nuevo empleado
-                </a></li>
-                <li><a class="dropdown-item" href="{{ url_for('rh_contratos') }}">
-                    <i class="fas fa-file-signature me-2"></i> Contratos
-                </a></li>
-                {% elif current_user.rol == 'admin' %}
-                <li><a class="dropdown-item" href="{{ url_for('gestion_usuarios') }}">
-                    <i class="fas fa-users-gear me-2"></i> Gestionar usuarios
-                </a></li>
-                <li><a class="dropdown-item" href="{{ url_for('agregar_usuario') }}">
-                    <i class="fas fa-user-plus me-2"></i> Nuevo usuario
-                </a></li>
-                {% endif %}
-            </ul>
-        </div>
-
-        <!-- Notificaciones -->
+    <div class="d-flex align-items-center gap-3">
         <div class="dropdown">
             <button class="btn btn-link text-dark position-relative text-decoration-none p-0" data-bs-toggle="dropdown">
                 <i class="fas fa-bell fs-5"></i>
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 9px;">
-                    0
-                </span>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 9px;">0</span>
             </button>
             <div class="dropdown-menu dropdown-menu-end p-3" style="width: 300px;">
                 <h6 class="dropdown-header">Notificaciones</h6>
@@ -284,12 +200,9 @@
             </div>
         </div>
         
-        <!-- Menú de usuario -->
         <div class="dropdown">
             <div class="user-menu d-flex align-items-center" data-bs-toggle="dropdown">
-                <div class="user-avatar me-2">
-                    {{ current_user.usuario[0]|upper if current_user.usuario else 'U' }}
-                </div>
+                <div class="user-avatar me-2">{{ current_user.usuario[0]|upper if current_user.usuario else 'U' }}</div>
                 <div class="d-none d-sm-block">
                     <div class="fw-semibold small">{{ current_user.usuario }}</div>
                     <small class="text-muted">{{ obtener_rol_display() }}</small>
@@ -297,32 +210,31 @@
                 <i class="fas fa-chevron-down ms-2 small text-muted"></i>
             </div>
             <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="{{ url_for('cambiar_password') }}">
-                    <i class="fas fa-key me-2"></i> Cambiar Contraseña
-                </a></li>
+                <li><a class="dropdown-item" href="{{ url_for('cambiar_password') }}"><i class="fas fa-key me-2"></i> Cambiar Contraseña</a></li>
                 {% if current_user.rol == 'admin' %}
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="{{ url_for('dashboard_admin') }}">
-                    <i class="fas fa-crown me-2"></i> Panel de Control
-                </a></li>
+                <li><a class="dropdown-item" href="{{ url_for('dashboard_admin') }}"><i class="fas fa-crown me-2"></i> Panel Admin</a></li>
                 {% endif %}
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
-                    <i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión
-                </a></li>
+                <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión</a></li>
             </ul>
         </div>
     </div>
 </nav>
 
-<!-- Contenido principal (será reemplazado por cada módulo) -->
+<!-- Botón flotante para colapsar sidebar (visible solo cuando hay sidebar) -->
+<button class="btn-collapse-sidebar" id="btnCollapseSidebar">
+    <i class="fas fa-bars"></i>
+</button>
+
+<!-- CONTENIDO PRINCIPAL - Cada módulo inyecta su propio wrapper con sidebar -->
 {% block content %}{% endblock %}
 
-<!-- Toast container para mensajes flash -->
+<!-- Toast container -->
 <div class="toast-container">
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% for category, message in messages %}
-            <div class="toast align-items-center text-white bg-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">
+            <div class="toast align-items-center text-white bg-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} border-0 mb-2" role="alert">
                 <div class="d-flex">
                     <div class="toast-body">
                         <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' if category == 'error' else 'info-circle' }} me-2"></i>
@@ -335,36 +247,40 @@
     {% endwith %}
 </div>
 
-<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Inicializar toasts
+        // Toasts
         var toastElList = [].slice.call(document.querySelectorAll('.toast'));
         toastElList.forEach(function(toastEl) {
-            new bootstrap.Toast(toastEl, {
-                autohide: true,
-                delay: 5000
-            }).show();
+            new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 }).show();
         });
         
-        // Guardar módulo activo en localStorage para mantener consistencia
-        const currentModule = getCurrentModule();
-        if (currentModule) {
-            localStorage.setItem('lastModule', currentModule);
+        // Botón colapsar sidebar
+        const btnCollapse = document.getElementById('btnCollapseSidebar');
+        const sidebar = document.getElementById('sidebar');
+        
+        if (btnCollapse && sidebar) {
+            btnCollapse.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+                // Cambiar ícono
+                const icon = btnCollapse.querySelector('i');
+                if (sidebar.classList.contains('active')) {
+                    icon.classList.remove('fa-bars');
+                    icon.classList.add('fa-arrow-right');
+                } else {
+                    icon.classList.remove('fa-arrow-right');
+                    icon.classList.add('fa-bars');
+                }
+            });
         }
         
-        function getCurrentModule() {
-            if (document.querySelector('.module-btn.active')) {
-                return document.querySelector('.module-btn.active').innerText.trim();
-            }
-            return null;
+        // Detectar si hay sidebar para mostrar el botón
+        if (sidebar) {
+            document.body.classList.add('has-sidebar');
         }
     });
 </script>
-
 {% block extra_js %}{% endblock %}
 </body>
 </html>
