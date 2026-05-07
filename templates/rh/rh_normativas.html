@@ -1,0 +1,605 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Normativa Laboral - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-gavel fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">Normativa Laboral</h4>
+                        <p class="text-white-80 mb-0 small">Leyes, decretos y regulaciones aplicables</p>
+                    </div>
+                </div>
+                <button class="btn btn-light btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevaNormativa">
+                    <i class="fas fa-plus me-1"></i> Agregar Normativa
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-filter me-2"></i> Filtros de Búsqueda
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;">
+                            <i class="fas fa-search" style="color: #2658A5;"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control border-start-0 rounded-3" 
+                               placeholder="Buscar por nombre, artículo o descripción..." 
+                               value="{{ request.args.get('q', '') }}"
+                               style="border-radius: 0 12px 12px 0;">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="tipo" class="form-select rounded-3">
+                        <option value="">Todos los tipos</option>
+                        <option value="ley">📜 Ley</option>
+                        <option value="decreto">📋 Decreto</option>
+                        <option value="resolucion">📄 Resolución</option>
+                        <option value="circular">🔄 Circular</option>
+                        <option value="sentencia">⚖️ Sentencia</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="estado" class="form-select rounded-3">
+                        <option value="">Todos los estados</option>
+                        <option value="vigente">✅ Vigente</option>
+                        <option value="modificada">✏️ Modificada</option>
+                        <option value="derogada">❌ Derogada</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 rounded-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); border: none;">
+                        <i class="fas fa-search me-1"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(38,88,165,0.1);">
+                    <i class="fas fa-book" style="color: #2658A5;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #2658A5;">{{ total_normativas|default(28) }}</h5>
+                <small class="text-muted">Total Normativas</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                    <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #28a745;">{{ vigentes|default(20) }}</h5>
+                <small class="text-muted">Vigentes</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(255,204,41,0.15);">
+                    <i class="fas fa-calendar-alt" style="color: #FFCC29;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #FFCC29;">{{ actualizadas|default(5) }}</h5>
+                <small class="text-muted">Actualizaciones 2024</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(194,53,56,0.1);">
+                    <i class="fas fa-exclamation-triangle" style="color: #C23538;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #C23538;">{{ por_vencer|default(3) }}</h5>
+                <small class="text-muted">Por vencer</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Listado de Normativas -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-list me-2"></i> Legislación Laboral
+                    <span class="badge bg-white text-dark rounded-pill ms-2 px-3">{{ normativas|default(15) }}</span>
+                </h5>
+                <div class="btn-group">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="exportarNormativas()">
+                        <i class="fas fa-file-excel me-1"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead style="background: #f8f9fc;">
+                        <tr>
+                            <th style="padding: 16px 12px;">#</th>
+                            <th style="padding: 16px 12px;">Normativa</th>
+                            <th style="padding: 16px 12px;">Tipo</th>
+                            <th style="padding: 16px 12px;">Descripción</th>
+                            <th style="padding: 16px 12px;">Estado</th>
+                            <th style="padding: 16px 12px;">Vigencia</th>
+                            <th style="padding: 16px 12px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Normativa 1 - Ley 100 de 1993 -->
+                        <tr class="normativa-fila">
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-book" style="color: #2658A5;"></i>
+                                    <span class="fw-semibold">Ley 100 de 1993</span>
+                                </div>
+                                <small class="text-muted d-block">Artículos 142-168</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
+                                    <i class="fas fa-landmark me-1"></i> Ley
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <small>Sistema de Seguridad Social Integral</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Vigente
+                                </span>
+                            </td>
+                            <td class="align-middle small">23/12/1993</td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verNormativa(1)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarNormativa(1)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="descargarNormativa(1)">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Normativa 2 - Decreto 1072 de 2015 -->
+                        <tr class="normativa-fila">
+                            <td class="align-middle">2</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-file-alt" style="color: #28a745;"></i>
+                                    <span class="fw-semibold">Decreto 1072 de 2015</span>
+                                </div>
+                                <small class="text-muted d-block">Decreto Único Reglamentario</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-file-alt me-1"></i> Decreto
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <small>Sector Trabajo, SST y riesgos laborales</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Vigente
+                                </span>
+                            </td>
+                            <td class="align-middle small">26/05/2015</td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verNormativa(2)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarNormativa(2)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="descargarNormativa(2)">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Normativa 3 - Resolución 0312 de 2019 -->
+                        <tr class="normativa-fila">
+                            <td class="align-middle">3</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-file-pdf" style="color: #C23538;"></i>
+                                    <span class="fw-semibold">Resolución 0312 de 2019</span>
+                                </div>
+                                <small class="text-muted d-block">Estándares mínimos SST</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">
+                                    <i class="fas fa-file-pdf me-1"></i> Resolución
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <small>Estándares mínimos del SG-SST</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Vigente
+                                </span>
+                            </td>
+                            <td class="align-middle small">13/02/2019</td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verNormativa(3)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarNormativa(3)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="descargarNormativa(3)">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Normativa 4 - Ley 1562 de 2012 -->
+                        <tr class="normativa-fila">
+                            <td class="align-middle">4</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-book" style="color: #2658A5;"></i>
+                                    <span class="fw-semibold">Ley 1562 de 2012</span>
+                                </div>
+                                <small class="text-muted d-block">Modifica sistema de riesgos laborales</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
+                                    <i class="fas fa-landmark me-1"></i> Ley
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <small>Sistema de Riesgos Laborales</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Vigente
+                                </span>
+                            </td>
+                            <td class="align-middle small">11/07/2012</td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verNormativa(4)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarNormativa(4)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="descargarNormativa(4)">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Normativa 5 - Circular 002 de 2022 -->
+                        <tr class="normativa-fila">
+                            <td class="align-middle">5</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-envelope" style="color: #FFCC29;"></i>
+                                    <span class="fw-semibold">Circular 002 de 2022</span>
+                                </div>
+                                <small class="text-muted d-block">Lineamientos SST</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-envelope me-1"></i> Circular
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <small>Lineamientos para implementación SG-SST</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Vigente
+                                </span>
+                            </td>
+                            <td class="align-middle small">15/03/2022</td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verNormativa(5)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarNormativa(5)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="descargarNormativa(5)">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Normativa 6 - Modificada -->
+                        <tr class="normativa-fila">
+                            <td class="align-middle">6</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-edit" style="color: #FFCC29;"></i>
+                                    <span class="fw-semibold">Ley 1429 de 2010</span>
+                                </div>
+                                <small class="text-muted d-block">Formalización laboral</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
+                                    <i class="fas fa-landmark me-1"></i> Ley
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <small>Formalización y generación de empleo</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-edit me-1"></i> Modificada
+                                </span>
+                            </td>
+                            <td class="align-middle small">29/12/2010</td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verNormativa(6)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="descargarNormativa(6)">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Normativa 7 - Por vencer -->
+                        <tr class="normativa-fila">
+                            <td class="align-middle">7</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-clock" style="color: #C23538;"></i>
+                                    <span class="fw-semibold">Resolución 1401 de 2007</span>
+                                </div>
+                                <small class="text-muted d-block">Investigación de accidentes</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">
+                                    <i class="fas fa-file-pdf me-1"></i> Resolución
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <small>Investigación de incidentes y accidentes</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-hourglass-half me-1"></i> Por actualizar
+                                </span>
+                            </td>
+                            <td class="align-middle small">17/05/2007</td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verNormativa(7)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #28a745; color: white;" onclick="actualizarNormativa(7)">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendario de vencimientos normativos -->
+    <div class="row mt-4 g-3">
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-calendar-alt me-2"></i> Próximos Vencimientos / Actualizaciones
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="timeline">
+                        <div class="timeline-item mb-3 d-flex align-items-start">
+                            <div class="timeline-icon me-3">
+                                <div class="rounded-circle bg-danger d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-exclamation-triangle text-white"></i>
+                                </div>
+                            </div>
+                            <div class="timeline-content flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1 fw-semibold">Actualización Decreto 1072</h6>
+                                    <span class="badge bg-danger">Urgente - 15 días</span>
+                                </div>
+                                <p class="mb-0 small text-muted">Se espera nueva modificación al capítulo de SST. Preparar equipo para revisión.</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-3 d-flex align-items-start">
+                            <div class="timeline-icon me-3">
+                                <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-clock text-dark"></i>
+                                </div>
+                            </div>
+                            <div class="timeline-content flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1 fw-semibold">Implementación Nueva Resolución SST</h6>
+                                    <span class="badge bg-warning text-dark">30 días</span>
+                                </div>
+                                <p class="mb-0 small text-muted">Entra en vigencia nuevos estándares mínimos. Capacitación programada.</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item d-flex align-items-start">
+                            <div class="timeline-icon me-3">
+                                <div class="rounded-circle bg-success d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-check text-white"></i>
+                                </div>
+                            </div>
+                            <div class="timeline-content flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <h6 class="mb-1 fw-semibold">Revisión Documental Normativa</h6>
+                                    <span class="badge bg-success">Completado</span>
+                                </div>
+                                <p class="mb-0 small text-muted">Actualización de matriz de requisitos legales finalizada.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Normativa -->
+<div class="modal fade" id="modalNuevaNormativa" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-plus-circle me-2"></i> Agregar Normativa
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formNuevaNormativa" method="POST" action="{{ url_for('rh_normativa_guardar') }}" enctype="multipart/form-data">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nombre de la Normativa *</label>
+                            <input type="text" name="nombre" class="form-control rounded-3" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tipo *</label>
+                            <select name="tipo" class="form-select rounded-3" required>
+                                <option value="">Seleccionar tipo...</option>
+                                <option value="ley">📜 Ley</option>
+                                <option value="decreto">📋 Decreto</option>
+                                <option value="resolucion">📄 Resolución</option>
+                                <option value="circular">🔄 Circular</option>
+                                <option value="sentencia">⚖️ Sentencia</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Descripción</label>
+                            <textarea name="descripcion" class="form-control rounded-3" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Artículos / Capítulos</label>
+                            <input type="text" name="articulos" class="form-control rounded-3" placeholder="Ej: 142-168, Capítulo 2">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fecha de Expedición *</label>
+                            <input type="date" name="fecha_expedicion" class="form-control rounded-3" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Entidad Emisora</label>
+                            <input type="text" name="entidad" class="form-control rounded-3" placeholder="Ej: Congreso, Ministerio del Trabajo">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Estado *</label>
+                            <select name="estado" class="form-select rounded-3" required>
+                                <option value="vigente">✅ Vigente</option>
+                                <option value="modificada">✏️ Modificada</option>
+                                <option value="derogada">❌ Derogada</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Documento (PDF)</label>
+                            <input type="file" name="archivo" class="form-control rounded-3" accept=".pdf">
+                            <small class="text-muted">Archivo PDF de la normativa</small>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Enlace Oficial</label>
+                            <input type="url" name="enlace" class="form-control rounded-3" placeholder="https://...">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Observaciones</label>
+                            <textarea name="observaciones" class="form-control rounded-3" rows="2"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formNuevaNormativa" class="btn rounded-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                    <i class="fas fa-save me-2"></i> Guardar Normativa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function verNormativa(id) {
+    window.location.href = "/rh/normativa/" + id;
+}
+
+function editarNormativa(id) {
+    window.location.href = "/rh/normativa/" + id + "/editar";
+}
+
+function descargarNormativa(id) {
+    alert('Descargando documento de la normativa...');
+}
+
+function actualizarNormativa(id) {
+    if (confirm('¿Deseas marcar esta normativa como actualizada?')) {
+        window.location.href = "/rh/normativa/" + id + "/actualizar";
+    }
+}
+
+function exportarNormativas() {
+    alert('Exportando listado de normativas...');
+}
+</script>
+
+<style>
+.normativa-fila {
+    transition: all 0.2s ease;
+}
+.normativa-fila:hover {
+    background-color: #f8f9fc;
+}
+.hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+}
+.timeline-icon {
+    flex-shrink: 0;
+}
+.timeline-content {
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 15px;
+}
+.timeline-item:last-child .timeline-content {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+</style>
+{% endblock %}
