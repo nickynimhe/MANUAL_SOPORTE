@@ -1,0 +1,461 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Detalle de Normativa - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header con información de la normativa -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-gavel fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">{{ normativa.nombre }}</h4>
+                        <p class="text-white-80 mb-0 small">
+                            <i class="fas fa-tag me-1"></i> {{ normativa.tipo }} • 
+                            <i class="fas fa-calendar me-1"></i> Expedida: {{ normativa.fecha_expedicion }}
+                        </p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="editarNormativa({{ normativa.id }})">
+                        <i class="fas fa-edit me-1"></i> Editar
+                    </button>
+                    <button class="btn btn-outline-light btn-sm" onclick="window.location.href='{{ url_for('rh_normativas') }}'">
+                        <i class="fas fa-arrow-left me-1"></i> Volver
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- COLUMNA IZQUIERDA - Información General -->
+        <div class="col-lg-4">
+            <!-- Resumen de la Normativa -->
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-info-circle me-2"></i> Resumen
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: 
+                            {% if normativa.tipo == 'Ley' %}linear-gradient(135deg, #2658A5, #1a3f73)
+                            {% elif normativa.tipo == 'Decreto' %}linear-gradient(135deg, #28a745, #1f8a3a)
+                            {% elif normativa.tipo == 'Resolución' %}linear-gradient(135deg, #C23538, #A73335)
+                            {% else %}linear-gradient(135deg, #FFCC29, #FFA500){% endif %}">
+                            <i class="fas 
+                                {% if normativa.tipo == 'Ley' %}fa-landmark
+                                {% elif normativa.tipo == 'Decreto' %}fa-file-alt
+                                {% elif normativa.tipo == 'Resolución' %}fa-file-pdf
+                                {% else %}fa-envelope{% endif %} fa-3x text-white"></i>
+                        </div>
+                        <h5 class="fw-bold mb-1">{{ normativa.nombre }}</h5>
+                        <div class="mt-2">
+                            {% if normativa.estado == 'vigente' %}
+                            <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                <i class="fas fa-check-circle me-1"></i> Vigente
+                            </span>
+                            {% elif normativa.estado == 'modificada' %}
+                            <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                <i class="fas fa-edit me-1"></i> Modificada
+                            </span>
+                            {% else %}
+                            <span class="badge rounded-pill px-3 py-2" style="background: #6c757d; color: white;">
+                                <i class="fas fa-times-circle me-1"></i> Derogada
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="info-group">
+                        <div class="d-flex align-items-start gap-3 py-3 border-bottom">
+                            <i class="fas fa-tag mt-1" style="color: #2658A5;"></i>
+                            <div>
+                                <small class="text-muted d-block">Tipo de Normativa</small>
+                                <span class="fw-semibold">{{ normativa.tipo }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 py-3 border-bottom">
+                            <i class="fas fa-building mt-1" style="color: #28a745;"></i>
+                            <div>
+                                <small class="text-muted d-block">Entidad Emisora</small>
+                                <span class="fw-semibold">{{ normativa.entidad or 'No especificada' }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 py-3 border-bottom">
+                            <i class="fas fa-calendar-alt mt-1" style="color: #FFCC29;"></i>
+                            <div>
+                                <small class="text-muted d-block">Fecha de Expedición</small>
+                                <span class="fw-semibold">{{ normativa.fecha_expedicion }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 py-3 border-bottom">
+                            <i class="fas fa-calendar-check mt-1" style="color: #C23538;"></i>
+                            <div>
+                                <small class="text-muted d-block">Vigencia desde</small>
+                                <span class="fw-semibold">{{ normativa.fecha_vigencia or normativa.fecha_expedicion }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 py-3">
+                            <i class="fas fa-hashtag mt-1" style="color: #2658A5;"></i>
+                            <div>
+                                <small class="text-muted d-block">Artículos / Capítulos</small>
+                                <span class="fw-semibold">{{ normativa.articulos or 'No especificado' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documentos adjuntos -->
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-paperclip me-2"></i> Documentos Adjuntos
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    {% if normativa.tiene_archivo %}
+                    <div class="document-preview text-center mb-3">
+                        <i class="fas fa-file-pdf fa-4x" style="color: #C23538;"></i>
+                        <p class="mt-2 mb-1 fw-semibold">{{ normativa.archivo_nombre or 'normativa.pdf' }}</p>
+                        <small class="text-muted">{{ normativa.archivo_tamano or '250 KB' }}</small>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('rh_descargar_normativa', id=normativa.id) }}" class="btn rounded-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); color: white;">
+                            <i class="fas fa-download me-2"></i> Descargar Documento
+                        </a>
+                        <button class="btn btn-outline-secondary rounded-3" onclick="window.open('{{ normativa.enlace }}', '_blank')">
+                            <i class="fas fa-external-link-alt me-2"></i> Ver en Portal Oficial
+                        </button>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-file-pdf fa-4x text-muted mb-3"></i>
+                        <p class="text-muted">No hay documento adjunto</p>
+                        <button class="btn btn-outline-primary btn-sm rounded-3" onclick="subirDocumento({{ normativa.id }})">
+                            <i class="fas fa-upload me-1"></i> Subir Documento
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Enlaces relacionados -->
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%);">
+                    <h6 class="mb-0 fw-semibold" style="color: #282F4B;">
+                        <i class="fas fa-link me-2"></i> Enlaces Relacionados
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="list-group list-group-flush">
+                        {% if normativa.enlace %}
+                        <a href="{{ normativa.enlace }}" target="_blank" class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3 bg-transparent">
+                            <i class="fas fa-external-link-alt" style="color: #2658A5;"></i>
+                            <div>
+                                <small class="text-muted d-block">Portal Oficial</small>
+                                <span class="small">{{ normativa.enlace[:50] }}{% if normativa.enlace|length > 50 %}...{% endif %}</span>
+                            </div>
+                        </a>
+                        {% endif %}
+                        <a href="#" class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3 bg-transparent" onclick="buscarRelacionadas()">
+                            <i class="fas fa-search" style="color: #28a745;"></i>
+                            <div>
+                                <small class="text-muted d-block">Normativas Relacionadas</small>
+                                <span class="small">Buscar normativas complementarias</span>
+                            </div>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3 bg-transparent" onclick="verJurisprudencia()">
+                            <i class="fas fa-gavel" style="color: #C23538;"></i>
+                            <div>
+                                <small class="text-muted d-block">Jurisprudencia</small>
+                                <span class="small">Sentencias relacionadas</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA - Detalle y Contenido -->
+        <div class="col-lg-8">
+            <!-- Descripción completa -->
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-align-left me-2"></i> Descripción
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted" style="line-height: 1.6;">{{ normativa.descripcion or 'No se ha ingresado una descripción para esta normativa.' }}</p>
+                </div>
+            </div>
+
+            <!-- Capítulos / Artículos destacados -->
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-book me-2"></i> Artículos Destacados
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item p-4">
+                            <h6 class="fw-semibold mb-2" style="color: #2658A5;">Artículo 1</h6>
+                            <p class="mb-0 text-muted small">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisl eget aliquam ultricies.</p>
+                        </div>
+                        <div class="list-group-item p-4">
+                            <h6 class="fw-semibold mb-2" style="color: #2658A5;">Artículo 2</h6>
+                            <p class="mb-0 text-muted small">Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.</p>
+                        </div>
+                        <div class="list-group-item p-4">
+                            <h6 class="fw-semibold mb-2" style="color: #2658A5;">Artículo 3</h6>
+                            <p class="mb-0 text-muted small">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modificaciones / Actualizaciones -->
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-semibold" style="color: #282F4B;">
+                            <i class="fas fa-history me-2"></i> Historial de Modificaciones
+                        </h6>
+                        {% if normativa.estado == 'modificada' %}
+                        <span class="badge bg-warning text-dark">Modificada</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead style="background: #f8f9fc;">
+                                <tr>
+                                    <th style="padding: 12px;">Fecha</th>
+                                    <th style="padding: 12px;">Normativa Modificatoria</th>
+                                    <th style="padding: 12px;">Artículo Modificado</th>
+                                    <th style="padding: 12px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="align-middle">15/03/2022</td>
+                                    <td class="align-middle">Decreto 345 de 2022</td>
+                                    <td class="align-middle">Artículo 12</td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="verModificacion(1)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="align-middle">10/01/2021</td>
+                                    <td class="align-middle">Resolución 123 de 2021</td>
+                                    <td class="align-middle">Artículo 5, 8</td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="verModificacion(2)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-semibold text-white">
+                            <i class="fas fa-clipboard-list me-2"></i> Observaciones
+                        </h6>
+                        <button class="btn btn-light btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAgregarObservacion">
+                            <i class="fas fa-plus me-1"></i> Agregar
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    {% if normativa.observaciones %}
+                    <div class="observation-list">
+                        <div class="observation-item p-3 mb-2 rounded-3" style="background: #f8f9fc;">
+                            <div class="d-flex justify-content-between mb-2">
+                                <div>
+                                    <i class="fas fa-user-circle me-1" style="color: #2658A5;"></i>
+                                    <span class="fw-semibold">Asesor Jurídico</span>
+                                </div>
+                                <small class="text-muted">15/03/2024</small>
+                            </div>
+                            <p class="mb-0 small">{{ normativa.observaciones }}</p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No hay observaciones registradas</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Matriz de requisitos aplicables -->
+            <div class="card border-0 shadow-sm overflow-hidden mt-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-table-list me-2"></i> Requisitos Aplicables
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead style="background: #f8f9fc;">
+                                <tr>
+                                    <th style="padding: 12px;">Requisito</th>
+                                    <th style="padding: 12px;">Responsable</th>
+                                    <th style="padding: 12px;">Cumplimiento</th>
+                                    <th style="padding: 12px;">Evidencia</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="align-middle">Implementar SG-SST</td>
+                                    <td class="align-middle">Coordinador SST</td>
+                                    <td class="align-middle">
+                                        <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">Cumple</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="verEvidencia(1)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="align-middle">Documentar matriz de riesgos</td>
+                                    <td class="align-middle">Coordinador SST</td>
+                                    <td class="align-middle">
+                                        <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">Cumple</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="verEvidencia(2)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="align-middle">Realizar capacitaciones anuales</td>
+                                    <td class="align-middle">SST</td>
+                                    <td class="align-middle">
+                                        <span class="badge rounded-pill px-2 py-1" style="background: #FFCC29; color: #282F4B;">En proceso</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="verEvidencia(3)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Agregar Observación -->
+<div class="modal fade" id="modalAgregarObservacion" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-clipboard-list me-2"></i> Agregar Observación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formObservacion" method="POST" action="{{ url_for('rh_normativa_agregar_observacion', id=normativa.id) }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Observación *</label>
+                        <textarea name="observacion" class="form-control rounded-3" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipo</label>
+                        <select name="tipo" class="form-select rounded-3">
+                            <option value="general">General</option>
+                            <option value="importante">Importante</option>
+                            <option value="alerta">Alerta</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formObservacion" class="btn rounded-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                    <i class="fas fa-save me-2"></i> Guardar Observación
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function editarNormativa(id) {
+    window.location.href = "/rh/normativa/" + id + "/editar";
+}
+
+function verModificacion(id) {
+    window.location.href = "/rh/normativa/modificacion/" + id;
+}
+
+function subirDocumento(id) {
+    window.location.href = "/rh/normativa/" + id + "/subir-documento";
+}
+
+function verEvidencia(id) {
+    window.location.href = "/rh/evidencia/" + id;
+}
+
+function buscarRelacionadas() {
+    alert('Buscando normativas relacionadas...');
+}
+
+function verJurisprudencia() {
+    alert('Consultando jurisprudencia relacionada...');
+}
+</script>
+
+<style>
+.info-group {
+    margin-top: 10px;
+}
+.observation-item {
+    transition: all 0.2s ease;
+}
+.observation-item:hover {
+    background: #e8f0fe !important;
+}
+.document-preview {
+    transition: all 0.2s ease;
+}
+.document-preview:hover {
+    transform: scale(1.02);
+}
+.list-group-item {
+    transition: all 0.2s ease;
+}
+.list-group-item:hover {
+    background-color: #f8f9fc !important;
+}
+</style>
+{% endblock %}
