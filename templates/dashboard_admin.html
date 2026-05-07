@@ -1,128 +1,319 @@
-{% extends "base.html" %}
+{% extends "base_admin.html" %}
 
-{% block title %}Panel de Administración{% endblock %}
+{% block title %}Dashboard Administrador{% endblock %}
 
-{% block content %}
-<div class="container-fluid px-4 py-4">
-    <!-- Header Admin -->
+{% block page_title %}Panel de Control{% endblock %}
+
+{% block breadcrumb %}
+<span class="text-muted mx-1">/</span>
+<span class="text-muted">Dashboard</span>
+{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid px-0">
+    
+    <!-- HEADER CON EFECTO SHIMMER -->
     <div class="admin-header bg-gradient-admin rounded-4 mb-4 p-4 text-white shadow-lg">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
-            <div class="mb-3 mb-md-0">
+            <div>
                 <div class="d-flex align-items-center mb-2">
                     <div class="bg-white rounded-3 p-2 me-3 shadow-sm">
                         <i class="fas fa-crown" style="color: #FFCC29; font-size: 1.8rem;"></i>
                     </div>
                     <div>
-                        <h1 class="h2 fw-bold mb-1 text-white">Panel de Administración</h1>
-                        <p class="text-white-80 mb-0">Bienvenido, {{ current_user.usuario }}</p>
+                        <h1 class="h2 fw-bold mb-1">¡Bienvenido, {{ current_user.usuario }}!</h1>
+                        <p class="text-white-80 mb-0">Panel de administración del sistema integrado</p>
                     </div>
                 </div>
             </div>
-            <div class="d-flex gap-2">
-                <a href="{{ url_for('gestion_usuarios') }}" class="btn btn-outline-light btn-sm">
-                    <i class="fas fa-users-gear me-1"></i> Usuarios
-                </a>
-                <a href="{{ url_for('index') }}" class="btn btn-light btn-sm">
-                    <i class="fas fa-headset me-1"></i> Soporte
-                </a>
+            <div class="mt-3 mt-md-0">
+                <div class="d-flex gap-2">
+                    <div class="bg-white bg-opacity-20 rounded-3 px-3 py-2 text-center">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        <span class="small">{{ now.strftime('%A, %d de %B de %Y')|title }}</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Tarjetas de acceso a módulos -->
+    <!-- TARJETAS DE ESTADÍSTICAS MODERNAS -->
     <div class="row g-4 mb-4">
         <div class="col-md-6 col-lg-3">
-            <div class="card border-0 shadow-sm h-100 hover-lift">
-                <div class="card-body text-center p-4">
-                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; background: linear-gradient(135deg, #2658A520, #1a3f7320);">
-                        <i class="fas fa-headset fa-2x" style="color: #2658A5;"></i>
+            <div class="stats-card bg-white rounded-4 p-3 shadow-sm border-0 h-100 hover-lift">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-semibold">Usuarios</span>
+                        <h2 class="fw-bold mb-0 mt-1" style="color: #2658A5;">{{ stats.total_usuarios|default(0) }}</h2>
                     </div>
-                    <h5 class="fw-bold">Soporte Técnico</h5>
-                    <p class="text-muted small">Base de conocimientos y soluciones</p>
-                    <a href="{{ url_for('index') }}" class="btn btn-sm btn-primary w-100">
-                        <i class="fas fa-arrow-right me-1"></i> Acceder
-                    </a>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: linear-gradient(135deg, #2658A5, #1a3f73);">
+                        <i class="fas fa-users fa-lg text-white"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2 border-top">
+                    <div class="row g-0 text-center">
+                        <div class="col-4">
+                            <div class="small text-muted">Soporte</div>
+                            <div class="fw-semibold" style="color: #2658A5;">{{ stats.usuarios_soporte|default(0) }}</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="small text-muted">SST</div>
+                            <div class="fw-semibold" style="color: #28a745;">{{ stats.usuarios_sst|default(0) }}</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="small text-muted">RH</div>
+                            <div class="fw-semibold" style="color: #C23538;">{{ stats.usuarios_rh|default(0) }}</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-6 col-lg-3">
-            <div class="card border-0 shadow-sm h-100 hover-lift">
-                <div class="card-body text-center p-4">
-                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; background: rgba(40,167,69,0.1);">
-                        <i class="fas fa-hard-hat fa-2x" style="color: #28a745;"></i>
+            <div class="stats-card bg-white rounded-4 p-3 shadow-sm border-0 h-100 hover-lift">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-semibold">Fichas Soporte</span>
+                        <h2 class="fw-bold mb-0 mt-1" style="color: #28a745;">{{ stats.total_fichas|default(0) }}</h2>
                     </div>
-                    <h5 class="fw-bold">SST</h5>
-                    <p class="text-muted small">Seguridad y Salud en el Trabajo</p>
-                    <a href="{{ url_for('sst_dashboard') }}" class="btn btn-sm btn-success w-100">
-                        <i class="fas fa-arrow-right me-1"></i> Acceder
-                    </a>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: linear-gradient(135deg, #28a745, #1e7e34);">
+                        <i class="fas fa-file-alt fa-lg text-white"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" style="width: 100%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2">
+                        <small class="text-muted">Base de conocimientos</small>
+                        <small class="fw-semibold text-success">Activo</small>
+                    </div>
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-6 col-lg-3">
-            <div class="card border-0 shadow-sm h-100 hover-lift">
-                <div class="card-body text-center p-4">
-                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; background: rgba(194,53,56,0.1);">
-                        <i class="fas fa-users fa-2x" style="color: #C23538;"></i>
+            <div class="stats-card bg-white rounded-4 p-3 shadow-sm border-0 h-100 hover-lift">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-semibold">Contenido SST</span>
+                        <h2 class="fw-bold mb-0 mt-1" style="color: #FFCC29;">{{ stats.total_contenido_sst|default(0) }}</h2>
                     </div>
-                    <h5 class="fw-bold">Recursos Humanos</h5>
-                    <p class="text-muted small">Gestión de personal y talento</p>
-                    <a href="{{ url_for('rh_dashboard') }}" class="btn btn-sm btn-danger w-100">
-                        <i class="fas fa-arrow-right me-1"></i> Acceder
-                    </a>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: linear-gradient(135deg, #FFCC29, #e6b800);">
+                        <i class="fas fa-hard-hat fa-lg text-white"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="text-muted">Documentos</small>
+                        <small class="fw-semibold">{{ stats.total_contenido_sst|default(0) }}</small>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Videos</small>
+                        <small class="fw-semibold">{{ stats.total_videos_sst|default(0) }}</small>
+                    </div>
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-6 col-lg-3">
-            <div class="card border-0 shadow-sm h-100 hover-lift">
-                <div class="card-body text-center p-4">
-                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; background: rgba(108,117,125,0.1);">
-                        <i class="fas fa-chart-line fa-2x" style="color: #6c757d;"></i>
+            <div class="stats-card bg-white rounded-4 p-3 shadow-sm border-0 h-100 hover-lift">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-semibold">Empleados Activos</span>
+                        <h2 class="fw-bold mb-0 mt-1" style="color: #C23538;">{{ stats.total_empleados_activos|default(0) }}</h2>
                     </div>
-                    <h5 class="fw-bold">Estadísticas</h5>
-                    <p class="text-muted small">Métricas del sistema</p>
-                    <button class="btn btn-sm btn-secondary w-100" disabled>
-                        <i class="fas fa-chart-simple me-1"></i> Próximamente
-                    </button>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: linear-gradient(135deg, #C23538, #8B1A1A);">
+                        <i class="fas fa-user-check fa-lg text-white"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2 border-top">
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Contratos activos</small>
+                        <small class="fw-semibold text-success">{{ stats.contratos_activos|default(0) }}</small>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Estadísticas del sistema -->
-    <div class="row">
+    <!-- ACCESO RÁPIDO A MÓDULOS -->
+    <div class="row g-4 mb-4">
         <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3 border-bottom">
-                    <h6 class="mb-0 fw-semibold"><i class="fas fa-chart-line me-2"></i>Estadísticas del Sistema</h6>
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header bg-white py-3 px-4 border-0">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-semibold" style="color: #2658A5;">
+                            <i class="fas fa-th me-2"></i>Acceso Rápido a Módulos
+                        </h6>
+                        <span class="badge bg-primary rounded-pill">4 módulos</span>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-6 col-md-3 mb-3">
-                            <div class="p-3 rounded-3" style="background: #f8f9fc;">
-                                <h3 class="fw-bold text-primary">{{ stats.total_usuarios|default(0) }}</h3>
-                                <small class="text-muted">Usuarios Totales</small>
+                <div class="card-body pt-0 px-4 pb-4">
+                    <div class="row g-3">
+                        <div class="col-md-3 col-6">
+                            <a href="{{ url_for('index') }}" class="text-decoration-none">
+                                <div class="module-card text-center p-3 rounded-3 border-0 shadow-sm hover-lift" style="background: linear-gradient(135deg, #f8f9fc, #fff);">
+                                    <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width: 55px; height: 55px; background: linear-gradient(135deg, #2658A5, #1a3f73);">
+                                        <i class="fas fa-headset fa-xl text-white"></i>
+                                    </div>
+                                    <h6 class="fw-bold mb-0" style="color: #2658A5;">Soporte Técnico</h6>
+                                    <small class="text-muted">Base de conocimientos</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <a href="{{ url_for('sst_dashboard') }}" class="text-decoration-none">
+                                <div class="module-card text-center p-3 rounded-3 border-0 shadow-sm hover-lift" style="background: linear-gradient(135deg, #f8f9fc, #fff);">
+                                    <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width: 55px; height: 55px; background: linear-gradient(135deg, #28a745, #1e7e34);">
+                                        <i class="fas fa-hard-hat fa-xl text-white"></i>
+                                    </div>
+                                    <h6 class="fw-bold mb-0" style="color: #28a745;">SST</h6>
+                                    <small class="text-muted">Seguridad y Salud</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <a href="{{ url_for('rh_dashboard') }}" class="text-decoration-none">
+                                <div class="module-card text-center p-3 rounded-3 border-0 shadow-sm hover-lift" style="background: linear-gradient(135deg, #f8f9fc, #fff);">
+                                    <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width: 55px; height: 55px; background: linear-gradient(135deg, #C23538, #8B1A1A);">
+                                        <i class="fas fa-users fa-xl text-white"></i>
+                                    </div>
+                                    <h6 class="fw-bold mb-0" style="color: #C23538;">Recursos Humanos</h6>
+                                    <small class="text-muted">Gestión de personal</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <a href="{{ url_for('gestion_usuarios') }}" class="text-decoration-none">
+                                <div class="module-card text-center p-3 rounded-3 border-0 shadow-sm hover-lift" style="background: linear-gradient(135deg, #f8f9fc, #fff);">
+                                    <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width: 55px; height: 55px; background: linear-gradient(135deg, #6c757d, #5a6268);">
+                                        <i class="fas fa-users-gear fa-xl text-white"></i>
+                                    </div>
+                                    <h6 class="fw-bold mb-0" style="color: #6c757d;">Administración</h6>
+                                    <small class="text-muted">Gestión de usuarios</small>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRÁFICOS Y ACTIVIDADES RECIENTES -->
+    <div class="row g-4">
+        <!-- Distribución de usuarios por rol -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+                <div class="card-header bg-white py-3 px-4 border-0">
+                    <h6 class="mb-0 fw-semibold" style="color: #2658A5;">
+                        <i class="fas fa-chart-pie me-2"></i>Distribución de Usuarios
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="userChart" style="max-height: 250px; width: 100%;"></canvas>
+                    <div class="row g-3 mt-3">
+                        <div class="col-4 text-center">
+                            <div class="d-flex align-items-center justify-content-center gap-2">
+                                <span class="badge" style="background: #2658A5; width: 12px; height: 12px; border-radius: 50%;"></span>
+                                <small class="text-muted">Soporte</small>
+                            </div>
+                            <div class="fw-bold" style="color: #2658A5;">{{ stats.usuarios_soporte|default(0) }}</div>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div class="d-flex align-items-center justify-content-center gap-2">
+                                <span class="badge" style="background: #28a745; width: 12px; height: 12px; border-radius: 50%;"></span>
+                                <small class="text-muted">SST</small>
+                            </div>
+                            <div class="fw-bold" style="color: #28a745;">{{ stats.usuarios_sst|default(0) }}</div>
+                        </div>
+                        <div class="col-4 text-center">
+                            <div class="d-flex align-items-center justify-content-center gap-2">
+                                <span class="badge" style="background: #C23538; width: 12px; height: 12px; border-radius: 50%;"></span>
+                                <small class="text-muted">RH</small>
+                            </div>
+                            <div class="fw-bold" style="color: #C23538;">{{ stats.usuarios_rh|default(0) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actividades recientes / Acciones rápidas -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+                <div class="card-header bg-white py-3 px-4 border-0 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold" style="color: #2658A5;">
+                        <i class="fas fa-bolt me-2"></i>Acciones Rápidas
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('agregar_usuario') }}" class="btn btn-outline-primary rounded-3 py-2 text-start">
+                            <i class="fas fa-user-plus me-2"></i> Crear nuevo usuario
+                            <small class="d-block text-muted ms-4">Agregar un nuevo usuario al sistema</small>
+                        </a>
+                        <a href="{{ url_for('agregar_ficha') }}" class="btn btn-outline-success rounded-3 py-2 text-start">
+                            <i class="fas fa-file-alt me-2"></i> Agregar ficha de soporte
+                            <small class="d-block text-muted ms-4">Añadir solución a la base de conocimientos</small>
+                        </a>
+                        <a href="{{ url_for('sst_agregar_contenido') }}" class="btn btn-outline-info rounded-3 py-2 text-start">
+                            <i class="fas fa-plus-circle me-2"></i> Agregar contenido SST
+                            <small class="d-block text-muted ms-4">Documentos o videos para SST</small>
+                        </a>
+                        <a href="{{ url_for('rh_empleado_nuevo') }}" class="btn btn-outline-danger rounded-3 py-2 text-start">
+                            <i class="fas fa-user-tie me-2"></i> Registrar nuevo empleado
+                            <small class="d-block text-muted ms-4">Agregar empleado al módulo RH</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado del sistema -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-header bg-white py-3 px-4 border-0">
+                    <h6 class="mb-0 fw-semibold" style="color: #2658A5;">
+                        <i class="fas fa-server me-2"></i>Estado del Sistema
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                                    <i class="fas fa-check-circle fa-lg" style="color: #28a745;"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">Base de datos</div>
+                                    <small class="text-muted">Conectada y operativa</small>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-3 mb-3">
-                            <div class="p-3 rounded-3" style="background: #f8f9fc;">
-                                <h3 class="fw-bold text-info">{{ stats.total_fichas|default(0) }}</h3>
-                                <small class="text-muted">Fichas de Soporte</small>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(38,88,165,0.1);">
+                                    <i class="fas fa-cloud-upload-alt fa-lg" style="color: #2658A5;"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">Almacenamiento</div>
+                                    <small class="text-muted">Archivos SST funcionando</small>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-6 col-md-3 mb-3">
-                            <div class="p-3 rounded-3" style="background: #f8f9fc;">
-                                <h3 class="fw-bold text-success">{{ stats.total_contenido_sst|default(0) }}</h3>
-                                <small class="text-muted">Contenido SST</small>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3 mb-3">
-                            <div class="p-3 rounded-3" style="background: #f8f9fc;">
-                                <h3 class="fw-bold text-danger">{{ stats.total_empleados_activos|default(0) }}</h3>
-                                <small class="text-muted">Empleados Activos</small>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(255,204,41,0.15);">
+                                    <i class="fas fa-shield-alt fa-lg" style="color: #FFCC29;"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">Seguridad</div>
+                                    <small class="text-muted">Sistema protegido</small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -131,6 +322,47 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico de distribución de usuarios
+    const ctx = document.getElementById('userChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Soporte', 'SST', 'RH'],
+            datasets: [{
+                data: [
+                    {{ stats.usuarios_soporte|default(0) }},
+                    {{ stats.usuarios_sst|default(0) }},
+                    {{ stats.usuarios_rh|default(0) }}
+                ],
+                backgroundColor: ['#2658A5', '#28a745', '#C23538'],
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.raw + ' usuarios';
+                        }
+                    }
+                }
+            },
+            cutout: '65%'
+        }
+    });
+});
+</script>
 
 <style>
 .bg-gradient-admin {
@@ -151,6 +383,10 @@
     animation: shimmer 8s infinite linear;
 }
 
+.bg-white.bg-opacity-20 {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
 @keyframes shimmer {
     0% { transform: translate(-30%, -30%) rotate(0deg); }
     100% { transform: translate(30%, 30%) rotate(360deg); }
@@ -165,9 +401,44 @@
     box-shadow: 0 12px 24px rgba(0,0,0,0.12) !important;
 }
 
-.card {
-    border-radius: 16px !important;
-    overflow: hidden;
+.stats-card {
+    transition: all 0.2s ease;
+    border: 1px solid rgba(0,0,0,0.03);
+}
+
+.stats-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px rgba(38,88,165,0.12) !important;
+}
+
+.module-card {
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.03);
+}
+
+.module-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.12) !important;
+}
+
+.btn-outline-primary,
+.btn-outline-success,
+.btn-outline-info,
+.btn-outline-danger {
+    transition: all 0.2s ease;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-success:hover,
+.btn-outline-info:hover,
+.btn-outline-danger:hover {
+    transform: translateX(5px);
+}
+
+/* Efecto glassmorph para el header */
+.bg-gradient-admin {
+    backdrop-filter: blur(10px);
 }
 </style>
 {% endblock %}
