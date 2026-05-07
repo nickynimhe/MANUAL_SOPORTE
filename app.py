@@ -383,7 +383,7 @@ def login():
                     if user.rol == 'admin':
                         return redirect(url_for('dashboard_admin'))
                     elif user.rol == 'rh':
-                        return redirect(url_for('rh_dashboard_main'))
+                        return redirect(url_for('rh_dashboard'))
                     elif user.rol == 'sst':
                         if user.redireccionar_sst and user.puede('acceder_sst'):
                             return redirect(url_for('sst_dashboard'))
@@ -450,7 +450,7 @@ def index():
     elif current_user.rol == 'sst':
         return redirect(url_for('sst_dashboard'))
     elif current_user.rol == 'rh':
-        return redirect(url_for('rh_dashboard_main'))
+        return redirect(url_for('rh_dashboard'))
     
     if not current_user.puede('acceder_soporte'):
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
