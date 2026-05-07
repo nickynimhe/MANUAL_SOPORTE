@@ -1,0 +1,503 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Capacitaciones - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-chalkboard-user fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">Capacitaciones</h4>
+                        <p class="text-white-80 mb-0 small">Gestión de formación y desarrollo</p>
+                    </div>
+                </div>
+                <button class="btn btn-light btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevaCapacitacion">
+                    <i class="fas fa-plus me-1"></i> Nueva Capacitación
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-filter me-2"></i> Filtros de Búsqueda
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;">
+                            <i class="fas fa-search" style="color: #2658A5;"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control border-start-0 rounded-3" 
+                               placeholder="Buscar por nombre de capacitación..." 
+                               value="{{ request.args.get('q', '') }}"
+                               style="border-radius: 0 12px 12px 0;">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="tipo" class="form-select rounded-3">
+                        <option value="">Todos los tipos</option>
+                        <option value="interna">🏢 Interna</option>
+                        <option value="externa">🌍 Externa</option>
+                        <option value="virtual">💻 Virtual</option>
+                        <option value="presencial">👥 Presencial</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="estado" class="form-select rounded-3">
+                        <option value="">Todos los estados</option>
+                        <option value="programada">📅 Programada</option>
+                        <option value="en_curso">🔄 En Curso</option>
+                        <option value="finalizada">✅ Finalizada</option>
+                        <option value="cancelada">❌ Cancelada</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 rounded-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); border: none;">
+                        <i class="fas fa-search me-1"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(38,88,165,0.1);">
+                    <i class="fas fa-calendar-alt" style="color: #2658A5;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #2658A5;">{{ total_capacitaciones|default(12) }}</h5>
+                <small class="text-muted">Total Capacitaciones</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(255,204,41,0.15);">
+                    <i class="fas fa-hourglass-half" style="color: #FFCC29;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #FFCC29;">{{ en_curso|default(3) }}</h5>
+                <small class="text-muted">En Curso</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                    <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #28a745;">{{ finalizadas|default(7) }}</h5>
+                <small class="text-muted">Finalizadas</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                    <i class="fas fa-users" style="color: #28a745;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #28a745;">{{ total_participantes|default(156) }}</h5>
+                <small class="text-muted">Participantes</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Listado de Capacitaciones -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-list me-2"></i> Plan de Capacitaciones
+                    <span class="badge bg-white text-dark rounded-pill ms-2 px-3">{{ capacitaciones|default(8) }}</span>
+                </h5>
+                <div class="btn-group">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="exportarCapacitaciones()">
+                        <i class="fas fa-file-excel me-1"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead style="background: #f8f9fc;">
+                        <tr>
+                            <th style="padding: 16px 12px;">#</th>
+                            <th style="padding: 16px 12px;">Capacitación</th>
+                            <th style="padding: 16px 12px;">Tipo</th>
+                            <th style="padding: 16px 12px;">Instructor</th>
+                            <th style="padding: 16px 12px;">Fechas</th>
+                            <th style="padding: 16px 12px;">Duración</th>
+                            <th style="padding: 16px 12px;">Participantes</th>
+                            <th style="padding: 16px 12px;">Estado</th>
+                            <th style="padding: 16px 12px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Capacitación 1 -->
+                        <tr class="capacitacion-fila">
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-chalkboard-user" style="color: #2658A5;"></i>
+                                    <span class="fw-semibold">Seguridad Vial - Nivel Básico</span>
+                                </div>
+                                <small class="text-muted d-block">Normas de tránsito y prevención de accidentes</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
+                                    <i class="fas fa-building me-1"></i> Interna
+                                </span>
+                            </td>
+                            <td class="align-middle">Ing. Carlos Rodríguez</td>
+                            <td class="align-middle small">
+                                <div>📅 15/02/2024</div>
+                                <div>⏰ 8:00 AM - 5:00 PM</div>
+                            </td>
+                            <td class="align-middle">8 horas</td>
+                            <td class="align-middle"><span class="badge bg-primary">25</span> asistentes</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Finalizada
+                                </span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verCapacitacion(1)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #28a745; color: white;" onclick="verCertificados(1)">
+                                        <i class="fas fa-certificate"></i>
+                                    </button>
+                                </div>
+                             </td>
+                         </tr>
+
+                        <!-- Capacitación 2 -->
+                        <tr class="capacitacion-fila">
+                            <td class="align-middle">2</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-heartbeat" style="color: #C23538;"></i>
+                                    <span class="fw-semibold">Primeros Auxilios Básicos</span>
+                                </div>
+                                <small class="text-muted d-block">RCP, manejo de emergencias y atención básica</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-chalkboard-user me-1"></i> Presencial
+                                </span>
+                            </td>
+                            <td class="align-middle">Dra. Laura Martínez</td>
+                            <td class="align-middle small">
+                                <div>📅 10/03/2024</div>
+                                <div>⏰ 8:00 AM - 12:00 PM</div>
+                            </td>
+                            <td class="align-middle">4 horas</td>
+                            <td class="align-middle"><span class="badge bg-primary">32</span> asistentes</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Finalizada
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verCapacitacion(2)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #28a745; color: white;" onclick="verCertificados(2)">
+                                        <i class="fas fa-certificate"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Capacitación 3 -->
+                        <tr class="capacitacion-fila">
+                            <td class="align-middle">3</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fab fa-microsoft" style="color: #FFCC29;"></i>
+                                    <span class="fw-semibold">Excel Avanzado</span>
+                                </div>
+                                <small class="text-muted d-block">Funciones avanzadas, macros y análisis de datos</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-laptop me-1"></i> Virtual
+                                </span>
+                            </td>
+                            <td class="align-middle">Andrés Pérez</td>
+                            <td class="align-middle small">
+                                <div>📅 05/04/2024</div>
+                                <div>⏰ 6:00 PM - 9:00 PM</div>
+                            </td>
+                            <td class="align-middle">3 horas</td>
+                            <td class="align-middle"><span class="badge bg-primary">18</span> asistentes</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Finalizada
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verCapacitacion(3)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #28a745; color: white;" onclick="verCertificados(3)">
+                                        <i class="fas fa-certificate"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Capacitación 4 - En curso -->
+                        <tr class="capacitacion-fila">
+                            <td class="align-middle">4</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-chart-line" style="color: #28a745;"></i>
+                                    <span class="fw-semibold">Liderazgo y Trabajo en Equipo</span>
+                                </div>
+                                <small class="text-muted d-block">Habilidades blandas y gestión de equipos</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-chalkboard-user me-1"></i> Presencial
+                                </span>
+                            </td>
+                            <td class="align-middle">Psic. María González</td>
+                            <td class="align-middle small">
+                                <div>📅 01/05/2024 - 30/05/2024</div>
+                                <div>⏰ Martes y Jueves 6PM</div>
+                            </td>
+                            <td class="align-middle">16 horas</td>
+                            <td class="align-middle"><span class="badge bg-warning">22/30</span> inscritos</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-spinner me-1"></i> En Curso
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verCapacitacion(4)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #28a745; color: white;" onclick="inscribirParticipantes(4)">
+                                        <i class="fas fa-user-plus"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Capacitación 5 - Programada -->
+                        <tr class="capacitacion-fila">
+                            <td class="align-middle">5</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-fire-extinguisher" style="color: #C23538;"></i>
+                                    <span class="fw-semibold">Manejo de Extintores y Prevención de Incendios</span>
+                                </div>
+                                <small class="text-muted d-block">Uso correcto de extintores y evacuación</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
+                                    <i class="fas fa-building me-1"></i> Interna
+                                </span>
+                            </td>
+                            <td class="align-middle">Bomberos Voluntarios</td>
+                            <td class="align-middle small">
+                                <div>📅 15/06/2024</div>
+                                <div>⏰ 9:00 AM - 1:00 PM</div>
+                            </td>
+                            <td class="align-middle">4 horas</td>
+                            <td class="align-middle"><span class="badge bg-secondary">0/40</span> inscritos</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
+                                    <i class="fas fa-calendar-alt me-1"></i> Programada
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verCapacitacion(5)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #28a745; color: white;" onclick="inscribirParticipantes(5)">
+                                        <i class="fas fa-user-plus"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Capacitación 6 -->
+                        <tr class="capacitacion-fila">
+                            <td class="align-middle">6</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-language" style="color: #2658A5;"></i>
+                                    <span class="fw-semibold">Inglés Técnico - Nivel Intermedio</span>
+                                </div>
+                                <small class="text-muted d-block">Vocabulario técnico y comunicación laboral</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-globe me-1"></i> Externa
+                                </span>
+                            </td>
+                            <td class="align-middle">English Institute</td>
+                            <td class="align-middle small">
+                                <div>📅 10/07/2024 - 10/10/2024</div>
+                                <div>⏰ Lunes y Miércoles 7PM</div>
+                            </td>
+                            <td class="align-middle">40 horas</td>
+                            <td class="align-middle"><span class="badge bg-primary">12</span> inscritos</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
+                                    <i class="fas fa-calendar-alt me-1"></i> Programada
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verCapacitacion(6)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #28a745; color: white;" onclick="inscribirParticipantes(6)">
+                                        <i class="fas fa-user-plus"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nueva Capacitación -->
+<div class="modal fade" id="modalNuevaCapacitacion" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-plus-circle me-2"></i> Nueva Capacitación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formNuevaCapacitacion" method="POST" action="{{ url_for('rh_capacitacion_guardar') }}">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Nombre de la Capacitación *</label>
+                            <input type="text" name="nombre" class="form-control rounded-3" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Descripción</label>
+                            <textarea name="descripcion" class="form-control rounded-3" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tipo de Capacitación *</label>
+                            <select name="tipo" class="form-select rounded-3" required>
+                                <option value="">Seleccionar tipo...</option>
+                                <option value="interna">🏢 Interna</option>
+                                <option value="externa">🌍 Externa</option>
+                                <option value="virtual">💻 Virtual</option>
+                                <option value="presencial">👥 Presencial</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Instructor *</label>
+                            <input type="text" name="instructor" class="form-control rounded-3" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fecha de Inicio *</label>
+                            <input type="date" name="fecha_inicio" class="form-control rounded-3" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fecha de Fin *</label>
+                            <input type="date" name="fecha_fin" class="form-control rounded-3" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Duración (horas) *</label>
+                            <input type="number" name="duracion" class="form-control rounded-3" step="1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Cupo Máximo</label>
+                            <input type="number" name="cupo_maximo" class="form-control rounded-3" value="30">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Ubicación / Plataforma</label>
+                            <input type="text" name="ubicacion" class="form-control rounded-3" placeholder="Salón de capacitaciones / Link de Zoom / Dirección">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Observaciones</label>
+                            <textarea name="observaciones" class="form-control rounded-3" rows="2"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formNuevaCapacitacion" class="btn rounded-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                    <i class="fas fa-save me-2"></i> Crear Capacitación
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function verCapacitacion(id) {
+    window.location.href = "/rh/capacitacion/" + id;
+}
+
+function verCertificados(id) {
+    window.location.href = "/rh/capacitacion/" + id + "/certificados";
+}
+
+function inscribirParticipantes(id) {
+    window.location.href = "/rh/capacitacion/" + id + "/inscribir";
+}
+
+function exportarCapacitaciones() {
+    alert('Exportando listado de capacitaciones...');
+}
+
+// Validación del formulario
+document.getElementById('formNuevaCapacitacion')?.addEventListener('submit', function(e) {
+    const fechaInicio = document.querySelector('input[name="fecha_inicio"]').value;
+    const fechaFin = document.querySelector('input[name="fecha_fin"]').value;
+    
+    if (fechaInicio && fechaFin && new Date(fechaFin) < new Date(fechaInicio)) {
+        e.preventDefault();
+        alert('❌ La fecha de fin no puede ser anterior a la fecha de inicio');
+    }
+});
+</script>
+
+<style>
+.capacitacion-fila {
+    transition: all 0.2s ease;
+}
+.capacitacion-fila:hover {
+    background-color: #f8f9fc;
+}
+.hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+}
+</style>
+{% endblock %}
