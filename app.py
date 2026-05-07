@@ -2401,6 +2401,30 @@ def rh_dashboard():
         return render_template('rh/rh_dashboard.html',
                              total_empleados=0, ingresos_mes=0, retiros_mes=0, procesos_activos=[])
 
+@app.route('/rh/procesos')
+@login_required
+def rh_procesos():
+    """Listado de procesos RH"""
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos para acceder a Recursos Humanos', 'error')
+        return redirect(url_for('index'))
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, nombre, responsable_id, estado, avance, fecha_limite
+            FROM rh_procesos
+            ORDER BY fecha_limite ASC
+        """)
+        procesos = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return render_template('rh/rh_procesos.html', procesos=procesos)
+    except Exception as e:
+        logger.error(f"Error en rh_procesos: {e}")
+        flash('Error al cargar los procesos', 'error')
+        return redirect(url_for('rh_dashboard'))
+
 
 @app.route('/rh/proceso/<int:id>')
 @login_required
