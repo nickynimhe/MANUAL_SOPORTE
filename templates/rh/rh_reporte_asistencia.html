@@ -1,0 +1,537 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Reporte de Asistencia - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-clock fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">Reporte de Asistencia</h4>
+                        <p class="text-white-80 mb-0 small">Control de asistencia y puntualidad</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i> Imprimir
+                    </button>
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="exportarReporte()">
+                        <i class="fas fa-file-excel me-1"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros de reporte -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-calendar-alt me-2"></i> Filtros de Reporte
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Mes</label>
+                    <select name="mes" class="form-select rounded-3">
+                        <option value="1">Enero</option>
+                        <option value="2">Febrero</option>
+                        <option value="3">Marzo</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Mayo</option>
+                        <option value="6">Junio</option>
+                        <option value="7">Julio</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12" selected>Diciembre</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Año</label>
+                    <select name="anio" class="form-select rounded-3">
+                        <option value="2024" selected>2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Departamento</label>
+                    <select name="departamento" class="form-select rounded-3">
+                        <option value="todos">Todos</option>
+                        <option value="rh">Recursos Humanos</option>
+                        <option value="sst">SST</option>
+                        <option value="operaciones">Operaciones</option>
+                        <option value="comercial">Comercial</option>
+                        <option value="tecnologia">Tecnología</option>
+                        <option value="financiero">Financiero</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Estado</label>
+                    <select name="estado" class="form-select rounded-3">
+                        <option value="todos">Todos</option>
+                        <option value="presente">✅ Presente</option>
+                        <option value="ausente">❌ Ausente</option>
+                        <option value="tardanza">⏰ Tardanza</option>
+                        <option value="permiso">📋 Permiso</option>
+                    </select>
+                </div>
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary rounded-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); border: none;">
+                        <i class="fas fa-search me-1"></i> Generar Reporte
+                    </button>
+                    <button type="reset" class="btn btn-outline-secondary rounded-3 ms-2">
+                        <i class="fas fa-times me-1"></i> Limpiar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tarjetas de resumen -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                    <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #28a745;">85%</h5>
+                <small class="text-muted">Asistencia Promedio</small>
+                <small class="text-success">+5% vs mes anterior</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(255,204,41,0.15);">
+                    <i class="fas fa-clock" style="color: #FFCC29;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #FFCC29;">12%</h5>
+                <small class="text-muted">Tardanzas</small>
+                <small class="text-warning">-2% vs mes anterior</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(194,53,56,0.1);">
+                    <i class="fas fa-user-slash" style="color: #C23538;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #C23538;">3%</h5>
+                <small class="text-muted">Ausentismo</small>
+                <small class="text-danger">+1% vs mes anterior</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(38,88,165,0.1);">
+                    <i class="fas fa-chart-line" style="color: #2658A5;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #2658A5;">8.5</h5>
+                <small class="text-muted">Horas Promedio/día</small>
+                <small class="text-success">Dentro del horario</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos de asistencia -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-line me-2"></i> Asistencia Diaria (Último mes)
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="asistenciaDiariaChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%);">
+                    <h6 class="mb-0 fw-semibold" style="color: #282F4B;">
+                        <i class="fas fa-chart-pie me-2"></i> Distribución de Asistencia
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="distribucionAsistenciaChart" height="250"></canvas>
+                    <div class="mt-3 text-center">
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <div><span class="badge" style="background: #28a745;">&nbsp;</span> Presente</div>
+                            <div><span class="badge" style="background: #FFCC29;">&nbsp;</span> Tardanza</div>
+                            <div><span class="badge" style="background: #C23538;">&nbsp;</span> Ausente</div>
+                            <div><span class="badge" style="background: #2658A5;">&nbsp;</span> Permiso</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de asistencia por empleado -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-table me-2"></i> Resumen de Asistencia por Empleado
+                </h5>
+                <div class="btn-group">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="exportarTabla()">
+                        <i class="fas fa-file-excel me-1"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead style="background: #f8f9fc;">
+                        <tr>
+                            <th style="padding: 16px 12px;">Empleado</th>
+                            <th style="padding: 16px 12px;">Departamento</th>
+                            <th style="padding: 16px 12px;">Días Laborales</th>
+                            <th style="padding: 16px 12px;">Presente</th>
+                            <th style="padding: 16px 12px;">Tardanzas</th>
+                            <th style="padding: 16px 12px;">Ausencias</th>
+                            <th style="padding: 16px 12px;">Permisos</th>
+                            <th style="padding: 16px 12px;">% Asistencia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="align-middle fw-semibold">María González López</td>
+                            <td class="align-middle">Recursos Humanos</td>
+                            <td class="align-middle">22</td>
+                            <td class="align-middle">20</td>
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">0</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress" style="width: 80px; height: 6px;">
+                                        <div class="progress-bar bg-success" style="width: 91%"></div>
+                                    </div>
+                                    <span class="fw-bold" style="color: #28a745;">91%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Carlos Rodríguez Pérez</td>
+                            <td class="align-middle">SST</td>
+                            <td class="align-middle">22</td>
+                            <td class="align-middle">21</td>
+                            <td class="align-middle">0</td>
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">0</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress" style="width: 80px; height: 6px;">
+                                        <div class="progress-bar bg-success" style="width: 95%"></div>
+                                    </div>
+                                    <span class="fw-bold" style="color: #28a745;">95%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Ana Martínez Suárez</td>
+                            <td class="align-middle">SST</td>
+                            <td class="align-middle">22</td>
+                            <td class="align-middle">18</td>
+                            <td class="align-middle">2</td>
+                            <td class="align-middle">2</td>
+                            <td class="align-middle">0</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress" style="width: 80px; height: 6px;">
+                                        <div class="progress-bar bg-warning" style="width: 82%"></div>
+                                    </div>
+                                    <span class="fw-bold" style="color: #FFCC29;">82%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Jorge Ramírez Castro</td>
+                            <td class="align-middle">Operaciones</td>
+                            <td class="align-middle">22</td>
+                            <td class="align-middle">19</td>
+                            <td class="align-middle">3</td>
+                            <td class="align-middle">0</td>
+                            <td class="align-middle">0</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress" style="width: 80px; height: 6px;">
+                                        <div class="progress-bar bg-warning" style="width: 86%"></div>
+                                    </div>
+                                    <span class="fw-bold" style="color: #FFCC29;">86%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Laura Sánchez Mendoza</td>
+                            <td class="align-middle">Recursos Humanos</td>
+                            <td class="align-middle">22</td>
+                            <td class="align-middle">20</td>
+                            <td class="align-middle">0</td>
+                            <td class="align-middle">0</td>
+                            <td class="align-middle">2</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress" style="width: 80px; height: 6px;">
+                                        <div class="progress-bar bg-success" style="width: 91%"></div>
+                                    </div>
+                                    <span class="fw-bold" style="color: #28a745;">91%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Andrés Felipe Méndez</td>
+                            <td class="align-middle">Tecnología</td>
+                            <td class="align-middle">22</td>
+                            <td class="align-middle">22</td>
+                            <td class="align-middle">0</td>
+                            <td class="align-middle">0</td>
+                            <td class="align-middle">0</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress" style="width: 80px; height: 6px;">
+                                        <div class="progress-bar bg-success" style="width: 100%"></div>
+                                    </div>
+                                    <span class="fw-bold" style="color: #28a745;">100%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Patricia Rojas Díaz</td>
+                            <td class="align-middle">Financiero</td>
+                            <td class="align-middle">22</td>
+                            <td class="align-middle">20</td>
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">0</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress" style="width: 80px; height: 6px;">
+                                        <div class="progress-bar bg-success" style="width: 91%"></div>
+                                    </div>
+                                    <span class="fw-bold" style="color: #28a745;">91%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Luis Fernando Gómez</td>
+                            <td class="align-middle">Comercial</td>
+                            <td class="align-middle">22</td>
+                            <td class="align-middle">17</td>
+                            <td class="align-middle">4</td>
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">0</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress" style="width: 80px; height: 6px;">
+                                        <div class="progress-bar bg-danger" style="width: 77%"></div>
+                                    </div>
+                                    <span class="fw-bold" style="color: #C23538;">77%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="table-light">
+                            <td class="align-middle fw-bold">TOTAL / PROMEDIO</td>
+                            <td class="align-middle">-</td>
+                            <td class="align-middle fw-bold">176</td>
+                            <td class="align-middle fw-bold">157</td>
+                            <td class="align-middle fw-bold">11</td>
+                            <td class="align-middle fw-bold">6</td>
+                            <td class="align-middle fw-bold">2</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress" style="width: 80px; height: 6px;">
+                                        <div class="progress-bar bg-success" style="width: 89%"></div>
+                                    </div>
+                                    <span class="fw-bold" style="color: #28a745;">89%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de tardanzas y ausencias detalladas -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Detalle de Novedades
+                </h5>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead style="background: #f8f9fc;">
+                        <tr>
+                            <th style="padding: 16px 12px;">Fecha</th>
+                            <th style="padding: 16px 12px;">Empleado</th>
+                            <th style="padding: 16px 12px;">Tipo</th>
+                            <th style="padding: 16px 12px;">Hora Entrada</th>
+                            <th style="padding: 16px 12px;">Hora Salida</th>
+                            <th style="padding: 16px 12px;">Observación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="align-middle">10/12/2024</td>
+                            <td class="align-middle">Jorge Ramírez Castro</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">Tardanza</span>
+                            </td>
+                            <td class="align-middle">8:25 AM</td>
+                            <td class="align-middle">5:00 PM</td>
+                            <td class="align-middle">Llegada 25 minutos tarde (Tráfico)</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">05/12/2024</td>
+                            <td class="align-middle">Ana Martínez Suárez</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">Ausencia</span>
+                            </td>
+                            <td class="align-middle">-</td>
+                            <td class="align-middle">-</td>
+                            <td class="align-middle">Incapacidad médica (1 día)</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">03/12/2024</td>
+                            <td class="align-middle">María González López</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">Permiso</span>
+                            </td>
+                            <td class="align-middle">-</td>
+                            <td class="align-middle">-</td>
+                            <td class="align-middle">Permiso personal (½ día)</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">28/11/2024</td>
+                            <td class="align-middle">Carlos Rodríguez Pérez</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">Ausencia</span>
+                            </td>
+                            <td class="align-middle">-</td>
+                            <td class="align-middle">-</td>
+                            <td class="align-middle">Licencia de paternidad</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">20/11/2024</td>
+                            <td class="align-middle">Luis Fernando Gómez</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">Tardanza</span>
+                            </td>
+                            <td class="align-middle">8:45 AM</td>
+                            <td class="align-middle">6:00 PM</td>
+                            <td class="align-middle">Llegada 45 minutos tarde</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Gráfico de asistencia diaria
+const ctxAsistencia = document.getElementById('asistenciaDiariaChart')?.getContext('2d');
+if (ctxAsistencia) {
+    new Chart(ctxAsistencia, {
+        type: 'line',
+        data: {
+            labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+            datasets: [
+                {
+                    label: 'Presente',
+                    data: [42, 44, 43, 40],
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.05)',
+                    borderWidth: 2,
+                    fill: true
+                },
+                {
+                    label: 'Tardanzas',
+                    data: [5, 4, 6, 8],
+                    borderColor: '#FFCC29',
+                    backgroundColor: 'rgba(255, 204, 41, 0.05)',
+                    borderWidth: 2,
+                    fill: true
+                },
+                {
+                    label: 'Ausencias',
+                    data: [2, 1, 2, 3],
+                    borderColor: '#C23538',
+                    backgroundColor: 'rgba(194, 53, 56, 0.05)',
+                    borderWidth: 2,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true
+        }
+    });
+}
+
+// Gráfico de distribución de asistencia
+const ctxDistribucion = document.getElementById('distribucionAsistenciaChart')?.getContext('2d');
+if (ctxDistribucion) {
+    new Chart(ctxDistribucion, {
+        type: 'doughnut',
+        data: {
+            labels: ['Presente', 'Tardanza', 'Ausente', 'Permiso'],
+            datasets: [{
+                data: [157, 11, 6, 2],
+                backgroundColor: ['#28a745', '#FFCC29', '#C23538', '#2658A5'],
+                borderWidth: 0,
+                cutout: '60%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+function exportarReporte() {
+    alert('Exportando reporte de asistencia...');
+}
+
+function exportarTabla() {
+    alert('Exportando tabla de asistencia...');
+}
+</script>
+
+<style>
+.hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+}
+.progress {
+    background-color: #e9ecef;
+    border-radius: 10px;
+}
+</style>
+{% endblock %}
