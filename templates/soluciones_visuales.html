@@ -178,9 +178,138 @@ const SOLUTIONS_DATA = {
             { imagen: 'softv/softv8.png', titulo: 'Consultar el ticket del pago', descripcion: 'Al hacer clic en *Ver*, se desplegará el ticket con el detalle completo del pago seleccionado.' }
         ]
     },
-    // ... (resto de soluciones)
+    3: {
+        titulo: '¿Como consultamos las ordenes de servicio de los usuarios?',
+        servicio: 'Softv',
+        descripcion: 'Consultar historial de ordenes de servicio del usuario',
+        pasos: [
+            { imagen: 'softv/softv9.png', titulo: 'Acceder al historial del usuario', descripcion: 'Desde la pantalla de información del cliente, ubique y haga clic en el botón *Historial* ubicado en la parte inferior.' },
+            { imagen: 'softv/softv10.png', titulo: 'Seleccionar el apartado de ordenes', descripcion: 'Dentro del historial, aparecen tres opciones. Seleccione la tercera opción llamada *Ordenes de servicio*.' },
+            { imagen: 'softv/softv11.png', titulo: 'Visualizar las ordenes', descripcion: 'Se mostrará el listado completo de las ordenes de servicio asociadas al usuario, con su estado y fecha.' },
+            { imagen: 'softv/softv12.png', titulo: 'Ver detalle de una orden', descripcion: 'Para ver los detalles de una orden específica, haga clic en el botón *Ver* correspondiente a la orden deseada.' }
+        ]
+    },
+    4: {
+        titulo: '¿Como consultamos reportes de fallas de los usuarios?',
+        servicio: 'Softv',
+        descripcion: 'Consultar historial de reportes de falla del usuario',
+        pasos: [
+            { imagen: 'softv/softv13.png', titulo: 'Acceder al historial del usuario', descripcion: 'Desde la pantalla de información del cliente, haga clic en el botón *Historial* en la parte inferior.' },
+            { imagen: 'softv/softv14.png', titulo: 'Seleccionar el apartado de reportes', descripcion: 'En el historial, seleccione la segunda opción llamada *Reportes de falla*.' },
+            { imagen: 'softv/softv15.png', titulo: 'Visualizar los reportes', descripcion: 'Aparecerá el listado de todos los reportes de falla creados para el usuario, con su estado actual (abierto, en proceso, cerrado).' },
+            { imagen: 'softv/softv16.png', titulo: 'Ver detalle del reporte', descripcion: 'Haga clic en *Ver* para consultar la información completa del reporte, incluyendo la descripción de la falla y las acciones tomadas.' }
+        ]
+    },
+    5: {
+        titulo: '¿Como creamos un reporte de falla?',
+        servicio: 'Softv',
+        descripcion: 'Crear un reporte de falla',
+        pasos: [
+            { imagen: 'softv/softv15.png', titulo: 'Acceder al historial del usuario', descripcion: 'Desde la pantalla de información del cliente, haga clic en el botón *Historial*.' },
+            { imagen: 'softv/softv16.png', titulo: 'Ingresar a reportes de falla', descripcion: 'Seleccione la opción *Reportes de falla* dentro del historial.' },
+            { imagen: 'softv/softv17.png', titulo: 'Crear un nuevo reporte', descripcion: 'Haga clic en el botón *Nuevo reporte de falla* para abrir el formulario de creación.' },
+            { imagen: 'softv/softv19.png', titulo: 'Completar la información', descripcion: 'Diligencie los campos requeridos: tipo de falla, descripción detallada, y seleccione la tecnología o servicio afectado.' },
+            { imagen: 'softv/softv21.png', titulo: 'Seleccionar la cuadrilla', descripcion: 'Asigne la cuadrilla o técnico responsable según la zona y el tipo de falla.' },
+            { imagen: 'softv/softv22.png', titulo: 'Guardar el reporte', descripcion: 'Revise la información y haga clic en *Guardar* para crear el reporte de falla. Se generará un número de seguimiento.' }
+        ]
+    },
+    6: {
+        titulo: '¿Como creamos una orden de servicio?',
+        servicio: 'Softv',
+        descripcion: 'Crear una orden de servicio',
+        pasos: [
+            { imagen: 'softv/softv23.png', titulo: 'Acceder al módulo de ordenes', descripcion: 'Desde el menú lateral de Softv, seleccione la opción *Ordenes de servicio*.' },
+            { imagen: 'softv/softv24.png', titulo: 'Crear nueva orden', descripcion: 'Haga clic en el botón *Nueva orden de servicio* para iniciar el proceso.' },
+            { imagen: 'softv/softv26.png', titulo: 'Buscar al cliente', descripcion: 'Digite el número de documento del titular y seleccione al cliente de la lista de resultados.' },
+            { imagen: 'softv/softv27.png', titulo: 'Completar los datos de la orden', descripcion: 'Seleccione el tipo de servicio, prioridad, y agregue una descripción detallada del trabajo a realizar.' },
+            { imagen: 'softv/softv28.png', titulo: 'Asignar y guardar', descripcion: 'Asigne un técnico o cuadrilla responsable, verifique los datos y haga clic en *Guardar* para crear la orden de servicio.' }
+        ]
+    },
+    7: {
+        titulo: '¿Como borramos un reporte de falla en caso necesario?',
+        servicio: 'Softv',
+        descripcion: 'Como eliminar un reporte de falla',
+        pasos: [
+            { imagen: 'softv/softv29.png', titulo: 'Buscar el reporte de falla', descripcion: 'Acceda al historial del usuario, ingrese a *Reportes de falla* y ubique el reporte que desea eliminar.' },
+            { imagen: 'softv/softv29.png', titulo: 'Acceder a opciones del reporte', descripcion: 'Haga clic en el botón de opciones (generalmente representado por tres puntos o un engranaje) junto al reporte seleccionado.' },
+            { imagen: 'softv/softv29.png', titulo: 'Confirmar eliminación', descripcion: 'Seleccione la opción *Eliminar* y confirme la acción en la ventana emergente. El reporte será removido del sistema.' }
+        ]
+    },
+    8: {
+        titulo: '¿Como ingresamos un nuevo cliente?',
+        servicio: 'Softv',
+        descripcion: 'Crear un nuevo cliente',
+        pasos: [
+            { imagen: 'softv/softv30.png', titulo: 'Acceder al módulo de clientes', descripcion: 'Desde el menú lateral de Softv, seleccione la opción *Clientes* o *Gestión de clientes*.' },
+            { imagen: 'softv/softv31.png', titulo: 'Crear nuevo cliente', descripcion: 'Haga clic en el botón *Nuevo cliente* o *Agregar cliente* para abrir el formulario de registro.' },
+            { imagen: 'softv/softv32.png', titulo: 'Diligenciar datos personales', descripcion: 'Complete los campos obligatorios: tipo y número de documento, nombres completos, apellidos, fecha de nacimiento, género y estado civil.' },
+            { imagen: 'softv/softv33.png', titulo: 'Agregar información de contacto', descripcion: 'Registre el teléfono, correo electrónico y dirección de residencia del nuevo cliente.' },
+            { imagen: 'softv/softv32.png', titulo: 'Guardar el cliente', descripcion: 'Revise que todos los datos estén correctos y haga clic en *Guardar*. El nuevo cliente quedará registrado en el sistema.' }
+        ]
+    },
+    9: {
+        titulo: '¿Como buscar un usuario?',
+        servicio: 'Vortex',
+        descripcion: 'Buscar a un usuario',
+        pasos: [
+            { imagen: 'vortex/vortex1.png', titulo: 'Acceder al módulo de búsqueda', descripcion: 'En la plataforma Vortex, ubique la barra de búsqueda en la parte superior o en el panel lateral izquierdo.' },
+            { imagen: 'vortex/vortex2.png', titulo: 'Ingresar el criterio de búsqueda', descripcion: 'Digite el número de documento, número de cuenta, nombre del titular o dirección asociada al usuario.' },
+            { imagen: 'vortex/vortex3.png', titulo: 'Seleccionar al usuario', descripcion: 'De los resultados mostrados, haga clic en el usuario deseado para acceder a su información detallada y opciones de gestión.' }
+        ]
+    },
+    10: {
+        titulo: '¿Como validar puertos en uso y la MAC del equipo?',
+        servicio: 'Vortex',
+        descripcion: 'Como validar si el usuario esta haciendo uso de los puertos o el dispositivo no da MAC',
+        pasos: [
+            { imagen: 'vortex/vortex4.png', titulo: 'Acceder a información del equipo', descripcion: 'Dentro de la ficha del usuario en Vortex, busque la sección de *Equipos conectados* o *Dispositivos*. Allí podrá visualizar la dirección MAC del equipo asociado.' },
+            { imagen: 'vortex/vortex5.png', titulo: 'Validar puertos en uso', descripcion: 'En la misma sección, revise el listado de puertos lógicos y físicos. Verifique cuáles están activos, en uso o libres, y confirme que el dispositivo esté reportando correctamente su MAC.' }
+        ]
+    },
+    11: {
+        titulo: '¿Como validar si el usuario esta teniendo consumo del servicio?',
+        servicio: 'Vortex',
+        descripcion: 'Como validar el consumo del usuario',
+        pasos: [
+            { imagen: 'vortex/vortex7.png', titulo: 'Consultar métricas de consumo', descripcion: 'En la ficha del usuario, acceda a la pestaña de *Consumo* o *Tráfico*. Allí podrá visualizar gráficos y estadísticas del uso de ancho de banda, datos transferidos y sesiones activas en tiempo real.' }
+        ]
+    },
+    12: {
+        titulo: '¿Como cambiar la VLAN?',
+        servicio: 'Vortex',
+        descripcion: 'Como cambiar la VLAN acorde a la zona',
+        pasos: [
+            { imagen: 'vortex/vortex8.png', titulo: 'Acceder a configuración de red', descripcion: 'Dentro de la ficha del usuario, busque la sección *Configuración de red* o *VLAN*. Allí podrá ver la VLAN actualmente asignada al cliente.' },
+            { imagen: 'vortex/vortex9.png', titulo: 'Seleccionar nueva VLAN', descripcion: 'Despliegue el menú de VLANs disponibles, seleccione la VLAN correspondiente a la zona geográfica o al plan contratado por el usuario, y guarde los cambios.' }
+        ]
+    },
+    13: {
+        titulo: '¿Como realizar un resync config?',
+        servicio: 'Vortex',
+        descripcion: 'Como realizar un resync config',
+        pasos: [
+            { imagen: 'vortex/vortex10.png', titulo: 'Ubicar la opción de resync', descripcion: 'En la ficha del usuario, vaya a la sección *Acciones avanzadas* o *Mantenimiento*. Busque el botón o comando *Resync config* o *Sincronizar configuración*.' },
+            { imagen: 'vortex/vortex11.png', titulo: 'Ejecutar el resync', descripcion: 'Haga clic en el botón y confirme la acción. Espere unos segundos mientras el sistema reenvía la configuración actualizada al equipo del usuario y reinicia los servicios necesarios.' }
+        ]
+    },
+    14: {
+        titulo: '¿Como realizar un reboot?',
+        servicio: 'Vortex',
+        descripcion: 'Como realizar un reboot',
+        pasos: [
+            { imagen: 'vortex/vortex12.png', titulo: 'Ubicar la opción de reinicio', descripcion: 'En la ficha del usuario, diríjase a la sección *Acciones remotas* o *Comandos*. Localice el botón *Reboot* o *Reiniciar equipo*.' },
+            { imagen: 'vortex/vortex13.png', titulo: 'Ejecutar el reinicio remoto', descripcion: 'Haga clic en el botón de reinicio, confirme la operación cuando el sistema lo solicite, y espere aproximadamente 2-3 minutos mientras el dispositivo se reinicia y restablece la conexión.' }
+        ]
+    },
+    15: {
+        titulo: '¿Como identificar si el servicio de internet y TV estan activados?',
+        servicio: 'Vortex',
+        descripcion: 'Validar si el servicio esta activo',
+        pasos: [
+            { imagen: 'vortex/vortex14.png', titulo: 'Revisar estado de servicios', descripcion: 'En la ficha principal del usuario, localice la sección *Servicios contratados* o *Estado del servicio*. Verifique que los servicios de *Internet* y *TV* aparezcan con estado *Activo* o *Conectado*. Si aparecen como *Inactivo* o *Suspendido*, valide la causa con el área de facturación o soporte técnico.' }
+        ]
+    }
 };
-
 document.addEventListener('DOMContentLoaded', function() {
     let currentCarousel = null;
     const solutionModal = new bootstrap.Modal(document.getElementById('solutionModal'));
