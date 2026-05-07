@@ -1,0 +1,734 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Organigrama - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-sitemap fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">Organigrama Empresarial</h4>
+                        <p class="text-white-80 mb-0 small">Estructura organizacional completa</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="zoomIn()">
+                        <i class="fas fa-search-plus me-1"></i> Zoom +
+                    </button>
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="zoomOut()">
+                        <i class="fas fa-search-minus me-1"></i> Zoom -
+                    </button>
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="resetZoom()">
+                        <i class="fas fa-sync-alt me-1"></i> Reset
+                    </button>
+                    <button class="btn btn-outline-light btn-sm" onclick="exportarOrganigrama()">
+                        <i class="fas fa-download me-1"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controles de visualización -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-2">
+                <small class="text-muted">Zoom actual</small>
+                <h5 id="zoomLevel" class="fw-bold mb-0" style="color: #2658A5;">100%</h5>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-2">
+                <small class="text-muted">Total Unidades</small>
+                <h5 class="fw-bold mb-0" style="color: #28a745;">{{ total_unidades|default(12) }}</h5>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-2">
+                <small class="text-muted">Niveles Jerárquicos</small>
+                <h5 class="fw-bold mb-0" style="color: #FFCC29;">5</h5>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-2">
+                <small class="text-muted">Total Empleados</small>
+                <h5 class="fw-bold mb-0" style="color: #C23538;">48</h5>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leyenda -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body py-2">
+            <div class="d-flex flex-wrap justify-content-center gap-4">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle" style="width: 12px; height: 12px; background: linear-gradient(135deg, #C23538, #A73335);"></div>
+                    <small>Nivel 1 - Dirección</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle" style="width: 12px; height: 12px; background: linear-gradient(135deg, #C23538, #A73335);"></div>
+                    <small>Nivel 2 - Gerencia</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle" style="width: 12px; height: 12px; background: linear-gradient(135deg, #2658A5, #1a3f73);"></div>
+                    <small>Nivel 3 - Subgerencia</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle" style="width: 12px; height: 12px; background: linear-gradient(135deg, #FFCC29, #FFA500);"></div>
+                    <small>Nivel 4 - Coordinación</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle" style="width: 12px; height: 12px; background: linear-gradient(135deg, #28a745, #20c997);"></div>
+                    <small>Nivel 5 - Operativo</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Organigrama completo -->
+    <div class="organigrama-wrapper" style="overflow-x: auto; overflow-y: visible;">
+        <div id="organigramaContainer" class="organigrama-container" style="transform-origin: top left; transition: transform 0.3s ease;">
+            
+            <!-- NIVEL 1 - DIRECCIÓN GENERAL -->
+            <div class="org-level level-1">
+                <div class="org-node ceo-node">
+                    <div class="org-card ceo">
+                        <div class="org-icon">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <h6 class="mb-0">Dirección General</h6>
+                        <small>Juan Pablo Méndez</small>
+                        <div class="org-stats">
+                            <span class="badge">Nivel 1</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conectores verticales -->
+            <div class="connectors-down">
+                <div class="line-vertical"></div>
+                <div class="line-horizontal-container">
+                    <div class="line-horizontal center"></div>
+                </div>
+            </div>
+
+            <!-- NIVEL 2 - GERENCIAS -->
+            <div class="org-level level-2">
+                <div class="org-row">
+                    <div class="org-node">
+                        <div class="org-card gerencia">
+                            <div class="org-icon">
+                                <i class="fas fa-briefcase"></i>
+                            </div>
+                            <h6 class="mb-0">Gerencia General</h6>
+                            <small>María González</small>
+                            <div class="org-stats">
+                                <span class="badge">5 áreas</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="org-node">
+                        <div class="org-card gerencia">
+                            <div class="org-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h6 class="mb-0">Gerencia Comercial</h6>
+                            <small>Carlos López</small>
+                            <div class="org-stats">
+                                <span class="badge">3 áreas</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="org-node">
+                        <div class="org-card gerencia">
+                            <div class="org-icon">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <h6 class="mb-0">Gerencia Operaciones</h6>
+                            <small>Ana Ramírez</small>
+                            <div class="org-stats">
+                                <span class="badge">4 áreas</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="org-node">
+                        <div class="org-card gerencia">
+                            <div class="org-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <h6 class="mb-0">Gerencia Financiera</h6>
+                            <small>Patricia Rojas</small>
+                            <div class="org-stats">
+                                <span class="badge">3 áreas</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conectores nivel 2 a 3 -->
+            <div class="connectors-down level-2-3">
+                <div class="row-connectors">
+                    <div class="connector-group">
+                        <div class="line-vertical small"></div>
+                        <div class="line-horizontal-container">
+                            <div class="line-horizontal small-center"></div>
+                        </div>
+                    </div>
+                    <div class="connector-group">
+                        <div class="line-vertical small"></div>
+                        <div class="line-horizontal-container">
+                            <div class="line-horizontal small-center"></div>
+                        </div>
+                    </div>
+                    <div class="connector-group">
+                        <div class="line-vertical small"></div>
+                        <div class="line-horizontal-container">
+                            <div class="line-horizontal small-center"></div>
+                        </div>
+                    </div>
+                    <div class="connector-group">
+                        <div class="line-vertical small"></div>
+                        <div class="line-horizontal-container">
+                            <div class="line-horizontal small-center"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NIVEL 3 - SUBGERENCIAS Y DEPARTAMENTOS -->
+            <div class="org-level level-3">
+                <div class="org-row">
+                    <!-- Subgerencias de Gerencia General -->
+                    <div class="org-node">
+                        <div class="org-card subgerencia">
+                            <div class="org-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h6 class="mb-0">Recursos Humanos</h6>
+                            <small>Laura Sánchez</small>
+                            <div class="org-stats">
+                                <span class="badge">4 empleados</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Subgerencias de Gerencia Comercial -->
+                    <div class="org-node">
+                        <div class="org-card subgerencia">
+                            <div class="org-icon">
+                                <i class="fas fa-chart-simple"></i>
+                            </div>
+                            <h6 class="mb-0">Ventas</h6>
+                            <small>Andrés Pérez</small>
+                            <div class="org-stats">
+                                <span class="badge">6 empleados</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="org-node">
+                        <div class="org-card subgerencia">
+                            <div class="org-icon">
+                                <i class="fas fa-bullhorn"></i>
+                            </div>
+                            <h6 class="mb-0">Mercadeo</h6>
+                            <small>Ana Martínez</small>
+                            <div class="org-stats">
+                                <span class="badge">4 empleados</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Subgerencias de Gerencia Operaciones -->
+                    <div class="org-node">
+                        <div class="org-card subgerencia">
+                            <div class="org-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h6 class="mb-0">SST</h6>
+                            <small>Carlos Rodríguez</small>
+                            <div class="org-stats">
+                                <span class="badge">4 empleados</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="org-node">
+                        <div class="org-card subgerencia">
+                            <div class="org-icon">
+                                <i class="fas fa-truck"></i>
+                            </div>
+                            <h6 class="mb-0">Logística</h6>
+                            <small>Jorge Ramírez</small>
+                            <div class="org-stats">
+                                <span class="badge">8 empleados</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Subgerencias de Gerencia Financiera -->
+                    <div class="org-node">
+                        <div class="org-card subgerencia">
+                            <div class="org-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <h6 class="mb-0">Contabilidad</h6>
+                            <small>Martha Díaz</small>
+                            <div class="org-stats">
+                                <span class="badge">3 empleados</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="org-node">
+                        <div class="org-card subgerencia">
+                            <div class="org-icon">
+                                <i class="fas fa-file-invoice"></i>
+                            </div>
+                            <h6 class="mb-0">Tesorería</h6>
+                            <small>Luis Gómez</small>
+                            <div class="org-stats">
+                                <span class="badge">2 empleados</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conectores nivel 3 a 4 -->
+            <div class="connectors-down level-3-4">
+                <div class="row-connectors">
+                    <div class="connector-group">
+                        <div class="line-vertical tiny"></div>
+                        <div class="line-horizontal-container">
+                            <div class="line-horizontal tiny-center"></div>
+                        </div>
+                    </div>
+                    <div class="connector-group">
+                        <div class="line-vertical tiny"></div>
+                        <div class="line-horizontal-container">
+                            <div class="line-horizontal tiny-center"></div>
+                        </div>
+                    </div>
+                    <div class="connector-group">
+                        <div class="line-vertical tiny"></div>
+                        <div class="line-horizontal-container">
+                            <div class="line-horizontal tiny-center"></div>
+                        </div>
+                    </div>
+                    <div class="connector-group">
+                        <div class="line-vertical tiny"></div>
+                        <div class="line-horizontal-container">
+                            <div class="line-horizontal tiny-center"></div>
+                        </div>
+                    </div>
+                    <div class="connector-group">
+                        <div class="line-vertical tiny"></div>
+                        <div class="line-horizontal-container">
+                            <div class="line-horizontal tiny-center"></div>
+                        </div>
+                    </div>
+                    <div class="connector-group">
+                        <div class="line-vertical tiny"></div>
+                        <div class="line-horizontal-container">
+                            <div class="line-horizontal tiny-center"></div>
+                        </div>
+                    </div>
+                    <div class="connector-group">
+                        <div class="line-vertical tiny"></div>
+                        <div class="line-horizontal-container">
+                            <div class="line-horizontal tiny-center"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NIVEL 4 - COORDINACIONES -->
+            <div class="org-level level-4">
+                <div class="org-row">
+                    <!-- Coordinaciones RH -->
+                    <div class="org-node small-node">
+                        <div class="org-card coordinacion">
+                            <div class="org-icon small-icon">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <h6 class="mb-0">Selección</h6>
+                            <small>2 empleados</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Coordinaciones SST -->
+                    <div class="org-node small-node">
+                        <div class="org-card coordinacion">
+                            <div class="org-icon small-icon">
+                                <i class="fas fa-chalkboard-user"></i>
+                            </div>
+                            <h6 class="mb-0">Capacitación</h6>
+                            <small>2 empleados</small>
+                        </div>
+                    </div>
+                    <div class="org-node small-node">
+                        <div class="org-card coordinacion">
+                            <div class="org-icon small-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <h6 class="mb-0">Documentación</h6>
+                            <small>2 empleados</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Coordinaciones Ventas -->
+                    <div class="org-node small-node">
+                        <div class="org-card coordinacion">
+                            <div class="org-icon small-icon">
+                                <i class="fas fa-tag"></i>
+                            </div>
+                            <h6 class="mb-0">Ventas Mayoristas</h6>
+                            <small>3 empleados</small>
+                        </div>
+                    </div>
+                    <div class="org-node small-node">
+                        <div class="org-card coordinacion">
+                            <div class="org-icon small-icon">
+                                <i class="fas fa-store"></i>
+                            </div>
+                            <h6 class="mb-0">Ventas Minoristas</h6>
+                            <small>3 empleados</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Coordinaciones Logística -->
+                    <div class="org-node small-node">
+                        <div class="org-card coordinacion">
+                            <div class="org-icon small-icon">
+                                <i class="fas fa-warehouse"></i>
+                            </div>
+                            <h6 class="mb-0">Almacén</h6>
+                            <small>4 empleados</small>
+                        </div>
+                    </div>
+                    <div class="org-node small-node">
+                        <div class="org-card coordinacion">
+                            <div class="org-icon small-icon">
+                                <i class="fas fa-truck-fast"></i>
+                            </div>
+                            <h6 class="mb-0">Transporte</h6>
+                            <small>4 empleados</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Coordinaciones Financieras -->
+                    <div class="org-node small-node">
+                        <div class="org-card coordinacion">
+                            <div class="org-icon small-icon">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <h6 class="mb-0">Cuentas por Pagar</h6>
+                            <small>2 empleados</small>
+                        </div>
+                    </div>
+                    <div class="org-node small-node">
+                        <div class="org-card coordinacion">
+                            <div class="org-icon small-icon">
+                                <i class="fas fa-hand-holding-usd"></i>
+                            </div>
+                            <h6 class="mb-0">Cuentas por Cobrar</h6>
+                            <small>2 empleados</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pie de página - Descripción de niveles -->
+    <div class="row mt-4 g-3">
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-3">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-circle" style="width: 10px; height: 10px; background: #C23538;"></div>
+                                <small><strong>Nivel 1:</strong> Dirección General</small>
+                            </div>
+                            <small class="text-muted ms-3">Estrategia y visión corporativa</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-circle" style="width: 10px; height: 10px; background: #C23538;"></div>
+                                <small><strong>Nivel 2:</strong> Gerencias</small>
+                            </div>
+                            <small class="text-muted ms-3">Gestión de áreas estratégicas</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-circle" style="width: 10px; height: 10px; background: #2658A5;"></div>
+                                <small><strong>Nivel 3:</strong> Subgerencias</small>
+                            </div>
+                            <small class="text-muted ms-3">Coordinación departamental</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-circle" style="width: 10px; height: 10px; background: #FFCC29;"></div>
+                                <small><strong>Nivel 4:</strong> Coordinaciones</small>
+                            </div>
+                            <small class="text-muted ms-3">Gestión operativa</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentZoom = 1;
+const container = document.getElementById('organigramaContainer');
+const zoomLevelSpan = document.getElementById('zoomLevel');
+
+function zoomIn() {
+    currentZoom = Math.min(currentZoom + 0.1, 1.5);
+    aplicarZoom();
+}
+
+function zoomOut() {
+    currentZoom = Math.max(currentZoom - 0.1, 0.5);
+    aplicarZoom();
+}
+
+function resetZoom() {
+    currentZoom = 1;
+    aplicarZoom();
+}
+
+function aplicarZoom() {
+    container.style.transform = `scale(${currentZoom})`;
+    zoomLevelSpan.textContent = `${Math.round(currentZoom * 100)}%`;
+}
+
+function exportarOrganigrama() {
+    alert('Exportando organigrama como imagen...');
+}
+
+// Tooltips para las tarjetas
+document.querySelectorAll('.org-card').forEach(card => {
+    card.addEventListener('click', function() {
+        const titulo = this.querySelector('h6')?.innerText || '';
+        const responsable = this.querySelector('small')?.innerText || '';
+        alert(`📋 ${titulo}\n👤 Responsable: ${responsable}\nℹ️ Haga clic para ver más detalles`);
+    });
+});
+</script>
+
+<style>
+/* Estilos del organigrama */
+.organigrama-wrapper {
+    background: #f8f9fc;
+    border-radius: 16px;
+    padding: 20px;
+    min-height: 600px;
+}
+
+.organigrama-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 1200px;
+}
+
+.org-level {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.level-1 {
+    margin-bottom: 10px;
+}
+
+.level-2 .org-row {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.level-3 .org-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.level-4 .org-row {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.org-node {
+    display: inline-block;
+    margin: 0 10px;
+}
+
+.org-node.small-node {
+    margin: 0 5px;
+}
+
+/* Tarjetas de organigrama */
+.org-card {
+    background: white;
+    border-radius: 12px;
+    padding: 15px 20px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    min-width: 160px;
+}
+
+.org-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.org-card.ceo {
+    background: linear-gradient(135deg, #C23538 0%, #A73335 100%);
+    color: white;
+    min-width: 220px;
+}
+
+.org-card.gerencia {
+    background: linear-gradient(135deg, #C23538 0%, #A73335 100%);
+    color: white;
+}
+
+.org-card.subgerencia {
+    background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%);
+    color: white;
+}
+
+.org-card.coordinacion {
+    background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%);
+    color: #282F4B;
+}
+
+.org-card .org-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.org-card .org-icon.small-icon {
+    font-size: 18px;
+}
+
+.org-card .org-stats {
+    margin-top: 8px;
+}
+
+.org-card .badge {
+    background: rgba(255,255,255,0.2);
+    color: inherit;
+    font-size: 10px;
+}
+
+.org-card.coordinacion .badge {
+    background: rgba(40,47,75,0.1);
+    color: #282F4B;
+}
+
+/* Conectores */
+.connectors-down {
+    margin: 5px 0;
+}
+
+.line-vertical {
+    width: 2px;
+    height: 40px;
+    background: #cbd5e1;
+    margin: 0 auto;
+}
+
+.line-vertical.small {
+    height: 30px;
+}
+
+.line-vertical.tiny {
+    height: 20px;
+}
+
+.line-horizontal-container {
+    display: flex;
+    justify-content: center;
+}
+
+.line-horizontal {
+    width: 100%;
+    height: 2px;
+    background: #cbd5e1;
+    position: relative;
+}
+
+.line-horizontal.center {
+    width: 600px;
+    margin: 0 auto;
+}
+
+.line-horizontal.small-center {
+    width: 800px;
+    margin: 0 auto;
+}
+
+.line-horizontal.tiny-center {
+    width: 1000px;
+    margin: 0 auto;
+}
+
+.row-connectors {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+}
+
+.level-2-3 .row-connectors {
+    gap: 30px;
+}
+
+.level-3-4 .row-connectors {
+    gap: 15px;
+}
+
+.connector-group {
+    text-align: center;
+    width: 160px;
+}
+
+.level-3-4 .connector-group {
+    width: 127px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .org-card {
+        padding: 10px 12px;
+        min-width: 120px;
+    }
+    .org-card.ceo {
+        min-width: 180px;
+    }
+    .org-card h6 {
+        font-size: 12px;
+    }
+    .org-card small {
+        font-size: 10px;
+    }
+}
+</style>
+{% endblock %}
