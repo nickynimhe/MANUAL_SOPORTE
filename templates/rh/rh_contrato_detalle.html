@@ -1,0 +1,432 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Detalle de Contrato - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header con información del contrato -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-file-contract fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">Detalle de Contrato</h4>
+                        <p class="text-white-80 mb-0 small">
+                            <i class="fas fa-hashtag me-1"></i> Contrato #{{ contrato.id }}
+                        </p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="editarContrato({{ contrato.id }})">
+                        <i class="fas fa-edit me-1"></i> Editar
+                    </button>
+                    <button class="btn btn-outline-light btn-sm" onclick="window.location.href='{{ url_for('rh_contratos') }}'">
+                        <i class="fas fa-arrow-left me-1"></i> Volver
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- COLUMNA IZQUIERDA - Información del Contrato -->
+        <div class="col-lg-5">
+            <!-- Resumen del Contrato -->
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-info-circle me-2"></i> Resumen del Contrato
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: {{ 'linear-gradient(135deg, #28a745, #20c997)' if contrato.estado == 'activo' else 'linear-gradient(135deg, #6c757d, #5a6268)' if contrato.estado == 'finalizado' else 'linear-gradient(135deg, #FFCC29, #FFA500)' }};">
+                            <i class="fas fa-file-contract fa-3x text-white"></i>
+                        </div>
+                        <h5 class="fw-bold mb-1">{{ contrato.tipo_contrato }}</h5>
+                        <div class="mt-2">
+                            {% if contrato.estado == 'activo' %}
+                            <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                <i class="fas fa-check-circle me-1"></i> Activo
+                            </span>
+                            {% elif contrato.estado == 'proximo_vencer' %}
+                            <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                <i class="fas fa-hourglass-half me-1"></i> Próximo a vencer
+                            </span>
+                            {% else %}
+                            <span class="badge rounded-pill px-3 py-2" style="background: #6c757d; color: white;">
+                                <i class="fas fa-check-circle me-1"></i> Finalizado
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="info-group">
+                        <div class="d-flex align-items-start gap-3 py-3 border-bottom">
+                            <i class="fas fa-user mt-1" style="color: #2658A5;"></i>
+                            <div>
+                                <small class="text-muted d-block">Empleado</small>
+                                <span class="fw-semibold">{{ contrato.empleado_nombre }}</span>
+                                <div class="small text-muted">{{ contrato.empleado_documento }}</div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 py-3 border-bottom">
+                            <i class="fas fa-tag mt-1" style="color: #28a745;"></i>
+                            <div>
+                                <small class="text-muted d-block">Tipo de Contrato</small>
+                                <span class="fw-semibold">{{ contrato.tipo_contrato }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 py-3 border-bottom">
+                            <i class="fas fa-calendar-alt mt-1" style="color: #FFCC29;"></i>
+                            <div>
+                                <small class="text-muted d-block">Fecha de Inicio</small>
+                                <span class="fw-semibold">{{ contrato.fecha_inicio }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 py-3 border-bottom">
+                            <i class="fas fa-calendar-times mt-1" style="color: #C23538;"></i>
+                            <div>
+                                <small class="text-muted d-block">Fecha de Fin</small>
+                                <span class="fw-semibold">{{ contrato.fecha_fin or 'No aplica' }}</span>
+                                {% if contrato.dias_restantes and contrato.dias_restantes > 0 %}
+                                <div class="small text-warning">
+                                    <i class="fas fa-hourglass-half me-1"></i> {{ contrato.dias_restantes }} días restantes
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 py-3 border-bottom">
+                            <i class="fas fa-money-bill-wave mt-1" style="color: #28a745;"></i>
+                            <div>
+                                <small class="text-muted d-block">Salario Contratado</small>
+                                <span class="fw-semibold fs-5" style="color: #28a745;">{{ contrato.salario|format_currency }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 py-3">
+                            <i class="fas fa-clock mt-1" style="color: #2658A5;"></i>
+                            <div>
+                                <small class="text-muted d-block">Tiempo de Contrato</small>
+                                <span class="fw-semibold">{{ contrato.duracion }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documento asociado -->
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-paperclip me-2"></i> Documento del Contrato
+                    </h6>
+                </div>
+                <div class="card-body p-4 text-center">
+                    {% if contrato.archivo_pdf %}
+                    <div class="document-preview mb-3">
+                        <i class="fas fa-file-pdf fa-4x" style="color: #C23538;"></i>
+                        <p class="mt-2 mb-1 fw-semibold">{{ contrato.archivo_nombre or 'contrato.pdf' }}</p>
+                        <small class="text-muted">{{ contrato.archivo_tamano or '150 KB' }}</small>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('rh_descargar_contrato', id=contrato.id) }}" class="btn rounded-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); color: white;">
+                            <i class="fas fa-download me-2"></i> Descargar Contrato
+                        </a>
+                        <button class="btn btn-outline-secondary rounded-3" onclick="window.open('{{ url_for('rh_ver_contrato', id=contrato.id) }}', '_blank')">
+                            <i class="fas fa-eye me-2"></i> Ver en línea
+                        </button>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-file-pdf fa-4x text-muted mb-3"></i>
+                        <p class="text-muted">No hay documento asociado</p>
+                        <button class="btn btn-outline-primary btn-sm rounded-3" onclick="subirDocumento({{ contrato.id }})">
+                            <i class="fas fa-upload me-1"></i> Subir Documento
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA - Información Adicional -->
+        <div class="col-lg-7">
+            <!-- Información del Empleado -->
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-user-circle me-2"></i> Información del Empleado
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3 py-2">
+                                <i class="fas fa-id-card mt-1" style="color: #2658A5;"></i>
+                                <div>
+                                    <small class="text-muted d-block">Documento</small>
+                                    <span class="fw-semibold">{{ contrato.empleado_documento }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3 py-2">
+                                <i class="fas fa-envelope mt-1" style="color: #28a745;"></i>
+                                <div>
+                                    <small class="text-muted d-block">Correo Electrónico</small>
+                                    <span class="fw-semibold">{{ contrato.empleado_email or 'no_registrado@empresa.com' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3 py-2">
+                                <i class="fas fa-phone mt-1" style="color: #FFCC29;"></i>
+                                <div>
+                                    <small class="text-muted d-block">Teléfono</small>
+                                    <span class="fw-semibold">{{ contrato.empleado_telefono or 'No registrado' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3 py-2">
+                                <i class="fas fa-briefcase mt-1" style="color: #C23538;"></i>
+                                <div>
+                                    <small class="text-muted d-block">Cargo</small>
+                                    <span class="fw-semibold">{{ contrato.empleado_cargo or 'No asignado' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3 py-2">
+                                <i class="fas fa-building mt-1" style="color: #2658A5;"></i>
+                                <div>
+                                    <small class="text-muted d-block">Departamento</small>
+                                    <span class="fw-semibold">{{ contrato.empleado_departamento or 'No asignado' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start gap-3 py-2">
+                                <i class="fas fa-calendar-alt mt-1" style="color: #28a745;"></i>
+                                <div>
+                                    <small class="text-muted d-block">Fecha de Ingreso</small>
+                                    <span class="fw-semibold">{{ contrato.empleado_ingreso or 'No registrada' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="verEmpleado({{ contrato.empleado_id }})">
+                            <i class="fas fa-user me-1"></i> Ver Perfil Completo
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Renovaciones / Historial -->
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-semibold" style="color: #282F4B;">
+                            <i class="fas fa-history me-2"></i> Historial de Renovaciones
+                        </h6>
+                        <button class="btn btn-sm rounded-3" style="background: #282F4B; color: white;" onclick="renovarContrato({{ contrato.id }})">
+                            <i class="fas fa-sync-alt me-1"></i> Renovar Contrato
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead style="background: #f8f9fc;">
+                                <tr>
+                                    <th style="padding: 12px;">Versión</th>
+                                    <th style="padding: 12px;">Fecha Inicio</th>
+                                    <th style="padding: 12px;">Fecha Fin</th>
+                                    <th style="padding: 12px;">Salario</th>
+                                    <th style="padding: 12px;">Estado</th>
+                                    <th style="padding: 12px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="align-middle">Original</td>
+                                    <td class="align-middle">15/03/2020</td>
+                                    <td class="align-middle">-</td>
+                                    <td class="align-middle">$ 3,800,000</td>
+                                    <td class="align-middle">
+                                        <span class="badge rounded-pill px-2 py-1" style="background: #6c757d; color: white;">Finalizado</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="verVersion(1)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="align-middle">Renovación 1</td>
+                                    <td class="align-middle">15/03/2021</td>
+                                    <td class="align-middle">14/03/2022</td>
+                                    <td class="align-middle">$ 4,000,000</td>
+                                    <td class="align-middle">
+                                        <span class="badge rounded-pill px-2 py-1" style="background: #6c757d; color: white;">Finalizado</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="verVersion(2)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="align-middle">Renovación 2</td>
+                                    <td class="align-middle">15/03/2022</td>
+                                    <td class="align-middle">14/03/2023</td>
+                                    <td class="align-middle">$ 4,200,000</td>
+                                    <td class="align-middle">
+                                        <span class="badge rounded-pill px-2 py-1" style="background: #6c757d; color: white;">Finalizado</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="verVersion(3)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="align-middle">Renovación 3 (Actual)</td>
+                                    <td class="align-middle">15/03/2023</td>
+                                    <td class="align-middle">14/03/2024</td>
+                                    <td class="align-middle">$ 4,500,000</td>
+                                    <td class="align-middle">
+                                        <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">Activo</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="verVersion(4)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Observaciones / Notas -->
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-semibold text-white">
+                            <i class="fas fa-clipboard-list me-2"></i> Observaciones
+                        </h6>
+                        <button class="btn btn-light btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAgregarObservacion">
+                            <i class="fas fa-plus me-1"></i> Agregar
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    {% if contrato.observaciones %}
+                    <div class="observation-list">
+                        <div class="observation-item p-3 mb-2 rounded-3" style="background: #f8f9fc;">
+                            <div class="d-flex justify-content-between mb-2">
+                                <small class="fw-semibold" style="color: #2658A5;">
+                                    <i class="fas fa-user-circle me-1"></i> María González
+                                </small>
+                                <small class="text-muted">15/03/2024 10:30 AM</small>
+                            </div>
+                            <p class="mb-0 small">{{ contrato.observaciones }}</p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No hay observaciones registradas</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Agregar Observación -->
+<div class="modal fade" id="modalAgregarObservacion" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-clipboard-list me-2"></i> Agregar Observación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formObservacion" method="POST" action="{{ url_for('rh_contrato_agregar_observacion', id=contrato.id) }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Observación *</label>
+                        <textarea name="observacion" class="form-control rounded-3" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipo</label>
+                        <select name="tipo" class="form-select rounded-3">
+                            <option value="general">General</option>
+                            <option value="importante">Importante</option>
+                            <option value="alerta">Alerta</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formObservacion" class="btn rounded-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                    <i class="fas fa-save me-2"></i> Guardar Observación
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function editarContrato(id) {
+    window.location.href = "/rh/contrato/" + id + "/editar";
+}
+
+function renovarContrato(id) {
+    if (confirm('¿Deseas renovar este contrato? Se generará una nueva versión.')) {
+        window.location.href = "/rh/contrato/" + id + "/renovar";
+    }
+}
+
+function verEmpleado(id) {
+    window.location.href = "/rh/empleado/" + id;
+}
+
+function verVersion(id) {
+    window.location.href = "/rh/contrato/version/" + id;
+}
+
+function subirDocumento(id) {
+    window.location.href = "/rh/contrato/" + id + "/subir-documento";
+}
+</script>
+
+<style>
+.info-group {
+    margin-top: 10px;
+}
+.observation-item {
+    transition: all 0.2s ease;
+}
+.observation-item:hover {
+    background: #e8f0fe !important;
+}
+.document-preview {
+    transition: all 0.2s ease;
+}
+.document-preview:hover {
+    transform: scale(1.02);
+}
+</style>
+{% endblock %}
