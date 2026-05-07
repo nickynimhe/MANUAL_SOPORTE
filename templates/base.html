@@ -649,8 +649,13 @@
       <button class="topbar-btn ghost d-md-none" id="mobileMenuBtn" style="border:none;">
         <i class="fas fa-bars"></i>
       </button>
-      <span class="topbar-title d-none d-md-block">{% block page_title %}Sistema de Soporte Técnico{% endblock %}</span>
-
+    <!-- Logo corporativo MÁS GRANDE -->
+        <a href="{{ url_for('sst_dashboard') }}" class="d-flex align-items-center text-decoration-none">
+          <img src="{{ url_for('static', filename='img/logo-sky-producciones.png') }}" 
+               alt="Sky Producciones SAS" 
+               class="topbar-logo"
+               style="height: 48px; width: auto; min-width: 3.5rem; object-fit: contain;">
+        </a>
       <div class="topbar-right">
         {% if current_user.is_authenticated %}
         <a href="{{ url_for('buscar') }}" class="topbar-btn ghost">
