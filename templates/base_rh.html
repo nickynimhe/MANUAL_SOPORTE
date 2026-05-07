@@ -1,78 +1,235 @@
 {% extends "base.html" %}
 
-{% block title %}RH - Recursos Humanos{% endblock %}
-
 {% block content %}
-<div class="container-fluid px-0">
-    <!-- Header RH -->
-    <div class="rh-header bg-gradient-rh rounded-4 mb-4 p-4 text-white shadow-lg">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
-            <div class="mb-3 mb-md-0">
-                <div class="d-flex align-items-center mb-2">
-                    <div class="bg-white rounded-3 p-2 me-3 shadow-sm">
-                        <i class="fas fa-users" style="color: #2658A5; font-size: 1.8rem;"></i>
-                    </div>
-                    <div>
-                        <h1 class="h2 fw-bold mb-1 text-white">Recursos Humanos</h1>
-                        <p class="text-white-80 mb-0">Gestión de Talento Humano</p>
-                    </div>
+<div class="wrapper">
+    <!-- Sidebar específico de RH -->
+    <nav id="sidebar" class="bg-dark">
+        <div class="sidebar-header bg-gradient-rh p-3">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-users fa-2x text-white me-2"></i>
+                <div>
+                    <h5 class="text-white mb-0">RH Management</h5>
+                    <small class="text-white-50">Recursos Humanos</small>
                 </div>
             </div>
-            <div class="d-flex flex-wrap gap-2">
-                <a href="{{ url_for('rh_dashboard') }}" class="btn btn-light btn-sm fw-medium shadow-sm">
-                    <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+        </div>
+
+        <ul class="list-unstyled components">
+            <!-- Dashboard -->
+            <li class="{{ 'active' if request.endpoint == 'rh_dashboard' }}">
+                <a href="{{ url_for('rh_dashboard') }}">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    <span>Dashboard RH</span>
                 </a>
-                <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm">
-                    <i class="fas fa-home me-1"></i> Inicio
+            </li>
+
+            <!-- Empleados -->
+            <li class="{{ 'active' if request.endpoint in ['rh_empleados', 'rh_empleado_nuevo', 'rh_empleado_detalle', 'rh_empleado_editar'] }}">
+                <a href="#empleadosSubmenu" data-bs-toggle="collapse" class="dropdown-toggle">
+                    <i class="fas fa-users me-2"></i>
+                    <span>Empleados</span>
                 </a>
+                <ul class="collapse list-unstyled {{ 'show' if request.endpoint in ['rh_empleados', 'rh_empleado_nuevo', 'rh_empleado_detalle', 'rh_empleado_editar'] }}" id="empleadosSubmenu">
+                    <li><a href="{{ url_for('rh_empleados') }}"><i class="fas fa-list me-2"></i>Listado</a></li>
+                    <li><a href="{{ url_for('rh_empleado_nuevo') }}"><i class="fas fa-user-plus me-2"></i>Nuevo Empleado</a></li>
+                    <li><a href="{{ url_for('rh_organigrama') }}"><i class="fas fa-sitemap me-2"></i>Organigrama</a></li>
+                </ul>
+            </li>
+
+            <!-- Contratos -->
+            <li class="{{ 'active' if request.endpoint in ['rh_contratos', 'rh_contrato_nuevo', 'rh_contrato_detalle'] }}">
+                <a href="#contratosSubmenu" data-bs-toggle="collapse" class="dropdown-toggle">
+                    <i class="fas fa-file-signature me-2"></i>
+                    <span>Contratos</span>
+                </a>
+                <ul class="collapse list-unstyled {{ 'show' if request.endpoint in ['rh_contratos', 'rh_contrato_nuevo', 'rh_contrato_detalle'] }}" id="contratosSubmenu">
+                    <li><a href="{{ url_for('rh_contratos') }}"><i class="fas fa-file-contract me-2"></i>Todos</a></li>
+                    <li><a href="{{ url_for('rh_contrato_nuevo') }}"><i class="fas fa-plus-circle me-2"></i>Nuevo Contrato</a></li>
+                </ul>
+            </li>
+
+            <!-- Capacitaciones -->
+            <li class="{{ 'active' if request.endpoint in ['rh_capacitaciones', 'rh_capacitacion_nueva', 'rh_capacitacion_detalle'] }}">
+                <a href="#capacitacionesSubmenu" data-bs-toggle="collapse" class="dropdown-toggle">
+                    <i class="fas fa-chalkboard-user me-2"></i>
+                    <span>Capacitaciones</span>
+                </a>
+                <ul class="collapse list-unstyled {{ 'show' if request.endpoint in ['rh_capacitaciones', 'rh_capacitacion_nueva', 'rh_capacitacion_detalle'] }}" id="capacitacionesSubmenu">
+                    <li><a href="{{ url_for('rh_capacitaciones') }}"><i class="fas fa-calendar-alt me-2"></i>Calendario</a></li>
+                    <li><a href="{{ url_for('rh_capacitacion_nueva') }}"><i class="fas fa-plus-circle me-2"></i>Nueva</a></li>
+                </ul>
+            </li>
+
+            <!-- Evaluaciones -->
+            <li class="{{ 'active' if request.endpoint in ['rh_evaluaciones', 'rh_evaluacion_nueva'] }}">
+                <a href="#evaluacionesSubmenu" data-bs-toggle="collapse" class="dropdown-toggle">
+                    <i class="fas fa-star me-2"></i>
+                    <span>Evaluaciones</span>
+                </a>
+                <ul class="collapse list-unstyled {{ 'show' if request.endpoint in ['rh_evaluaciones', 'rh_evaluacion_nueva'] }}" id="evaluacionesSubmenu">
+                    <li><a href="{{ url_for('rh_evaluaciones') }}"><i class="fas fa-clipboard-list me-2"></i>Listado</a></li>
+                    <li><a href="{{ url_for('rh_evaluacion_nueva') }}"><i class="fas fa-edit me-2"></i>Nueva</a></li>
+                </ul>
+            </li>
+
+            <!-- Ascensos y Cargos -->
+            <li class="{{ 'active' if request.endpoint in ['rh_ascensos', 'rh_cargos', 'rh_cargo_nuevo'] }}">
+                <a href="#carreraSubmenu" data-bs-toggle="collapse" class="dropdown-toggle">
+                    <i class="fas fa-chart-line me-2"></i>
+                    <span>Desarrollo</span>
+                </a>
+                <ul class="collapse list-unstyled {{ 'show' if request.endpoint in ['rh_ascensos', 'rh_cargos', 'rh_cargo_nuevo'] }}" id="carreraSubmenu">
+                    <li><a href="{{ url_for('rh_ascensos') }}"><i class="fas fa-arrow-up me-2"></i>Ascensos</a></li>
+                    <li><a href="{{ url_for('rh_cargos') }}"><i class="fas fa-briefcase me-2"></i>Cargos</a></li>
+                    <li><a href="{{ url_for('rh_cargo_nuevo') }}"><i class="fas fa-plus me-2"></i>Nuevo Cargo</a></li>
+                </ul>
+            </li>
+
+            <!-- Sanciones -->
+            <li class="{{ 'active' if request.endpoint in ['rh_sanciones', 'rh_sancion_nueva'] }}">
+                <a href="#sancionesSubmenu" data-bs-toggle="collapse" class="dropdown-toggle">
+                    <i class="fas fa-gavel me-2"></i>
+                    <span>Disciplina</span>
+                </a>
+                <ul class="collapse list-unstyled {{ 'show' if request.endpoint in ['rh_sanciones', 'rh_sancion_nueva'] }}" id="sancionesSubmenu">
+                    <li><a href="{{ url_for('rh_sanciones') }}"><i class="fas fa-list me-2"></i>Sanciones</a></li>
+                    <li><a href="{{ url_for('rh_sancion_nueva') }}"><i class="fas fa-plus me-2"></i>Registrar</a></li>
+                </ul>
+            </li>
+
+            <!-- Departamentos -->
+            <li>
+                <a href="{{ url_for('rh_departamentos') }}">
+                    <i class="fas fa-building me-2"></i>
+                    <span>Departamentos</span>
+                </a>
+            </li>
+
+            <!-- Normativas -->
+            <li>
+                <a href="{{ url_for('rh_normativas') }}">
+                    <i class="fas fa-gavel me-2"></i>
+                    <span>Normativas</span>
+                </a>
+            </li>
+
+            <!-- Reportes -->
+            <li class="{{ 'active' if request.endpoint in ['rh_reportes', 'rh_reporte_asistencia', 'rh_reporte_nomina', 'rh_reporte_rotacion'] }}">
+                <a href="#reportesSubmenu" data-bs-toggle="collapse" class="dropdown-toggle">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    <span>Reportes</span>
+                </a>
+                <ul class="collapse list-unstyled {{ 'show' if request.endpoint in ['rh_reportes', 'rh_reporte_asistencia', 'rh_reporte_nomina', 'rh_reporte_rotacion'] }}" id="reportesSubmenu">
+                    <li><a href="{{ url_for('rh_reportes') }}"><i class="fas fa-chart-pie me-2"></i>Dashboard</a></li>
+                    <li><a href="{{ url_for('rh_reporte_asistencia') }}"><i class="fas fa-clock me-2"></i>Asistencia</a></li>
+                    <li><a href="{{ url_for('rh_reporte_nomina') }}"><i class="fas fa-dollar-sign me-2"></i>Nómina</a></li>
+                    <li><a href="{{ url_for('rh_reporte_rotacion') }}"><i class="fas fa-exchange-alt me-2"></i>Rotación</a></li>
+                </ul>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer p-3 border-top border-secondary">
+            <div class="d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <div class="rounded-circle bg-white d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                        <i class="fas fa-user-tie" style="color: #C23538;"></i>
+                    </div>
+                </div>
+                <div class="flex-grow-1 ms-2">
+                    <small class="text-white-50 d-block">Módulo RH</small>
+                    <small class="text-white">{{ current_user.usuario }}</small>
+                </div>
             </div>
         </div>
-    </div>
+    </nav>
 
-    <!-- Contenido principal -->
-    {% block rh_content %}{% endblock %}
+    <div id="content">
+        <div class="p-3 p-md-4">
+            {% block rh_content %}{% endblock %}
+        </div>
+    </div>
 </div>
 
 <style>
 .bg-gradient-rh {
-    background: linear-gradient(135deg, #1a3a6e 0%, #0e2a52 50%, #0a1f3d 100%) !important;
-    position: relative;
-    overflow: hidden;
+    background: linear-gradient(135deg, #C23538 0%, #8B1A1A 100%) !important;
 }
 
-.bg-gradient-rh::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
-    pointer-events: none;
-    animation: shimmer 8s infinite linear;
+.wrapper {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
 }
 
-@keyframes shimmer {
-    0% { transform: translate(-30%, -30%) rotate(0deg); }
-    100% { transform: translate(30%, 30%) rotate(360deg); }
+#sidebar {
+    min-width: 280px;
+    max-width: 280px;
+    background: #1a1a2e;
+    color: #fff;
+    transition: all 0.3s;
+    min-height: calc(100vh - 60px);
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
 }
 
-.card {
-    border-radius: 16px;
-    transition: all 0.3s ease;
+#sidebar.active {
+    margin-left: -280px;
 }
 
-.card:hover {
-    transform: translateY(-2px);
+#sidebar .sidebar-header {
+    padding: 20px;
 }
 
-.btn {
-    border-radius: 10px;
-    transition: all 0.2s ease;
+#sidebar ul.components {
+    padding: 20px 0;
 }
 
-.btn:hover {
-    transform: translateY(-1px);
+#sidebar ul li a {
+    padding: 12px 20px;
+    font-size: 0.95em;
+    display: block;
+    color: #e0e0e0;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+#sidebar ul li a:hover {
+    background: #2d2d4a;
+    padding-left: 25px;
+}
+
+#sidebar ul li.active > a {
+    background: linear-gradient(135deg, #C23538 0%, #8B1A1A 100%);
+    color: white;
+    border-left: 4px solid #FFCC29;
+}
+
+#sidebar ul ul li a {
+    padding-left: 40px;
+    font-size: 0.85em;
+}
+
+#sidebar ul ul li a:hover {
+    padding-left: 45px;
+}
+
+#sidebar ul ul {
+    background: #15152a;
+}
+
+#content {
+    width: 100%;
+    min-height: calc(100vh - 60px);
+    transition: all 0.3s;
+    background: #f8f9fc;
+}
+
+@media (max-width: 768px) {
+    #sidebar {
+        margin-left: -280px;
+    }
+    #sidebar.active {
+        margin-left: 0;
+    }
 }
 </style>
 {% endblock %}
