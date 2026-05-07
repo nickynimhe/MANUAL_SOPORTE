@@ -651,16 +651,11 @@
       <!-- Más opciones -->
       <div class="nav-label">Otros</div>
 
-      <a class="nav-item-sidebar {% if request.endpoint == 'informacion_general' %}active{% endif %}"
-         href="{{ url_for('informacion_general') }}" data-tooltip="Información General">
-        <div class="nav-item-icon"><i class="fas fa-info-circle"></i></div>
-        <span class="nav-item-text">Información General</span>
-      </a>
-
-      <a class="nav-item-sidebar {% if request.endpoint == 'atencion_telefonica' %}active{% endif %}"
-         href="{{ url_for('atencion_telefonica') }}" data-tooltip="Atención Telefónica">
-        <div class="nav-item-icon"><i class="fas fa-headset"></i></div>
-        <span class="nav-item-text">Atención Telefónica</span>
+        <a class="nav-item-sidebar accent"
+         href="{{ url_for('static', filename='documentos/politicas-seguridad-crm-softv.pdf') }}"
+         target="_blank" data-tooltip="Políticas PDF">
+        <div class="nav-item-icon"><i class="fas fa-file-pdf"></i></div>
+        <span class="nav-item-text">Políticas PDF</span>
       </a>
 
       {% if current_user.rol == 'admin' %}
