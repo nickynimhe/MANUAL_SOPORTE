@@ -1,378 +1,230 @@
 {% extends "base_rh.html" %}
 
-{% block title %}Dashboard RH - Recursos Humanos{% endblock %}
-
 {% block rh_content %}
 <div class="container-fluid px-0 px-md-3 py-4">
 
-    <!-- Estadísticas rápidas -->
-    <div class="row g-3 mb-4">
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm h-100 hover-lift">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div class="rounded-3 p-3" style="background: linear-gradient(135deg, rgba(38,88,165,0.1) 0%, rgba(40,47,75,0.1) 100%);">
-                            <i class="fas fa-users" style="color: #2658A5; font-size: 1.8rem;"></i>
-                        </div>
-                        <span class="badge rounded-pill px-3 py-1" style="background: rgba(38,88,165,0.15); color: #2658A5;">Total</span>
+    <!-- HEADER CON EFECTO SHIMMER - Estilo RH -->
+    <div class="rh-header bg-gradient-rh rounded-4 mb-4 p-4 text-white shadow-lg">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+            <div class="mb-3 mb-md-0">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-white rounded-3 p-2 me-3 shadow-sm">
+                        <i class="fas fa-users" style="color: #C23538; font-size: 1.8rem;"></i>
                     </div>
-                    <h2 class="fw-bold display-5 mb-2" style="color: #2658A5;">{{ total_empleados|default(48) }}</h2>
-                    <p class="text-muted mb-0">Empleados activos</p>
-                    <div class="mt-3 pt-3 border-top">
-                        <small class="text-muted">
-                            <i class="fas fa-chart-line me-1" style="color: #28a745;"></i>
-                            <span style="color: #28a745;">+5%</span> vs mes anterior
-                        </small>
+                    <div>
+                        <h1 class="h2 fw-bold mb-1 text-white">Recursos Humanos</h1>
+                        <p class="text-white-80 mb-0">Gestión de personal, contratos y desarrollo organizacional</p>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm h-100 hover-lift">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div class="rounded-3 p-3" style="background: linear-gradient(135deg, rgba(255,204,41,0.15) 0%, rgba(255,165,0,0.1) 100%);">
-                            <i class="fas fa-calendar-plus" style="color: #FFCC29; font-size: 1.8rem;"></i>
-                        </div>
-                        <span class="badge rounded-pill px-3 py-1" style="background: rgba(255,204,41,0.2); color: #D4A000;">Mes actual</span>
-                    </div>
-                    <h2 class="fw-bold display-5 mb-2" style="color: #FFCC29;">{{ ingresos_mes|default(3) }}</h2>
-                    <p class="text-muted mb-0">Nuevos ingresos</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm h-100 hover-lift">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div class="rounded-3 p-3" style="background: linear-gradient(135deg, rgba(194,53,56,0.1) 0%, rgba(167,51,53,0.1) 100%);">
-                            <i class="fas fa-calendar-times" style="color: #C23538; font-size: 1.8rem;"></i>
-                        </div>
-                        <span class="badge rounded-pill px-3 py-1" style="background: rgba(194,53,56,0.15); color: #C23538;">Salidas</span>
-                    </div>
-                    <h2 class="fw-bold display-5 mb-2" style="color: #C23538;">{{ retiros_mes|default(2) }}</h2>
-                    <p class="text-muted mb-0">Retiros del mes</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-xl-3 col-md-6">
-            <div class="card border-0 shadow-sm h-100 hover-lift">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div class="rounded-3 p-3" style="background: linear-gradient(135deg, rgba(40,167,69,0.1) 0%, rgba(32,201,151,0.1) 100%);">
-                            <i class="fas fa-percent" style="color: #28a745; font-size: 1.8rem;"></i>
-                        </div>
-                        <span class="badge rounded-pill px-3 py-1" style="background: rgba(40,167,69,0.15); color: #28a745;">Rotación</span>
-                    </div>
-                    <h2 class="fw-bold display-5 mb-2" style="color: #28a745;">{{ rotacion_personal|default(4.2) }}%</h2>
-                    <p class="text-muted mb-0">Rotación anual</p>
-                </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('rh_empleados') }}" class="btn btn-light btn-sm fw-medium shadow-sm">
+                    <i class="fas fa-user-plus me-1"></i> Nuevo Empleado
+                </a>
+                <a href="{{ url_for('rh_reportes') }}" class="btn btn-outline-light btn-sm fw-medium shadow-sm">
+                    <i class="fas fa-chart-line me-1"></i> Reportes
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- Gráfico de evolución de personal (simulado) -->
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <div class="card border-0 shadow-sm overflow-hidden">
-                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+    <div class="row g-4">
+        <!-- Panel de Estadísticas RRHH -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm overflow-hidden h-100">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #282F4B 100%);">
                     <h6 class="mb-0 fw-semibold text-white">
-                        <i class="fas fa-chart-line me-2"></i> Evolución de Personal
+                        <i class="fas fa-chart-pie me-2"></i> Estadísticas RH
                     </h6>
                 </div>
                 <div class="card-body p-4">
-                    <canvas id="empleadosChart" height="200" style="max-height: 250px;"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm overflow-hidden">
-                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-                    <h6 class="mb-0 fw-semibold text-white">
-                        <i class="fas fa-chart-pie me-2"></i> Distribución por Género
-                    </h6>
-                </div>
-                <div class="card-body p-4">
-                    <canvas id="generoChart" height="200" style="max-height: 250px;"></canvas>
-                    <div class="mt-3 text-center">
-                        <div class="d-flex justify-content-center gap-3">
-                            <div><span class="badge" style="background: #2658A5;">&nbsp;</span> Hombres (52%)</div>
-                            <div><span class="badge" style="background: #C23538;">&nbsp;</span> Mujeres (48%)</div>
+                    <div class="stat-card mb-3 p-3 rounded-3 text-center" style="background: linear-gradient(135deg, rgba(38,88,165,0.05) 0%, rgba(40,47,75,0.05) 100%);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="small text-muted">Total Empleados</span>
+                                <div class="fw-bold display-6 mb-0" style="color: #2658A5;">{{ total_empleados|default(0) }}</div>
+                            </div>
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(38,88,165,0.1);">
+                                <i class="fas fa-user-friends" style="color: #2658A5; font-size: 1.5rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card mb-3 p-3 rounded-3 text-center" style="background: linear-gradient(135deg, rgba(40,167,69,0.05) 0%, rgba(32,201,151,0.05) 100%);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="small text-muted">Ingresos (este mes)</span>
+                                <div class="fw-bold display-6 mb-0" style="color: #28a745;">{{ ingresos_mes|default(0) }}</div>
+                            </div>
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                                <i class="fas fa-calendar-plus" style="color: #28a745; font-size: 1.5rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card mb-3 p-3 rounded-3 text-center" style="background: linear-gradient(135deg, rgba(255,204,41,0.08) 0%, rgba(255,165,0,0.05) 100%);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="small text-muted">Rotación (este mes)</span>
+                                <div class="fw-bold display-6 mb-0" style="color: #D4A000;">{{ retiros_mes|default(0) }}</div>
+                            </div>
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(255,204,41,0.15);">
+                                <i class="fas fa-user-minus" style="color: #FFCC29; font-size: 1.5rem;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card p-3 rounded-3 text-center" style="background: linear-gradient(135deg, rgba(194,53,56,0.05) 0%, rgba(167,51,53,0.05) 100%);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="small text-muted">Procesos Activos</span>
+                                <div class="fw-bold display-6 mb-0" style="color: #C23538;">{{ procesos_activos|length|default(0) }}</div>
+                            </div>
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(194,53,56,0.1);">
+                                <i class="fas fa-tasks" style="color: #C23538; font-size: 1.5rem;"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Módulos RH -->
-    <div class="row g-4 mb-4">
-        <div class="col-md-6 col-lg-4">
-            <div class="card border-0 shadow-sm h-100 overflow-hidden hover-lift">
-                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
-                    <h6 class="mb-0 fw-semibold text-white">
-                        <i class="fas fa-user-tie me-2"></i> Gestión de Personal
-                    </h6>
+        <!-- Contenido Principal -->
+        <div class="col-md-9">
+            <!-- Tarjetas de acceso rápido -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <a href="{{ url_for('rh_empleados') }}" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                            <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width: 50px; height: 50px; background: rgba(38,88,165,0.1);">
+                                <i class="fas fa-users fa-2x" style="color: #2658A5;"></i>
+                            </div>
+                            <h6 class="fw-bold mb-0" style="color: #2658A5;">Empleados</h6>
+                            <small class="text-muted">Gestión completa</small>
+                        </div>
+                    </a>
                 </div>
-                <div class="card-body p-4">
-                    <p class="text-muted small">Administración completa del talento humano</p>
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('rh_empleados') }}" class="btn btn-outline-primary rounded-3">
-                            <i class="fas fa-address-card me-2"></i> Empleados
-                        </a>
-                        <a href="{{ url_for('rh_contratos') }}" class="btn btn-outline-primary rounded-3">
-                            <i class="fas fa-file-contract me-2"></i> Contratos
-                        </a>
-                        <a href="{{ url_for('rh_cargos') }}" class="btn btn-outline-primary rounded-3">
-                            <i class="fas fa-briefcase me-2"></i> Cargos y Salarios
-                        </a>
-                    </div>
+                <div class="col-md-4">
+                    <a href="{{ url_for('rh_contratos') }}" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                            <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width: 50px; height: 50px; background: rgba(255,204,41,0.1);">
+                                <i class="fas fa-file-signature fa-2x" style="color: #FFCC29;"></i>
+                            </div>
+                            <h6 class="fw-bold mb-0" style="color: #2658A5;">Contratos</h6>
+                            <small class="text-muted">Administrar contratos</small>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a href="{{ url_for('rh_capacitaciones') }}" class="text-decoration-none">
+                        <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                            <div class="rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width: 50px; height: 50px; background: rgba(40,167,69,0.1);">
+                                <i class="fas fa-chalkboard-user fa-2x" style="color: #28a745;"></i>
+                            </div>
+                            <h6 class="fw-bold mb-0" style="color: #2658A5;">Capacitaciones</h6>
+                            <small class="text-muted">Plan de formación</small>
+                        </div>
+                    </a>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-6 col-lg-4">
-            <div class="card border-0 shadow-sm h-100 overflow-hidden hover-lift">
-                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <!-- Procesos Activos -->
+            {% if procesos_activos %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%);">
                     <h6 class="mb-0 fw-semibold text-white">
-                        <i class="fas fa-graduation-cap me-2"></i> Desarrollo Organizacional
+                        <i class="fas fa-tasks me-2"></i> Procesos Activos
                     </h6>
-                </div>
-                <div class="card-body p-4">
-                    <p class="text-muted small">Capacitación y crecimiento profesional</p>
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('rh_capacitaciones') }}" class="btn btn-outline-success rounded-3">
-                            <i class="fas fa-chalkboard-user me-2"></i> Capacitaciones
-                        </a>
-                        <a href="{{ url_for('rh_evaluaciones') }}" class="btn btn-outline-success rounded-3">
-                            <i class="fas fa-star me-2"></i> Evaluaciones de Desempeño
-                        </a>
-                        <a href="{{ url_for('rh_ascensos') }}" class="btn btn-outline-success rounded-3">
-                            <i class="fas fa-arrow-up me-2"></i> Ascensos y Promociones
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-lg-4">
-            <div class="card border-0 shadow-sm h-100 overflow-hidden hover-lift">
-                <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
-                    <h6 class="mb-0 fw-semibold text-white">
-                        <i class="fas fa-gavel me-2"></i> Aspectos Legales
-                    </h6>
-                </div>
-                <div class="card-body p-4">
-                    <p class="text-muted small">Normatividad y cumplimiento legal</p>
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('rh_normativas') }}" class="btn btn-outline-danger rounded-3">
-                            <i class="fas fa-book me-2"></i> Normativa Laboral
-                        </a>
-                        <a href="{{ url_for('rh_sanciones') }}" class="btn btn-outline-danger rounded-3">
-                            <i class="fas fa-exclamation-triangle me-2"></i> Sanciones y Procesos
-                        </a>
-                        <a href="{{ url_for('rh_contratos') }}" class="btn btn-outline-danger rounded-3">
-                            <i class="fas fa-stamp me-2"></i> Documentación Legal
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Procesos Activos -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm overflow-hidden">
-                <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-semibold text-white">
-                            <i class="fas fa-chalkboard-user me-2"></i> Procesos Activos
-                        </h5>
-                        <a href="{{ url_for('rh_procesos') }}" class="btn btn-light btn-sm shadow-sm">
-                            <i class="fas fa-eye me-1"></i> Ver Todos
-                        </a>
-                    </div>
                 </div>
                 <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead style="background: #f8f9fc;">
-                                <tr>
-                                    <th style="padding: 16px 12px;">Proceso</th>
-                                    <th style="padding: 16px 12px;">Responsable</th>
-                                    <th style="padding: 16px 12px;">Estado</th>
-                                    <th style="padding: 16px 12px;">Avance</th>
-                                    <th style="padding: 16px 12px;">Fecha Límite</th>
-                                    <th style="padding: 16px 12px;">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="proceso-fila">
-                                    <td class="align-middle">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i class="fas fa-user-plus" style="color: #2658A5;"></i>
-                                            <span class="fw-semibold">Reclutamiento y Selección</span>
-                                        </div>
-                                    </td>
-                                    <td class="align-middle">María González</td>
-                                    <td class="align-middle">
-                                        <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
-                                            <i class="fas fa-spinner me-1"></i> En Proceso
-                                        </span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="progress flex-grow-1" style="height: 6px;">
-                                                <div class="progress-bar" role="progressbar" style="width: 65%; background: linear-gradient(90deg, #2658A5, #28a745);"></div>
-                                            </div>
-                                            <small class="fw-bold">65%</small>
-                                        </div>
-                                    </td>
-                                    <td class="align-middle"><small class="text-muted">30/04/2024</small></td>
-                                    <td class="align-middle">
-                                        <a href="#" class="btn btn-sm rounded-3" style="background: #2658A5; color: white;">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                <tr class="proceso-fila">
-                                    <td class="align-middle">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i class="fas fa-chalkboard-user" style="color: #28a745;"></i>
-                                            <span class="fw-semibold">Capacitación Anual</span>
-                                        </div>
-                                    </td>
-                                    <td class="align-middle">Carlos Rodríguez</td>
-                                    <td class="align-middle">
-                                        <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
-                                            <i class="fas fa-check-circle me-1"></i> Completado
-                                        </span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="progress flex-grow-1" style="height: 6px;">
-                                                <div class="progress-bar" role="progressbar" style="width: 100%; background: linear-gradient(90deg, #28a745, #20c997);"></div>
-                                            </div>
-                                            <small class="fw-bold">100%</small>
-                                        </div>
-                                    </td>
-                                    <td class="align-middle"><small class="text-muted">15/12/2024</small></td>
-                                    <td class="align-middle">
-                                        <a href="#" class="btn btn-sm rounded-3" style="background: #2658A5; color: white;">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                <tr class="proceso-fila">
-                                    <td class="align-middle">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i class="fas fa-star" style="color: #FFCC29;"></i>
-                                            <span class="fw-semibold">Evaluación de Desempeño</span>
-                                        </div>
-                                    </td>
-                                    <td class="align-middle">Ana Martínez</td>
-                                    <td class="align-middle">
-                                        <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
-                                            <i class="fas fa-spinner me-1"></i> En Proceso
-                                        </span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="progress flex-grow-1" style="height: 6px;">
-                                                <div class="progress-bar" role="progressbar" style="width: 40%; background: linear-gradient(90deg, #FFCC29, #FFA500);"></div>
-                                            </div>
-                                            <small class="fw-bold">40%</small>
-                                        </div>
-                                    </td>
-                                    <td class="align-middle"><small class="text-muted">30/06/2024</small></td>
-                                    <td class="align-middle">
-                                        <a href="#" class="btn btn-sm rounded-3" style="background: #2658A5; color: white;">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="list-group list-group-flush">
+                        {% for proceso in procesos_activos %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1 fw-semibold">{{ proceso[1] }}</h6>
+                                <small class="text-muted">Responsable ID: {{ proceso[2] or 'No asignado' }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge {% if proceso[3] == 'en_proceso' %}bg-warning{% else %}bg-secondary{% endif %} me-2">
+                                    {{ proceso[3]|default('pendiente')|replace('_', ' ')|title }}
+                                </span>
+                                <span class="badge bg-info">{{ proceso[4]|default(0) }}%</span>
+                                <a href="{{ url_for('rh_proceso_detalle', id=proceso[0]) }}" class="btn btn-sm btn-outline-primary ms-2">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
+            {% else %}
+            <div class="card border-0 shadow-sm text-center p-5">
+                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+                    <i class="fas fa-tasks fa-3x" style="color: #C23538;"></i>
+                </div>
+                <h5 class="fw-semibold text-muted mb-2">No hay procesos activos</h5>
+                <p class="text-muted small mb-0">Los procesos se mostrarán aquí cuando estén disponibles</p>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-// Gráfico de evolución de empleados
-const ctxEmpleados = document.getElementById('empleadosChart').getContext('2d');
-new Chart(ctxEmpleados, {
-    type: 'line',
-    data: {
-        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-        datasets: [{
-            label: 'Empleados Activos',
-            data: [42, 44, 45, 46, 48, 47, 49, 50, 48, 49, 48, 48],
-            borderColor: '#2658A5',
-            backgroundColor: 'rgba(38, 88, 165, 0.05)',
-            borderWidth: 3,
-            pointBackgroundColor: '#2658A5',
-            pointBorderColor: '#fff',
-            pointRadius: 5,
-            pointHoverRadius: 7,
-            tension: 0.3,
-            fill: true
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        }
-    }
-});
-
-// Gráfico de género
-const ctxGenero = document.getElementById('generoChart').getContext('2d');
-new Chart(ctxGenero, {
-    type: 'doughnut',
-    data: {
-        labels: ['Hombres', 'Mujeres'],
-        datasets: [{
-            data: [52, 48],
-            backgroundColor: ['#2658A5', '#C23538'],
-            borderWidth: 0,
-            cutout: '65%'
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-            legend: { display: false }
-        }
-    }
-});
-</script>
-
 <style>
+.bg-gradient-rh {
+    background: linear-gradient(135deg, #C23538 0%, #8B1A1A 50%, #282F4B 100%) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.bg-gradient-rh::before {
+    content: '';
+    position: absolute;
+   top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    pointer-events: none;
+    animation: shimmer 8s infinite linear;
+}
+
+@keyframes shimmer {
+    0% { transform: translate(-30%, -30%) rotate(0deg); }
+    100% { transform: translate(30%, 30%) rotate(360deg); }
+}
+
 .hover-lift {
     transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
+
 .hover-lift:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
     box-shadow: 0 12px 24px rgba(0,0,0,0.12) !important;
 }
-.proceso-fila {
+
+.card {
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.stat-card {
     transition: all 0.2s ease;
 }
-.proceso-fila:hover {
-    background-color: #f8f9fc;
+
+.stat-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.display-6 {
+    font-size: 1.8rem;
+    font-weight: 700;
 }
 </style>
 {% endblock %}
