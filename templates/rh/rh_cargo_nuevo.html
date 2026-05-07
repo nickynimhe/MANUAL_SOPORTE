@@ -1,0 +1,439 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Nuevo Cargo - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-briefcase fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">Nuevo Cargo</h4>
+                        <p class="text-white-80 mb-0 small">Registrar nuevo cargo en la estructura organizacional</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline-light btn-sm" onclick="window.location.href='{{ url_for('rh_cargos') }}'">
+                    <i class="fas fa-arrow-left me-1"></i> Volver a Cargos
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de Nuevo Cargo -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-edit me-2"></i> Formulario de Registro
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="POST" id="formNuevoCargo" action="{{ url_for('rh_cargo_guardar') }}">
+                
+                <!-- SECCIÓN 1: INFORMACIÓN BÁSICA -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #2658A5;">
+                        <i class="fas fa-info-circle me-2"></i> Información Básica
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Nombre del Cargo *</label>
+                            <input type="text" name="nombre" id="nombre" class="form-control rounded-3" required 
+                                   placeholder="Ej: Coordinador de Seguridad y Salud en el Trabajo">
+                            <small class="text-muted">Denominación oficial del cargo</small>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Descripción del Cargo</label>
+                            <textarea name="descripcion" id="descripcion" class="form-control rounded-3" rows="3" 
+                                      placeholder="Describa las funciones principales, responsabilidades y propósito del cargo..."></textarea>
+                            <small class="text-muted">Máximo 500 caracteres</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 2: UBICACIÓN ORGANIZACIONAL -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #FFCC29;">
+                        <i class="fas fa-building me-2"></i> Ubicación Organizacional
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Departamento *</label>
+                            <select name="departamento" id="departamento" class="form-select rounded-3" required>
+                                <option value="">Seleccionar departamento...</option>
+                                <option value="administrativo">🏢 Administrativo</option>
+                                <option value="operaciones">⚙️ Operaciones</option>
+                                <option value="comercial">📈 Comercial</option>
+                                <option value="tecnologia">💻 Tecnología</option>
+                                <option value="sst">🛡️ SST</option>
+                                <option value="rh">👥 Recursos Humanos</option>
+                                <option value="financiero">💰 Financiero</option>
+                                <option value="juridico">⚖️ Jurídico</option>
+                            </select>
+                            <small class="text-muted">Área a la que pertenece el cargo</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nivel Jerárquico *</label>
+                            <select name="nivel" id="nivel" class="form-select rounded-3" required onchange="actualizarRequisitos()">
+                                <option value="">Seleccionar nivel...</option>
+                                <option value="operativo">🔧 Operativo</option>
+                                <option value="tecnico">📐 Técnico</option>
+                                <option value="profesional">🎓 Profesional</option>
+                                <option value="coordinador">📋 Coordinador</option>
+                                <option value="jefe">👔 Jefe de Área</option>
+                                <option value="gerente">💼 Gerente</option>
+                                <option value="director">🎯 Director</option>
+                                <option value="vicepresidente">👑 Vicepresidente</option>
+                            </select>
+                            <small class="text-muted">Posición en la jerarquía organizacional</small>
+                        </div>
+                        <div class="col-md-12" id="campo_jefe" style="display: none;">
+                            <label class="form-label fw-semibold">Reporta a *</label>
+                            <select name="reporta_a" class="form-select rounded-3">
+                                <option value="">Seleccionar jefe inmediato...</option>
+                                <option value="1">Gerente General</option>
+                                <option value="2">Director de Operaciones</option>
+                                <option value="3">Gerente de RH</option>
+                                <option value="4">Jefe de SST</option>
+                            </select>
+                            <small class="text-muted">Persona a la que reporta este cargo</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 3: COMPENSACIÓN -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #C23538;">
+                        <i class="fas fa-money-bill-wave me-2"></i> Compensación
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Salario Base *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="salario_base" id="salario_base" class="form-control rounded-3" step="0.01" required oninput="calcularRango()">
+                            </div>
+                            <small class="text-muted">Salario mensual en pesos</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Salario Mínimo del Rango</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="rango_min" id="rango_min" class="form-control rounded-3" step="0.01" oninput="validarRango()">
+                            </div>
+                            <small class="text-muted">Límite inferior del rango salarial</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Salario Máximo del Rango</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="rango_max" id="rango_max" class="form-control rounded-3" step="0.01" oninput="validarRango()">
+                            </div>
+                            <small class="text-muted">Límite superior del rango salarial</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Banda salarial sugerida -->
+                    <div class="row mt-3" id="banda_sugerida" style="display: none;">
+                        <div class="col-md-12">
+                            <div class="alert alert-info" style="background: rgba(38,88,165,0.08); border-left: 4px solid #2658A5;">
+                                <i class="fas fa-chart-line me-2" style="color: #2658A5;"></i>
+                                <strong>Banda salarial sugerida para el nivel {{ nivel_texto }}:</strong>
+                                <span id="sugerencia_rango" class="fw-bold ms-2"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 4: REQUISITOS DEL CARGO -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #2658A5;">
+                        <i class="fas fa-graduation-cap me-2"></i> Requisitos del Cargo
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Formación Académica</label>
+                            <select name="formacion" class="form-select rounded-3">
+                                <option value="">Seleccionar nivel educativo...</option>
+                                <option value="bachiller">Bachiller</option>
+                                <option value="tecnico">Técnico / Tecnólogo</option>
+                                <option value="pregrado">Profesional Universitario</option>
+                                <option value="especializacion">Especialización</option>
+                                <option value="maestria">Maestría</option>
+                                <option value="doctorado">Doctorado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Experiencia Requerida</label>
+                            <select name="experiencia" class="form-select rounded-3">
+                                <option value="">Seleccionar experiencia...</option>
+                                <option value="0">Sin experiencia</option>
+                                <option value="1">1 año</option>
+                                <option value="2">2 años</option>
+                                <option value="3">3 años</option>
+                                <option value="4">4 años</option>
+                                <option value="5">5 años</option>
+                                <option value="5+">Más de 5 años</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Competencias Requeridas</label>
+                            <textarea name="competencias" class="form-control rounded-3" rows="2" 
+                                      placeholder="Ej: Liderazgo, Trabajo en equipo, Comunicación efectiva, Resolución de problemas..."></textarea>
+                            <small class="text-muted">Separe por comas las competencias</small>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Conocimientos Específicos</label>
+                            <textarea name="conocimientos" class="form-control rounded-3" rows="2" 
+                                      placeholder="Ej: Normatividad SST, ISO 45001, Legislación laboral..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 5: FUNCIONES PRINCIPALES -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #28a745;">
+                        <i class="fas fa-clipboard-list me-2"></i> Funciones Principales
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Funciones del Cargo</label>
+                            <div id="lista_funciones">
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text">1.</span>
+                                    <input type="text" name="funciones[]" class="form-control rounded-3" placeholder="Describa una función principal...">
+                                    <button type="button" class="btn btn-outline-danger" onclick="eliminarFuncion(this)">✖</button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="agregarFuncion()">
+                                <i class="fas fa-plus me-1"></i> Agregar Función
+                            </button>
+                            <small class="text-muted d-block mt-2">Liste las responsabilidades principales del cargo</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 6: OBSERVACIONES -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #FFCC29;">
+                        <i class="fas fa-comments me-2"></i> Observaciones
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <textarea name="observaciones" class="form-control rounded-3" rows="2" 
+                                      placeholder="Notas adicionales, condiciones especiales del cargo..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOTONES DE ACCIÓN -->
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                    <div>
+                        <a href="{{ url_for('rh_cargos') }}" class="btn btn-outline-secondary rounded-3 px-4">
+                            <i class="fas fa-times me-1"></i> Cancelar
+                        </a>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="reset" class="btn rounded-3 px-4" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%); border: none; color: #282F4B;">
+                            <i class="fas fa-eraser me-1"></i> Limpiar Formulario
+                        </button>
+                        <button type="submit" class="btn rounded-3 px-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; color: white;">
+                            <i class="fas fa-save me-2"></i> Guardar Cargo
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let funcionCount = 1;
+
+// Agregar nueva función
+function agregarFuncion() {
+    funcionCount++;
+    const lista = document.getElementById('lista_funciones');
+    const newItem = document.createElement('div');
+    newItem.className = 'input-group mb-2';
+    newItem.innerHTML = `
+        <span class="input-group-text">${funcionCount}.</span>
+        <input type="text" name="funciones[]" class="form-control rounded-3" placeholder="Describa una función principal...">
+        <button type="button" class="btn btn-outline-danger" onclick="eliminarFuncion(this)">✖</button>
+    `;
+    lista.appendChild(newItem);
+}
+
+// Eliminar función
+function eliminarFuncion(btn) {
+    btn.parentElement.remove();
+    reordenarFunciones();
+}
+
+// Reordenar números de funciones
+function reordenarFunciones() {
+    const funciones = document.querySelectorAll('#lista_funciones .input-group');
+    funciones.forEach((func, index) => {
+        func.querySelector('.input-group-text').textContent = (index + 1) + '.';
+    });
+    funcionCount = funciones.length;
+}
+
+// Actualizar requisitos según nivel jerárquico
+function actualizarRequisitos() {
+    const nivel = document.getElementById('nivel').value;
+    const campoJefe = document.getElementById('campo_jefe');
+    
+    if (nivel === 'coordinador' || nivel === 'jefe' || nivel === 'gerente' || nivel === 'director' || nivel === 'vicepresidente') {
+        campoJefe.style.display = 'block';
+    } else {
+        campoJefe.style.display = 'none';
+    }
+    
+    calcularRango();
+}
+
+// Calcular rango salarial sugerido por nivel
+function calcularRango() {
+    const nivel = document.getElementById('nivel').value;
+    const salarioBase = parseFloat(document.getElementById('salario_base').value) || 0;
+    const bandaSugerida = document.getElementById('banda_sugerida');
+    const sugerenciaSpan = document.getElementById('sugerencia_rango');
+    
+    let nivelTexto = '';
+    let rangoMin = 0;
+    let rangoMax = 0;
+    
+    switch(nivel) {
+        case 'operativo':
+            nivelTexto = 'Operativo';
+            rangoMin = 1300000;
+            rangoMax = 1800000;
+            break;
+        case 'tecnico':
+            nivelTexto = 'Técnico';
+            rangoMin = 1800000;
+            rangoMax = 2500000;
+            break;
+        case 'profesional':
+            nivelTexto = 'Profesional';
+            rangoMin = 2500000;
+            rangoMax = 3500000;
+            break;
+        case 'coordinador':
+            nivelTexto = 'Coordinador';
+            rangoMin = 3500000;
+            rangoMax = 5000000;
+            break;
+        case 'jefe':
+            nivelTexto = 'Jefe';
+            rangoMin = 4500000;
+            rangoMax = 7000000;
+            break;
+        case 'gerente':
+            nivelTexto = 'Gerente';
+            rangoMin = 7000000;
+            rangoMax = 12000000;
+            break;
+        case 'director':
+            nivelTexto = 'Director';
+            rangoMin = 10000000;
+            rangoMax = 20000000;
+            break;
+        case 'vicepresidente':
+            nivelTexto = 'Vicepresidente';
+            rangoMin = 15000000;
+            rangoMax = 30000000;
+            break;
+        default:
+            bandaSugerida.style.display = 'none';
+            return;
+    }
+    
+    if (salarioBase > 0) {
+        if (salarioBase < rangoMin) {
+            sugerenciaSpan.innerHTML = `⚠️ El salario ingresado está por debajo del rango sugerido ($${rangoMin.toLocaleString()} - $${rangoMax.toLocaleString()})`;
+            sugerenciaSpan.style.color = '#C23538';
+        } else if (salarioBase > rangoMax) {
+            sugerenciaSpan.innerHTML = `⚠️ El salario ingresado está por encima del rango sugerido ($${rangoMin.toLocaleString()} - $${rangoMax.toLocaleString()})`;
+            sugerenciaSpan.style.color = '#C23538';
+        } else {
+            sugerenciaSpan.innerHTML = `$${rangoMin.toLocaleString()} - $${rangoMax.toLocaleString()}`;
+            sugerenciaSpan.style.color = '#2658A5';
+        }
+        bandaSugerida.style.display = 'block';
+    } else {
+        sugerenciaSpan.innerHTML = `$${rangoMin.toLocaleString()} - $${rangoMax.toLocaleString()}`;
+        sugerenciaSpan.style.color = '#2658A5';
+        bandaSugerida.style.display = 'block';
+    }
+}
+
+// Validar rango salarial
+function validarRango() {
+    const rangoMin = parseFloat(document.getElementById('rango_min').value) || 0;
+    const rangoMax = parseFloat(document.getElementById('rango_max').value) || 0;
+    
+    if (rangoMin > 0 && rangoMax > 0 && rangoMin > rangoMax) {
+        alert('⚠️ El salario mínimo del rango no puede ser mayor al máximo');
+        document.getElementById('rango_min').value = '';
+    }
+}
+
+// Validación del formulario
+document.getElementById('formNuevoCargo')?.addEventListener('submit', function(e) {
+    const nombre = document.getElementById('nombre')?.value.trim();
+    const departamento = document.getElementById('departamento')?.value;
+    const nivel = document.getElementById('nivel')?.value;
+    const salarioBase = document.getElementById('salario_base')?.value;
+    
+    let error = '';
+    
+    if (!nombre) error = 'El nombre del cargo es obligatorio';
+    else if (!departamento) error = 'Debe seleccionar un departamento';
+    else if (!nivel) error = 'Debe seleccionar un nivel jerárquico';
+    else if (!salarioBase || parseFloat(salarioBase) <= 0) error = 'El salario base debe ser mayor a 0';
+    
+    if (error) {
+        e.preventDefault();
+        alert('❌ ' + error);
+    }
+});
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    actualizarRequisitos();
+});
+</script>
+
+<style>
+.form-section {
+    background: #f8f9fc;
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+.form-section:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.form-control, .form-select {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #2658A5;
+    box-shadow: 0 0 0 3px rgba(38,88,165,0.15);
+}
+.input-group-text {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+</style>
+{% endblock %}
