@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}SST - Seguridad y Salud en el Trabajo{% endblock %}</title>
+    <title>{% block title %}RH - Recursos Humanos{% endblock %}</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -26,9 +26,9 @@
         --sidebar-width: 250px;
         --sidebar-collapsed: 64px;
         --transition: 0.25s ease;
-        --sst-green: #059669;
-        --sst-green-dark: #047857;
-        --sst-green-light: #d1fae5;
+        --rh-blue: #052398;
+        --rh-blue-dark: #03196e;
+        --rh-blue-light: #dbeafe;
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -47,7 +47,7 @@
       min-height: 100vh;
     }
 
-    /* ===== SIDEBAR SST ===== */
+    /* ===== SIDEBAR RH ===== */
     .sidebar {
       position: fixed;
       top: 0;
@@ -128,13 +128,13 @@
       justify-content: center;
       cursor: pointer;
       font-size: 10px;
-      color: var(--sst-green);
+      color: var(--rh-blue);
       z-index: 1001;
       transition: all var(--transition);
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
 
-    .sidebar-toggle:hover { background: var(--sst-green); color: white; border-color: var(--sst-green); }
+    .sidebar-toggle:hover { background: var(--rh-blue); color: white; border-color: var(--rh-blue); }
     .sidebar.collapsed .sidebar-toggle i { transform: rotate(180deg); }
     .sidebar-toggle i { transition: transform var(--transition); }
 
@@ -260,74 +260,6 @@
 
     .sidebar.collapsed .nav-item-text { opacity: 0; width: 0; }
 
-    /* Chevron */
-    .nav-item-chevron {
-      margin-left: auto;
-      font-size: 10px;
-      transition: transform var(--transition);
-      opacity: 0.5;
-      flex-shrink: 0;
-    }
-
-    .nav-item-sidebar[aria-expanded="true"] .nav-item-chevron { transform: rotate(180deg); }
-    .sidebar.collapsed .nav-item-chevron { display: none; }
-
-    /* Tooltip colapsado */
-    .sidebar.collapsed .nav-item-sidebar {
-      position: relative;
-    }
-
-    .sidebar.collapsed .nav-item-sidebar:hover::after {
-      content: attr(data-tooltip);
-      position: fixed;
-      left: calc(var(--sidebar-collapsed) + 8px);
-      background: #0f4c24;
-      color: white;
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-      white-space: nowrap;
-      z-index: 9999;
-      pointer-events: none;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    }
-
-    /* Submenú */
-    .submenu {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.35s ease;
-    }
-
-    .submenu.open { max-height: 600px; }
-    .sidebar.collapsed .submenu { display: none; }
-
-    .submenu-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 14px 7px 52px;
-      margin: 1px 8px;
-      border-radius: 8px;
-      color: rgba(255,255,255,0.6);
-      font-size: 12px;
-      text-decoration: none;
-      transition: all var(--transition);
-      white-space: nowrap;
-    }
-
-    .submenu-item:hover { color: white; background: rgba(255,255,255,0.1); }
-    .submenu-item.active { color: white; background: rgba(255,255,255,0.14); font-weight: 600; }
-
-    .submenu-item.danger { color: #fca5a5; }
-    .submenu-item.danger:hover { background: rgba(239,68,68,0.15); color: #fecaca; }
-
-    .submenu-divider {
-      height: 1px;
-      background: rgba(255,255,255,0.1);
-      margin: 4px 20px;
-    }
-
     /* Footer sidebar */
     .sidebar-footer {
       border-top: 1px solid rgba(255,255,255,0.12);
@@ -394,7 +326,7 @@
 
     .main-content.expanded { margin-left: var(--sidebar-collapsed); }
 
-    /* Topbar - MEJORADO */
+    /* Topbar */
     .topbar {
       background: var(--white);
       border-bottom: 1px solid #e5e7eb;
@@ -413,7 +345,6 @@
       gap: 16px;
     }
 
-    /* Logo en topbar - MÁS GRANDE */
     .topbar-logo {
       transition: all var(--transition);
       max-height: 48px;
@@ -444,15 +375,15 @@
       transition: all var(--transition);
     }
 
-    .topbar-btn.green {
-      background: linear-gradient(135deg, var(--sst-green) 0%, var(--sst-green-dark) 100%);
+    .topbar-btn.blue {
+      background: linear-gradient(135deg, var(--rh-blue) 0%, var(--rh-blue-dark) 100%);
       color: white;
     }
 
-    .topbar-btn.green:hover { 
-      background: linear-gradient(135deg, var(--sst-green-dark) 0%, #065f46 100%);
+    .topbar-btn.blue:hover { 
+      background: linear-gradient(135deg, var(--rh-blue-dark) 0%, #020e3a 100%);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+      box-shadow: 0 4px 12px rgba(5, 35, 152, 0.3);
     }
 
     .topbar-btn.ghost {
@@ -463,8 +394,33 @@
 
     .topbar-btn.ghost:hover { 
       background: var(--bg); 
-      color: var(--primary);
+      color: var(--rh-blue);
       border-color: var(--primary-light);
+    }
+
+    /* Botón flotante volver al admin */
+    .btn-back-admin {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: linear-gradient(135deg, var(--rh-blue) 0%, var(--rh-blue-dark) 100%);
+      color: white;
+      border-radius: 50px;
+      padding: 12px 20px;
+      box-shadow: 0 4px 12px rgba(5, 35, 152, 0.3);
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+    }
+    
+    .btn-back-admin:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(5, 35, 152, 0.4);
+      color: white;
     }
 
     /* Contenido */
@@ -529,9 +485,15 @@
       .sidebar-toggle { display: none; }
       .topbar { padding: 0 16px; height: 56px; }
       main.page-main { padding: 16px; }
+      
+      .btn-back-admin {
+        bottom: 16px;
+        right: 16px;
+        padding: 10px 16px;
+        font-size: 12px;
+      }
     }
 
-    /* Ajuste responsivo del logo */
     @media (max-width: 576px) {
       .topbar-logo {
         max-height: 36px !important;
@@ -550,119 +512,77 @@
 
 <div class="layout-wrapper">
 
-  <!-- ===== SIDEBAR SST ===== -->
+  <!-- ===== SIDEBAR RH ===== -->
   <aside class="sidebar" id="sidebar">
 
-    <!-- Botón colapsar -->
     <button class="sidebar-toggle" id="sidebarToggle" title="Colapsar menú">
       <i class="fas fa-chevron-left"></i>
     </button>
 
-    <!-- Marca SST con degradado sutil -->
-    <a class="sidebar-brand" href="{{ url_for('sst_dashboard') }}">
+    <a class="sidebar-brand" href="{{ url_for('rh_dashboard') }}">
       <div class="sidebar-brand-icon">
-        <i class="fas fa-shield-alt"></i>
+        <i class="fas fa-users"></i>
       </div>
       <div class="sidebar-brand-texts">
-        <div class="sidebar-brand-title">SST</div>
-        <div class="sidebar-brand-sub">Seguridad y Salud en el Trabajo</div>
+        <div class="sidebar-brand-title">RH</div>
+        <div class="sidebar-brand-sub">Recursos Humanos</div>
       </div>
     </a>
 
-    <!-- Volver a Soporte Técnico -->
-    {% if current_user.is_authenticated and current_user.puede('acceder_soporte') %}
-    <a href="{{ url_for('index') }}" class="back-to-soporte" data-tooltip="Volver a Soporte">
+    <!-- Volver al Dashboard Admin -->
+    <a href="{{ url_for('dashboard_admin') }}" class="back-to-soporte" data-tooltip="Volver al Admin">
       <div class="back-icon"><i class="fas fa-arrow-left"></i></div>
-      <span class="back-text">← Volver a Soporte</span>
+      <span class="back-text">← Volver al Admin</span>
     </a>
-    {% endif %}
 
-    <!-- Navegación -->
     <nav class="sidebar-nav">
       {% if current_user.is_authenticated %}
 
-      <div class="nav-label">SST</div>
+      <div class="nav-label">Recursos Humanos</div>
 
-      <a class="nav-item-sidebar {% if request.endpoint == 'sst_dashboard' %}active{% endif %}"
-         href="{{ url_for('sst_dashboard') }}" data-tooltip="Inicio SST">
+      <a class="nav-item-sidebar {% if request.endpoint == 'rh_dashboard' %}active{% endif %}"
+         href="{{ url_for('rh_dashboard') }}" data-tooltip="Dashboard RH">
         <div class="nav-item-icon"><i class="fas fa-home"></i></div>
-        <span class="nav-item-text">Inicio SST</span>
+        <span class="nav-item-text">Dashboard RH</span>
       </a>
 
-      <a class="nav-item-sidebar {% if 'contenido' in request.endpoint and 'agregar' not in request.endpoint %}active{% endif %}"
-         href="{{ url_for('sst_contenido') }}" data-tooltip="Contenidos">
-        <div class="nav-item-icon"><i class="fas fa-folder-open"></i></div>
-        <span class="nav-item-text">Contenidos</span>
-      </a>
+      <div class="nav-label">Gestión de Personal</div>
 
-      {% if current_user.rol == 'admin' %}
-      <a class="nav-item-sidebar {% if request.endpoint == 'sst_agregar_contenido' %}active{% endif %}"
-         href="{{ url_for('sst_agregar_contenido') }}" data-tooltip="Nuevo Contenido">
-        <div class="nav-item-icon"><i class="fas fa-plus-circle"></i></div>
-        <span class="nav-item-text">Nuevo Contenido</span>
-      </a>
-      {% endif %}
-
-      <!-- Plan Anual PESV con submenú -->
-      <div class="nav-label">Plan Anual PESV</div>
-
-      <button class="nav-item-sidebar {% if 'plan_anual' in request.endpoint %}active{% endif %}"
-              id="planAnualToggle"
-              aria-expanded="{{ 'true' if 'plan_anual' in request.endpoint else 'false' }}"
-              data-tooltip="Plan Anual PESV"
-              onclick="toggleSubmenu('planAnualMenu', this)">
-        <div class="nav-item-icon"><i class="fas fa-calendar-alt"></i></div>
-        <span class="nav-item-text">Plan Anual PESV</span>
-        <i class="fas fa-chevron-down nav-item-chevron"></i>
-      </button>
-
-      <div class="submenu {% if 'plan_anual' in request.endpoint %}open{% endif %}" id="planAnualMenu">
-        <a class="submenu-item {% if request.endpoint == 'sst_plan_anual' %}active{% endif %}"
-           href="{{ url_for('sst_plan_anual') }}">
-          <i class="fas fa-tachometer-alt"></i> Dashboard
-        </a>
-        <div class="submenu-divider"></div>
-        <a class="submenu-item {% if request.endpoint == 'sst_plan_anual_actividades' %}active{% endif %}"
-           href="{{ url_for('sst_plan_anual_actividades') }}">
-          <i class="fas fa-tasks"></i> Ver Actividades
-        </a>
-        <a class="submenu-item {% if request.endpoint == 'sst_plan_anual_gestionar' %}active{% endif %}"
-           href="{{ url_for('sst_plan_anual_gestionar') }}">
-          <i class="fas fa-cog"></i> Gestionar Actividades
-        </a>
-        <div class="submenu-divider"></div>
-        <a class="submenu-item {% if request.endpoint == 'sst_plan_anual_nueva_actividad' %}active{% endif %}"
-           href="{{ url_for('sst_plan_anual_nueva_actividad') }}">
-          <i class="fas fa-plus"></i> Nueva Actividad
-        </a>
-        <a class="submenu-item {% if request.endpoint == 'sst_subir_excel' %}active{% endif %}"
-           href="{{ url_for('sst_subir_excel') }}">
-          <i class="fas fa-file-excel"></i> Importar Excel
-        </a>
-        {% if current_user.rol == 'admin' %}
-        <div class="submenu-divider"></div>
-        <a class="submenu-item danger"
-           href="{{ url_for('sst_plan_anual_limpiar_datos') }}">
-          <i class="fas fa-trash-alt"></i> Limpiar Datos
-        </a>
-        {% endif %}
-      </div>
-
-      <!-- Más opciones -->
-      <div class="nav-label">Otros</div>
-
-        <a class="nav-item-sidebar accent"
-         href="{{ url_for('static', filename='documentos/politicas-seguridad-crm-softv.pdf') }}"
-         target="_blank" data-tooltip="Políticas PDF">
-        <div class="nav-item-icon"><i class="fas fa-file-pdf"></i></div>
-        <span class="nav-item-text">Políticas PDF</span>
-      </a>
-
-      {% if current_user.rol == 'admin' %}
-      <a class="nav-item-sidebar {% if request.endpoint == 'gestion_usuarios' %}active{% endif %}"
-         href="{{ url_for('gestion_usuarios') }}" data-tooltip="Gestionar Usuarios">
+      <a class="nav-item-sidebar {% if request.endpoint == 'rh_empleados' %}active{% endif %}"
+         href="{{ url_for('rh_empleados') }}" data-tooltip="Ver Empleados">
         <div class="nav-item-icon"><i class="fas fa-users"></i></div>
-        <span class="nav-item-text">Gestionar Usuarios</span>
+        <span class="nav-item-text">Ver Empleados</span>
+      </a>
+
+      <a class="nav-item-sidebar {% if request.endpoint == 'rh_empleado_nuevo' %}active{% endif %}"
+         href="{{ url_for('rh_empleado_nuevo') }}" data-tooltip="Nuevo Empleado">
+        <div class="nav-item-icon"><i class="fas fa-user-plus"></i></div>
+        <span class="nav-item-text">Nuevo Empleado</span>
+      </a>
+
+      <div class="nav-label">Contratos</div>
+
+      <a class="nav-item-sidebar {% if request.endpoint == 'rh_contratos' %}active{% endif %}"
+         href="{{ url_for('rh_contratos') }}" data-tooltip="Ver Contratos">
+        <div class="nav-item-icon"><i class="fas fa-file-signature"></i></div>
+        <span class="nav-item-text">Ver Contratos</span>
+      </a>
+
+      <div class="nav-label">Reportes</div>
+
+      <a class="nav-item-sidebar {% if request.endpoint == 'rh_reportes' %}active{% endif %}"
+         href="{{ url_for('rh_reportes') }}" data-tooltip="Reportes RH">
+        <div class="nav-item-icon"><i class="fas fa-chart-bar"></i></div>
+        <span class="nav-item-text">Reportes RH</span>
+      </a>
+
+      {% if current_user.rol == 'admin' %}
+      <div class="nav-label">Configuración</div>
+
+      <a class="nav-item-sidebar danger"
+         href="{{ url_for('logout') }}" data-tooltip="Cerrar Sesión">
+        <div class="nav-item-icon"><i class="fas fa-sign-out-alt"></i></div>
+        <span class="nav-item-text">Cerrar Sesión</span>
       </a>
       {% endif %}
 
@@ -711,15 +631,13 @@
   <!-- ===== CONTENIDO PRINCIPAL ===== -->
   <div class="main-content" id="mainContent">
 
-    <!-- Topbar MEJORADO -->
+    <!-- Topbar -->
     <div class="topbar">
       <div class="topbar-left">
-        <!-- Hamburguesa móvil -->
         <button class="topbar-btn ghost d-md-none" id="mobileMenuBtn" style="border:none; padding:8px 10px;">
           <i class="fas fa-bars fs-5"></i>
         </button>
-        <!-- Logo corporativo MÁS GRANDE -->
-        <a href="{{ url_for('sst_dashboard') }}" class="d-flex align-items-center text-decoration-none">
+        <a href="{{ url_for('rh_dashboard') }}" class="d-flex align-items-center text-decoration-none">
           <img src="{{ url_for('static', filename='img/logo-sky-producciones.png') }}" 
                alt="Sky Producciones SAS" 
                class="topbar-logo"
@@ -728,16 +646,14 @@
       </div>
 
       <div class="topbar-right">
-        {% if current_user.is_authenticated %}
-        <a href="{{ url_for('sst_plan_anual_nueva_actividad') }}" class="topbar-btn ghost">
-          <i class="fas fa-calendar-plus"></i>
-          <span class="d-none d-sm-inline">Nueva Actividad</span>
+        <a href="{{ url_for('rh_empleado_nuevo') }}" class="topbar-btn ghost">
+          <i class="fas fa-user-plus"></i>
+          <span class="d-none d-sm-inline">Nuevo Empleado</span>
         </a>
-        {% else %}
-        <a href="{{ url_for('login') }}" class="topbar-btn green">
-          <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+        <a href="{{ url_for('dashboard_admin') }}" class="topbar-btn blue">
+          <i class="fas fa-crown"></i>
+          <span class="d-none d-sm-inline">Admin</span>
         </a>
-        {% endif %}
       </div>
     </div>
 
@@ -760,27 +676,33 @@
 
     <!-- Contenido de la página -->
     <main class="page-main">
-      {% block content %}{% endblock %}
+      {% block rh_content %}{% endblock %}
     </main>
 
     <!-- Footer -->
     <footer class="page-footer">
-      <p>&copy; 2024 SST – Seguridad y Salud en el Trabajo. Todos los derechos reservados.</p>
+      <p>&copy; 2024 RH – Recursos Humanos. Todos los derechos reservados.</p>
     </footer>
 
   </div>
 </div>
 
+<!-- Botón flotante volver al admin -->
+<a href="{{ url_for('dashboard_admin') }}" class="btn-back-admin">
+  <i class="fas fa-arrow-left"></i>
+  <span>Volver al Panel Admin</span>
+</a>
+
 <!-- ===== SCRIPTS ===== -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-  // ── Colapsar sidebar (desktop) ──
+  // Colapsar sidebar (desktop)
   const sidebar     = document.getElementById('sidebar');
   const mainContent = document.getElementById('mainContent');
   const toggleBtn   = document.getElementById('sidebarToggle');
 
-  const COLLAPSED_KEY = 'sst_sidebar_collapsed';
+  const COLLAPSED_KEY = 'rh_sidebar_collapsed';
   let collapsed = localStorage.getItem(COLLAPSED_KEY) === 'true';
 
   function applyCollapsed() {
@@ -798,7 +720,7 @@
     });
   }
 
-  // ── Menú móvil ──
+  // Menú móvil
   const mobileBtn = document.getElementById('mobileMenuBtn');
   const overlay   = document.getElementById('sidebarOverlay');
 
@@ -817,33 +739,14 @@
   if (mobileBtn) mobileBtn.addEventListener('click', openMobile);
   if (overlay)   overlay.addEventListener('click', closeMobile);
 
-  // ── Submenús ──
-  function toggleSubmenu(id, btn) {
-    const menu = document.getElementById(id);
-    if (!menu) return;
-    const isOpen = menu.classList.contains('open');
-    document.querySelectorAll('.submenu.open').forEach(m => m.classList.remove('open'));
-    document.querySelectorAll('.nav-item-sidebar[aria-expanded="true"]').forEach(b => b.setAttribute('aria-expanded','false'));
-    if (!isOpen) {
-      menu.classList.add('open');
-      btn.setAttribute('aria-expanded','true');
-    }
-  }
-
-  // Abrir submenú activo al cargar
-  document.querySelectorAll('.submenu.open').forEach(menu => {
-    const btn = document.querySelector(`[onclick*="${menu.id}"]`);
-    if (btn) btn.setAttribute('aria-expanded','true');
-  });
-
-  // ── Auto-cierre alertas ──
+  // Auto-cierre alertas
   setTimeout(() => {
     document.querySelectorAll('.alert').forEach(a => {
       try { new bootstrap.Alert(a).close(); } catch(e) {}
     });
   }, 5000);
 
-  // ── Tooltips Bootstrap ──
+  // Tooltips Bootstrap
   document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
     new bootstrap.Tooltip(el);
   });
