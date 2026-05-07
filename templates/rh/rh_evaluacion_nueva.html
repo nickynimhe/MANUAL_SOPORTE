@@ -1,0 +1,396 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Nueva Evaluación de Desempeño - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-star fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">Nueva Evaluación de Desempeño</h4>
+                        <p class="text-white-80 mb-0 small">Registrar evaluación de empleado</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline-light btn-sm" onclick="window.location.href='{{ url_for('rh_evaluaciones') }}'">
+                    <i class="fas fa-arrow-left me-1"></i> Volver a Evaluaciones
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de Nueva Evaluación -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-edit me-2"></i> Formulario de Registro
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="POST" id="formNuevaEvaluacion" action="{{ url_for('rh_evaluacion_guardar') }}">
+                
+                <!-- SECCIÓN 1: INFORMACIÓN BÁSICA -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #2658A5;">
+                        <i class="fas fa-info-circle me-2"></i> Información Básica
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Empleado Evaluado *</label>
+                            <select name="empleado_id" id="empleado_id" class="form-select rounded-3" required>
+                                <option value="">Seleccionar empleado...</option>
+                                <option value="1">María González López - CC 12345678 (Gerente RH)</option>
+                                <option value="2">Carlos Rodríguez Pérez - CC 87654321 (Coordinador SST)</option>
+                                <option value="3">Ana Martínez Suárez - CC 11223344 (Analista SST)</option>
+                                <option value="4">Jorge Ramírez Castro - CC 55667788 (Operador)</option>
+                                <option value="5">Laura Sánchez Mendoza - CC 99887766 (Asistente RH)</option>
+                                <option value="6">Andrés Felipe Méndez - CC 44332211 (Aprendiz)</option>
+                                <option value="7">Patricia Rojas Díaz - CC 66778899 (Coordinadora)</option>
+                            </select>
+                            <small class="text-muted">Empleado que será evaluado</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Evaluador *</label>
+                            <select name="evaluador_id" id="evaluador_id" class="form-select rounded-3" required>
+                                <option value="">Seleccionar evaluador...</option>
+                                <option value="1">María González López - Gerente RH</option>
+                                <option value="2">Carlos Rodríguez Pérez - Coordinador SST</option>
+                                <option value="8">Juan Pablo Méndez - Gerente General</option>
+                                <option value="9">Sandra Patricia Gómez - Directora Administrativa</option>
+                            </select>
+                            <small class="text-muted">Persona que realiza la evaluación</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Periodo de Evaluación *</label>
+                            <select name="periodo" id="periodo" class="form-select rounded-3" required>
+                                <option value="">Seleccionar periodo...</option>
+                                <option value="2024-1">Enero - Junio 2024</option>
+                                <option value="2024-2">Julio - Diciembre 2024</option>
+                                <option value="2025-1">Enero - Junio 2025</option>
+                                <option value="2025-2">Julio - Diciembre 2025</option>
+                            </select>
+                            <small class="text-muted">Periodo al que corresponde la evaluación</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fecha de Evaluación *</label>
+                            <input type="date" name="fecha_evaluacion" id="fecha_evaluacion" class="form-control rounded-3" required>
+                            <small class="text-muted">Fecha en que se realiza la evaluación</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 2: CRITERIOS DE EVALUACIÓN -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #FFCC29;">
+                        <i class="fas fa-clipboard-list me-2"></i> Criterios de Evaluación
+                    </h6>
+                    <p class="small text-muted mb-3">Califique cada criterio del 0 al 100, donde 0 es deficiente y 100 es excelente</p>
+                    
+                    <div class="row g-3">
+                        <!-- Criterio 1 -->
+                        <div class="col-md-6">
+                            <div class="criterio-card p-3 rounded-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="fw-semibold">
+                                        <i class="fas fa-bullseye me-2" style="color: #2658A5;"></i>
+                                        Cumplimiento de objetivos
+                                    </label>
+                                    <span id="puntaje1_val" class="fw-bold" style="color: #28a745;">0</span>
+                                </div>
+                                <input type="range" name="puntaje_cumplimiento" id="puntaje1" class="form-range" min="0" max="100" step="1" value="0" oninput="actualizarPuntaje(1, this.value)">
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small class="text-muted">Deficiente</small>
+                                    <small class="text-muted">Regular</small>
+                                    <small class="text-muted">Bueno</small>
+                                    <small class="text-muted">Excelente</small>
+                                </div>
+                                <small class="text-muted d-block mt-2">Capacidad para alcanzar metas y objetivos asignados</small>
+                            </div>
+                        </div>
+
+                        <!-- Criterio 2 -->
+                        <div class="col-md-6">
+                            <div class="criterio-card p-3 rounded-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="fw-semibold">
+                                        <i class="fas fa-users me-2" style="color: #28a745;"></i>
+                                        Trabajo en equipo
+                                    </label>
+                                    <span id="puntaje2_val" class="fw-bold" style="color: #28a745;">0</span>
+                                </div>
+                                <input type="range" name="puntaje_trabajo_equipo" id="puntaje2" class="form-range" min="0" max="100" step="1" value="0" oninput="actualizarPuntaje(2, this.value)">
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small class="text-muted">Deficiente</small>
+                                    <small class="text-muted">Regular</small>
+                                    <small class="text-muted">Bueno</small>
+                                    <small class="text-muted">Excelente</small>
+                                </div>
+                                <small class="text-muted d-block mt-2">Colaboración y comunicación con compañeros</small>
+                            </div>
+                        </div>
+
+                        <!-- Criterio 3 -->
+                        <div class="col-md-6">
+                            <div class="criterio-card p-3 rounded-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="fw-semibold">
+                                        <i class="fas fa-lightbulb me-2" style="color: #FFCC29;"></i>
+                                        Iniciativa y proactividad
+                                    </label>
+                                    <span id="puntaje3_val" class="fw-bold" style="color: #28a745;">0</span>
+                                </div>
+                                <input type="range" name="puntaje_iniciativa" id="puntaje3" class="form-range" min="0" max="100" step="1" value="0" oninput="actualizarPuntaje(3, this.value)">
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small class="text-muted">Deficiente</small>
+                                    <small class="text-muted">Regular</small>
+                                    <small class="text-muted">Bueno</small>
+                                    <small class="text-muted">Excelente</small>
+                                </div>
+                                <small class="text-muted d-block mt-2">Capacidad de acción autónoma y propositiva</small>
+                            </div>
+                        </div>
+
+                        <!-- Criterio 4 -->
+                        <div class="col-md-6">
+                            <div class="criterio-card p-3 rounded-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="fw-semibold">
+                                        <i class="fas fa-check-circle me-2" style="color: #C23538;"></i>
+                                        Calidad del trabajo
+                                    </label>
+                                    <span id="puntaje4_val" class="fw-bold" style="color: #28a745;">0</span>
+                                </div>
+                                <input type="range" name="puntaje_calidad" id="puntaje4" class="form-range" min="0" max="100" step="1" value="0" oninput="actualizarPuntaje(4, this.value)">
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small class="text-muted">Deficiente</small>
+                                    <small class="text-muted">Regular</small>
+                                    <small class="text-muted">Bueno</small>
+                                    <small class="text-muted">Excelente</small>
+                                </div>
+                                <small class="text-muted d-block mt-2">Precisión, orden y excelencia en el trabajo</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resumen de puntajes -->
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="alert alert-info" style="background: rgba(38,88,165,0.08); border-left: 4px solid #2658A5;">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <i class="fas fa-chart-line me-2" style="color: #2658A5;"></i>
+                                        <strong>Puntaje Total:</strong>
+                                        <span id="puntaje_total" class="fw-bold ms-2" style="color: #2658A5;">0</span>
+                                        <span class="text-muted">/100</span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Calificación:</strong>
+                                        <span id="calificacion_texto" class="fw-bold ms-2">-</span>
+                                    </div>
+                                </div>
+                                <div class="progress mt-2" style="height: 8px;">
+                                    <div id="barra_progreso" class="progress-bar" role="progressbar" style="width: 0%; background: linear-gradient(90deg, #2658A5, #28a745);"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 3: OBSERVACIONES Y PLAN DE MEJORA -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #2658A5;">
+                        <i class="fas fa-clipboard-list me-2"></i> Observaciones y Plan de Mejora
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Observaciones Generales</label>
+                            <textarea name="observaciones" id="observaciones" class="form-control rounded-3" rows="3" 
+                                      placeholder="Comentarios adicionales, fortalezas detectadas, áreas de oportunidad..."></textarea>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Plan de Mejora</label>
+                            <textarea name="plan_mejora" id="plan_mejora" class="form-control rounded-3" rows="3" 
+                                      placeholder="Si el puntaje es menor a 75, describa el plan de acción para mejorar el desempeño"></textarea>
+                            <small class="text-muted">Requerido cuando el puntaje total es inferior a 75</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 4: FIRMAS -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #C23538;">
+                        <i class="fas fa-signature me-2"></i> Firmas de Aprobación
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Firma del Evaluador</label>
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="text" name="firma_evaluador" class="form-control rounded-3" placeholder="Nombre completo del evaluador" required>
+                                <i class="fas fa-pen fa-lg" style="color: #2658A5;"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Firma del Empleado</label>
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="text" name="firma_empleado" class="form-control rounded-3" placeholder="Nombre completo del empleado" required>
+                                <i class="fas fa-pen fa-lg" style="color: #28a745;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOTONES DE ACCIÓN -->
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                    <div>
+                        <a href="{{ url_for('rh_evaluaciones') }}" class="btn btn-outline-secondary rounded-3 px-4">
+                            <i class="fas fa-times me-1"></i> Cancelar
+                        </a>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="reset" class="btn rounded-3 px-4" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%); border: none; color: #282F4B;">
+                            <i class="fas fa-eraser me-1"></i> Limpiar Formulario
+                        </button>
+                        <button type="submit" class="btn rounded-3 px-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; color: white;">
+                            <i class="fas fa-save me-2"></i> Guardar Evaluación
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Actualizar puntaje en tiempo real
+function actualizarPuntaje(numero, valor) {
+    document.getElementById(`puntaje${numero}_val`).textContent = valor;
+    calcularTotal();
+}
+
+// Calcular puntaje total y calificación
+function calcularTotal() {
+    const p1 = parseInt(document.getElementById('puntaje1').value) || 0;
+    const p2 = parseInt(document.getElementById('puntaje2').value) || 0;
+    const p3 = parseInt(document.getElementById('puntaje3').value) || 0;
+    const p4 = parseInt(document.getElementById('puntaje4').value) || 0;
+    
+    const total = (p1 + p2 + p3 + p4) / 4;
+    const totalRedondeado = Math.round(total);
+    
+    document.getElementById('puntaje_total').textContent = totalRedondeado;
+    document.getElementById('barra_progreso').style.width = totalRedondeado + '%';
+    
+    // Determinar calificación
+    let calificacion = '';
+    let color = '';
+    
+    if (totalRedondeado >= 90) {
+        calificacion = 'Excelente ⭐';
+        color = '#28a745';
+    } else if (totalRedondeado >= 75) {
+        calificacion = 'Sobresaliente 👍';
+        color = '#2658A5';
+    } else if (totalRedondeado >= 60) {
+        calificacion = 'Básico 📋';
+        color = '#FFCC29';
+    } else {
+        calificacion = 'Necesita mejorar ⚠️';
+        color = '#C23538';
+    }
+    
+    document.getElementById('calificacion_texto').innerHTML = `<span style="color: ${color};">${calificacion}</span>`;
+    
+    // Mostrar advertencia si es menor a 75
+    const planMejoraField = document.getElementById('plan_mejora');
+    if (totalRedondeado < 75 && planMejoraField) {
+        planMejoraField.required = true;
+        document.querySelector('label[for="plan_mejora"]').innerHTML = 'Plan de Mejora * <small class="text-danger">(Requerido para puntajes menores a 75)</small>';
+    } else if (planMejoraField) {
+        planMejoraField.required = false;
+        document.querySelector('label[for="plan_mejora"]').innerHTML = 'Plan de Mejora';
+    }
+}
+
+// Validar formulario antes de enviar
+document.getElementById('formNuevaEvaluacion')?.addEventListener('submit', function(e) {
+    const empleado = document.getElementById('empleado_id')?.value;
+    const evaluador = document.getElementById('evaluador_id')?.value;
+    const periodo = document.getElementById('periodo')?.value;
+    const fecha = document.getElementById('fecha_evaluacion')?.value;
+    const firmaEvaluador = document.querySelector('input[name="firma_evaluador"]')?.value.trim();
+    const firmaEmpleado = document.querySelector('input[name="firma_empleado"]')?.value.trim();
+    
+    const p1 = parseInt(document.getElementById('puntaje1').value) || 0;
+    const p2 = parseInt(document.getElementById('puntaje2').value) || 0;
+    const p3 = parseInt(document.getElementById('puntaje3').value) || 0;
+    const p4 = parseInt(document.getElementById('puntaje4').value) || 0;
+    const total = (p1 + p2 + p3 + p4) / 4;
+    
+    let error = '';
+    
+    if (!empleado) error = 'Debe seleccionar un empleado';
+    else if (!evaluador) error = 'Debe seleccionar un evaluador';
+    else if (!periodo) error = 'Debe seleccionar un periodo de evaluación';
+    else if (!fecha) error = 'La fecha de evaluación es obligatoria';
+    else if (p1 === 0 || p2 === 0 || p3 === 0 || p4 === 0) error = 'Debe completar todos los criterios de evaluación';
+    else if (!firmaEvaluador) error = 'La firma del evaluador es obligatoria';
+    else if (!firmaEmpleado) error = 'La firma del empleado es obligatoria';
+    
+    if (error) {
+        e.preventDefault();
+        alert('❌ ' + error);
+    }
+});
+
+// Establecer fecha actual por defecto
+document.addEventListener('DOMContentLoaded', function() {
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fecha_evaluacion')?.setAttribute('value', hoy);
+});
+</script>
+
+<style>
+.form-section {
+    background: #f8f9fc;
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+.form-section:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.form-control, .form-select {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #2658A5;
+    box-shadow: 0 0 0 3px rgba(38,88,165,0.15);
+}
+.criterio-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+}
+.criterio-card:hover {
+    border-color: #2658A5;
+    box-shadow: 0 2px 8px rgba(38,88,165,0.1);
+}
+.form-range {
+    width: 100%;
+}
+.form-range::-webkit-slider-thumb {
+    background: #2658A5;
+}
+.form-range::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+</style>
+{% endblock %}
