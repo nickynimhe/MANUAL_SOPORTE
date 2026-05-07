@@ -1,0 +1,501 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Reporte de Nómina - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-file-invoice-dollar fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">Reporte de Nómina</h4>
+                        <p class="text-white-80 mb-0 small">Gestión de pagos y compensaciones</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i> Imprimir
+                    </button>
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="exportarReporte()">
+                        <i class="fas fa-file-excel me-1"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros de reporte -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-calendar-alt me-2"></i> Filtros de Reporte
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Mes</label>
+                    <select name="mes" class="form-select rounded-3">
+                        <option value="1">Enero</option>
+                        <option value="2">Febrero</option>
+                        <option value="3">Marzo</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Mayo</option>
+                        <option value="6">Junio</option>
+                        <option value="7">Julio</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12" selected>Diciembre</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Año</label>
+                    <select name="anio" class="form-select rounded-3">
+                        <option value="2024" selected>2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Departamento</label>
+                    <select name="departamento" class="form-select rounded-3">
+                        <option value="todos">Todos</option>
+                        <option value="rh">Recursos Humanos</option>
+                        <option value="sst">SST</option>
+                        <option value="operaciones">Operaciones</option>
+                        <option value="comercial">Comercial</option>
+                        <option value="tecnologia">Tecnología</option>
+                        <option value="financiero">Financiero</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Formato</label>
+                    <select name="formato" class="form-select rounded-3">
+                        <option value="detallado">Detallado</option>
+                        <option value="resumido">Resumido</option>
+                        <option value="ejecutivo">Ejecutivo</option>
+                    </select>
+                </div>
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary rounded-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); border: none;">
+                        <i class="fas fa-search me-1"></i> Generar Reporte
+                    </button>
+                    <button type="reset" class="btn btn-outline-secondary rounded-3 ms-2">
+                        <i class="fas fa-times me-1"></i> Limpiar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tarjetas de resumen -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(38,88,165,0.1);">
+                    <i class="fas fa-users" style="color: #2658A5;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #2658A5;">44</h5>
+                <small class="text-muted">Total Empleados</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                    <i class="fas fa-money-bill-wave" style="color: #28a745;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #28a745;">$140,800,000</h5>
+                <small class="text-muted">Total Nómina Mensual</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(255,204,41,0.15);">
+                    <i class="fas fa-chart-line" style="color: #FFCC29;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #FFCC29;">$3,200,000</h5>
+                <small class="text-muted">Salario Promedio</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(194,53,56,0.1);">
+                    <i class="fas fa-percent" style="color: #C23538;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #C23538;">42%</h5>
+                <small class="text-muted">Prestaciones Sociales</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos de nómina -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-bar me-2"></i> Distribución Salarial por Departamento
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="salariosDeptosChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%);">
+                    <h6 class="mb-0 fw-semibold" style="color: #282F4B;">
+                        <i class="fas fa-chart-pie me-2"></i> Composición de la Nómina
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="composicionNominaChart" height="250"></canvas>
+                    <div class="mt-3 text-center">
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <div><span class="badge" style="background: #2658A5;">&nbsp;</span> Salario Base</div>
+                            <div><span class="badge" style="background: #28a745;">&nbsp;</span> Auxilio Transporte</div>
+                            <div><span class="badge" style="background: #FFCC29;">&nbsp;</span> Horas Extras</div>
+                            <div><span class="badge" style="background: #C23538;">&nbsp;</span> Bonificaciones</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de nómina detallada -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-table me-2"></i> Detalle de Nómina
+                </h5>
+                <div class="btn-group">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="exportarTabla()">
+                        <i class="fas fa-file-excel me-1"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead style="background: #f8f9fc;">
+                        <tr>
+                            <th style="padding: 16px 12px;">Empleado</th>
+                            <th style="padding: 16px 12px;">Departamento</th>
+                            <th style="padding: 16px 12px;">Cargo</th>
+                            <th style="padding: 16px 12px;">Salario Base</th>
+                            <th style="padding: 16px 12px;">Aux. Transporte</th>
+                            <th style="padding: 16px 12px;">Horas Extras</th>
+                            <th style="padding: 16px 12px;">Bonificación</th>
+                            <th style="padding: 16px 12px;">Total Devengado</th>
+                            <th style="padding: 16px 12px;">Deducciones</th>
+                            <th style="padding: 16px 12px;">Neto a Pagar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="align-middle fw-semibold">María González López</td>
+                            <td class="align-middle">Recursos Humanos</td>
+                            <td class="align-middle">Gerente RH</td>
+                            <td class="align-middle">$4,500,000</td>
+                            <td class="align-middle">$162,000</td>
+                            <td class="align-middle">$0</td>
+                            <td class="align-middle">$500,000</td>
+                            <td class="align-middle">$5,162,000</td>
+                            <td class="align-middle">$774,300</td>
+                            <td class="align-middle fw-bold" style="color: #28a745;">$4,387,700</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Carlos Rodríguez Pérez</td>
+                            <td class="align-middle">SST</td>
+                            <td class="align-middle">Coordinador SST</td>
+                            <td class="align-middle">$3,200,000</td>
+                            <td class="align-middle">$162,000</td>
+                            <td class="align-middle">$120,000</td>
+                            <td class="align-middle">$300,000</td>
+                            <td class="align-middle">$3,782,000</td>
+                            <td class="align-middle">$567,300</td>
+                            <td class="align-middle fw-bold" style="color: #28a745;">$3,214,700</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Ana Martínez Suárez</td>
+                            <td class="align-middle">SST</td>
+                            <td class="align-middle">Analista SST</td>
+                            <td class="align-middle">$2,200,000</td>
+                            <td class="align-middle">$162,000</td>
+                            <td class="align-middle">$80,000</td>
+                            <td class="align-middle">$200,000</td>
+                            <td class="align-middle">$2,642,000</td>
+                            <td class="align-middle">$396,300</td>
+                            <td class="align-middle fw-bold" style="color: #28a745;">$2,245,700</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Jorge Ramírez Castro</td>
+                            <td class="align-middle">Operaciones</td>
+                            <td class="align-middle">Operador</td>
+                            <td class="align-middle">$1,800,000</td>
+                            <td class="align-middle">$162,000</td>
+                            <td class="align-middle">$200,000</td>
+                            <td class="align-middle">$100,000</td>
+                            <td class="align-middle">$2,262,000</td>
+                            <td class="align-middle">$339,300</td>
+                            <td class="align-middle fw-bold" style="color: #28a745;">$1,922,700</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Laura Sánchez Mendoza</td>
+                            <td class="align-middle">Recursos Humanos</td>
+                            <td class="align-middle">Asistente RH</td>
+                            <td class="align-middle">$1,600,000</td>
+                            <td class="align-middle">$162,000</td>
+                            <td class="align-middle">$0</td>
+                            <td class="align-middle">$0</td>
+                            <td class="align-middle">$1,762,000</td>
+                            <td class="align-middle">$264,300</td>
+                            <td class="align-middle fw-bold" style="color: #28a745;">$1,497,700</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Andrés Felipe Méndez</td>
+                            <td class="align-middle">Tecnología</td>
+                            <td class="align-middle">Aprendiz SST</td>
+                            <td class="align-middle">$1,200,000</td>
+                            <td class="align-middle">$162,000</td>
+                            <td class="align-middle">$0</td>
+                            <td class="align-middle">$0</td>
+                            <td class="align-middle">$1,362,000</td>
+                            <td class="align-middle">$204,300</td>
+                            <td class="align-middle fw-bold" style="color: #28a745;">$1,157,700</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Patricia Rojas Díaz</td>
+                            <td class="align-middle">Financiero</td>
+                            <td class="align-middle">Coordinadora</td>
+                            <td class="align-middle">$3,500,000</td>
+                            <td class="align-middle">$162,000</td>
+                            <td class="align-middle">$150,000</td>
+                            <td class="align-middle">$400,000</td>
+                            <td class="align-middle">$4,212,000</td>
+                            <td class="align-middle">$631,800</td>
+                            <td class="align-middle fw-bold" style="color: #28a745;">$3,580,200</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Luis Fernando Gómez</td>
+                            <td class="align-middle">Comercial</td>
+                            <td class="align-middle">Ejecutivo Comercial</td>
+                            <td class="align-middle">$2,500,000</td>
+                            <td class="align-middle">$162,000</td>
+                            <td class="align-middle">$100,000</td>
+                            <td class="align-middle">$350,000</td>
+                            <td class="align-middle">$3,112,000</td>
+                            <td class="align-middle">$466,800</td>
+                            <td class="align-middle fw-bold" style="color: #28a745;">$2,645,200</td>
+                        </tr>
+                        <tr class="table-light">
+                            <td class="align-middle fw-bold" colspan="3">TOTALES</td>
+                            <td class="align-middle fw-bold">$21,500,000</td>
+                            <td class="align-middle fw-bold">$1,296,000</td>
+                            <td class="align-middle fw-bold">$650,000</td>
+                            <td class="align-middle fw-bold">$1,850,000</td>
+                            <td class="align-middle fw-bold">$25,296,000</td>
+                            <td class="align-middle fw-bold">$3,794,400</td>
+                            <td class="align-middle fw-bold" style="color: #28a745;">$21,501,600</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen de prestaciones sociales -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+            <h6 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-chart-simple me-2"></i> Resumen de Prestaciones Sociales (Mes Actual)
+            </h6>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <div class="text-center p-3 rounded-3" style="background: #f8f9fc;">
+                        <i class="fas fa-calendar-alt fa-2x mb-2" style="color: #2658A5;"></i>
+                        <h6 class="mb-0">Cesantías</h6>
+                        <h5 class="fw-bold mb-0" style="color: #2658A5;">$18,450,000</h5>
+                        <small class="text-muted">8.33% del salario</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center p-3 rounded-3" style="background: #f8f9fc;">
+                        <i class="fas fa-money-bill-alt fa-2x mb-2" style="color: #28a745;"></i>
+                        <h6 class="mb-0">Intereses Cesantías</h6>
+                        <h5 class="fw-bold mb-0" style="color: #28a745;">$2,214,000</h5>
+                        <small class="text-muted">12% anual</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center p-3 rounded-3" style="background: #f8f9fc;">
+                        <i class="fas fa-umbrella-beach fa-2x mb-2" style="color: #FFCC29;"></i>
+                        <h6 class="mb-0">Prima de Servicios</h6>
+                        <h5 class="fw-bold mb-0" style="color: #FFCC29;">$18,450,000</h5>
+                        <small class="text-muted">30 días por año</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center p-3 rounded-3" style="background: #f8f9fc;">
+                        <i class="fas fa-chalkboard-user fa-2x mb-2" style="color: #C23538;"></i>
+                        <h6 class="mb-0">Vacaciones</h6>
+                        <h5 class="fw-bold mb-0" style="color: #C23538;">$9,225,000</h5>
+                        <small class="text-muted">15 días hábiles</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen de aportes parafiscales -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <h6 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-building me-2"></i> Aportes Parafiscales
+            </h6>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                        <span><i class="fas fa-heartbeat me-2" style="color: #C23538;"></i> EPS (Salud)</span>
+                        <span class="fw-bold" style="color: #2658A5;">8.5%</span>
+                        <span class="fw-bold">$13,600,000</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                        <span><i class="fas fa-shield-alt me-2" style="color: #28a745;"></i> ARL</span>
+                        <span class="fw-bold" style="color: #2658A5;">0.522%</span>
+                        <span class="fw-bold">$835,200</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                        <span><i class="fas fa-university me-2" style="color: #FFCC29;"></i> Pensiones</span>
+                        <span class="fw-bold" style="color: #2658A5;">12%</span>
+                        <span class="fw-bold">$19,200,000</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-between align-items-center p-3">
+                        <span><i class="fas fa-users me-2" style="color: #C23538;"></i> ICBF</span>
+                        <span class="fw-bold" style="color: #2658A5;">3%</span>
+                        <span class="fw-bold">$4,800,000</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-between align-items-center p-3">
+                        <span><i class="fas fa-graduation-cap me-2" style="color: #28a745;"></i> SENA</span>
+                        <span class="fw-bold" style="color: #2658A5;">2%</span>
+                        <span class="fw-bold">$3,200,000</span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-between align-items-center p-3">
+                        <span><i class="fas fa-chart-line me-2" style="color: #FFCC29;"></i> Cajas de Compensación</span>
+                        <span class="fw-bold" style="color: #2658A5;">4%</span>
+                        <span class="fw-bold">$6,400,000</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Gráfico de salarios por departamento
+const ctxSalariosDeptos = document.getElementById('salariosDeptosChart')?.getContext('2d');
+if (ctxSalariosDeptos) {
+    new Chart(ctxSalariosDeptos, {
+        type: 'bar',
+        data: {
+            labels: ['RH', 'SST', 'Operaciones', 'Comercial', 'Tecnología', 'Financiero'],
+            datasets: [{
+                label: 'Total Nómina',
+                data: [6800000, 5400000, 21600000, 19200000, 14400000, 16800000],
+                backgroundColor: '#2658A5',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Total: $' + context.raw.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Gráfico de composición de nómina
+const ctxComposicion = document.getElementById('composicionNominaChart')?.getContext('2d');
+if (ctxComposicion) {
+    new Chart(ctxComposicion, {
+        type: 'doughnut',
+        data: {
+            labels: ['Salario Base', 'Auxilio Transporte', 'Horas Extras', 'Bonificaciones'],
+            datasets: [{
+                data: [21500000, 1296000, 650000, 1850000],
+                backgroundColor: ['#2658A5', '#28a745', '#FFCC29', '#C23538'],
+                borderWidth: 0,
+                cutout: '60%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+function exportarReporte() {
+    alert('Exportando reporte de nómina...');
+}
+
+function exportarTabla() {
+    alert('Exportando detalle de nómina...');
+}
+</script>
+
+<style>
+.hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+}
+</style>
+{% endblock %}
