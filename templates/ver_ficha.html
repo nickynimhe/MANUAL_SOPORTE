@@ -3,151 +3,161 @@
 {% block title %}{{ ficha.problema }} - Soporte Técnico{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-10">
-        <!-- Header de la ficha -->
-        <div class="d-flex justify-content-between align-items-start mb-4">
-            <div class="flex-grow-1">
-                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm mb-2">
-                    <i class="fas fa-arrow-left me-1"></i> Volver al listado
-                </a>
-                <h2 class="h3 text-primary mb-1">{{ ficha.problema }}</h2>
-                <p class="text-muted fst-italic mb-3">Ficha técnica para diagnóstico y solución rápida</p>
+<div class="container-fluid px-0 px-md-3 py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
 
-                <div class="flex-column flex-md-row flex-wrap gap-2">
-                    <span class="badge {% if ficha.categoria == 'TV' %}bg-warning{% else %}bg-info{% endif %}">
-                        <i class="fas {% if ficha.categoria == 'TV' %}fa-tv{% else %}fa-wifi{% endif %} me-1"></i> 
-                        {{ ficha.categoria }}
-                    </span>
-                    <div class="d-flex flex-column flex-md-row">
-                        <small class="text-muted">
-                            <i class="far fa-clock me-1"></i> 
-                            {{ ficha.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}
-                        </small>
-                        {% if ficha.fecha_actualizacion != ficha.fecha_creacion %}
-                        <small class="text-muted ms-md-2">
-                            <i class="fas fa-sync-alt me-1"></i> 
-                            {{ ficha.fecha_actualizacion.strftime('%d/%m/%Y %H:%M') }}
-                        </small>
-                        {% endif %}
+            <!-- HEADER CON EFECTO SHIMMER -->
+            <div class="sst-header bg-gradient-soporte rounded-4 mb-4 p-4 text-white shadow-lg">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                    <div class="mb-3 mb-md-0">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="bg-white rounded-3 p-2 me-3 shadow-sm">
+                                <i class="fas fa-file-alt" style="color: #2658A5; font-size: 1.8rem;"></i>
+                            </div>
+                            <div>
+                                <h1 class="h2 fw-bold mb-1 text-white">{{ ficha.problema }}</h1>
+                                <p class="text-white-80 mb-0">Ficha técnica para diagnóstico y solución rápida</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('index') }}" class="btn btn-light btn-sm fw-medium shadow-sm">
+                            <i class="fas fa-arrow-left me-1"></i> Volver al listado
+                        </a>
                     </div>
                 </div>
             </div>
-            
-            {% if current_user.rol == 'admin' %}
-            <div class="btn-group ms-3">
-                <a href="{{ url_for('editar_ficha', id=ficha.id) }}" class="btn btn-outline-primary btn-sm">
-                    <i class="fas fa-edit me-1"></i> Editar
-                </a>
-                <a href="{{ url_for('eliminar_ficha', id=ficha.id) }}" class="btn btn-outline-danger btn-sm"
-                   onclick="return confirm('¿Estás seguro de eliminar esta ficha?')">
-                    <i class="fas fa-trash me-1"></i> Eliminar
-                </a>
-            </div>
-            {% endif %}
-        </div>
 
-        <!-- Contenido de la ficha -->
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-4 rounded-3">
-                <div class="row">
-                    <!-- Columna izquierda -->
-                    <div class="col-md-6">
-                        <!-- Descripción -->
-                        <div class="mb-4 section-border section-description">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="bg-primary p-2 rounded-circle me-2 icon-circle">
-                                    <i class="fas fa-align-left text-white"></i>
-                                </div>
-                                <h5 class="mb-0 text-dark">Descripción</h5>
-                            </div>
-                            <div class="ps-4">
-                                <div class="bg-light p-3 rounded">
-                                    {{ ficha.descripcion or 'Sin descripción' }}
-                                </div>
-                            </div>
+            <!-- CONTENIDO PRINCIPAL -->
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="d-flex gap-2">
+                            <span class="badge rounded-pill px-3 py-2" style="background: 
+                                {% if ficha.categoria == 'TV' %}#C23538
+                                {% elif ficha.categoria == 'Internet' %}#2658A5
+                                {% else %}#28a745{% endif %};">
+                                <i class="fas 
+                                    {% if ficha.categoria == 'TV' %}fa-tv
+                                    {% elif ficha.categoria == 'Internet' %}fa-wifi
+                                    {% else %}fa-laptop{% endif %} me-1"></i>
+                                {{ ficha.categoria }}
+                            </span>
+                            <span class="badge rounded-pill px-3 py-2" style="background: #6c757d;">
+                                <i class="fas fa-calendar-alt me-1"></i> Creado: {{ ficha.fecha_creacion.strftime('%d/%m/%Y %H:%M') }}
+                            </span>
+                            {% if ficha.fecha_actualizacion != ficha.fecha_creacion %}
+                            <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                <i class="fas fa-sync-alt me-1"></i> Actualizado: {{ ficha.fecha_actualizacion.strftime('%d/%m/%Y %H:%M') }}
+                            </span>
+                            {% endif %}
                         </div>
-
-                        <!-- Causas -->
-                        <div class="mb-4 section-border section-causas">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="bg-warning p-2 rounded-circle me-2 icon-circle">
-                                    <i class="fas fa-search text-white"></i>
+                        {% if current_user.rol == 'admin' %}
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('editar_ficha', id=ficha.id) }}" class="btn btn-light btn-sm shadow-sm">
+                                <i class="fas fa-edit me-1" style="color: #FFCC29;"></i> Editar
+                            </a>
+                            <button type="button" class="btn btn-danger btn-sm shadow-sm" 
+                                    data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fas fa-trash me-1"></i> Eliminar
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <!-- COLUMNA IZQUIERDA -->
+                        <div class="col-md-6">
+                            <!-- DESCRIPCIÓN -->
+                            <div class="info-section mb-4">
+                                <div class="d-flex align-items-center gap-2 mb-3">
+                                    <div class="rounded-circle p-2" style="background: rgba(38,88,165,0.1);">
+                                        <i class="fas fa-align-left" style="color: #2658A5;"></i>
+                                    </div>
+                                    <h5 class="fw-bold mb-0" style="color: #2658A5;">Descripción</h5>
                                 </div>
-                                <h5 class="mb-0 text-dark">Causas Posibles</h5>
+                                <div class="bg-light p-3 rounded-3" style="background: #f8f9fc !important;">
+                                    <p class="mb-0 text-muted" style="line-height: 1.6;">
+                                        {{ ficha.descripcion or 'Sin descripción' }}
+                                    </p>
+                                </div>
                             </div>
-                            <div class="ps-4">
+
+                            <!-- CAUSAS -->
+                            <div class="info-section mb-4">
+                                <div class="d-flex align-items-center gap-2 mb-3">
+                                    <div class="rounded-circle p-2" style="background: rgba(255,204,41,0.15);">
+                                        <i class="fas fa-search" style="color: #FFCC29;"></i>
+                                    </div>
+                                    <h5 class="fw-bold mb-0" style="color: #FFCC29;">Causas Posibles</h5>
+                                </div>
                                 {% if ficha.causas %}
                                 <div class="causas-container">
                                     {% for causa in ficha.causas.split('|') %}
-                                    <div class="causa-item bg-light p-3 rounded mb-2">
-                                        <div class="d-flex">
-                                            <span class="text-primary me-2">•</span>
-                                            <span>{{ causa }}</span>
-                                        </div>
+                                    <div class="causa-item p-3 rounded-3 mb-2 d-flex align-items-start gap-2">
+                                        <i class="fas fa-circle mt-1" style="color: #FFCC29; font-size: 0.6rem;"></i>
+                                        <span class="text-muted">{{ causa.strip() }}</span>
                                     </div>
                                     {% endfor %}
                                 </div>
                                 {% else %}
-                                <div class="text-center py-3 text-muted">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    No se especificaron causas
+                                <div class="text-center py-4 bg-light rounded-3">
+                                    <i class="fas fa-info-circle me-2" style="color: #6c757d;"></i>
+                                    <span class="text-muted">No se especificaron causas</span>
                                 </div>
                                 {% endif %}
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Columna derecha -->
-                    <div class="col-md-6">
-                        <!-- Solución -->
-                        <div class="mb-4 section-border section-solucion">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="bg-success p-2 rounded-circle me-2 icon-circle">
-                                    <i class="fas fa-check-circle text-white"></i>
+                        <!-- COLUMNA DERECHA -->
+                        <div class="col-md-6">
+                            <!-- SOLUCIÓN -->
+                            <div class="info-section mb-4">
+                                <div class="d-flex align-items-center gap-2 mb-3">
+                                    <div class="rounded-circle p-2" style="background: rgba(40,167,69,0.1);">
+                                        <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                                    </div>
+                                    <h5 class="fw-bold mb-0" style="color: #28a745;">Solución</h5>
                                 </div>
-                                <h5 class="mb-0 text-dark">Solución</h5>
-                            </div>
-                            <div class="ps-4">
                                 {% if ficha.solucion %}
                                 <div class="solucion-container">
                                     {% for paso in ficha.solucion.split('|') %}
-                                    <div class="paso-item bg-light p-3 rounded mb-2">
-                                        <div class="d-flex align-items-start">
-                                            <span class="badge bg-primary rounded-pill me-2">{{ loop.index }}</span>
-                                            <span>{{ paso.strip().lstrip('0123456789. ') }}</span>
-                                        </div>
+                                    <div class="paso-item p-3 rounded-3 mb-2 d-flex align-items-start gap-2">
+                                        <span class="badge rounded-circle" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">{{ loop.index }}</span>
+                                        <span class="text-muted" style="line-height: 1.5;">{{ paso.strip() }}</span>
                                     </div>
                                     {% endfor %}
                                 </div>
                                 {% else %}
-                                <div class="text-center py-3 text-muted">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    No se especificó solución
+                                <div class="text-center py-4 bg-light rounded-3">
+                                    <i class="fas fa-info-circle me-2" style="color: #6c757d;"></i>
+                                    <span class="text-muted">No se especificó solución</span>
                                 </div>
                                 {% endif %}
                             </div>
-                        </div>
 
-                        <!-- Palabras clave -->
-                        <div class="mb-4 section-border section-palabras">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="bg-info p-2 rounded-circle me-2 icon-circle">
-                                    <i class="fas fa-tags text-white"></i>
+                            <!-- PALABRAS CLAVE -->
+                            <div class="info-section mb-4">
+                                <div class="d-flex align-items-center gap-2 mb-3">
+                                    <div class="rounded-circle p-2" style="background: rgba(13,202,240,0.1);">
+                                        <i class="fas fa-tags" style="color: #0dcaf0;"></i>
+                                    </div>
+                                    <h5 class="fw-bold mb-0" style="color: #0dcaf0;">Palabras Clave</h5>
                                 </div>
-                                <h5 class="mb-0 text-dark">Palabras Clave</h5>
-                            </div>
-                            <div class="ps-4">
                                 {% if ficha.palabras_clave %}
                                 <div class="d-flex flex-wrap gap-2">
                                     {% for palabra in ficha.palabras_clave.split(',') %}
-                                    <span class="badge bg-secondary">{{ palabra.strip() }}</span>
+                                    <span class="badge rounded-pill px-3 py-2" style="background: #f8f9fc; color: #2658A5; border: 1px solid #e5e7eb;">
+                                        <i class="fas fa-hashtag me-1" style="font-size: 0.7rem;"></i> {{ palabra.strip() }}
+                                    </span>
                                     {% endfor %}
                                 </div>
                                 {% else %}
-                                <div class="text-center py-3 text-muted">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Sin palabras clave
+                                <div class="text-center py-4 bg-light rounded-3">
+                                    <i class="fas fa-info-circle me-2" style="color: #6c757d;"></i>
+                                    <span class="text-muted">Sin palabras clave</span>
                                 </div>
                                 {% endif %}
                             </div>
@@ -159,100 +169,139 @@
     </div>
 </div>
 
-<style>
-    /* Barras laterales de color para secciones */
-    .section-border {
-        border-left: 5px solid transparent;
-        padding-left: 1rem;
-        transition: border-color 0.3s ease;
-    }
-    .section-description {
-        border-left-color: #0d6efd; /* azul */
-    }
-    .section-causas {
-        border-left-color: #ffc107; /* amarillo */
-    }
-    .section-solucion {
-        border-left-color: #198754; /* verde */
-    }
-    .section-palabras {
-        border-left-color: #0dcaf0; /* celeste */
-    }
+<!-- MODAL DE ELIMINACIÓN -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                    <i class="fas fa-file-alt text-danger" style="font-size: 1.8rem;"></i>
+                </div>
+                <h6 class="fw-bold mb-3">¿Estás seguro que deseas eliminar esta ficha?</h6>
+                <div class="alert p-3 mb-3" style="background: #f8f9fc; border-left: 4px solid #C23538;">
+                    <strong style="color: #2658A5;">{{ ficha.problema }}</strong><br>
+                    <small class="text-muted">{{ ficha.categoria }} • {{ ficha.fecha_creacion.strftime('%d/%m/%Y') }}</small>
+                </div>
+                <p class="text-muted small mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Esta acción no se puede deshacer
+                </p>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4 justify-content-center">
+                <button type="button" class="btn btn-secondary rounded-3 px-4" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Cancelar
+                </button>
+                <a href="{{ url_for('eliminar_ficha', id=ficha.id) }}" class="btn rounded-3 px-4" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%); color: white; border: none;">
+                    <i class="fas fa-trash-alt me-1"></i> Eliminar Ficha
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 
-    /* Iconos circulares con tamaño fijo y hover */
-    .icon-circle {
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: transform 0.3s ease;
-    }
-    .icon-circle:hover {
-        transform: scale(1.15);
-        cursor: default;
-    }
-
-    /* Sombras suaves y bordes redondeados para el contenido */
-    .card-body {
-        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.1);
-        border-radius: 12px;
-    }
-
-    /* Efecto hover para badges */
-    .badge {
-        transition: background-color 0.3s ease;
-    }
-    .badge:hover {
-        background-color: #0a58ca !important;
-        cursor: pointer;
-    }
-
-    /* Hover en causa y paso */
-    .causa-item, .paso-item {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        border-left: 3px solid transparent;
-    }
-    .causa-item:hover, .paso-item:hover {
-        transform: translateX(5px);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .causa-item {
-        border-left-color: #ffc107;
-    }
-    .paso-item {
-        border-left-color: #198754;
-    }
-</style>
-
-<!-- Script para el procesamiento de causas -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Función para procesar el textarea de causas
-    const procesarCausas = () => {
-        const causasTextarea = document.getElementById('causas');
-        
-        if (causasTextarea) {
-            // Formatear causas existentes (para editar)
-            if (causasTextarea.value.includes('|')) {
-                causasTextarea.value = causasTextarea.value.split('|').join('\n');
-            }
-            
-            // Procesar al enviar el formulario
-            const form = causasTextarea.closest('form');
-            if (form) {
-                form.addEventListener('submit', function() {
-                    const lineas = causasTextarea.value.split('\n')
-                        .filter(linea => linea.trim())
-                        .map(linea => linea.trim());
-                    causasTextarea.value = lineas.join('|');
-                });
-            }
-        }
-    };
-    
-    // Ejecutar la función
-    procesarCausas();
+    // Tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 });
 </script>
+
+<style>
+/* Efecto shimmer para el header */
+.bg-gradient-soporte {
+    background: linear-gradient(135deg, #2658A5 0%, #1a3f73 50%, #282F4B 100%) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.bg-gradient-soporte::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    animation: shimmer 8s infinite linear;
+}
+
+@keyframes shimmer {
+    0% { transform: translate(-30%, -30%) rotate(0deg); }
+    100% { transform: translate(30%, 30%) rotate(360deg); }
+}
+
+/* Secciones de información */
+.info-section {
+    transition: all 0.3s ease;
+}
+
+.info-section:hover {
+    transform: translateY(-2px);
+}
+
+/* Causa item */
+.causa-item {
+    background: #f8f9fc;
+    border-left: 3px solid #FFCC29;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.causa-item:hover {
+    transform: translateX(5px);
+    background: rgba(255,204,41,0.05);
+}
+
+/* Paso item */
+.paso-item {
+    background: #f8f9fc;
+    border-left: 3px solid #28a745;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.paso-item:hover {
+    transform: translateX(5px);
+    background: rgba(40,167,69,0.05);
+}
+
+/* Badges */
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    animation: fadeIn 0.4s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .card-header .d-flex {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 10px;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+    }
+}
+</style>
 {% endblock %}
