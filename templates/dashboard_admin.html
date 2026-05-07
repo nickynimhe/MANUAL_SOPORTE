@@ -45,7 +45,6 @@
       color: var(--text);
     }
 
-    /* Contenedor principal */
     .dashboard-wrapper {
       min-height: 100vh;
       padding: 40px 20px;
@@ -54,7 +53,6 @@
       justify-content: center;
     }
 
-    /* Tarjeta principal */
     .dashboard-card {
       max-width: 1400px;
       width: 100%;
@@ -66,17 +64,10 @@
     }
 
     @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Header */
     .dashboard-header {
       background: linear-gradient(135deg, var(--admin-accent) 0%, #5b21b6 100%);
       color: white;
@@ -105,7 +96,6 @@
       margin-top: 12px;
     }
 
-    /* Información del usuario */
     .user-info-bar {
       background: #f8f9fa;
       padding: 15px 40px;
@@ -155,14 +145,15 @@
       font-size: 13px;
       font-weight: 500;
       transition: all 0.2s;
+      text-decoration: none;
     }
 
     .logout-btn:hover {
       background: #dc2626;
       transform: translateY(-1px);
+      color: white;
     }
 
-    /* Módulos */
     .modules-container {
       padding: 40px;
     }
@@ -188,7 +179,6 @@
       margin-bottom: 40px;
     }
 
-    /* Tarjetas de módulos */
     .module-card {
       background: white;
       border-radius: var(--radius);
@@ -216,7 +206,6 @@
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     }
 
-    /* Colores por módulo */
     .module-card.soporte::before { background: var(--soporte-color); }
     .module-card.sst::before { background: var(--sst-color); }
     .module-card.rh::before { background: var(--rh-color); }
@@ -289,7 +278,6 @@
       filter: brightness(1.1);
     }
 
-    /* Accesos rápidos */
     .quick-access {
       background: #f8f9fa;
       border-radius: var(--radius);
@@ -328,7 +316,6 @@
       width: 24px;
     }
 
-    /* Footer stats */
     .dashboard-footer {
       background: #f8f9fa;
       padding: 20px 40px;
@@ -361,7 +348,6 @@
       text-transform: uppercase;
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
       .dashboard-header { padding: 20px; }
       .user-info-bar { padding: 15px 20px; flex-direction: column; text-align: center; }
@@ -433,7 +419,7 @@
                     </div>
 
                     <!-- Módulo RH -->
-                    <div class="module-card rh" onclick="window.location.href='{{ url_for('rh_dashboard') }}'">
+                    <div class="module-card rh" onclick="window.location.href='{{ url_for('rh_dashboard_main') }}'">
                         <div class="module-icon">
                             <i class="fas fa-users"></i>
                         </div>
@@ -443,7 +429,7 @@
                     </div>
                 </div>
 
-                <!-- Accesos Rápidos (Menú Admin personalizable) -->
+                <!-- Accesos Rápidos -->
                 <div class="quick-access">
                     <div class="section-title">
                         <i class="fas fa-bolt"></i>
@@ -485,20 +471,20 @@
                     </div>
                     <div class="stats" style="justify-content: space-around;">
                         <div class="stat-item">
-                            <div class="stat-number">156</div>
-                            <div class="stat-label">Tickets Activos</div>
+                            <div class="stat-number">{{ stats.get('total_fichas', 0) }}</div>
+                            <div class="stat-label">Fichas Soporte</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-number">12</div>
+                            <div class="stat-number">{{ stats.get('total_usuarios', 0) }}</div>
                             <div class="stat-label">Usuarios Activos</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-number">98%</div>
-                            <div class="stat-label">Satisfacción</div>
+                            <div class="stat-number">{{ stats.get('total_contenido_sst', 0) }}</div>
+                            <div class="stat-label">Contenido SST</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-number">24</div>
-                            <div class="stat-label">Reportes SST</div>
+                            <div class="stat-number">{{ stats.get('total_empleados_activos', 0) }}</div>
+                            <div class="stat-label">Empleados RH</div>
                         </div>
                     </div>
                 </div>
@@ -508,7 +494,7 @@
             <div class="dashboard-footer">
                 <div>
                     <small class="text-muted">
-                        <i class="fas fa-copyright"></i> 2024 M@STV Producciones - Panel Administrativo
+                        <i class="fas fa-copyright"></i> 2025 M@STV Producciones - Panel Administrativo
                     </small>
                 </div>
                 <div>
@@ -520,93 +506,6 @@
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Script para personalizar el menú del admin -->
-    <script>
-        // Este objeto contiene la configuración del menú del administrador
-        // Puedes modificarlo fácilmente para agregar, quitar o cambiar accesos rápidos
-        
-        const ADMIN_MENU_CONFIG = {
-            quickLinks: [
-                { icon: 'fa-users-cog', text: 'Gestionar Usuarios', url: 'gestion_usuarios', visible: true },
-                { icon: 'fa-user-plus', text: 'Agregar Usuario', url: 'agregar_usuario', visible: true },
-                { icon: 'fa-key', text: 'Cambiar Contraseña', url: 'cambiar_password', visible: true },
-                { icon: 'fa-images', text: 'Soluciones Visuales', url: 'soluciones_visuales', visible: true },
-                { icon: 'fa-phone-alt', text: 'Atención Telefónica', url: 'atencion_telefonica', visible: true },
-                { icon: 'fa-info-circle', text: 'Información General', url: 'informacion_general', visible: true },
-                { icon: 'fa-chart-bar', text: 'Reportes', url: 'reportes', visible: false }, // Ejemplo de link oculto
-                { icon: 'fa-database', text: 'Base de Datos', url: 'backup', visible: false } // Ejemplo de link oculto
-            ],
-            modules: {
-                soporte: {
-                    enabled: true,
-                    url: 'index',
-                    icon: 'fa-headset',
-                    color: '#0284c7'
-                },
-                sst: {
-                    enabled: true,
-                    url: 'sst_dashboard',
-                    icon: 'fa-shield-alt',
-                    color: '#16a34a'
-                },
-                rh: {
-                    enabled: true,
-                    url: 'rh_dashboard',
-                    icon: 'fa-users',
-                    color: '#dc2626'
-                }
-            },
-            stats: {
-                ticketsActivos: 156,
-                usuariosActivos: 12,
-                satisfaccion: 98,
-                reportesSST: 24
-            }
-        };
-
-        // Función para actualizar los accesos rápidos dinámicamente
-        function actualizarMenuAdmin(config) {
-            const quickLinksContainer = document.querySelector('.quick-links');
-            if (!quickLinksContainer) return;
-            
-            // Limpiar y reconstruir según la configuración
-            quickLinksContainer.innerHTML = '';
-            
-            config.quickLinks.forEach(link => {
-                if (link.visible) {
-                    const a = document.createElement('a');
-                    a.href = `{{ url_for('${link.url}') }}`;
-                    a.className = 'quick-link';
-                    a.innerHTML = `
-                        <i class="fas ${link.icon}"></i>
-                        <span>${link.text}</span>
-                    `;
-                    quickLinksContainer.appendChild(a);
-                }
-            });
-        }
-
-        // Actualizar estadísticas
-        function actualizarEstadisticas(config) {
-            const stats = document.querySelectorAll('.stat-number');
-            if (stats.length >= 4) {
-                stats[0].textContent = config.stats.ticketsActivos;
-                stats[1].textContent = config.stats.usuariosActivos;
-                stats[2].textContent = `${config.stats.satisfaccion}%`;
-                stats[3].textContent = config.stats.reportesSST;
-            }
-        }
-
-        // Ejecutar al cargar (descomentar si se quiere usar)
-        // document.addEventListener('DOMContentLoaded', () => {
-        //     actualizarMenuAdmin(ADMIN_MENU_CONFIG);
-        //     actualizarEstadisticas(ADMIN_MENU_CONFIG);
-        // });
-        
-        console.log('Menú de administrador cargado. Configuración:', ADMIN_MENU_CONFIG);
-    </script>
 </body>
 </html>
