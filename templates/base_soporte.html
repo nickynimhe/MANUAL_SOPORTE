@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="wrapper">
-    <!-- Sidebar específico de SOPORTE TÉCNICO -->
+    <!-- Sidebar específico de SOPORTE -->
     <nav id="sidebar" class="bg-dark">
         <div class="sidebar-header bg-gradient-soporte p-3">
             <div class="d-flex align-items-center">
@@ -15,7 +15,6 @@
         </div>
 
         <ul class="list-unstyled components">
-            <!-- Dashboard -->
             <li class="{{ 'active' if request.endpoint == 'index' }}">
                 <a href="{{ url_for('index') }}">
                     <i class="fas fa-tachometer-alt me-2"></i>
@@ -23,9 +22,8 @@
                 </a>
             </li>
 
-            <!-- Fichas Técnicas -->
             <li class="{{ 'active' if request.endpoint in ['agregar_ficha', 'editar_ficha', 'ver_ficha'] }}">
-                <a href="#fichasSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle">
+                <a href="#fichasSubmenu" data-bs-toggle="collapse" class="dropdown-toggle">
                     <i class="fas fa-file-alt me-2"></i>
                     <span>Fichas Técnicas</span>
                 </a>
@@ -37,7 +35,6 @@
                 </ul>
             </li>
 
-            <!-- Búsqueda -->
             <li class="{{ 'active' if request.endpoint == 'buscar' }}">
                 <a href="{{ url_for('buscar') }}">
                     <i class="fas fa-search me-2"></i>
@@ -45,7 +42,6 @@
                 </a>
             </li>
 
-            <!-- Soluciones Visuales -->
             <li class="{{ 'active' if request.endpoint == 'soluciones_visuales' }}">
                 <a href="{{ url_for('soluciones_visuales') }}">
                     <i class="fas fa-chalkboard-user me-2"></i>
@@ -53,7 +49,6 @@
                 </a>
             </li>
 
-            <!-- Atención Telefónica -->
             <li class="{{ 'active' if request.endpoint == 'atencion_telefonica' }}">
                 <a href="{{ url_for('atencion_telefonica') }}">
                     <i class="fas fa-phone-alt me-2"></i>
@@ -61,7 +56,6 @@
                 </a>
             </li>
 
-            <!-- Información General -->
             <li class="{{ 'active' if request.endpoint == 'informacion_general' }}">
                 <a href="{{ url_for('informacion_general') }}">
                     <i class="fas fa-info-circle me-2"></i>
@@ -85,7 +79,6 @@
         </div>
     </nav>
 
-    <!-- Contenido principal -->
     <div id="content">
         <div class="p-3 p-md-4">
             {% block soporte_content %}{% endblock %}
@@ -175,15 +168,4 @@
     }
 }
 </style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const sidebarCollapse = document.getElementById('sidebarCollapse');
-    if (sidebarCollapse) {
-        sidebarCollapse.addEventListener('click', function() {
-            document.getElementById('sidebar').classList.toggle('active');
-        });
-    }
-});
-</script>
 {% endblock %}
