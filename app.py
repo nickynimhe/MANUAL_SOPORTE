@@ -82,10 +82,6 @@ login_manager.login_message = 'Por favor inicia sesión para acceder a esta pág
 
 # ===== CONTEXT PROCESSORS =====
 @app.context_processor
-def inject_now():
-    return {'now': datetime.now()}
-
-@app.context_processor
 def inject_permissions():
     def tiene_permiso(permiso):
         if current_user.is_authenticated:
@@ -101,7 +97,19 @@ def inject_permissions():
                 return True
             if modulo == 'soporte' and current_user.rol in ['admin', 'soporte']:
                 return True
-            if modulo == 'dashboard' and current_user.rol == 'admin':
+            if modulo == 'rh' and current_user.rol in ['admin', 'rh']:
+                return True
+        return False
+    
+    def puede_gestionar(modulo):
+        if current_user.is_authenticated:
+            if current_user.rol == 'admin':
+                return True
+            if modulo == 'rh' and current_user.rol == 'rh':
+                return True
+            if modulo == 'sst' and current_user.rol == 'sst':
+                return True
+            if modulo == 'soporte' and current_user.rol == 'soporte':
                 return True
         return False
     
@@ -111,13 +119,13 @@ def inject_permissions():
         return 'soporte'
     
     def obtener_rol_display():
-        """Obtener nombre legible del rol"""
         if current_user.is_authenticated:
             rol = current_user.rol
             display_map = {
                 'admin': 'Administrador',
                 'sst': 'SST',
-                'soporte': 'Soporte Técnico'
+                'soporte': 'Soporte Técnico',
+                'rh': 'Recursos Humanos'
             }
             return display_map.get(rol, rol.capitalize())
         return ''
@@ -125,6 +133,7 @@ def inject_permissions():
     return dict(
         tiene_permiso=tiene_permiso,
         puede_acceder_modulo=puede_acceder_modulo,
+        puede_gestionar=puede_gestionar,
         obtener_modulo_principal=obtener_modulo_principal,
         obtener_rol_display=obtener_rol_display
     )
@@ -222,85 +231,69 @@ class User(UserMixin):
             self.permisos.update(permisos)
 
     def _normalizar_rol(self, rol):
-        """Normalizar diferentes variaciones de roles a valores estándar"""
         if not rol:
             return 'soporte'
-        
         rol_str = str(rol).strip().lower()
-        
-        # Mapear variaciones comunes
-        if rol_str in ['admin', 'administrador', 'administradora', 'superadmin', 'super usuario']:
+        if rol_str in ['admin', 'administrador', 'administradora']:
             return 'admin'
-        elif rol_str in ['sst', 'seguridad', 'salud', 'salud y seguridad', 'seguridad y salud', 'seguridad laboral']:
+        elif rol_str in ['sst', 'seguridad', 'salud']:
             return 'sst'
-        elif rol_str in ['soporte', 'tecnico', 'técnico', 'asistente', 'ayudante', 'operador', 'soporte técnico']:
+        elif rol_str in ['soporte', 'tecnico', 'técnico']:
             return 'soporte'
-        else:
-            # Si no reconocemos el rol, usar soporte por defecto
-            logger.warning(f"Rol desconocido '{rol}', normalizando a 'soporte'")
-            return 'soporte'
+        elif rol_str in ['rh', 'recursos', 'recursos humanos', 'talento humano']:
+            return 'rh'
+        return 'soporte'
 
     def _obtener_permisos_base(self):
-        """Definir permisos base según rol normalizado"""
-        if self.rol == 'admin':
-            return {
-                'ver_fichas': True,
-                'agregar_fichas': True,
-                'editar_fichas': True,
-                'eliminar_fichas': True,
-                'cambiar_password': True,
-                'gestion_usuarios': True,
-                'acceder_sst': True,
-                'gestionar_plan_anual': True,
-                'agregar_evidencias': True,
-                'acceder_soporte': True,
-                'acceder_dashboard': True,
-                'administrar_sistema': True
-            }
-        elif self.rol == 'sst':
-            return {
-                'ver_fichas': False,
-                'agregar_fichas': False,
-                'editar_fichas': False,
-                'eliminar_fichas': False,
-                'cambiar_password': True,
-                'gestion_usuarios': False,
-                'acceder_sst': True,
-                'gestionar_plan_anual': True,
-                'agregar_evidencias': True,
-                'acceder_soporte': False,
-                'acceder_dashboard': False,
-                'administrar_sistema': False
-            }
-        elif self.rol == 'soporte':
-            return {
-                'ver_fichas': True,
-                'agregar_fichas': True,
-                'editar_fichas': True,
-                'eliminar_fichas': True,
-                'cambiar_password': True,
-                'gestion_usuarios': False,
-                'acceder_sst': False,
-                'gestionar_plan_anual': False,
-                'agregar_evidencias': False,
-                'acceder_soporte': True,
-                'acceder_dashboard': False,
-                'administrar_sistema': False
-            }
-        else:
-            # Por defecto, permisos de soporte
-            return {
-                'ver_fichas': True,
-                'agregar_fichas': True,
-                'editar_fichas': True,
-                'eliminar_fichas': True,
-                'cambiar_password': True,
-                'gestion_usuarios': False,
-                'acceder_sst': False,
-                'acceder_soporte': True,
-                'acceder_dashboard': False,
-                'administrar_sistema': False
-            }
+    permisos = {'cambiar_password': True}
+    
+    if self.rol == 'admin':
+        permisos.update({
+            'ver_rh': True, 'gestionar_rh': True,
+            'ver_empleados': True, 'gestionar_empleados': True,
+            'ver_contratos': True, 'gestionar_contratos': True,
+            'ver_nomina': True, 'gestionar_nomina': True,
+            'ver_capacitaciones': True, 'gestionar_capacitaciones': True,
+            'ver_evaluaciones': True, 'gestionar_evaluaciones': True,
+            'ver_ascensos': True, 'gestionar_ascensos': True,
+            'ver_sanciones': True, 'gestionar_sanciones': True,
+            'ver_reportes_rh': True,
+            'ver_sst': True, 'gestionar_sst': True,
+            'ver_soporte': True, 'gestionar_soporte': True,
+            'gestion_usuarios': True, 'administrar_sistema': True,
+            'acceder_sst': True, 'acceder_soporte': True,
+            'gestionar_plan_anual': True, 'agregar_evidencias': True
+        })
+    elif self.rol == 'rh':
+        permisos.update({
+            'ver_rh': True, 'gestionar_rh': True,
+            'ver_empleados': True, 'gestionar_empleados': True,
+            'ver_contratos': True, 'gestionar_contratos': True,
+            'ver_nomina': True, 'gestionar_nomina': True,
+            'ver_capacitaciones': True, 'gestionar_capacitaciones': True,
+            'ver_evaluaciones': True, 'gestionar_evaluaciones': True,
+            'ver_ascensos': True, 'gestionar_ascensos': True,
+            'ver_sanciones': True, 'gestionar_sanciones': True,
+            'ver_reportes_rh': True
+        })
+    elif self.rol == 'sst':
+        permisos.update({
+            'ver_sst': True, 'gestionar_sst': True,
+            'ver_contenido_sst': True, 'agregar_contenido_sst': True,
+            'editar_contenido_sst': True, 'eliminar_contenido_sst': True,
+            'ver_plan_anual': True, 'gestionar_plan_anual': True,
+            'agregar_evidencias': True,
+            'acceder_sst': True
+        })
+    elif self.rol == 'soporte':
+        permisos.update({
+            'ver_soporte': True, 'gestionar_soporte': True,
+            'ver_fichas': True, 'agregar_fichas': True,
+            'editar_fichas': True, 'eliminar_fichas': True,
+            'acceder_soporte': True
+        })
+    
+    return permisos
 
     def puede(self, permiso):
         return self.permisos.get(permiso, False)
@@ -368,31 +361,29 @@ def load_user(user_id):
 
 # ===== FUNCIÓN DE REDIRECCIÓN MEJORADA =====
 def redirect_a_modulo_principal():
-    """Redirige al usuario a su módulo principal - VERSIÓN SEGURA"""
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
     
-    logger.info(f"Redirigiendo usuario {current_user.usuario} (rol: {current_user.rol})")
-    
-    # Verificar si hay que redirigir a SST automáticamente
     if hasattr(current_user, 'redireccionar_sst') and current_user.redireccionar_sst:
-        logger.info(f"Redirección automática a SST activada para {current_user.usuario}")
         return redirect(url_for('sst_dashboard'))
     
-    # Redirección normal según rol
     if current_user.rol == 'admin':
-        return redirect(url_for('index'))
+        return redirect(url_for('rh_dashboard'))
     elif current_user.rol == 'sst':
         return redirect(url_for('sst_dashboard'))
-    elif current_user.rol == 'soporte':
-        return redirect(url_for('index'))
-    
-    # Si llegamos aquí, usar módulo principal de la BD
-    modulo = getattr(current_user, 'modulo_principal', 'soporte')
-    if modulo == 'sst':
-        return redirect(url_for('sst_dashboard'))
+    elif current_user.rol == 'rh':
+        return redirect(url_for('rh_dashboard'))
     else:
         return redirect(url_for('index'))
+
+@app.template_filter('format_currency')
+def format_currency(value):
+    if value is None:
+        return '$0'
+    try:
+        return f'${float(value):,.0f}'.replace(',', '.')
+    except:
+        return f'${value}'
 
 # ===== RUTAS DE AUTENTICACIÓN =====
 @app.route('/login', methods=['GET', 'POST'])
@@ -4546,6 +4537,240 @@ def sst_eliminar_evidencia(id):
         return redirect(url_for('sst_plan_anual_actividades'))
     
     return redirect(url_for('sst_plan_anual_actividad_detalle', id=plan_id))
+
+# ==================== MÓDULO DE RECURSOS HUMANOS (RH) ====================
+@app.route('/rh')
+@login_required
+def rh_dashboard():
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos para acceder a Recursos Humanos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_dashboard.html')
+
+@app.route('/rh/empleados')
+@login_required
+def rh_empleados():
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_empleados.html')
+
+@app.route('/rh/empleado/<int:id>')
+@login_required
+def rh_empleado_detalle(id):
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_empleado_detalle.html', empleado_id=id)
+
+@app.route('/rh/empleado/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def rh_empleado_editar(id):
+    if not current_user.puede('gestionar_rh'):
+        flash('No tienes permisos para editar empleados', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_empleado_editar.html', empleado_id=id)
+
+@app.route('/rh/empleado/nuevo', methods=['GET', 'POST'])
+@login_required
+def rh_empleado_nuevo():
+    if not current_user.puede('gestionar_rh'):
+        flash('No tienes permisos para crear empleados', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_empleado_nuevo.html')
+
+@app.route('/rh/procesos')
+@login_required
+def rh_procesos():
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_procesos.html')
+
+@app.route('/rh/proceso/<int:id>')
+@login_required
+def rh_proceso_detalle(id):
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_proceso_detalle.html', proceso_id=id)
+
+@app.route('/rh/contratos')
+@login_required
+def rh_contratos():
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_contratos.html')
+
+@app.route('/rh/contrato/<int:id>')
+@login_required
+def rh_contrato_detalle(id):
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_contrato_detalle.html', contrato_id=id)
+
+@app.route('/rh/contrato/nuevo', methods=['GET', 'POST'])
+@login_required
+def rh_contrato_nuevo():
+    if not current_user.puede('gestionar_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_contrato_nuevo.html')
+
+@app.route('/rh/capacitaciones')
+@login_required
+def rh_capacitaciones():
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_capacitaciones.html')
+
+@app.route('/rh/capacitacion/<int:id>')
+@login_required
+def rh_capacitacion_detalle(id):
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_capacitacion_detalle.html', capacitacion_id=id)
+
+@app.route('/rh/capacitacion/nueva', methods=['GET', 'POST'])
+@login_required
+def rh_capacitacion_nueva():
+    if not current_user.puede('gestionar_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_capacitacion_nueva.html')
+
+@app.route('/rh/evaluaciones')
+@login_required
+def rh_evaluaciones():
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_evaluaciones.html')
+
+@app.route('/rh/evaluacion/nueva', methods=['GET', 'POST'])
+@login_required
+def rh_evaluacion_nueva():
+    if not current_user.puede('gestionar_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_evaluacion_nueva.html')
+
+@app.route('/rh/ascensos')
+@login_required
+def rh_ascensos():
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_ascensos.html')
+
+@app.route('/rh/ascenso/nuevo', methods=['GET', 'POST'])
+@login_required
+def rh_ascenso_nuevo():
+    if not current_user.puede('gestionar_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_ascenso_nuevo.html')
+
+@app.route('/rh/cargos')
+@login_required
+def rh_cargos():
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_cargos.html')
+
+@app.route('/rh/cargo/nuevo', methods=['GET', 'POST'])
+@login_required
+def rh_cargo_nuevo():
+    if not current_user.puede('gestionar_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_cargo_nuevo.html')
+
+@app.route('/rh/normativas')
+@login_required
+def rh_normativas():
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_normativas.html')
+
+@app.route('/rh/normativa/<int:id>')
+@login_required
+def rh_normativa_detalle(id):
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_normativa_detalle.html', normativa_id=id)
+
+@app.route('/rh/sanciones')
+@login_required
+def rh_sanciones():
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_sanciones.html')
+
+@app.route('/rh/sancion/nueva', methods=['GET', 'POST'])
+@login_required
+def rh_sancion_nueva():
+    if not current_user.puede('gestionar_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_sancion_nueva.html')
+
+@app.route('/rh/departamentos')
+@login_required
+def rh_departamentos():
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_departamentos.html')
+
+@app.route('/rh/organigrama')
+@login_required
+def rh_organigrama():
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_organigrama.html')
+
+@app.route('/rh/reportes')
+@login_required
+def rh_reportes():
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_reportes.html')
+
+@app.route('/rh/reporte/asistencia')
+@login_required
+def rh_reporte_asistencia():
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_reporte_asistencia.html')
+
+@app.route('/rh/reporte/nomina')
+@login_required
+def rh_reporte_nomina():
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_reporte_nomina.html')
+
+@app.route('/rh/reporte/rotacion')
+@login_required
+def rh_reporte_rotacion():
+    if not current_user.puede('ver_rh'):
+        flash('No tienes permisos', 'error')
+        return redirect_a_modulo_principal()
+    return render_template('rh/rh_reporte_rotacion.html')
+
     
 # EN LA SECCIÓN DE INICIALIZACIÓN DEL APP
 if __name__ == '__main__':
@@ -4553,6 +4778,128 @@ if __name__ == '__main__':
         print("🚀 Iniciando la aplicación Flask...")
         print("📊 Creando tablas en la base de datos...")
         crear_tablas()
+                print("📊 Creando tablas de Recursos Humanos...")
+        try:
+            conn = crear_conexion()
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS rh_departamentos (
+                    id SERIAL PRIMARY KEY, nombre VARCHAR(100) NOT NULL, descripcion TEXT,
+                    nivel INTEGER DEFAULT 3, jefe_id INTEGER, padre_id INTEGER,
+                    presupuesto DECIMAL(12,2), ubicacion VARCHAR(200), activo BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS rh_cargos (
+                    id SERIAL PRIMARY KEY, nombre VARCHAR(100) NOT NULL, descripcion TEXT,
+                    departamento VARCHAR(100), nivel VARCHAR(50), salario_base DECIMAL(12,2),
+                    rango_min DECIMAL(12,2), rango_max DECIMAL(12,2), requisitos TEXT,
+                    competencias TEXT, activo BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS rh_empleados (
+                    id SERIAL PRIMARY KEY, tipo_documento VARCHAR(10), documento VARCHAR(20) NOT NULL UNIQUE,
+                    primer_nombre VARCHAR(50) NOT NULL, segundo_nombre VARCHAR(50),
+                    primer_apellido VARCHAR(50) NOT NULL, segundo_apellido VARCHAR(50),
+                    email VARCHAR(100) UNIQUE, telefono VARCHAR(20), celular VARCHAR(20),
+                    direccion TEXT, fecha_nacimiento DATE, cargo VARCHAR(100),departamento VARCHAR(100),
+                    cargo_id INTEGER, departamento_id INTEGER, fecha_ingreso DATE, fecha_retiro DATE,
+                    estado VARCHAR(20) DEFAULT 'activo', salario DECIMAL(12,2), tipo_contrato VARCHAR(50),
+                    jefe_inmediato VARCHAR(100), eps VARCHAR(100), arl VARCHAR(100), tipo_sangre VARCHAR(5),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS rh_contratos (
+                    id SERIAL PRIMARY KEY, empleado_id INTEGER NOT NULL REFERENCES rh_empleados(id) ON DELETE CASCADE,
+                    tipo_contrato VARCHAR(50) NOT NULL, fecha_inicio DATE NOT NULL, fecha_fin DATE,
+                    salario_contratado DECIMAL(12,2), archivo_pdf VARCHAR(255), observaciones TEXT,
+                    estado VARCHAR(20) DEFAULT 'activo', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS rh_procesos (
+                    id SERIAL PRIMARY KEY, nombre VARCHAR(100) NOT NULL, descripcion TEXT,
+                    tipo VARCHAR(50), responsable VARCHAR(100), prioridad VARCHAR(20) DEFAULT 'media',
+                    estado VARCHAR(20) DEFAULT 'pendiente', fecha_inicio DATE, fecha_limite DATE,
+                    avance INTEGER DEFAULT 0, observaciones TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS rh_capacitaciones (
+                    id SERIAL PRIMARY KEY, nombre VARCHAR(200) NOT NULL, descripcion TEXT,
+                    tipo VARCHAR(50), instructor VARCHAR(100), fecha_inicio DATE, fecha_fin DATE,
+                    duracion_horas INTEGER, costo DECIMAL(12,2), ubicacion VARCHAR(200),
+                    estado VARCHAR(20) DEFAULT 'programada', observaciones TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS rh_capacitacion_participantes (
+                    id SERIAL PRIMARY KEY, capacitacion_id INTEGER NOT NULL REFERENCES rh_capacitaciones(id) ON DELETE CASCADE,
+                    empleado_id INTEGER NOT NULL REFERENCES rh_empleados(id) ON DELETE CASCADE,
+                    asistio BOOLEAN DEFAULT FALSE, nota DECIMAL(5,2), certificado_generado BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS rh_evaluaciones (
+                    id SERIAL PRIMARY KEY, empleado_id INTEGER NOT NULL REFERENCES rh_empleados(id) ON DELETE CASCADE,
+                    evaluador_id INTEGER NOT NULL REFERENCES rh_empleados(id), periodo VARCHAR(20),
+                    fecha_evaluacion DATE DEFAULT CURRENT_DATE, puntaje_cumplimiento INTEGER DEFAULT 0,
+                    puntaje_trabajo_equipo INTEGER DEFAULT 0, puntaje_iniciativa INTEGER DEFAULT 0,
+                    puntaje_calidad INTEGER DEFAULT 0, puntaje_total INTEGER DEFAULT 0,
+                    observaciones TEXT, plan_mejora TEXT, estado VARCHAR(20) DEFAULT 'pendiente',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS rh_ascensos (
+                    id SERIAL PRIMARY KEY, empleado_id INTEGER NOT NULL REFERENCES rh_empleados(id) ON DELETE CASCADE,
+                    cargo_anterior_id INTEGER, cargo_nuevo_id INTEGER, fecha_ascenso DATE,
+                    salario_anterior DECIMAL(12,2), salario_nuevo DECIMAL(12,2), justificacion TEXT,
+                    acta_ascenso VARCHAR(255), estado VARCHAR(20) DEFAULT 'propuesto', observaciones TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS rh_sanciones (
+                    id SERIAL PRIMARY KEY, empleado_id INTEGER NOT NULL REFERENCES rh_empleados(id) ON DELETE CASCADE,
+                    tipo VARCHAR(30) NOT NULL, fecha DATE NOT NULL, motivo TEXT NOT NULL,
+                    descripcion TEXT, duracion VARCHAR(100), documento VARCHAR(255), observaciones TEXT,
+                    estado VARCHAR(20) DEFAULT 'vigente', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            cursor.execute("SELECT COUNT(*) FROM rh_departamentos")
+            if cursor.fetchone()[0] == 0:
+                deptos = [('Dirección General', 1), ('Gerencia General', 2), ('Recursos Humanos', 3),
+                         ('Seguridad y Salud en el Trabajo', 3), ('Operaciones', 3), ('Comercial', 3),
+                         ('Tecnología', 3), ('Financiero', 3)]
+                for d in deptos:
+                    cursor.execute("INSERT INTO rh_departamentos (nombre, nivel) VALUES (%s, %s)", d)
+                print("✅ Departamentos RH iniciales insertados")
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            print("✅ Tablas de RH creadas/verificadas correctamente")
+        except Exception as e:
+            print(f"⚠️ Advertencia al crear tablas RH: {e}")
         print("✅ Tablas creadas/verificadas correctamente")
         
         print("📋 Verificando categorías SST...")
