@@ -1,0 +1,515 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Reportes - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-chart-bar fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">Centro de Reportes</h4>
+                        <p class="text-white-80 mb-0 small">Análisis y estadísticas de gestión humana</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i> Imprimir
+                    </button>
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="exportarReportes()">
+                        <i class="fas fa-file-excel me-1"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros de reportes -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-calendar-alt me-2"></i> Filtros de Reportes
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Año</label>
+                    <select name="anio" class="form-select rounded-3">
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                        <option value="2021">2021</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Trimestre</label>
+                    <select name="trimestre" class="form-select rounded-3">
+                        <option value="todos">Todos</option>
+                        <option value="1">Ene - Mar</option>
+                        <option value="2">Abr - Jun</option>
+                        <option value="3">Jul - Sep</option>
+                        <option value="4">Oct - Dic</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Departamento</label>
+                    <select name="departamento" class="form-select rounded-3">
+                        <option value="todos">Todos</option>
+                        <option value="administrativo">Administrativo</option>
+                        <option value="operaciones">Operaciones</option>
+                        <option value="comercial">Comercial</option>
+                        <option value="sst">SST</option>
+                        <option value="rh">Recursos Humanos</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Tipo de Reporte</label>
+                    <select name="tipo_reporte" class="form-select rounded-3">
+                        <option value="general">General</option>
+                        <option value="detallado">Detallado</option>
+                        <option value="ejecutivo">Ejecutivo</option>
+                    </select>
+                </div>
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary rounded-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); border: none;">
+                        <i class="fas fa-search me-1"></i> Aplicar Filtros
+                    </button>
+                    <button type="reset" class="btn btn-outline-secondary rounded-3 ms-2">
+                        <i class="fas fa-times me-1"></i> Limpiar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tarjetas de resumen -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(38,88,165,0.1);">
+                    <i class="fas fa-users" style="color: #2658A5;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #2658A5;">48</h5>
+                <small class="text-muted">Total Empleados</small>
+                <small class="text-success">+5 vs año anterior</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                    <i class="fas fa-user-check" style="color: #28a745;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #28a745;">12</h5>
+                <small class="text-muted">Nuevos Ingresos</small>
+                <small class="text-success">+3 vs trimestre anterior</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(194,53,56,0.1);">
+                    <i class="fas fa-user-minus" style="color: #C23538;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #C23538;">4</h5>
+                <small class="text-muted">Retiros</small>
+                <small class="text-danger">-2 vs trimestre anterior</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(255,204,41,0.15);">
+                    <i class="fas fa-percent" style="color: #FFCC29;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #FFCC29;">8.3%</h5>
+                <small class="text-muted">Rotación Anual</small>
+                <small class="text-success">Por debajo del promedio</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos principales -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-line me-2"></i> Evolución de Personal
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="evolucionPersonalChart" height="250"></canvas>
+                    <div class="mt-3 text-center">
+                        <small class="text-muted">Crecimiento del último año</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-pie me-2"></i> Distribución por Departamento
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="distribucionDeptosChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%);">
+                    <h6 class="mb-0 fw-semibold" style="color: #282F4B;">
+                        <i class="fas fa-chart-bar me-2"></i> Distribución por Género
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="generoChart" height="250"></canvas>
+                    <div class="mt-3 text-center">
+                        <div class="d-flex justify-content-center gap-3">
+                            <div><span class="badge" style="background: #2658A5;">&nbsp;</span> Hombres (52%)</div>
+                            <div><span class="badge" style="background: #C23538;">&nbsp;</span> Mujeres (48%)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-simple me-2"></i> Antigüedad Promedio
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="antiguedadChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de reporte detallado -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-table me-2"></i> Reporte Detallado de Personal
+                </h5>
+                <div class="btn-group">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="exportarTabla()">
+                        <i class="fas fa-file-excel me-1"></i> Exportar Tabla
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead style="background: #f8f9fc;">
+                        <tr>
+                            <th style="padding: 16px 12px;">Departamento</th>
+                            <th style="padding: 16px 12px;">Total Empleados</th>
+                            <th style="padding: 16px 12px;">Hombres</th>
+                            <th style="padding: 16px 12px;">Mujeres</th>
+                            <th style="padding: 16px 12px;">Antigüedad Promedio</th>
+                            <th style="padding: 16px 12px;">Salario Promedio</th>
+                            <th style="padding: 16px 12px;">% Rotación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="align-middle fw-semibold">Dirección General</td>
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">0</td>
+                            <td class="align-middle">5 años</td>
+                            <td class="align-middle">$12,000,000</td>
+                            <td class="align-middle">0%</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Gerencia General</td>
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">0</td>
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">4 años</td>
+                            <td class="align-middle">$8,500,000</td>
+                            <td class="align-middle">0%</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Recursos Humanos</td>
+                            <td class="align-middle">4</td>
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">3</td>
+                            <td class="align-middle">3 años</td>
+                            <td class="align-middle">$2,800,000</td>
+                            <td class="align-middle">5%</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">SST</td>
+                            <td class="align-middle">4</td>
+                            <td class="align-middle">3</td>
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">2 años</td>
+                            <td class="align-middle">$2,400,000</td>
+                            <td class="align-middle">8%</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Operaciones</td>
+                            <td class="align-middle">15</td>
+                            <td class="align-middle">12</td>
+                            <td class="align-middle">3</td>
+                            <td class="align-middle">1.5 años</td>
+                            <td class="align-middle">$1,800,000</td>
+                            <td class="align-middle">12%</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Comercial</td>
+                            <td class="align-middle">8</td>
+                            <td class="align-middle">5</td>
+                            <td class="align-middle">3</td>
+                            <td class="align-middle">2 años</td>
+                            <td class="align-middle">$2,500,000</td>
+                            <td class="align-middle">10%</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Tecnología</td>
+                            <td class="align-middle">6</td>
+                            <td class="align-middle">4</td>
+                            <td class="align-middle">2</td>
+                            <td class="align-middle">1.8 años</td>
+                            <td class="align-middle">$3,200,000</td>
+                            <td class="align-middle">15%</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle fw-semibold">Financiero</td>
+                            <td class="align-middle">5</td>
+                            <td class="align-middle">2</td>
+                            <td class="align-middle">3</td>
+                            <td class="align-middle">3.5 años</td>
+                            <td class="align-middle">$3,500,000</td>
+                            <td class="align-middle">6%</td>
+                        </tr>
+                        <tr class="table-light">
+                            <td class="align-middle fw-bold">TOTAL</td>
+                            <td class="align-middle fw-bold">44</td>
+                            <td class="align-middle fw-bold">28</td>
+                            <td class="align-middle fw-bold">16</td>
+                            <td class="align-middle fw-bold">2.4 años</td>
+                            <td class="align-middle fw-bold">$3,200,000</td>
+                            <td class="align-middle fw-bold">8.3%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicadores clave -->
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-graduation-cap me-2"></i> Capacitaciones
+                    </h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Total capacitaciones año:</span>
+                        <span class="fw-bold" style="color: #2658A5;">12</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Empleados capacitados:</span>
+                        <span class="fw-bold" style="color: #28a745;">156</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Horas de formación:</span>
+                        <span class="fw-bold" style="color: #FFCC29;">320</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Inversión en capacitación:</span>
+                        <span class="fw-bold" style="color: #C23538;">$12,500,000</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chalkboard-user me-2"></i> Evaluaciones
+                    </h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Evaluaciones realizadas:</span>
+                        <span class="fw-bold" style="color: #28a745;">42</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Promedio general:</span>
+                        <span class="fw-bold" style="color: #2658A5;">88/100</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Empleados destacados:</span>
+                        <span class="fw-bold" style="color: #FFCC29;">12</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Necesitan mejora:</span>
+                        <span class="fw-bold" style="color: #C23538;">3</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%);">
+                    <h6 class="mb-0 fw-semibold" style="color: #282F4B;">
+                        <i class="fas fa-arrow-up me-2"></i> Ascensos
+                    </h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Ascensos otorgados:</span>
+                        <span class="fw-bold" style="color: #28a745;">8</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Promedio incremento:</span>
+                        <span class="fw-bold" style="color: #2658A5;">12%</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Solicitudes recibidas:</span>
+                        <span class="fw-bold" style="color: #FFCC29;">15</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>En evaluación:</span>
+                        <span class="fw-bold" style="color: #C23538;">4</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Gráfico de evolución de personal
+const ctxEvolucion = document.getElementById('evolucionPersonalChart')?.getContext('2d');
+if (ctxEvolucion) {
+    new Chart(ctxEvolucion, {
+        type: 'line',
+        data: {
+            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+            datasets: [{
+                label: 'Empleados Activos',
+                data: [42, 44, 45, 46, 48, 47, 49, 50, 48, 49, 48, 48],
+                borderColor: '#2658A5',
+                backgroundColor: 'rgba(38, 88, 165, 0.05)',
+                borderWidth: 3,
+                pointBackgroundColor: '#2658A5',
+                pointBorderColor: '#fff',
+                pointRadius: 5,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true
+        }
+    });
+}
+
+// Gráfico de distribución por departamento
+const ctxDeptos = document.getElementById('distribucionDeptosChart')?.getContext('2d');
+if (ctxDeptos) {
+    new Chart(ctxDeptos, {
+        type: 'doughnut',
+        data: {
+            labels: ['Operaciones', 'Comercial', 'Tecnología', 'Financiero', 'SST', 'RH', 'Dirección/Gerencia'],
+            datasets: [{
+                data: [15, 8, 6, 5, 4, 4, 2],
+                backgroundColor: ['#FFCC29', '#C23538', '#2658A5', '#28a745', '#17a2b8', '#fd7e14', '#6c757d'],
+                borderWidth: 0,
+                cutout: '60%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+}
+
+// Gráfico de género
+const ctxGenero = document.getElementById('generoChart')?.getContext('2d');
+if (ctxGenero) {
+    new Chart(ctxGenero, {
+        type: 'doughnut',
+        data: {
+            labels: ['Hombres', 'Mujeres'],
+            datasets: [{
+                data: [28, 16],
+                backgroundColor: ['#2658A5', '#C23538'],
+                borderWidth: 0,
+                cutout: '65%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+}
+
+// Gráfico de antigüedad
+const ctxAntiguedad = document.getElementById('antiguedadChart')?.getContext('2d');
+if (ctxAntiguedad) {
+    new Chart(ctxAntiguedad, {
+        type: 'bar',
+        data: {
+            labels: ['<1 año', '1-2 años', '3-5 años', '5-10 años', '>10 años'],
+            datasets: [{
+                label: 'Empleados',
+                data: [12, 15, 10, 5, 2],
+                backgroundColor: '#2658A5',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { position: 'top' } }
+        }
+    });
+}
+
+function exportarReportes() {
+    alert('Exportando reportes de Recursos Humanos...');
+}
+
+function exportarTabla() {
+    alert('Exportando tabla de reporte detallado...');
+}
+</script>
+
+<style>
+.hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+}
+</style>
+{% endblock %}
