@@ -1,0 +1,546 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Detalle de Capacitación - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header con información de la capacitación -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-chalkboard-user fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">{{ capacitacion.nombre }}</h4>
+                        <p class="text-white-80 mb-0 small">
+                            <i class="fas fa-tag me-1"></i> {{ capacitacion.tipo }} • 
+                            <i class="fas fa-user me-1"></i> {{ capacitacion.instructor }}
+                        </p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="editarCapacitacion({{ capacitacion.id }})">
+                        <i class="fas fa-edit me-1"></i> Editar
+                    </button>
+                    <button class="btn btn-outline-light btn-sm" onclick="window.location.href='{{ url_for('rh_capacitaciones') }}'">
+                        <i class="fas fa-arrow-left me-1"></i> Volver
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- COLUMNA IZQUIERDA - Información General -->
+        <div class="col-lg-4">
+            <!-- Resumen de la Capacitación -->
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-info-circle me-2"></i> Resumen
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: 
+                            {% if capacitacion.estado == 'finalizada' %}linear-gradient(135deg, #28a745, #20c997)
+                            {% elif capacitacion.estado == 'en_curso' %}linear-gradient(135deg, #FFCC29, #FFA500)
+                            {% elif capacitacion.estado == 'programada' %}linear-gradient(135deg, #2658A5, #282F4B)
+                            {% else %}linear-gradient(135deg, #6c757d, #5a6268){% endif %};">
+                            <i class="fas fa-chalkboard-user fa-3x text-white"></i>
+                        </div>
+                        <h5 class="fw-bold mb-1">{{ capacitacion.nombre }}</h5>
+                        <div class="mt-2">
+                            {% if capacitacion.estado == 'finalizada' %}
+                            <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                <i class="fas fa-check-circle me-1"></i> Finalizada
+                            </span>
+                            {% elif capacitacion.estado == 'en_curso' %}
+                            <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                <i class="fas fa-spinner me-1"></i> En Curso
+                            </span>
+                            {% elif capacitacion.estado == 'programada' %}
+                            <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
+                                <i class="fas fa-calendar-alt me-1"></i> Programada
+                            </span>
+                            {% else %}
+                            <span class="badge rounded-pill px-3 py-2" style="background: #6c757d; color: white;">
+                                <i class="fas fa-times-circle me-1"></i> Cancelada
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="info-group">
+                        <div class="d-flex align-items-start gap-3 py-3 border-bottom">
+                            <i class="fas fa-calendar-alt mt-1" style="color: #2658A5;"></i>
+                            <div>
+                                <small class="text-muted d-block">Fechas</small>
+                                <span class="fw-semibold">{{ capacitacion.fecha_inicio }} al {{ capacitacion.fecha_fin }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 py-3 border-bottom">
+                            <i class="fas fa-clock mt-1" style="color: #FFCC29;"></i>
+                            <div>
+                                <small class="text-muted d-block">Duración</small>
+                                <span class="fw-semibold">{{ capacitacion.duracion }} horas</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 py-3 border-bottom">
+                            <i class="fas fa-user mt-1" style="color: #28a745;"></i>
+                            <div>
+                                <small class="text-muted d-block">Instructor</small>
+                                <span class="fw-semibold">{{ capacitacion.instructor }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 py-3 border-bottom">
+                            <i class="fas fa-map-marker-alt mt-1" style="color: #C23538;"></i>
+                            <div>
+                                <small class="text-muted d-block">Ubicación / Plataforma</small>
+                                <span class="fw-semibold">{{ capacitacion.ubicacion or 'No especificada' }}</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 py-3">
+                            <i class="fas fa-users mt-1" style="color: #2658A5;"></i>
+                            <div>
+                                <small class="text-muted d-block">Participantes</small>
+                                <span class="fw-semibold">{{ capacitacion.participantes_actuales }}/{{ capacitacion.cupo_maximo }}</span>
+                                <div class="progress mt-2" style="height: 8px;">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: {{ (capacitacion.participantes_actuales / capacitacion.cupo_maximo * 100)|round }}%; background: linear-gradient(90deg, #2658A5, #28a745);">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Descripción -->
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%);">
+                    <h6 class="mb-0 fw-semibold" style="color: #282F4B;">
+                        <i class="fas fa-align-left me-2"></i> Descripción
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted mb-0">{{ capacitacion.descripcion or 'No se ha ingresado una descripción para esta capacitación.' }}</p>
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            {% if capacitacion.observaciones %}
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-clipboard-list me-2"></i> Observaciones
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted mb-0">{{ capacitacion.observaciones }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- COLUMNA DERECHA - Participantes y más -->
+        <div class="col-lg-8">
+            <!-- Participantes Inscritos -->
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-semibold text-white">
+                            <i class="fas fa-users me-2"></i> Participantes Inscritos
+                            <span class="badge bg-white text-dark rounded-pill ms-2 px-3">{{ participantes|length }}</span>
+                        </h6>
+                        <button class="btn btn-light btn-sm shadow-sm" onclick="inscribirParticipante({{ capacitacion.id }})">
+                            <i class="fas fa-user-plus me-1"></i> Inscribir
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead style="background: #f8f9fc;">
+                                <tr>
+                                    <th style="padding: 12px;">Empleado</th>
+                                    <th style="padding: 12px;">Documento</th>
+                                    <th style="padding: 12px;">Cargo</th>
+                                    <th style="padding: 12px;">Asistió</th>
+                                    <th style="padding: 12px;">Nota</th>
+                                    <th style="padding: 12px;">Certificado</th>
+                                    <th style="padding: 12px;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="align-middle">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fas fa-user-circle" style="color: #2658A5;"></i>
+                                            <span class="fw-semibold">María González López</span>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle">CC 12345678</td>
+                                    <td class="align-middle">Gerente RH</td>
+                                    <td class="align-middle">
+                                        <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">
+                                            <i class="fas fa-check-circle me-1"></i> Sí
+                                        </span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <span class="fw-bold" style="color: #28a745;">95/100</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="descargarCertificado(1)">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #FFCC29; color: #282F4B;" onclick="verParticipante(1)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="align-middle">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fas fa-user-circle" style="color: #28a745;"></i>
+                                            <span class="fw-semibold">Carlos Rodríguez Pérez</span>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle">CC 87654321</td>
+                                    <td class="align-middle">Coordinador SST</td>
+                                    <td class="align-middle">
+                                        <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">
+                                            <i class="fas fa-check-circle me-1"></i> Sí
+                                        </span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <span class="fw-bold" style="color: #28a745;">88/100</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="descargarCertificado(2)">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #FFCC29; color: #282F4B;" onclick="verParticipante(2)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="align-middle">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fas fa-user-circle" style="color: #FFCC29;"></i>
+                                            <span class="fw-semibold">Ana Martínez Suárez</span>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle">CC 11223344</td>
+                                    <td class="align-middle">Analista SST</td>
+                                    <td class="align-middle">
+                                        <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">
+                                            <i class="fas fa-check-circle me-1"></i> Sí
+                                        </span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <span class="fw-bold" style="color: #28a745;">92/100</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="descargarCertificado(3)">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #FFCC29; color: #282F4B;" onclick="verParticipante(3)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="align-middle">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fas fa-user-circle" style="color: #C23538;"></i>
+                                            <span class="fw-semibold">Jorge Ramírez Castro</span>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle">CC 55667788</td>
+                                    <td class="align-middle">Operador</td>
+                                    <td class="align-middle">
+                                        <span class="badge rounded-pill px-2 py-1" style="background: #FFCC29; color: #282F4B;">
+                                            <i class="fas fa-clock me-1"></i> Pendiente
+                                        </span>
+                                    </td>
+                                    <td class="align-middle">-</td>
+                                    <td class="align-middle">
+                                        <span class="text-muted">-</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #FFCC29; color: #282F4B;" onclick="verParticipante(4)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="align-middle">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="fas fa-user-circle" style="color: #28a745;"></i>
+                                            <span class="fw-semibold">Laura Sánchez Mendoza</span>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle">CC 99887766</td>
+                                    <td class="align-middle">Asistente RH</td>
+                                    <td class="align-middle">
+                                        <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">
+                                            <i class="fas fa-check-circle me-1"></i> Sí
+                                        </span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <span class="fw-bold" style="color: #28a745;">85/100</span>
+                                    </td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="descargarCertificado(5)">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm rounded-3" style="background: #FFCC29; color: #282F4B;" onclick="verParticipante(5)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contenido / Material de apoyo -->
+            <div class="card border-0 shadow-sm overflow-hidden mb-4">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-semibold text-white">
+                            <i class="fas fa-paperclip me-2"></i> Material de Apoyo
+                        </h6>
+                        <button class="btn btn-light btn-sm shadow-sm" onclick="subirMaterial({{ capacitacion.id }})">
+                            <i class="fas fa-upload me-1"></i> Subir Material
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+                            <div>
+                                <i class="fas fa-file-pdf fa-lg me-2" style="color: #C23538;"></i>
+                                <span>Guía_Seguridad_Vial_2024.pdf</span>
+                                <small class="text-muted ms-2">(2.5 MB)</small>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verMaterial(1)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="descargarMaterial(1)">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+                            <div>
+                                <i class="fas fa-file-powerpoint fa-lg me-2" style="color: #FFCC29;"></i>
+                                <span>Presentación_Capacitación.pptx</span>
+                                <small class="text-muted ms-2">(4.8 MB)</small>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verMaterial(2)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="descargarMaterial(2)">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+                            <div>
+                                <i class="fas fa-video fa-lg me-2" style="color: #2658A5;"></i>
+                                <span>Video_Introduccion.mp4</span>
+                                <small class="text-muted ms-2">(15.2 MB)</small>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verMaterial(3)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="descargarMaterial(3)">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white py-2 text-center">
+                    <small class="text-muted">Total: 3 archivos - 22.5 MB</small>
+                </div>
+            </div>
+
+            <!-- Evaluación de la Capacitación -->
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-semibold text-white">
+                            <i class="fas fa-star me-2"></i> Evaluación de la Capacitación
+                        </h6>
+                        <button class="btn btn-light btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAgregarEvaluacion">
+                            <i class="fas fa-plus me-1"></i> Agregar Evaluación
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row text-center mb-4">
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-3" style="background: #f8f9fc;">
+                                <h1 class="display-4 fw-bold mb-0" style="color: #2658A5;">4.8</h1>
+                                <small class="text-muted">Calificación Promedio</small>
+                                <div class="mt-2">
+                                    <i class="fas fa-star" style="color: #FFCC29;"></i>
+                                    <i class="fas fa-star" style="color: #FFCC29;"></i>
+                                    <i class="fas fa-star" style="color: #FFCC29;"></i>
+                                    <i class="fas fa-star" style="color: #FFCC29;"></i>
+                                    <i class="fas fa-star-half-alt" style="color: #FFCC29;"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-3" style="background: #f8f9fc;">
+                                <h1 class="display-4 fw-bold mb-0" style="color: #28a745;">95%</h1>
+                                <small class="text-muted">Tasa de Aprobación</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 rounded-3" style="background: #f8f9fc;">
+                                <h1 class="display-4 fw-bold mb-0" style="color: #FFCC29;">32</h1>
+                                <small class="text-muted">Evaluaciones Recibidas</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <h6 class="fw-semibold mb-3">Últimos Comentarios</h6>
+                        <div class="comment-list">
+                            <div class="comment-item p-3 mb-2 rounded-3" style="background: #f8f9fc;">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <div>
+                                        <i class="fas fa-user-circle me-1" style="color: #2658A5;"></i>
+                                        <span class="fw-semibold">María González</span>
+                                    </div>
+                                    <small class="text-muted">5 estrellas</small>
+                                </div>
+                                <p class="mb-0 small">Excelente capacitación, muy completa y práctica. El instructor fue muy claro en sus explicaciones.</p>
+                            </div>
+                            <div class="comment-item p-3 mb-2 rounded-3" style="background: #f8f9fc;">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <div>
+                                        <i class="fas fa-user-circle me-1" style="color: #28a745;"></i>
+                                        <span class="fw-semibold">Carlos Rodríguez</span>
+                                    </div>
+                                    <small class="text-muted">4 estrellas</small>
+                                </div>
+                                <p class="mb-0 small">Muy buen contenido, mejoraría los ejemplos prácticos.</p>
+                            </div>
+                            <div class="comment-item p-3 rounded-3" style="background: #f8f9fc;">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <div>
+                                        <i class="fas fa-user-circle me-1" style="color: #FFCC29;"></i>
+                                        <span class="fw-semibold">Ana Martínez</span>
+                                    </div>
+                                    <small class="text-muted">5 estrellas</small>
+                                </div>
+                                <p class="mb-0 small">Material muy útil, lo recomiendo totalmente.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Inscribir Participante -->
+<div class="modal fade" id="modalInscribirParticipante" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-user-plus me-2"></i> Inscribir Participante
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formInscribir" method="POST" action="{{ url_for('rh_capacitacion_inscribir', id=capacitacion.id) }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Empleado *</label>
+                        <select name="empleado_id" class="form-select rounded-3" required>
+                            <option value="">Seleccionar empleado...</option>
+                            <option value="1">María González López - CC 12345678</option>
+                            <option value="2">Carlos Rodríguez Pérez - CC 87654321</option>
+                            <option value="3">Ana Martínez Suárez - CC 11223344</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formInscribir" class="btn rounded-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                    <i class="fas fa-save me-2"></i> Inscribir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function editarCapacitacion(id) {
+    window.location.href = "/rh/capacitacion/" + id + "/editar";
+}
+
+function verParticipante(id) {
+    window.location.href = "/rh/empleado/" + id;
+}
+
+function descargarCertificado(id) {
+    alert('Descargando certificado...');
+}
+
+function inscribirParticipante(id) {
+    new bootstrap.Modal(document.getElementById('modalInscribirParticipante')).show();
+}
+
+function subirMaterial(id) {
+    alert('Funcionalidad de subida de material');
+}
+
+function verMaterial(id) {
+    alert('Visualizando material');
+}
+
+function descargarMaterial(id) {
+    alert('Descargando material...');
+}
+</script>
+
+<style>
+.info-group {
+    margin-top: 10px;
+}
+.comment-item {
+    transition: all 0.2s ease;
+}
+.comment-item:hover {
+    background: #e8f0fe !important;
+}
+.progress {
+    border-radius: 10px;
+}
+</style>
+{% endblock %}
