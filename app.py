@@ -2900,11 +2900,24 @@ def dashboard_admin():
             'total_empleados_activos': total_empleados_activos,
             'procesos_pendientes': 0
         }
-        return render_template('dashboard_admin.html', stats=stats)
+
+        urls = {
+            'gestion_usuarios': url_for('gestion_usuarios'),
+            'agregar_usuario': url_for('agregar_usuario'),
+            'cambiar_password': url_for('cambiar_password'),
+            'soluciones_visuales': url_for('soluciones_visuales'),
+            'atencion_telefonica': url_for('atencion_telefonica'),
+            'informacion_general': url_for('informacion_general'),
+            'logout': url_for('logout'),
+            'index': url_for('index'),
+            'sst_dashboard': url_for('sst_dashboard'),
+            'rh_dashboard': url_for('rh_dashboard')  # <- importante
+        }
+        
+        return render_template('dashboard_admin.html', stats=stats, urls=urls)
     except Exception as e:
         logger.error(f"Error en dashboard_admin: {e}")
-        return render_template('dashboard_admin.html', stats={})
-
+        return render_template('dashboard_admin.html', stats={}, urls={})
 
 # ===== FUNCIONES AUXILIARES =====
 def actualizar_porcentaje_avance(id):
