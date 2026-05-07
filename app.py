@@ -19,6 +19,18 @@ from functools import wraps
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# ===== HELPER: PARSEAR PERMISOS DESDE BD =====
+def parsear_permisos(raw):
+    """Parsea permisos desde BD — acepta dict (JSONB) o str (TEXT/JSON)."""
+    if not raw:
+        return {}
+    try:
+        if isinstance(raw, dict):
+            return raw
+        return json.loads(raw)
+    except Exception:
+        return {}
+
 # ===== DECORADOR DE REINTENTO PARA ERRORES SSL =====
 def retry_on_ssl_error(max_retries=2, delay=3):
     """Decorador para reintentar operaciones con errores SSL"""
@@ -176,6 +188,7 @@ def inject_permissions():
         obtener_modulo_principal=obtener_modulo_principal,
         obtener_rol_display=obtener_rol_display
     )
+
 # ===== FILTROS TEMPLATE =====
 @app.template_filter('format_date')
 def format_date_filter(date_value, format='%d/%m/%Y'):
@@ -241,8 +254,7 @@ class User(UserMixin):
         # Primero los permisos de BD, luego el rol base rellena las claves que falten
         permisos_bd = permisos or {}
         self.permisos = self._obtener_permisos_base()
-        # Solo se sobreescriben las claves que YA existen en los permisos base;
-        # claves nuevas del rol (ver_rh, gestionar_rh, etc.) nunca se pierden.
+        # Solo se sobreescriben las claves que YA existen en los permisos base
         for clave, valor in permisos_bd.items():
             if clave in self.permisos:
                 self.permisos[clave] = valor
@@ -288,12 +300,13 @@ class User(UserMixin):
                 'acceder_soporte': True, 'acceder_dashboard': False, 'administrar_sistema': False,
                 'ver_rh': False, 'gestionar_rh': False,
             }
-        else:
+        else:  # rh y otros
             return {
                 'ver_fichas': True, 'agregar_fichas': True, 'editar_fichas': True,
                 'eliminar_fichas': True, 'cambiar_password': True, 'gestion_usuarios': False,
                 'acceder_sst': False, 'acceder_soporte': True, 'acceder_dashboard': False,
-                'administrar_sistema': False, 'ver_rh': False, 'gestionar_rh': False,
+                'administrar_sistema': False, 'ver_rh': True, 'gestionar_rh': True,
+                'gestionar_plan_anual': False, 'agregar_evidencias': False,
             }
 
     def puede(self, permiso):
@@ -303,7 +316,8 @@ class User(UserMixin):
         display_map = {
             'admin': 'Administrador',
             'sst': 'SST (Salud y Seguridad)',
-            'soporte': 'Soporte Técnico'
+            'soporte': 'Soporte Técnico',
+            'rh': 'Recursos Humanos'
         }
         return display_map.get(self.rol, self.rol.capitalize())
 
@@ -320,12 +334,7 @@ def load_user(user_id):
         cursor.close()
         conn.close()
         if user_data:
-            permisos = {}
-            if user_data[5]:
-                try:
-                    permisos = json.loads(user_data[5])
-                except:
-                    permisos = {}
+            permisos = parsear_permisos(user_data[5])
             user = User(user_data[0], user_data[1], user_data[3], user_data[4], permisos)
             user.redireccionar_sst = user_data[6] if len(user_data) > 6 else False
             return user
@@ -338,7 +347,7 @@ def redirect_a_modulo_principal():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
     logger.info(f"Redirigiendo usuario {current_user.usuario} (rol: {current_user.rol})")
-    
+
     if current_user.rol == 'admin':
         return redirect(url_for('dashboard_admin'))
     elif current_user.rol == 'rh':
@@ -368,12 +377,7 @@ def login():
             conn.close()
             if user_data and user_data[2] and user_data[2].strip():
                 if check_password_hash(user_data[2], password):
-                    permisos = {}
-                    if user_data[5]:
-                        try:
-                            permisos = json.loads(user_data[5])
-                        except:
-                            permisos = {}
+                    permisos = parsear_permisos(user_data[5])
                     user = User(user_data[0], user_data[1], user_data[3], user_data[4], permisos)
                     user.redireccionar_sst = user_data[6] if len(user_data) > 6 else False
                     login_user(user)
@@ -385,11 +389,9 @@ def login():
                     elif user.rol == 'rh':
                         return redirect(url_for('rh_dashboard'))
                     elif user.rol == 'sst':
-                        if user.redireccionar_sst and user.puede('acceder_sst'):
-                            return redirect(url_for('sst_dashboard'))
                         return redirect(url_for('sst_dashboard'))
                     else:  # soporte o cualquier otro
-                        return redirect(url_for('index'))                    
+                        return redirect(url_for('index'))
                 else:
                     flash('Usuario o contraseña incorrectos', 'error')
             else:
@@ -444,18 +446,17 @@ def cambiar_password():
 @login_required
 def index():
     """Página principal de soporte técnico"""
-    # Admin puede ver soporte también
     if current_user.rol == 'admin':
         pass  # Admin puede pasar
     elif current_user.rol == 'sst':
         return redirect(url_for('sst_dashboard'))
     elif current_user.rol == 'rh':
         return redirect(url_for('rh_dashboard'))
-    
+
     if not current_user.puede('acceder_soporte'):
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
         return redirect_a_modulo_principal()
-    
+
     fichas = []
     try:
         resultado = ejecutar_consulta(
@@ -476,15 +477,14 @@ def index():
 @login_required
 def agregar_ficha():
     """Agregar nueva ficha de soporte"""
-    # Admin también puede agregar
     if current_user.rol not in ['admin', 'soporte']:
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
         return redirect_a_modulo_principal()
-    
+
     if not current_user.puede('agregar_fichas'):
         flash('No tienes permisos para realizar esta acción', 'error')
         return redirect(url_for('index'))
-    
+
     if request.method == 'POST':
         categoria = request.form.get('categoria', '')
         problema = request.form.get('problema', '')
@@ -492,14 +492,14 @@ def agregar_ficha():
         causas = request.form.get('causas', '')
         solucion = request.form.get('solucion', '')
         palabras_clave = request.form.get('palabras_clave', '')
-        
+
         campos_requeridos = {'categoria': categoria, 'problema': problema, 'causas': causas, 'solucion': solucion}
         campos_faltantes = [campo for campo, valor in campos_requeridos.items() if not valor]
-        
+
         if campos_faltantes:
             flash('Por favor, complete todos los campos requeridos', 'error')
             return render_template('agregar_ficha.html')
-        
+
         try:
             ejecutar_consulta(
                 'INSERT INTO fichas (categoria, problema, descripcion, causas, solucion, palabras_clave) VALUES (%s, %s, %s, %s, %s, %s)',
@@ -508,7 +508,7 @@ def agregar_ficha():
             return redirect(url_for('index'))
         except Exception as e:
             flash(f'Error al agregar la ficha: {str(e)}', 'error')
-    
+
     return render_template('agregar_ficha.html')
 
 
@@ -519,11 +519,11 @@ def editar_ficha(id):
     if current_user.rol not in ['admin', 'soporte']:
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
         return redirect_a_modulo_principal()
-    
+
     if not current_user.puede('editar_fichas'):
         flash('No tienes permisos para realizar esta acción', 'error')
         return redirect(url_for('index'))
-    
+
     ficha = None
     try:
         if request.method == 'POST':
@@ -533,16 +533,16 @@ def editar_ficha(id):
             causas = request.form['causas']
             solucion = request.form['solucion']
             palabras_clave = request.form['palabras_clave']
-            
+
             causas_items = [item.strip() for item in causas.split('\n') if item.strip()]
             causas_str = '|'.join(causas_items)
-            
+
             ejecutar_consulta(
                 'UPDATE fichas SET categoria=%s, problema=%s, descripcion=%s, causas=%s, solucion=%s, palabras_clave=%s WHERE id=%s',
                 (categoria, problema, descripcion, causas_str, solucion, palabras_clave, id), commit=True)
             flash('Ficha actualizada correctamente', 'success')
             return redirect(url_for('index'))
-        
+
         resultado = ejecutar_consulta("SELECT * FROM fichas WHERE id = %s", (id,), fetch=True)
         if resultado and resultado[0]:
             ficha_data = resultado[0]
@@ -556,11 +556,11 @@ def editar_ficha(id):
     except Exception as e:
         flash('Error al cargar/editar la ficha', 'error')
         logger.error(f"Error en editar_ficha: {e}")
-    
+
     if not ficha:
         flash('Ficha no encontrada', 'error')
         return redirect(url_for('index'))
-    
+
     return render_template('editar_ficha.html', ficha=ficha)
 
 
@@ -571,18 +571,18 @@ def eliminar_ficha(id):
     if current_user.rol not in ['admin', 'soporte']:
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
         return redirect_a_modulo_principal()
-    
+
     if not current_user.puede('eliminar_fichas'):
         flash('No tienes permisos para realizar esta acción', 'error')
         return redirect(url_for('index'))
-    
+
     try:
         ejecutar_consulta("DELETE FROM fichas WHERE id = %s", (id,), commit=True)
         flash('Ficha eliminada correctamente', 'success')
     except Exception as e:
         flash('Error al eliminar la ficha', 'error')
         logger.error(f"Error en eliminar_ficha: {e}")
-    
+
     return redirect(url_for('index'))
 
 
@@ -593,15 +593,15 @@ def buscar():
     if current_user.rol not in ['admin', 'soporte']:
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
         return redirect_a_modulo_principal()
-    
+
     if not current_user.puede('ver_fichas'):
         flash('No tienes permisos para ver las fichas', 'error')
         return redirect(url_for('index'))
-    
+
     query = request.args.get('q', '')
     categoria = request.args.get('categoria', '')
     fichas = []
-    
+
     try:
         if categoria and query:
             resultado = ejecutar_consulta(
@@ -615,7 +615,7 @@ def buscar():
                 (f'%{query}%', f'%{query}%'), fetch=True)
         else:
             resultado = ejecutar_consulta("SELECT * FROM fichas ORDER BY fecha_actualizacion DESC", fetch=True)
-        
+
         for ficha in resultado or []:
             fichas.append({
                 'id': ficha[0], 'categoria': ficha[1], 'problema': ficha[2],
@@ -625,7 +625,7 @@ def buscar():
     except Exception as e:
         flash('Error en la búsqueda', 'error')
         logger.error(f"Error en buscar: {e}")
-    
+
     return render_template('buscar.html', fichas=fichas, query=query, categoria=categoria)
 
 
@@ -636,11 +636,11 @@ def ver_ficha(id):
     if current_user.rol not in ['admin', 'soporte']:
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
         return redirect_a_modulo_principal()
-    
+
     if not current_user.puede('ver_fichas'):
         flash('No tienes permisos para ver las fichas', 'error')
         return redirect(url_for('index'))
-    
+
     ficha = None
     try:
         resultado = ejecutar_consulta("SELECT * FROM fichas WHERE id = %s", (id,), fetch=True)
@@ -654,11 +654,11 @@ def ver_ficha(id):
     except Exception as e:
         flash('Error al cargar la ficha', 'error')
         logger.error(f"Error en ver_ficha: {e}")
-    
+
     if not ficha:
         flash('Ficha no encontrada', 'error')
         return redirect(url_for('index'))
-    
+
     return render_template('ver_ficha.html', ficha=ficha)
 
 # ===== RUTAS DE GESTIÓN DE USUARIOS (Solo Admin) =====
@@ -680,13 +680,7 @@ def gestion_usuarios():
                 'rol': usuario[3], 'modulo_principal': usuario[4] if usuario[4] else 'soporte',
                 'permisos': usuario[5], 'fecha_creacion': usuario[6], 'fecha_actualizacion': usuario[7]
             }
-            permisos_parsed = {}
-            if usuario_dict.get('permisos'):
-                try:
-                    permisos_parsed = json.loads(usuario_dict['permisos'])
-                except Exception as e:
-                    logger.warning(f"Error al parsear permisos del usuario {usuario_dict['id']}: {e}")
-            usuario_dict['permisos_parsed'] = permisos_parsed
+            usuario_dict['permisos_parsed'] = parsear_permisos(usuario_dict.get('permisos'))
             usuarios.append(usuario_dict)
     except Exception as e:
         flash('Error al cargar los usuarios', 'error')
@@ -733,13 +727,7 @@ def editar_usuario(id):
                 'rol': usuario[3], 'modulo_principal': usuario[4] if usuario[4] else 'soporte',
                 'permisos': usuario[5], 'fecha_creacion': usuario[6], 'fecha_actualizacion': usuario[7]
             }
-            if usuario_data.get('permisos'):
-                try:
-                    usuario_data['permisos_parsed'] = json.loads(usuario_data['permisos'])
-                except:
-                    usuario_data['permisos_parsed'] = {}
-            else:
-                usuario_data['permisos_parsed'] = {}
+            usuario_data['permisos_parsed'] = parsear_permisos(usuario_data.get('permisos'))
     except psycopg2.IntegrityError:
         flash('El usuario ya existe', 'error')
     except Exception as e:
@@ -2095,19 +2083,15 @@ def sst_eliminar_evidencia(id):
 # MÓDULO DE RECURSOS HUMANOS (RH)
 # ==========================================
 
-# -------------------- DASHBOARD Y PRINCIPALES --------------------
-# ===== RUTA RH_DASHBOARD (alias para compatibilidad) =====
 @app.route('/rh_dashboard')
 @login_required
 def rh_dashboard_redirect():
     """Redirección a /rh para compatibilidad"""
     return redirect(url_for('rh_dashboard'))
 
-# -------------------- GESTIÓN DE EMPLEADOS --------------------
 @app.route('/rh/empleados')
 @login_required
 def rh_empleados():
-    """Listado de empleados"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
@@ -2144,11 +2128,9 @@ def rh_empleados():
         flash('Error al cargar los empleados', 'error')
         return redirect(url_for('rh_dashboard'))
 
-
 @app.route('/rh/empleado/<int:id>')
 @login_required
 def rh_empleado_detalle(id):
-    """Detalle de un empleado específico"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
@@ -2188,11 +2170,9 @@ def rh_empleado_detalle(id):
         flash('Error al cargar el detalle del empleado', 'error')
         return redirect(url_for('rh_empleados'))
 
-
 @app.route('/rh/empleado/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
 def rh_empleado_editar(id):
-    """Editar información de un empleado"""
     if not current_user.puede('gestionar_rh'):
         flash('No tienes permisos para editar empleados', 'error')
         return redirect(url_for('rh_empleados'))
@@ -2241,11 +2221,9 @@ def rh_empleado_editar(id):
         flash('Error al editar el empleado', 'error')
         return redirect(url_for('rh_empleados'))
 
-
 @app.route('/rh/empleado/nuevo', methods=['GET', 'POST'])
 @login_required
 def rh_empleado_nuevo():
-    """Crear un nuevo empleado"""
     if not current_user.puede('gestionar_rh'):
         flash('No tienes permisos para crear empleados', 'error')
         return redirect(url_for('rh_empleados'))
@@ -2281,12 +2259,9 @@ def rh_empleado_nuevo():
         flash('Error al crear el empleado', 'error')
         return redirect(url_for('rh_empleados'))
 
-
-# -------------------- CONTRATOS --------------------
 @app.route('/rh/contratos')
 @login_required
 def rh_contratos():
-    """Listado de contratos"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
@@ -2308,11 +2283,9 @@ def rh_contratos():
         logger.error(f"Error en rh_contratos: {e}")
         return render_template('rh/rh_contratos.html', contratos=[])
 
-
 @app.route('/rh/contrato/<int:id>')
 @login_required
 def rh_contrato_detalle(id):
-    """Detalle de un contrato"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
@@ -2336,11 +2309,9 @@ def rh_contrato_detalle(id):
         flash('Error al cargar el detalle del contrato', 'error')
         return redirect(url_for('rh_contratos'))
 
-
 @app.route('/rh/contrato/nuevo', methods=['GET', 'POST'])
 @login_required
 def rh_contrato_nuevo():
-    """Crear un nuevo contrato"""
     if not current_user.puede('gestionar_rh'):
         flash('No tienes permisos para crear contratos', 'error')
         return redirect(url_for('rh_contratos'))
@@ -2364,8 +2335,6 @@ def rh_contrato_nuevo():
         flash('Error al crear el contrato', 'error')
         return redirect(url_for('rh_contratos'))
 
-
-# -------------------- PROCESOS RH --------------------
 @app.route('/rh')
 @login_required
 def rh_dashboard():
@@ -2383,7 +2352,6 @@ def rh_dashboard():
                 (SELECT COUNT(*) FROM rh_empleados WHERE fecha_retiro >= DATE_TRUNC('month', CURRENT_DATE)) as retiros_mes
         """)
         stats = cursor.fetchone()
-        # CORREGIDO: usar responsable_id en lugar de responsable
         cursor.execute("""
             SELECT id, nombre, responsable_id, estado, avance, fecha_limite
             FROM rh_procesos WHERE estado != 'completado' ORDER BY fecha_limite ASC LIMIT 5
@@ -2404,7 +2372,6 @@ def rh_dashboard():
 @app.route('/rh/procesos')
 @login_required
 def rh_procesos():
-    """Listado de procesos RH"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
@@ -2425,11 +2392,9 @@ def rh_procesos():
         flash('Error al cargar los procesos', 'error')
         return redirect(url_for('rh_dashboard'))
 
-
 @app.route('/rh/proceso/<int:id>')
 @login_required
 def rh_proceso_detalle(id):
-    """Detalle de un proceso RH"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
@@ -2449,12 +2414,9 @@ def rh_proceso_detalle(id):
         flash('Error al cargar el detalle del proceso', 'error')
         return redirect(url_for('rh_procesos'))
 
-
-# -------------------- CAPACITACIONES --------------------
 @app.route('/rh/capacitaciones')
 @login_required
 def rh_capacitaciones():
-    """Listado de capacitaciones"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
@@ -2474,11 +2436,9 @@ def rh_capacitaciones():
         logger.error(f"Error en rh_capacitaciones: {e}")
         return render_template('rh/rh_capacitaciones.html', capacitaciones=[])
 
-
 @app.route('/rh/capacitacion/<int:id>')
 @login_required
 def rh_capacitacion_detalle(id):
-    """Detalle de una capacitación"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
@@ -2506,11 +2466,9 @@ def rh_capacitacion_detalle(id):
         flash('Error al cargar el detalle de la capacitación', 'error')
         return redirect(url_for('rh_capacitaciones'))
 
-
 @app.route('/rh/capacitacion/nueva', methods=['GET', 'POST'])
 @login_required
 def rh_capacitacion_nueva():
-    """Crear una nueva capacitación"""
     if not current_user.puede('gestionar_rh'):
         flash('No tienes permisos para crear capacitaciones', 'error')
         return redirect(url_for('rh_capacitaciones'))
@@ -2535,12 +2493,9 @@ def rh_capacitacion_nueva():
         flash('Error al crear la capacitación', 'error')
         return redirect(url_for('rh_capacitaciones'))
 
-
-# -------------------- EVALUACIONES --------------------
 @app.route('/rh/evaluaciones')
 @login_required
 def rh_evaluaciones():
-    """Listado de evaluaciones de desempeño"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
@@ -2564,11 +2519,9 @@ def rh_evaluaciones():
         logger.error(f"Error en rh_evaluaciones: {e}")
         return render_template('rh/rh_evaluaciones.html', evaluaciones=[])
 
-
 @app.route('/rh/evaluacion/nueva', methods=['GET', 'POST'])
 @login_required
 def rh_evaluacion_nueva():
-    """Crear una nueva evaluación de desempeño"""
     if not current_user.puede('gestionar_rh'):
         flash('No tienes permisos para crear evaluaciones', 'error')
         return redirect(url_for('rh_evaluaciones'))
@@ -2604,12 +2557,9 @@ def rh_evaluacion_nueva():
         flash('Error al crear la evaluación', 'error')
         return redirect(url_for('rh_evaluaciones'))
 
-
-# -------------------- ASCENSOS --------------------
 @app.route('/rh/ascensos')
 @login_required
 def rh_ascensos():
-    """Listado de ascensos"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
@@ -2634,12 +2584,9 @@ def rh_ascensos():
         logger.error(f"Error en rh_ascensos: {e}")
         return render_template('rh/rh_ascensos.html', ascensos=[])
 
-
-# -------------------- CARGOS --------------------
 @app.route('/rh/cargos')
 @login_required
 def rh_cargos():
-    """Listado de cargos"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
@@ -2660,11 +2607,9 @@ def rh_cargos():
         logger.error(f"Error en rh_cargos: {e}")
         return render_template('rh/rh_cargos.html', cargos=[])
 
-
 @app.route('/rh/cargo/nuevo', methods=['GET', 'POST'])
 @login_required
 def rh_cargo_nuevo():
-    """Crear un nuevo cargo"""
     if not current_user.puede('gestionar_rh'):
         flash('No tienes permisos para crear cargos', 'error')
         return redirect(url_for('rh_cargos'))
@@ -2689,12 +2634,9 @@ def rh_cargo_nuevo():
         flash('Error al crear el cargo', 'error')
         return redirect(url_for('rh_cargos'))
 
-
-# -------------------- SANCIONES --------------------
 @app.route('/rh/sanciones')
 @login_required
 def rh_sanciones():
-    """Listado de sanciones"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
@@ -2714,11 +2656,9 @@ def rh_sanciones():
         logger.error(f"Error en rh_sanciones: {e}")
         return render_template('rh/rh_sanciones.html', sanciones=[])
 
-
 @app.route('/rh/sancion/nueva', methods=['GET', 'POST'])
 @login_required
 def rh_sancion_nueva():
-    """Registrar una nueva sanción"""
     if not current_user.puede('gestionar_rh'):
         flash('No tienes permisos para registrar sanciones', 'error')
         return redirect(url_for('rh_sanciones'))
@@ -2746,12 +2686,9 @@ def rh_sancion_nueva():
         flash('Error al registrar la sanción', 'error')
         return redirect(url_for('rh_sanciones'))
 
-
-# -------------------- DEPARTAMENTOS --------------------
 @app.route('/rh/departamentos')
 @login_required
 def rh_departamentos():
-    """Listado de departamentos"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
@@ -2772,52 +2709,41 @@ def rh_departamentos():
         logger.error(f"Error en rh_departamentos: {e}")
         return render_template('rh/rh_departamentos.html', departamentos=[])
 
-
 @app.route('/rh/organigrama')
 @login_required
 def rh_organigrama():
-    """Vista del organigrama de la empresa"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
     return render_template('rh/rh_organigrama.html')
 
-
-# -------------------- REPORTES --------------------
 @app.route('/rh/reportes')
 @login_required
 def rh_reportes():
-    """Centro de reportes RH"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
     return render_template('rh/rh_reportes.html')
 
-
 @app.route('/rh/reporte/asistencia')
 @login_required
 def rh_reporte_asistencia():
-    """Reporte de asistencia"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
     return render_template('rh/rh_reporte_asistencia.html')
 
-
 @app.route('/rh/reporte/nomina')
 @login_required
 def rh_reporte_nomina():
-    """Reporte de nómina"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
     return render_template('rh/rh_reporte_nomina.html')
 
-
 @app.route('/rh/reporte/rotacion')
 @login_required
 def rh_reporte_rotacion():
-    """Reporte de rotación de personal"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
@@ -2826,16 +2752,12 @@ def rh_reporte_rotacion():
 @app.route('/rh/normativas')
 @login_required
 def rh_normativas():
-    """Listado de normativas laborales"""
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
-    
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
-        
-        # Intentar obtener normativas de la base de datos
         try:
             cursor.execute("""
                 SELECT id, titulo, descripcion, tipo, fecha_publicacion, url
@@ -2845,16 +2767,13 @@ def rh_normativas():
         except Exception as e:
             logger.warning(f"Tabla rh_normativas no existe: {e}")
             normativas = []
-        
         cursor.close()
         conn.close()
-        
         return render_template('rh/rh_normativas.html', normativas=normativas)
     except Exception as e:
         logger.error(f"Error en rh_normativas: {e}")
         flash('Error al cargar las normativas', 'error')
         return redirect(url_for('rh_dashboard'))
-
 
 # ==========================================
 # FIN MÓDULO DE RECURSOS HUMANOS
@@ -2865,92 +2784,55 @@ def rh_normativas():
 @login_required
 @admin_required
 def dashboard_admin():
-    """Panel principal del administrador con acceso a todas las áreas"""
+    """
+    Panel HUB del administrador: muestra tarjetas para ingresar
+    a Soporte, SST y RH. También muestra estadísticas generales.
+    """
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
-        
-        # Usar try/except para cada consulta por si hay problemas con el ENUM
-        try:
-            cursor.execute("SELECT COUNT(*) FROM usuarios")
-            total_usuarios = cursor.fetchone()[0]
-        except:
-            total_usuarios = 0
-        
-        try:
-            cursor.execute("SELECT COUNT(*) FROM usuarios WHERE rol = 'soporte' OR rol = 'usuario'")
-            usuarios_soporte = cursor.fetchone()[0]
-        except:
-            usuarios_soporte = 0
-        
-        try:
-            cursor.execute("SELECT COUNT(*) FROM usuarios WHERE rol = 'sst'")
-            usuarios_sst = cursor.fetchone()[0]
-        except:
-            usuarios_sst = 0
-        
-        try:
-            cursor.execute("SELECT COUNT(*) FROM usuarios WHERE rol = 'rh'")
-            usuarios_rh = cursor.fetchone()[0]
-        except:
-            usuarios_rh = 0
-        
-        try:
-            cursor.execute("SELECT COUNT(*) FROM fichas")
-            total_fichas = cursor.fetchone()[0]
-        except:
-            total_fichas = 0
-        
-        try:
-            cursor.execute("SELECT COUNT(*) FROM sst_contenido")
-            total_contenido_sst = cursor.fetchone()[0]
-        except:
-            total_contenido_sst = 0
-        
-        try:
-            cursor.execute("SELECT COUNT(*) FROM plan_anual_trabajo")
-            total_actividades_plan = cursor.fetchone()[0]
-        except:
-            total_actividades_plan = 0
-        
-        try:
-            cursor.execute("SELECT COUNT(*) FROM rh_empleados WHERE estado = 'activo'")
-            total_empleados_activos = cursor.fetchone()[0]
-        except:
-            total_empleados_activos = 0
-        
-        cursor.close()
-        conn.close()
-        
+
+        def safe_count(query):
+            try:
+                cursor.execute(query)
+                return cursor.fetchone()[0]
+            except Exception:
+                return 0
+
         stats = {
-            'total_usuarios': total_usuarios,
-            'usuarios_soporte': usuarios_soporte,
-            'usuarios_sst': usuarios_sst,
-            'usuarios_rh': usuarios_rh,
-            'total_fichas': total_fichas,
-            'total_contenido_sst': total_contenido_sst,
-            'total_actividades_plan': total_actividades_plan,
-            'total_empleados_activos': total_empleados_activos,
-            'procesos_pendientes': 0
+            'total_usuarios':          safe_count("SELECT COUNT(*) FROM usuarios"),
+            'usuarios_soporte':        safe_count("SELECT COUNT(*) FROM usuarios WHERE rol IN ('soporte', 'usuario')"),
+            'usuarios_sst':            safe_count("SELECT COUNT(*) FROM usuarios WHERE rol = 'sst'"),
+            'usuarios_rh':             safe_count("SELECT COUNT(*) FROM usuarios WHERE rol = 'rh'"),
+            'total_fichas':            safe_count("SELECT COUNT(*) FROM fichas"),
+            'total_contenido_sst':     safe_count("SELECT COUNT(*) FROM sst_contenido"),
+            'total_actividades_plan':  safe_count("SELECT COUNT(*) FROM plan_anual_trabajo"),
+            'total_empleados_activos': safe_count("SELECT COUNT(*) FROM rh_empleados WHERE estado = 'activo'"),
+            'procesos_pendientes': 0,
         }
 
+        cursor.close()
+        conn.close()
+
         urls = {
-            'gestion_usuarios': url_for('gestion_usuarios'),
-            'agregar_usuario': url_for('agregar_usuario'),
-            'cambiar_password': url_for('cambiar_password'),
+            'gestion_usuarios':   url_for('gestion_usuarios'),
+            'agregar_usuario':    url_for('agregar_usuario'),
+            'cambiar_password':   url_for('cambiar_password'),
             'soluciones_visuales': url_for('soluciones_visuales'),
             'atencion_telefonica': url_for('atencion_telefonica'),
             'informacion_general': url_for('informacion_general'),
-            'logout': url_for('logout'),
-            'index': url_for('index'),
-            'sst_dashboard': url_for('sst_dashboard'),
-            'rh_dashboard': url_for('rh_dashboard')  # <- importante
+            'logout':             url_for('logout'),
+            'index':              url_for('index'),
+            'sst_dashboard':      url_for('sst_dashboard'),
+            'rh_dashboard':       url_for('rh_dashboard'),
         }
-        
+
         return render_template('dashboard_admin.html', stats=stats, urls=urls)
+
     except Exception as e:
         logger.error(f"Error en dashboard_admin: {e}")
         return render_template('dashboard_admin.html', stats={}, urls={})
+
 
 # ===== FUNCIONES AUXILIARES =====
 def actualizar_porcentaje_avance(id):
