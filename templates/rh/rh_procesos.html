@@ -1,0 +1,521 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Procesos RH - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Filtros y búsqueda -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-filter me-2"></i> Filtros de Búsqueda
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;">
+                            <i class="fas fa-search" style="color: #2658A5;"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control border-start-0 rounded-3" 
+                               placeholder="Buscar por proceso, responsable..." 
+                               value="{{ request.args.get('q', '') }}"
+                               style="border-radius: 0 12px 12px 0;">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="tipo" class="form-select rounded-3">
+                        <option value="">Todos los tipos</option>
+                        <option value="reclutamiento">📋 Reclutamiento</option>
+                        <option value="capacitacion">🎓 Capacitación</option>
+                        <option value="evaluacion">⭐ Evaluación</option>
+                        <option value="ascenso">📈 Ascenso</option>
+                        <option value="legal">⚖️ Legal</option>
+                        <option value="nomina">💰 Nómina</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="estado" class="form-select rounded-3">
+                        <option value="">Todos los estados</option>
+                        <option value="pendiente">⏳ Pendiente</option>
+                        <option value="en_proceso">🔄 En Proceso</option>
+                        <option value="completado">✅ Completado</option>
+                        <option value="cancelado">❌ Cancelado</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 rounded-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); border: none;">
+                        <i class="fas fa-search me-1"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Listado de Procesos -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-chalkboard-user me-2"></i> Procesos de Recursos Humanos
+                    <span class="badge bg-white text-dark rounded-pill ms-2 px-3">{{ procesos|default(12) }}</span>
+                </h5>
+                <button class="btn btn-light btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoProceso">
+                    <i class="fas fa-plus me-1"></i> Nuevo Proceso
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead style="background: #f8f9fc;">
+                        <tr>
+                            <th style="padding: 16px 12px;">Proceso</th>
+                            <th style="padding: 16px 12px;">Descripción</th>
+                            <th style="padding: 16px 12px;">Responsable</th>
+                            <th style="padding: 16px 12px;">Estado</th>
+                            <th style="padding: 16px 12px;">Prioridad</th>
+                            <th style="padding: 16px 12px;">Fechas</th>
+                            <th style="padding: 16px 12px;">Avance</th>
+                            <th style="padding: 16px 12px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Proceso 1 -->
+                        <tr class="proceso-fila">
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle p-1" style="background: rgba(38,88,165,0.1);">
+                                        <i class="fas fa-user-plus" style="color: #2658A5;"></i>
+                                    </div>
+                                    <span class="fw-semibold">Reclutamiento y Selección</span>
+                                </div>
+                            </td>
+                            <td class="align-middle small">Proceso de atracción y selección de talento humano para áreas críticas</td>
+                            <td class="align-middle">María González</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-spinner me-1"></i> En Proceso
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">Alta</span>
+                            </td>
+                            <td class="align-middle small">
+                                <div>📅 Inicio: 01/03/2024</div>
+                                <div>⏰ Fin: 30/04/2024</div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2" style="min-width: 100px;">
+                                    <div class="progress flex-grow-1" style="height: 6px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 65%; background: linear-gradient(90deg, #2658A5, #28a745);"></div>
+                                    </div>
+                                    <small class="fw-bold">65%</small>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verProceso(1)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarProceso(1)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="avanzarProceso(1)">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Proceso 2 -->
+                        <tr class="proceso-fila">
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle p-1" style="background: rgba(40,167,69,0.1);">
+                                        <i class="fas fa-chalkboard-user" style="color: #28a745;"></i>
+                                    </div>
+                                    <span class="fw-semibold">Plan de Capacitación Anual</span>
+                                </div>
+                            </td>
+                            <td class="align-middle small">Programa de formación continua para colaboradores</td>
+                            <td class="align-middle">Carlos Rodríguez</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Completado
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">Media</span>
+                            </td>
+                            <td class="align-middle small">
+                                <div>📅 Inicio: 15/01/2024</div>
+                                <div>⏰ Fin: 15/12/2024</div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2" style="min-width: 100px;">
+                                    <div class="progress flex-grow-1" style="height: 6px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 100%; background: linear-gradient(90deg, #28a745, #20c997);"></div>
+                                    </div>
+                                    <small class="fw-bold">100%</small>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verProceso(2)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarProceso(2)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #6c757d; color: white;" disabled>
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Proceso 3 -->
+                        <tr class="proceso-fila">
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle p-1" style="background: rgba(255,204,41,0.15);">
+                                        <i class="fas fa-star" style="color: #FFCC29;"></i>
+                                    </div>
+                                    <span class="fw-semibold">Evaluación de Desempeño</span>
+                                </div>
+                            </td>
+                            <td class="align-middle small">Evaluación semestral del desempeño laboral</td>
+                            <td class="align-middle">Ana Martínez</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-spinner me-1"></i> En Proceso
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">Media</span>
+                            </td>
+                            <td class="align-middle small">
+                                <div>📅 Inicio: 01/06/2024</div>
+                                <div>⏰ Fin: 30/06/2024</div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2" style="min-width: 100px;">
+                                    <div class="progress flex-grow-1" style="height: 6px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 40%; background: linear-gradient(90deg, #FFCC29, #FFA500);"></div>
+                                    </div>
+                                    <small class="fw-bold">40%</small>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verProceso(3)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarProceso(3)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="avanzarProceso(3)">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Proceso 4 -->
+                        <tr class="proceso-fila">
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle p-1" style="background: rgba(194,53,56,0.1);">
+                                        <i class="fas fa-file-contract" style="color: #C23538;"></i>
+                                    </div>
+                                    <span class="fw-semibold">Gestión de Contratos</span>
+                                </div>
+                            </td>
+                            <td class="align-middle small">Actualización y seguimiento de contratos laborales 2024</td>
+                            <td class="align-middle">Laura Sánchez</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
+                                    <i class="fas fa-clock me-1"></i> Pendiente
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">Alta</span>
+                            </td>
+                            <td class="align-middle small">
+                                <div>📅 Inicio: 10/04/2024</div>
+                                <div>⏰ Fin: 20/05/2024</div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2" style="min-width: 100px;">
+                                    <div class="progress flex-grow-1" style="height: 6px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 15%; background: linear-gradient(90deg, #2658A5, #C23538);"></div>
+                                    </div>
+                                    <small class="fw-bold">15%</small>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verProceso(4)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarProceso(4)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="avanzarProceso(4)">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Proceso 5 -->
+                        <tr class="proceso-fila">
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle p-1" style="background: rgba(38,88,165,0.1);">
+                                        <i class="fas fa-arrow-up" style="color: #2658A5;"></i>
+                                    </div>
+                                    <span class="fw-semibold">Plan de Ascensos 2024</span>
+                                </div>
+                            </td>
+                            <td class="align-middle small">Evaluación y promoción de personal para cargos superiores</td>
+                            <td class="align-middle">Patricia Rojas</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-spinner me-1"></i> En Proceso
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">Media</span>
+                            </td>
+                            <td class="align-middle small">
+                                <div>📅 Inicio: 01/05/2024</div>
+                                <div>⏰ Fin: 30/07/2024</div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2" style="min-width: 100px;">
+                                    <div class="progress flex-grow-1" style="height: 6px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 25%; background: linear-gradient(90deg, #2658A5, #FFCC29);"></div>
+                                    </div>
+                                    <small class="fw-bold">25%</small>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verProceso(5)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarProceso(5)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="avanzarProceso(5)">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Proceso 6 -->
+                        <tr class="proceso-fila">
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle p-1" style="background: rgba(40,167,69,0.1);">
+                                        <i class="fas fa-gavel" style="color: #28a745;"></i>
+                                    </div>
+                                    <span class="fw-semibold">Actualización Normativa</span>
+                                </div>
+                            </td>
+                            <td class="align-middle small">Implementación de nuevas normas laborales 2024</td>
+                            <td class="align-middle">Andrés Méndez</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Completado
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">Media</span>
+                            </td>
+                            <td class="align-middle small">
+                                <div>📅 Inicio: 01/02/2024</div>
+                                <div>⏰ Fin: 31/03/2024</div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2" style="min-width: 100px;">
+                                    <div class="progress flex-grow-1" style="height: 6px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 100%; background: linear-gradient(90deg, #28a745, #20c997);"></div>
+                                    </div>
+                                    <small class="fw-bold">100%</small>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verProceso(6)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarProceso(6)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3" style="background: #6c757d; color: white;" disabled>
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen de procesos por estado -->
+    <div class="row mt-4 g-3">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(38,88,165,0.1);">
+                    <i class="fas fa-clock" style="color: #2658A5;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #2658A5;">4</h5>
+                <small class="text-muted">Pendientes</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(255,204,41,0.15);">
+                    <i class="fas fa-spinner" style="color: #FFCC29;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #FFCC29;">3</h5>
+                <small class="text-muted">En Proceso</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                    <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #28a745;">3</h5>
+                <small class="text-muted">Completados</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(194,53,56,0.1);">
+                    <i class="fas fa-times-circle" style="color: #C23538;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #C23538;">2</h5>
+                <small class="text-muted">Cancelados</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Proceso -->
+<div class="modal fade" id="modalNuevoProceso" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-plus-circle me-2"></i> Nuevo Proceso
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formNuevoProceso" method="POST" action="#">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Nombre del Proceso *</label>
+                            <input type="text" name="nombre" class="form-control rounded-3" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Descripción</label>
+                            <textarea name="descripcion" class="form-control rounded-3" rows="3"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tipo de Proceso *</label>
+                            <select name="tipo" class="form-select rounded-3" required>
+                                <option value="">Seleccionar tipo...</option>
+                                <option value="reclutamiento">📋 Reclutamiento</option>
+                                <option value="capacitacion">🎓 Capacitación</option>
+                                <option value="evaluacion">⭐ Evaluación</option>
+                                <option value="ascenso">📈 Ascenso</option>
+                                <option value="legal">⚖️ Legal</option>
+                                <option value="nomina">💰 Nómina</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Prioridad</label>
+                            <select name="prioridad" class="form-select rounded-3">
+                                <option value="media">Media</option>
+                                <option value="alta">Alta</option>
+                                <option value="baja">Baja</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Responsable</label>
+                            <input type="text" name="responsable" class="form-control rounded-3" placeholder="Nombre del responsable">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Departamento</label>
+                            <select name="departamento" class="form-select rounded-3">
+                                <option value="Administrativo">Administrativo</option>
+                                <option value="Operaciones">Operaciones</option>
+                                <option value="Comercial">Comercial</option>
+                                <option value="Tecnología">Tecnología</option>
+                                <option value="SST">SST</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fecha de Inicio</label>
+                            <input type="date" name="fecha_inicio" class="form-control rounded-3">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fecha Límite</label>
+                            <input type="date" name="fecha_limite" class="form-control rounded-3">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formNuevoProceso" class="btn rounded-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                    <i class="fas fa-save me-2"></i> Crear Proceso
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function verProceso(id) {
+    window.location.href = "/rh/proceso/" + id;
+}
+
+function editarProceso(id) {
+    window.location.href = "/rh/proceso/" + id + "/editar";
+}
+
+function avanzarProceso(id) {
+    if (confirm('¿Deseas marcar este proceso como avanzado?')) {
+        window.location.href = "/rh/proceso/" + id + "/avanzar";
+    }
+}
+</script>
+
+<style>
+.proceso-fila {
+    transition: all 0.2s ease;
+}
+.proceso-fila:hover {
+    background-color: #f8f9fc;
+}
+.hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+}
+</style>
+{% endblock %}
