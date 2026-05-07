@@ -3,120 +3,197 @@
 {% block title %}Agregar Ficha - Soporte Técnico{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center mt-4">
-    <div class="col-md-8">
-        <div class="card border-0 shadow-sm rounded-3">
-            <div class="card-header bg-primary text-white d-flex align-items-center gap-2">
-                <i class="fas fa-plus-circle"></i>
-                <h4 class="mb-0">Agregar Nueva Ficha</h4>
-            </div>
-            <div class="card-body">
-                <!-- Mensajes flash -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
-                                <strong>{{ 'Error:' if category == 'error' else 'Éxito:' }}</strong> {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+<div class="container-fluid px-0 px-md-3 py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+
+            <!-- HEADER CON EFECTO SHIMMER -->
+            <div class="sst-header bg-gradient-soporte rounded-4 mb-4 p-4 text-white shadow-lg">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                    <div class="mb-3 mb-md-0">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="bg-white rounded-3 p-2 me-3 shadow-sm">
+                                <i class="fas fa-plus-circle" style="color: #2658A5; font-size: 1.8rem;"></i>
                             </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-
-                <form method="POST" action="{{ url_for('agregar_ficha') }}" novalidate autocomplete="off" spellcheck="false">
-                    <div class="mb-3">
-                        <label for="categoria" class="form-label" data-bs-toggle="tooltip" title="Selecciona el tipo de servicio con problemas">
-                            Tipo de Servicio <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="fas fa-tags"></i></span>
-                            <select class="form-select" id="categoria" name="categoria" required aria-describedby="categoriaHelp">
-                                <option value="" disabled selected>¿Qué servicio presenta el problema?</option>
-                                <option value="TV">TV</option>
-                                <option value="Internet">Internet</option>
-                                <option value="Equipo">Equipo/Dispositivo</option>
-                            </select>
+                            <div>
+                                <h1 class="h2 fw-bold mb-1 text-white">Agregar Nueva Ficha</h1>
+                                <p class="text-white-80 mb-0">Documentar solución para base de conocimientos</p>
+                            </div>
                         </div>
-                        <div id="categoriaHelp" class="form-text">Selecciona el servicio que necesita soporte.</div>
                     </div>
-
-                    <div class="mb-3">
-                        <label for="problema" class="form-label" data-bs-toggle="tooltip" title="Selecciona el problema de la lista">
-                            Problema <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="fas fa-exclamation-triangle"></i></span>
-                            <select class="form-select" id="problema" name="problema" required aria-describedby="problemaHelp" disabled>
-                                <option value="" disabled selected>Primero selecciona un servicio</option>
-                                <!-- Opciones se cargarán dinámicamente según la categoría -->
-                            </select>
-                        </div>
-                        <div id="problemaHelp" class="form-text">Selecciona el problema de la lista o elige "Otro" para escribir uno personalizado.</div>
-                    </div>
-
-                    <div class="mb-3" id="otroProblemaContainer" style="display: none;">
-                        <label for="problema_real" class="form-label">Especificar otro problema <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="problema_real" name="problema_real" 
-                               placeholder="Describe el problema personalizado" autocomplete="off">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="descripcion" class="form-label" data-bs-toggle="tooltip" title="Describe el problema con detalles">
-                            Descripción Detallada
-                        </label>
-                        <textarea class="form-control" id="descripcion" name="descripcion" rows="4" placeholder="Describa el problema en detalle..." autocomplete="off"></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="causas" class="form-label" data-bs-toggle="tooltip" title="Selecciona causas posibles o escribe personalizadas">
-                            Causas Posibles <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
-                            <select class="form-select" id="causas_select" name="causas_select" aria-describedby="causasHelp" disabled>
-                                <option value="" disabled selected>Primero selecciona un problema</option>
-                                <!-- Opciones se cargarán dinámicamente según el problema -->
-                            </select>
-                        </div>
-                        <div class="form-text mt-2">Selecciona causas de la lista o escribe personalizadas abajo.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="causas_personalizadas" class="form-label">Causas Personalizadas</label>
-                        <textarea class="form-control" id="causas_personalizadas" name="causas_personalizadas" rows="3" 
-                                  placeholder="Escribe causas personalizadas (una por línea) o usa las sugeridas arriba" autocomplete="off"></textarea>
-                        <div class="form-text">Presiona Enter para nueva causa. Se guardarán separadas por '|'.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="solucion" class="form-label" data-bs-toggle="tooltip" title="Cada paso numerado para mejor seguimiento">
-                            Solución <span class="text-danger">*</span>
-                        </label>
-                        <textarea class="form-control" id="solucion" name="solucion" rows="5" placeholder="Pasos para resolver el problema, uno por línea" required autocomplete="off"></textarea>
-                        <div class="form-text">Cada paso se numera automáticamente al presionar Enter.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="palabras_clave" class="form-label" data-bs-toggle="tooltip" title="Separe palabras clave con comas para mejorar búsqueda">
-                            Palabras Clave
-                        </label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light"><i class="fas fa-key"></i></span>
-                            <input type="text" class="form-control" id="palabras_clave" name="palabras_clave" 
-                                   placeholder="Ej: señal, internet lento, pixelación" aria-describedby="palabrasHelp" autocomplete="off">
-                        </div>
-                        <div id="palabrasHelp" class="form-text">Separe cada palabra clave con comas para facilitar búsquedas.</div>
-                    </div>
-
-                    <div class="d-flex justify-content-end gap-2 mt-4">
-                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary" title="Cancelar">
-                            <i class="fas fa-times"></i> Cancelar
+                    <div>
+                        <a href="{{ url_for('index') }}" class="btn btn-light btn-sm fw-medium shadow-sm">
+                            <i class="fas fa-arrow-left me-1"></i> Volver al Inicio
                         </a>
-                        <button type="submit" class="btn btn-primary" title="Guardar ficha">
-                            <i class="fas fa-save"></i> Guardar Ficha
-                        </button>
                     </div>
-                </form>
+                </div>
+            </div>
+
+            <!-- Mensajes flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-custom fade-in mb-4" style="border-left: 4px solid {% if category == 'error' %}#C23538{% elif category == 'success' %}#28a745{% else %}#2658A5{% endif %}; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 12px 16px;">
+                            <div class="d-flex align-items-center">
+                                <i class="fas {% if category == 'error' %}fa-exclamation-circle{% elif category == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} me-2" style="color: {% if category == 'error' %}#C23538{% elif category == 'success' %}#28a745{% else %}#2658A5{% endif %};"></i>
+                                <span>{{ message }}</span>
+                                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Formulario -->
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h5 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-clipboard-list me-2"></i> Formulario de Registro
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('agregar_ficha') }}" novalidate autocomplete="off" spellcheck="false">
+                        
+                        <!-- SECCIÓN 1: TIPO DE SERVICIO -->
+                        <div class="form-section mb-4">
+                            <h6 class="fw-semibold mb-3" style="color: #2658A5;">
+                                <i class="fas fa-tags me-2"></i> Información del Servicio
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold">
+                                        <i class="fas fa-tv me-1" style="color: #C23538;"></i> Tipo de Servicio <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select rounded-3" id="categoria" name="categoria" required>
+                                        <option value="" disabled selected>¿Qué servicio presenta el problema?</option>
+                                        <option value="TV">📺 TV</option>
+                                        <option value="Internet">🌐 Internet</option>
+                                        <option value="Equipo">💻 Equipo/Dispositivo</option>
+                                    </select>
+                                    <small class="text-muted">Selecciona el servicio que necesita soporte</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SECCIÓN 2: PROBLEMA -->
+                        <div class="form-section mb-4">
+                            <h6 class="fw-semibold mb-3" style="color: #FFCC29;">
+                                <i class="fas fa-exclamation-triangle me-2"></i> Identificación del Problema
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold">
+                                        <i class="fas fa-bug me-1" style="color: #C23538;"></i> Problema <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;">
+                                            <i class="fas fa-exclamation-triangle" style="color: #FFCC29;"></i>
+                                        </span>
+                                        <select class="form-select border-start-0 rounded-3" id="problema" name="problema" required disabled style="border-radius: 0 12px 12px 0;">
+                                            <option value="" disabled selected>Primero selecciona un servicio</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-12" id="otroProblemaContainer" style="display: none;">
+                                    <label class="form-label fw-semibold">
+                                        <i class="fas fa-pen-alt me-1" style="color: #28a745;"></i> Especificar otro problema <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control rounded-3" id="problema_real" name="problema_real" 
+                                           placeholder="Describe el problema personalizado" autocomplete="off">
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold">
+                                        <i class="fas fa-align-left me-1" style="color: #2658A5;"></i> Descripción Detallada
+                                    </label>
+                                    <textarea class="form-control rounded-3" id="descripcion" name="descripcion" rows="3" 
+                                              placeholder="Describa el problema en detalle..." autocomplete="off"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SECCIÓN 3: CAUSAS -->
+                        <div class="form-section mb-4">
+                            <h6 class="fw-semibold mb-3" style="color: #28a745;">
+                                <i class="fas fa-search me-2"></i> Causas Posibles
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold">
+                                        <i class="fas fa-list me-1" style="color: #C23538;"></i> Causas Sugeridas
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;">
+                                            <i class="fas fa-lightbulb" style="color: #FFCC29;"></i>
+                                        </span>
+                                        <select class="form-select border-start-0 rounded-3" id="causas_select" name="causas_select" disabled style="border-radius: 0 12px 12px 0;">
+                                            <option value="" disabled selected>Primero selecciona un problema</option>
+                                        </select>
+                                    </div>
+                                    <small class="text-muted">Selecciona causas de la lista o escribe personalizadas abajo</small>
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold">
+                                        <i class="fas fa-pen-alt me-1" style="color: #2658A5;"></i> Causas Personalizadas
+                                    </label>
+                                    <textarea class="form-control rounded-3" id="causas_personalizadas" name="causas_personalizadas" rows="4" 
+                                              placeholder="Escribe causas personalizadas (una por línea) o usa las sugeridas arriba" autocomplete="off"></textarea>
+                                    <small class="text-muted">Presiona Enter para nueva causa. Se guardarán separadas por '|'</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SECCIÓN 4: SOLUCIÓN -->
+                        <div class="form-section mb-4">
+                            <h6 class="fw-semibold mb-3" style="color: #C23538;">
+                                <i class="fas fa-check-circle me-2"></i> Solución
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold">
+                                        <i class="fas fa-clipboard-list me-1" style="color: #28a745;"></i> Pasos para resolver <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea class="form-control rounded-3" id="solucion" name="solucion" rows="6" 
+                                              placeholder="1. " required autocomplete="off" style="font-family: monospace;"></textarea>
+                                    <small class="text-muted">Cada paso se numera automáticamente al presionar Enter</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SECCIÓN 5: PALABRAS CLAVE -->
+                        <div class="form-section mb-4">
+                            <h6 class="fw-semibold mb-3" style="color: #2658A5;">
+                                <i class="fas fa-key me-2"></i> Palabras Clave
+                            </h6>
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold">
+                                        <i class="fas fa-hashtag me-1" style="color: #FFCC29;"></i> Etiquetas de búsqueda
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;">
+                                            <i class="fas fa-key" style="color: #28a745;"></i>
+                                        </span>
+                                        <input type="text" class="form-control border-start-0 rounded-3" id="palabras_clave" name="palabras_clave" 
+                                               placeholder="Ej: señal, internet lento, pixelación" autocomplete="off" style="border-radius: 0 12px 12px 0;">
+                                    </div>
+                                    <small class="text-muted">Separe cada palabra clave con comas para facilitar búsquedas</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BOTONES DE ACCIÓN -->
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <div>
+                                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary rounded-3 px-4">
+                                    <i class="fas fa-times me-1"></i> Cancelar
+                                </a>
+                            </div>
+                            <button type="submit" class="btn rounded-3 px-5" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; color: white;">
+                                <i class="fas fa-save me-2"></i> Guardar Ficha
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -152,7 +229,6 @@ const problemasPorCategoria = {
 
 // Base de datos de causas por problema
 const causasPorProblema = {
-    // Problemas de TV
     'No hay señal en el televisor': [
         'Micronodo/CATV alarmado, apagado',
         'Problemas con el decodificador',
@@ -168,8 +244,6 @@ const causasPorProblema = {
         'Configuración de audio del canal',
         'Falla temporal del canal'
     ],
-    
-    // Problemas de Internet
     'Internet lento o intermitente': [
         'Congestión de la red',
         'Interferencia WiFi',
@@ -189,12 +263,10 @@ const causasPorProblema = {
         'Límite de dispositivos conectados',
         'Router en ubicación demasiado lejos'
     ],
-    
-    // Problemas de Equipo
     'Equipo no enciende': [
         'Cargador del modem desconectado',
         'Boton OFF/ON Sin presionar',
-        'Equipo quemado',
+        'Equipo quemado'
     ],
     'Problemas con puertos': [
         'Puerto físico dañado',
@@ -218,29 +290,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const causasPersonalizadasTextarea = document.getElementById('causas_personalizadas');
     const solucionTextarea = document.getElementById('solucion');
 
-    // Inicializar textarea de solución con "1. " si está vacío
+    // Inicializar textarea de solución
     if (solucionTextarea && solucionTextarea.value.trim() === '') {
         solucionTextarea.value = '1. ';
+        // Posicionar cursor al final
+        solucionTextarea.focus();
+        solucionTextarea.setSelectionRange(3, 3);
     }
 
-    // Inicialmente deshabilitar selects dependientes
     problemaSelect.disabled = true;
     causasSelect.disabled = true;
 
-    // Cuando cambia la categoría (servicio)
     categoriaSelect.addEventListener('change', function() {
         const categoria = this.value;
-        
-        // Habilitar el select de problemas
         problemaSelect.disabled = !categoria;
         causasSelect.disabled = true;
-        
-        // Limpiar opciones anteriores
         problemaSelect.innerHTML = '';
         causasSelect.innerHTML = '';
         
         if (categoria && problemasPorCategoria[categoria]) {
-            // Agregar opción inicial
             const optionDefault = document.createElement('option');
             optionDefault.value = '';
             optionDefault.disabled = true;
@@ -248,7 +316,6 @@ document.addEventListener('DOMContentLoaded', function() {
             optionDefault.textContent = 'Selecciona un problema';
             problemaSelect.appendChild(optionDefault);
             
-            // Agregar todos los problemas de la categoría
             problemasPorCategoria[categoria].forEach(problema => {
                 const option = document.createElement('option');
                 option.value = problema;
@@ -256,7 +323,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 problemaSelect.appendChild(option);
             });
         } else {
-            // Si no hay categoría o no existe
             const optionError = document.createElement('option');
             optionError.value = '';
             optionError.disabled = true;
@@ -265,18 +331,15 @@ document.addEventListener('DOMContentLoaded', function() {
             problemaSelect.appendChild(optionError);
         }
         
-        // Resetear campos dependientes
         otroProblemaContainer.style.display = 'none';
         problemaRealInput.value = '';
         problemaRealInput.removeAttribute('required');
         causasPersonalizadasTextarea.value = '';
     });
 
-    // Cuando se selecciona un problema
     problemaSelect.addEventListener('change', function() {
         const problemaSeleccionado = this.value;
         
-        // Mostrar u ocultar campo para "otro problema"
         if (problemaSeleccionado && problemaSeleccionado.includes('Otro')) {
             otroProblemaContainer.style.display = 'block';
             problemaRealInput.setAttribute('required', 'required');
@@ -286,8 +349,6 @@ document.addEventListener('DOMContentLoaded', function() {
             otroProblemaContainer.style.display = 'none';
             problemaRealInput.removeAttribute('required');
             problemaRealInput.value = '';
-            
-            // Cargar causas para el problema seleccionado
             cargarCausas(problemaSeleccionado);
         } else {
             causasSelect.disabled = true;
@@ -295,12 +356,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Función para cargar causas según el problema
     function cargarCausas(problema) {
         causasSelect.disabled = false;
         causasSelect.innerHTML = '';
         
-        // Agregar opción inicial
         const optionDefault = document.createElement('option');
         optionDefault.value = '';
         optionDefault.disabled = true;
@@ -309,7 +368,6 @@ document.addEventListener('DOMContentLoaded', function() {
         causasSelect.appendChild(optionDefault);
         
         if (causasPorProblema[problema]) {
-            // Agregar todas las causas del problema
             causasPorProblema[problema].forEach(causa => {
                 const option = document.createElement('option');
                 option.value = causa;
@@ -317,7 +375,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 causasSelect.appendChild(option);
             });
             
-            // Agregar opción para agregar todas las causas
             const optionAll = document.createElement('option');
             optionAll.value = 'all';
             optionAll.textContent = '--- Agregar todas las causas sugeridas ---';
@@ -332,12 +389,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Cuando se selecciona una causa
     causasSelect.addEventListener('change', function() {
         const causaSeleccionada = this.value;
         
         if (causaSeleccionada === 'all') {
-            // Agregar todas las causas sugeridas al textarea
             const problema = problemaSelect.value;
             if (causasPorProblema[problema]) {
                 const causasTexto = causasPorProblema[problema].map((causa, index) => 
@@ -345,9 +400,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 ).join('\n');
                 causasPersonalizadasTextarea.value = causasTexto;
             }
-            this.value = ''; // Resetear el select
+            this.value = '';
         } else if (causaSeleccionada) {
-            // Agregar la causa seleccionada al textarea
             const lineasActuales = causasPersonalizadasTextarea.value.split('\n').filter(line => line.trim());
             const numero = lineasActuales.length + 1;
             const nuevaCausa = `${numero}. ${causaSeleccionada}`;
@@ -357,8 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 causasPersonalizadasTextarea.value += '\n' + nuevaCausa;
             }
-            
-            this.value = ''; // Resetear el select después de agregar
+            this.value = '';
         }
     });
 
@@ -367,12 +420,9 @@ document.addEventListener('DOMContentLoaded', function() {
         causasPersonalizadasTextarea.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-
                 const { selectionStart, selectionEnd, value } = this;
                 const beforeCursor = value.substring(0, selectionStart);
                 const afterCursor = value.substring(selectionEnd);
-
-                // Obtener número del último paso
                 const lines = beforeCursor.split('\n');
                 const currentLine = lines[lines.length - 1];
                 const match = currentLine.match(/^(\d+)\.\s/);
@@ -380,27 +430,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (match) {
                     nextNumber = parseInt(match[1], 10) + 1;
                 }
-
                 const insertText = '\n' + nextNumber + '. ';
                 const newCursorPos = selectionStart + insertText.length;
-
                 this.value = beforeCursor + insertText + afterCursor;
                 this.selectionStart = this.selectionEnd = newCursorPos;
             }
         });
     }
 
-    // Autoenumerar pasos en solución al presionar Enter
+    // Autoenumerar en solución
     if (solucionTextarea) {
         solucionTextarea.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-
                 const { selectionStart, selectionEnd, value } = this;
                 const beforeCursor = value.substring(0, selectionStart);
                 const afterCursor = value.substring(selectionEnd);
-
-                // Obtener número del último paso
                 const lines = beforeCursor.split('\n');
                 const currentLine = lines[lines.length - 1];
                 const match = currentLine.match(/^(\d+)\.\s/);
@@ -408,50 +453,43 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (match) {
                     nextNumber = parseInt(match[1], 10) + 1;
                 }
-
                 const insertText = '\n' + nextNumber + '. ';
                 const newCursorPos = selectionStart + insertText.length;
-
                 this.value = beforeCursor + insertText + afterCursor;
                 this.selectionStart = this.selectionEnd = newCursorPos;
             }
         });
     }
 
-    // Validación antes de enviar el formulario
+    // Validación antes de enviar
     document.querySelector('form').addEventListener('submit', function(e) {
         const problemaSeleccionado = problemaSelect.value;
         const problemaReal = problemaRealInput.value.trim();
         const causasPersonalizadas = causasPersonalizadasTextarea.value.trim();
         const solucion = solucionTextarea.value.trim();
         
-        // Validar problema
         if (problemaSeleccionado && problemaSeleccionado.includes('Otro') && !problemaReal) {
             e.preventDefault();
-            alert('Por favor, describe el problema personalizado');
+            alert('❌ Por favor, describe el problema personalizado');
             problemaRealInput.focus();
             return;
         }
         
-        // Validar que haya al menos una causa
         if (!causasPersonalizadas) {
             e.preventDefault();
-            alert('Por favor, ingresa al menos una causa posible');
+            alert('❌ Por favor, ingresa al menos una causa posible');
             causasPersonalizadasTextarea.focus();
             return;
         }
         
-        // Validar solución
         if (!solucion || solucion === '1. ') {
             e.preventDefault();
-            alert('Por favor, ingresa la solución');
+            alert('❌ Por favor, ingresa la solución');
             solucionTextarea.focus();
             return;
         }
         
-        // Si seleccionó "Otro" y escribió algo, usar ese texto como problema
         if (problemaSeleccionado && problemaSeleccionado.includes('Otro') && problemaReal) {
-            // Crear un campo oculto con el problema personalizado
             const hiddenInput = document.createElement('input');
             hiddenInput.type = 'hidden';
             hiddenInput.name = 'problema_real';
@@ -459,7 +497,6 @@ document.addEventListener('DOMContentLoaded', function() {
             this.appendChild(hiddenInput);
         }
         
-        // Formatear causas personalizadas para enviar
         const causasOcultas = document.createElement('input');
         causasOcultas.type = 'hidden';
         causasOcultas.name = 'causas';
@@ -469,16 +506,91 @@ document.addEventListener('DOMContentLoaded', function() {
             .join('|');
         this.appendChild(causasOcultas);
         
-        // Formatear solución para enviar
         solucionTextarea.value = solucionTextarea.value.split('\n')
             .map(line => line.replace(/^\d+\.\s*/, '').trim())
             .filter(line => line.length > 0)
             .join('|');
     });
-
-    // Inicializar tooltips Bootstrap 5
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
 });
 </script>
+
+<style>
+/* Efecto shimmer para el header */
+.bg-gradient-soporte {
+    background: linear-gradient(135deg, #2658A5 0%, #1a3f73 50%, #282F4B 100%) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.bg-gradient-soporte::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    animation: shimmer 8s infinite linear;
+}
+
+@keyframes shimmer {
+    0% { transform: translate(-30%, -30%) rotate(0deg); }
+    100% { transform: translate(30%, 30%) rotate(360deg); }
+}
+
+/* Secciones del formulario */
+.form-section {
+    background: #f8f9fc;
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.form-section:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* Campos de formulario */
+.form-control, .form-select {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #2658A5;
+    box-shadow: 0 0 0 3px rgba(38,88,165,0.15);
+}
+
+.input-group-text {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+/* Botones */
+.btn {
+    transition: all 0.2s ease;
+    border-radius: 10px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    animation: fadeIn 0.4s ease;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease;
+}
+</style>
 {% endblock %}
