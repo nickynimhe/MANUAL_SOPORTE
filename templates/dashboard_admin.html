@@ -1,511 +1,165 @@
-<!DOCTYPE html>
-<html lang="es" data-bs-theme="light">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Administrador - M@STV</title>
-    
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-    /* ===== VARIABLES CSS ===== */
-    :root {
-      --primary: #052398;
-      --secondary: #e0f2fe;
-      --accent: #ff0000;
-      --admin-accent: #7c3aed;
-      --admin-accent-light: #ede9fe;
-      --soporte-color: #0284c7;
-      --soporte-bg: #e0f2fe;
-      --sst-color: #16a34a;
-      --sst-bg: #dcfce7;
-      --rh-color: #dc2626;
-      --rh-bg: #fee2e2;
-      --bg: #f9fafb;
-      --white: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --radius: 12px;
-      --radius-sm: 8px;
-    }
+{% extends "base.html" %}
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+{% block title %}Panel de Administración{% endblock %}
 
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      color: var(--text);
-    }
-
-    .dashboard-wrapper {
-      min-height: 100vh;
-      padding: 40px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .dashboard-card {
-      max-width: 1400px;
-      width: 100%;
-      background: var(--white);
-      border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      overflow: hidden;
-      animation: slideUp 0.5s ease;
-    }
-
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .dashboard-header {
-      background: linear-gradient(135deg, var(--admin-accent) 0%, #5b21b6 100%);
-      color: white;
-      padding: 30px 40px;
-      text-align: center;
-    }
-
-    .dashboard-header h1 {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .dashboard-header p {
-      opacity: 0.9;
-      font-size: 14px;
-      margin-bottom: 0;
-    }
-
-    .admin-badge {
-      display: inline-block;
-      background: rgba(255, 255, 255, 0.2);
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      margin-top: 12px;
-    }
-
-    .user-info-bar {
-      background: #f8f9fa;
-      padding: 15px 40px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 15px;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    .user-greeting {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .user-avatar {
-      width: 40px;
-      height: 40px;
-      background: var(--admin-accent);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: bold;
-    }
-
-    .user-details h5 {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .user-details small {
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .logout-btn {
-      background: #ef4444;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-weight: 500;
-      transition: all 0.2s;
-      text-decoration: none;
-    }
-
-    .logout-btn:hover {
-      background: #dc2626;
-      transform: translateY(-1px);
-      color: white;
-    }
-
-    .modules-container {
-      padding: 40px;
-    }
-
-    .section-title {
-      font-size: 20px;
-      font-weight: 600;
-      margin-bottom: 20px;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .section-title i {
-      font-size: 24px;
-    }
-
-    .modules-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 25px;
-      margin-bottom: 40px;
-    }
-
-    .module-card {
-      background: white;
-      border-radius: var(--radius);
-      padding: 30px 25px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      border: 2px solid #f0f0f0;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .module-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      transition: all 0.3s;
-    }
-
-    .module-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    }
-
-    .module-card.soporte::before { background: var(--soporte-color); }
-    .module-card.sst::before { background: var(--sst-color); }
-    .module-card.rh::before { background: var(--rh-color); }
-
-    .module-icon {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      font-size: 36px;
-    }
-
-    .module-card.soporte .module-icon {
-      background: var(--soporte-bg);
-      color: var(--soporte-color);
-    }
-
-    .module-card.sst .module-icon {
-      background: var(--sst-bg);
-      color: var(--sst-color);
-    }
-
-    .module-card.rh .module-icon {
-      background: var(--rh-bg);
-      color: var(--rh-color);
-    }
-
-    .module-card h3 {
-      font-size: 22px;
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
-
-    .module-card p {
-      color: var(--muted);
-      font-size: 14px;
-      margin-bottom: 20px;
-    }
-
-    .module-btn {
-      display: inline-block;
-      padding: 8px 24px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 500;
-      text-decoration: none;
-      transition: all 0.2s;
-    }
-
-    .module-card.soporte .module-btn {
-      background: var(--soporte-color);
-      color: white;
-    }
-
-    .module-card.sst .module-btn {
-      background: var(--sst-color);
-      color: white;
-    }
-
-    .module-card.rh .module-btn {
-      background: var(--rh-color);
-      color: white;
-    }
-
-    .module-btn:hover {
-      transform: scale(1.05);
-      filter: brightness(1.1);
-    }
-
-    .quick-access {
-      background: #f8f9fa;
-      border-radius: var(--radius);
-      padding: 25px;
-      margin-top: 20px;
-    }
-
-    .quick-links {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin-top: 15px;
-    }
-
-    .quick-link {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 15px;
-      background: white;
-      border-radius: var(--radius-sm);
-      text-decoration: none;
-      color: var(--text);
-      transition: all 0.2s;
-      border: 1px solid #e5e7eb;
-    }
-
-    .quick-link:hover {
-      transform: translateX(5px);
-      border-color: var(--admin-accent);
-      color: var(--admin-accent);
-    }
-
-    .quick-link i {
-      font-size: 18px;
-      width: 24px;
-    }
-
-    .dashboard-footer {
-      background: #f8f9fa;
-      padding: 20px 40px;
-      border-top: 1px solid #e5e7eb;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 15px;
-    }
-
-    .stats {
-      display: flex;
-      gap: 25px;
-    }
-
-    .stat-item {
-      text-align: center;
-    }
-
-    .stat-number {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--admin-accent);
-    }
-
-    .stat-label {
-      font-size: 11px;
-      color: var(--muted);
-      text-transform: uppercase;
-    }
-
-    @media (max-width: 768px) {
-      .dashboard-header { padding: 20px; }
-      .user-info-bar { padding: 15px 20px; flex-direction: column; text-align: center; }
-      .modules-container { padding: 20px; }
-      .modules-grid { grid-template-columns: 1fr; }
-      .dashboard-footer { flex-direction: column; text-align: center; }
-      .stats { justify-content: center; }
-    }
-    </style>
-</head>
-<body>
-    <div class="dashboard-wrapper">
-        <div class="dashboard-card">
-            <!-- Header -->
-            <div class="dashboard-header">
-                <h1>
-                    <i class="fas fa-crown"></i> Panel de Administración
-                </h1>
-                <p>Gestión centralizada de todas las áreas de la empresa</p>
-                <div class="admin-badge">
-                    <i class="fas fa-shield-halved"></i> Administrador Master
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Header Admin -->
+    <div class="admin-header bg-gradient-admin rounded-4 mb-4 p-4 text-white shadow-lg">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+            <div class="mb-3 mb-md-0">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-white rounded-3 p-2 me-3 shadow-sm">
+                        <i class="fas fa-crown" style="color: #FFCC29; font-size: 1.8rem;"></i>
+                    </div>
+                    <div>
+                        <h1 class="h2 fw-bold mb-1 text-white">Panel de Administración</h1>
+                        <p class="text-white-80 mb-0">Gestión centralizada del sistema</p>
+                    </div>
                 </div>
             </div>
+            <div>
+                <a href="{{ url_for('index') }}" class="btn btn-light btn-sm fw-medium shadow-sm">
+                    <i class="fas fa-headset me-1"></i> Ir a Soporte
+                </a>
+            </div>
+        </div>
+    </div>
 
-            <!-- Info Usuario -->
-            <div class="user-info-bar">
-                <div class="user-greeting">
-                    <div class="user-avatar">
-                        <i class="fas fa-user"></i>
+    <div class="row g-4">
+        <!-- Tarjetas de acceso a módulos -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 hover-lift">
+                <div class="card-body text-center p-4">
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; background: linear-gradient(135deg, #2658A520, #1a3f7320);">
+                        <i class="fas fa-headset fa-2x" style="color: #2658A5;"></i>
                     </div>
-                    <div class="user-details">
-                        <h5>Bienvenido, <strong>{{ current_user.usuario if current_user.is_authenticated else 'Administrador' }}</strong></h5>
-                        <small><i class="fas fa-badge-check"></i> Acceso completo al sistema</small>
-                    </div>
-                </div>
-                <div>
-                    <a href="{{ url_for('logout') }}" class="logout-btn">
-                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    <h5 class="fw-bold">Soporte Técnico</h5>
+                    <p class="text-muted small">Base de conocimientos y soluciones</p>
+                    <a href="{{ url_for('index') }}" class="btn btn-sm btn-primary w-100">
+                        <i class="fas fa-arrow-right me-1"></i> Acceder
                     </a>
                 </div>
             </div>
-
-            <!-- Módulos -->
-            <div class="modules-container">
-                <div class="section-title">
-                    <i class="fas fa-th-large"></i>
-                    <span>Módulos del Sistema</span>
-                </div>
-
-                <div class="modules-grid">
-                    <!-- Módulo Soporte Técnico -->
-                    <div class="module-card soporte" onclick="window.location.href='{{ url_for('index') }}'">
-                        <div class="module-icon">
-                            <i class="fas fa-headset"></i>
-                        </div>
-                        <h3>Soporte Técnico</h3>
-                        <p>Gestión de tickets, soluciones técnicas, atención al cliente y diagnóstico de fallas</p>
-                        <span class="module-btn">Ingresar →</span>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 hover-lift">
+                <div class="card-body text-center p-4">
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; background: rgba(40,167,69,0.1);">
+                        <i class="fas fa-hard-hat fa-2x" style="color: #28a745;"></i>
                     </div>
-
-                    <!-- Módulo SST -->
-                    <div class="module-card sst" onclick="window.location.href='{{ url_for('sst_dashboard') }}'">
-                        <div class="module-icon">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <h3>Seguridad y Salud</h3>
-                        <p>Gestión de seguridad industrial, salud ocupacional y medio ambiente</p>
-                        <span class="module-btn">Ingresar →</span>
-                    </div>
-
-                    <!-- Módulo RH -->
-                    <div class="module-card rh" onclick="window.location.href='{{ url_for('rh_dashboard') }}'">
-                        <div class="module-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <h3>Recursos Humanos</h3>
-                        <p>Gestión de personal, nómina, contratación y desarrollo organizacional</p>
-                        <span class="module-btn">Ingresar →</span>
-                    </div>
-                </div>
-
-                <!-- Accesos Rápidos -->
-                <div class="quick-access">
-                    <div class="section-title">
-                        <i class="fas fa-bolt"></i>
-                        <span>Accesos Rápidos - Administración</span>
-                    </div>
-                    <div class="quick-links">
-                        <a href="{{ url_for('gestion_usuarios') }}" class="quick-link">
-                            <i class="fas fa-users-cog"></i>
-                            <span>Gestionar Usuarios</span>
-                        </a>
-                        <a href="{{ url_for('agregar_usuario') }}" class="quick-link">
-                            <i class="fas fa-user-plus"></i>
-                            <span>Agregar Usuario</span>
-                        </a>
-                        <a href="{{ url_for('cambiar_password') }}" class="quick-link">
-                            <i class="fas fa-key"></i>
-                            <span>Cambiar Contraseña</span>
-                        </a>
-                        <a href="{{ url_for('soluciones_visuales') }}" class="quick-link">
-                            <i class="fas fa-images"></i>
-                            <span>Soluciones Visuales</span>
-                        </a>
-                        <a href="{{ url_for('atencion_telefonica') }}" class="quick-link">
-                            <i class="fas fa-phone-alt"></i>
-                            <span>Atención Telefónica</span>
-                        </a>
-                        <a href="{{ url_for('informacion_general') }}" class="quick-link">
-                            <i class="fas fa-info-circle"></i>
-                            <span>Información General</span>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Estadísticas rápidas -->
-                <div class="quick-access" style="margin-top: 20px;">
-                    <div class="section-title">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Estadísticas del Sistema</span>
-                    </div>
-                    <div class="stats" style="justify-content: space-around;">
-                        <div class="stat-item">
-                            <div class="stat-number">{{ stats.get('total_fichas', 0) }}</div>
-                            <div class="stat-label">Fichas Soporte</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">{{ stats.get('total_usuarios', 0) }}</div>
-                            <div class="stat-label">Usuarios Activos</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">{{ stats.get('total_contenido_sst', 0) }}</div>
-                            <div class="stat-label">Contenido SST</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">{{ stats.get('total_empleados_activos', 0) }}</div>
-                            <div class="stat-label">Empleados RH</div>
-                        </div>
-                    </div>
+                    <h5 class="fw-bold">SST</h5>
+                    <p class="text-muted small">Seguridad y Salud en el Trabajo</p>
+                    <a href="{{ url_for('sst_dashboard') }}" class="btn btn-sm btn-success w-100">
+                        <i class="fas fa-arrow-right me-1"></i> Acceder
+                    </a>
                 </div>
             </div>
-
-            <!-- Footer -->
-            <div class="dashboard-footer">
-                <div>
-                    <small class="text-muted">
-                        <i class="fas fa-copyright"></i> 2025 M@STV Producciones - Panel Administrativo
-                    </small>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 hover-lift">
+                <div class="card-body text-center p-4">
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; background: rgba(194,53,56,0.1);">
+                        <i class="fas fa-users fa-2x" style="color: #C23538;"></i>
+                    </div>
+                    <h5 class="fw-bold">Recursos Humanos</h5>
+                    <p class="text-muted small">Gestión de personal y talento</p>
+                    <a href="{{ url_for('rh_dashboard') }}" class="btn btn-sm btn-danger w-100">
+                        <i class="fas fa-arrow-right me-1"></i> Acceder
+                    </a>
                 </div>
-                <div>
-                    <small class="text-muted">
-                        <i class="fas fa-code-branch"></i> Versión 2.0 | Áreas: Soporte | SST | RRHH
-                    </small>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100 hover-lift">
+                <div class="card-body text-center p-4">
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px; background: rgba(108,117,125,0.1);">
+                        <i class="fas fa-users-gear fa-2x" style="color: #6c757d;"></i>
+                    </div>
+                    <h5 class="fw-bold">Gestión de Usuarios</h5>
+                    <p class="text-muted small">Crear y administrar usuarios</p>
+                    <a href="{{ url_for('gestion_usuarios') }}" class="btn btn-sm btn-secondary w-100">
+                        <i class="fas fa-arrow-right me-1"></i> Acceder
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <!-- Estadísticas del sistema -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h6 class="mb-0 fw-semibold"><i class="fas fa-chart-line me-2"></i>Estadísticas del Sistema</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="p-3 rounded-3" style="background: #f8f9fc;">
+                                <h3 class="fw-bold text-primary">{{ stats.total_usuarios|default(0) }}</h3>
+                                <small class="text-muted">Usuarios Totales</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="p-3 rounded-3" style="background: #f8f9fc;">
+                                <h3 class="fw-bold text-info">{{ stats.total_fichas|default(0) }}</h3>
+                                <small class="text-muted">Fichas de Soporte</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="p-3 rounded-3" style="background: #f8f9fc;">
+                                <h3 class="fw-bold text-success">{{ stats.total_contenido_sst|default(0) }}</h3>
+                                <small class="text-muted">Contenido SST</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="p-3 rounded-3" style="background: #f8f9fc;">
+                                <h3 class="fw-bold text-danger">{{ stats.total_empleados_activos|default(0) }}</h3>
+                                <small class="text-muted">Empleados Activos</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-admin {
+    background: linear-gradient(135deg, #282F4B 0%, #1a1f33 50%, #0d0d1a 100%) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.bg-gradient-admin::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    animation: shimmer 8s infinite linear;
+}
+
+@keyframes shimmer {
+    0% { transform: translate(-30%, -30%) rotate(0deg); }
+    100% { transform: translate(30%, 30%) rotate(360deg); }
+}
+
+.hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.12) !important;
+}
+</style>
+{% endblock %}
