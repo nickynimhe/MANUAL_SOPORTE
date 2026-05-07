@@ -4,10 +4,39 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login - Manual Asesor</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  
+  <!-- Fuentes personalizadas de la empresa -->
   <style>
+    /* Fuentes de la empresa */
+    @font-face {
+      font-family: 'Poppins Bold';
+      src: local('Poppins Bold'), local('Poppins-Bold');
+      font-weight: bold;
+      font-style: normal;
+    }
+    
+    @font-face {
+      font-family: 'Jacksilver';
+      src: local('Jacksilver');
+      font-weight: normal;
+      font-style: normal;
+    }
+    
+    @font-face {
+      font-family: 'Bebas Neue Pro';
+      src: local('Bebas Neue Pro'), local('BebasNeuePro');
+      font-weight: normal;
+      font-style: normal;
+    }
+    
+    /* Fallback para fuentes locales - si no están instaladas, usar alternativas */
+    .font-poppins-bold { font-family: 'Poppins Bold', 'Impact', 'Arial Black', sans-serif; }
+    .font-jacksilver { font-family: 'Jacksilver', 'Georgia', serif; }
+    .font-open-sans { font-family: 'Open Sans', 'Segoe UI', sans-serif; }
+    .font-bebas { font-family: 'Bebas Neue Pro', 'Bebas Neue', 'Arial Narrow', sans-serif; }
+    
     /* Estilos para las alertas */
     .alert {
       padding: 12px 16px;
@@ -76,95 +105,388 @@
 
     /* Estilos para el logo de la empresa */
     .company-logo {
-      max-width: 300px;
+      max-width: 280px;
       height: auto;
       margin-bottom: 15px;
+    }
+
+    /* Layout con dos columnas - mascota lateral */
+    .login-container {
+      display: flex;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    /* Columna de la mascota - lado izquierdo */
+    .mascot-side {
+      flex: 1;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+      backdrop-filter: blur(2px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Decoración de fondo para la mascota */
+    .mascot-side::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .mascot-image {
+      max-width: 380px;
+      width: 100%;
+      height: auto;
+      animation: float 4s ease-in-out infinite;
+      filter: drop-shadow(0 15px 25px rgba(0,0,0,0.2));
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+    }
+
+    .mascot-message {
+      text-align: center;
+      margin-top: 30px;
+      color: white;
+      font-family: 'Open Sans', sans-serif;
+      max-width: 300px;
+    }
+
+    .mascot-message h3 {
+      font-family: 'Poppins Bold', sans-serif;
+      font-size: 24px;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .mascot-message p {
+      font-size: 16px;
+      opacity: 0.95;
+    }
+
+    /* Columna del formulario - lado derecho */
+    .form-side {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      width: 100%;
+      max-width: 460px;
+      box-shadow: 0 25px 45px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease;
+    }
+
+    .login-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .login-header h1 {
+      font-family: 'Poppins Bold', 'Impact', sans-serif;
+      font-size: 28px;
+      color: #1a1a2e;
+      margin: 15px 0 8px;
+      letter-spacing: 1px;
+    }
+
+    .login-header p {
+      font-family: 'Open Sans', sans-serif;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-label {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: #764ba2;
+      box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Poppins Bold', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-login:active {
+      transform: translateY(0);
+    }
+
+    /* Texto de muestra de tipografías */
+    .font-showcase {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      text-align: center;
+    }
+
+    .font-showcase p {
+      font-size: 10px;
+      color: #aaa;
+      margin: 0 0 8px 0;
+      letter-spacing: 0.5px;
+    }
+
+    .font-samples {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .font-samples span {
+      font-size: 11px;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+
+    .font-samples span:hover {
+      opacity: 1;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .login-container {
+        flex-direction: column;
+      }
+      
+      .mascot-side {
+        padding: 30px 20px;
+        min-height: 280px;
+      }
+      
+      .mascot-image {
+        max-width: 180px;
+      }
+      
+      .mascot-message h3 {
+        font-size: 20px;
+      }
+      
+      .login-card {
+        margin: 20px;
+        padding: 30px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .login-card {
+        padding: 24px;
+      }
+      
+      .login-header h1 {
+        font-size: 22px;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="login-card">
-    <div class="login-header">
-      <!-- Reemplazar el icono de la antena por el logo de la empresa -->
-      <img src="{{ url_for('static', filename='img/logo.png') }}" alt="PRODUCCIONES S.A.S" class="company-logo">
-      <h1>MANUAL ASESOR</h1>
-      <p>Ingresa tus credenciales para continuar</p>
+<div class="login-container">
+  <!-- Lado izquierdo: Mascota de la empresa -->
+  <div class="mascot-side">
+    <!-- Aquí puedes cambiar la imagen de la mascota -->
+    <!-- Si tienes una imagen específica de mascota, reemplaza la URL -->
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" 
+         alt="Mascota de la empresa" 
+         class="mascot-image"
+         onerror="this.src='https://cdn-icons-png.flaticon.com/512/1998/1998615.png'">
+    
+    <div class="mascot-message">
+      <h3 class="font-poppins-bold">¡Hola! 👋</h3>
+      <p class="font-open-sans">Estamos aquí para ayudarte a gestionar tu manual asesor de la mejor manera</p>
     </div>
-
-    <!-- Mensajes Flash -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }}" id="flash-{{ loop.index }}">
-            <div class="alert-content">
-              <i class="fas fa-{% if category == 'error' %}exclamation-triangle{% elif category == 'success' %}check-circle{% elif category == 'warning' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
-              <span>{{ message }}</span>
-            </div>
-            <button type="button" class="alert-close" onclick="closeAlert('flash-{{ loop.index }}')">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-
-    <form method="POST" action="/login">
-      <div class="form-group">
-        <label for="usuario" class="form-label">Usuario</label>
-        <input type="text" id="usuario" name="usuario" class="form-control" placeholder="Ingresa tu usuario" required />
+    
+    <!-- Muestra de tipografías de la empresa -->
+    <div class="font-showcase">
+      <p>NUESTRAS TIPOGRAFÍAS</p>
+      <div class="font-samples">
+        <span class="font-poppins-bold" style="font-size: 12px;">Poppins Bold</span>
+        <span class="font-jacksilver" style="font-size: 12px;">Jacksilver</span>
+        <span class="font-open-sans" style="font-size: 12px;">Open Sans</span>
+        <span class="font-bebas" style="font-size: 12px;">Bebas Neue</span>
       </div>
-
-      <div class="form-group">
-        <label for="password" class="form-label">Contraseña</label>
-        <input type="password" id="password" name="password" class="form-control" placeholder="Ingresa tu contraseña" required />
-      </div>
-
-      <button type="submit" class="btn-login">
-        <i class="fas fa-sign-in-alt me-2"></i> Ingresar al manual
-      </button>
-    </form>
+    </div>
   </div>
 
-  <script>
-    // Función para cerrar alertas manualmente
-    function closeAlert(alertId) {
-      const alert = document.getElementById(alertId);
-      if (alert) {
-        alert.style.opacity = '0';
-        alert.style.transform = 'translateY(-10px)';
-        setTimeout(() => {
-          if (alert.parentNode) {
-            alert.remove();
-          }
-        }, 300);
-      }
-    }
-
-    // Auto-cierre de alertas después de 5 segundos
-    document.addEventListener('DOMContentLoaded', function() {
-      const alerts = document.querySelectorAll('.alert');
-      
-      // Mostrar alertas con animación
-      alerts.forEach(alert => {
-        alert.classList.add('show');
+  <!-- Lado derecho: Formulario de login -->
+  <div class="form-side">
+    <div class="login-card">
+      <div class="login-header">
+        <!-- Logo de la empresa -->
+        <img src="{{ url_for('static', filename='img/logo.png') }}" 
+             alt="PRODUCCIONES S.A.S" 
+             class="company-logo"
+             onerror="this.style.display='none'">
         
-        // Auto-eliminar después de 5 segundos
-        setTimeout(() => {
-          if (alert.parentNode) {
-            alert.style.opacity = '0';
-            alert.style.transform = 'translateY(-10px)';
-            setTimeout(() => {
-              if (alert.parentNode) {
-                alert.remove();
-              }
-            }, 300);
-          }
-        }, 5000); // 5 segundos
-      });
+        <!-- Texto alternativo si no carga el logo -->
+        <div class="company-logo" style="display: none;" id="fallback-logo">
+          <div style="font-family: 'Bebas Neue Pro', 'Bebas Neue', sans-serif; font-size: 32px; color: #764ba2;">PRODUCCIONES</div>
+          <div style="font-family: 'Open Sans', sans-serif; font-size: 12px; color: #888;">S.A.S</div>
+        </div>
+        
+        <h1 class="font-poppins-bold">MANUAL ASESOR</h1>
+        <p class="font-open-sans">Ingresa tus credenciales para continuar</p>
+      </div>
+
+      <!-- Mensajes Flash -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" id="flash-{{ loop.index }}">
+              <div class="alert-content">
+                <i class="fas fa-{% if category == 'error' %}exclamation-triangle{% elif category == 'success' %}check-circle{% elif category == 'warning' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                <span>{{ message }}</span>
+              </div>
+              <button type="button" class="alert-close" onclick="closeAlert('flash-{{ loop.index }}')">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" action="/login">
+        <div class="form-group">
+          <label for="usuario" class="form-label">
+            <i class="fas fa-user" style="margin-right: 6px; color: #764ba2;"></i> Usuario
+          </label>
+          <input type="text" id="usuario" name="usuario" class="form-control" placeholder="Ingresa tu usuario" required />
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">
+            <i class="fas fa-lock" style="margin-right: 6px; color: #764ba2;"></i> Contraseña
+          </label>
+          <input type="password" id="password" name="password" class="form-control" placeholder="Ingresa tu contraseña" required />
+        </div>
+
+        <button type="submit" class="btn-login">
+          <i class="fas fa-sign-in-alt"></i> Ingresar al manual
+        </button>
+      </form>
+      
+      <!-- Pequeño texto decorativo -->
+      <div style="text-align: center; margin-top: 24px; font-family: 'Open Sans', sans-serif; font-size: 11px; color: #aaa;">
+        <i class="fas fa-shield-alt"></i> Acceso seguro · <i class="fas fa-fiber"></i> Conectados con fibra óptica
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Función para cerrar alertas manualmente
+  function closeAlert(alertId) {
+    const alert = document.getElementById(alertId);
+    if (alert) {
+      alert.style.opacity = '0';
+      alert.style.transform = 'translateY(-10px)';
+      setTimeout(() => {
+        if (alert.parentNode) {
+          alert.remove();
+        }
+      }, 300);
+    }
+  }
+
+  // Auto-cierre de alertas después de 5 segundos
+  document.addEventListener('DOMContentLoaded', function() {
+    const alerts = document.querySelectorAll('.alert');
+    
+    // Mostrar alertas con animación
+    alerts.forEach(alert => {
+      alert.classList.add('show');
+      
+      // Auto-eliminar después de 5 segundos
+      setTimeout(() => {
+        if (alert.parentNode) {
+          alert.style.opacity = '0';
+          alert.style.transform = 'translateY(-10px)';
+          setTimeout(() => {
+            if (alert.parentNode) {
+              alert.remove();
+            }
+          }, 300);
+        }
+      }, 5000);
     });
-  </script>
+    
+    // Fallback para el logo si no carga la imagen
+    const logoImg = document.querySelector('.company-logo');
+    if (logoImg && logoImg.complete && logoImg.naturalHeight === 0) {
+      logoImg.style.display = 'none';
+      document.getElementById('fallback-logo').style.display = 'block';
+    } else if (logoImg) {
+      logoImg.onerror = function() {
+        this.style.display = 'none';
+        document.getElementById('fallback-logo').style.display = 'block';
+      };
+    }
+  });
+</script>
 
 </body>
 </html>
-
