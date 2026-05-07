@@ -1,0 +1,556 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Reporte de Rotación - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-chart-line fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">Reporte de Rotación de Personal</h4>
+                        <p class="text-white-80 mb-0 small">Análisis de ingresos y retiros</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i> Imprimir
+                    </button>
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="exportarReporte()">
+                        <i class="fas fa-file-excel me-1"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros de reporte -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-calendar-alt me-2"></i> Filtros de Reporte
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Año</label>
+                    <select name="anio" class="form-select rounded-3">
+                        <option value="2024" selected>2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                        <option value="2021">2021</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Trimestre</label>
+                    <select name="trimestre" class="form-select rounded-3">
+                        <option value="todos">Todos</option>
+                        <option value="1">Ene - Mar</option>
+                        <option value="2">Abr - Jun</option>
+                        <option value="3">Jul - Sep</option>
+                        <option value="4">Oct - Dic</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Departamento</label>
+                    <select name="departamento" class="form-select rounded-3">
+                        <option value="todos">Todos</option>
+                        <option value="rh">Recursos Humanos</option>
+                        <option value="sst">SST</option>
+                        <option value="operaciones">Operaciones</option>
+                        <option value="comercial">Comercial</option>
+                        <option value="tecnologia">Tecnología</option>
+                        <option value="financiero">Financiero</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Tipo</label>
+                    <select name="tipo" class="form-select rounded-3">
+                        <option value="todos">Todos</option>
+                        <option value="ingresos">Ingresos</option>
+                        <option value="retiros">Retiros</option>
+                    </select>
+                </div>
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary rounded-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); border: none;">
+                        <i class="fas fa-search me-1"></i> Generar Reporte
+                    </button>
+                    <button type="reset" class="btn btn-outline-secondary rounded-3 ms-2">
+                        <i class="fas fa-times me-1"></i> Limpiar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tarjetas de resumen -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(38,88,165,0.1);">
+                    <i class="fas fa-chart-line" style="color: #2658A5;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #2658A5;">8.3%</h5>
+                <small class="text-muted">Rotación Anual</small>
+                <small class="text-success">-1.2% vs año anterior</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                    <i class="fas fa-user-plus" style="color: #28a745;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #28a745;">12</h5>
+                <small class="text-muted">Nuevos Ingresos</small>
+                <small class="text-success">+3 vs año anterior</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(194,53,56,0.1);">
+                    <i class="fas fa-user-minus" style="color: #C23538;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #C23538;">8</h5>
+                <small class="text-muted">Retiros</small>
+                <small class="text-danger">-2 vs año anterior</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(255,204,41,0.15);">
+                    <i class="fas fa-clock" style="color: #FFCC29;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #FFCC29;">2.5</h5>
+                <small class="text-muted">Promedio Estadía (años)</small>
+                <small class="text-success">+0.3 vs año anterior</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos de rotación -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-line me-2"></i> Evolución de la Rotación
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="rotacionAnualChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-pie me-2"></i> Rotación por Departamento
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="rotacionDeptosChart" height="250"></canvas>
+                    <div class="mt-3 text-center">
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <div><span class="badge" style="background: #C23538;">&nbsp;</span> Operaciones</div>
+                            <div><span class="badge" style="background: #2658A5;">&nbsp;</span> Tecnología</div>
+                            <div><span class="badge" style="background: #FFCC29;">&nbsp;</span> Comercial</div>
+                            <div><span class="badge" style="background: #28a745;">&nbsp;</span> SST</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%);">
+                    <h6 class="mb-0 fw-semibold" style="color: #282F4B;">
+                        <i class="fas fa-chart-bar me-2"></i> Ingresos vs Retiros por Trimestre
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="ingresosRetirosChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-simple me-2"></i> Causas de Retiro
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="causasRetiroChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de ingresos recientes -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-user-plus me-2"></i> Últimos Ingresos
+                </h5>
+                <span class="badge bg-white text-dark rounded-pill px-3 py-2">{{ ingresos|default(6) }} nuevos empleados</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead style="background: #f8f9fc;">
+                        <tr>
+                            <th style="padding: 16px 12px;">Fecha Ingreso</th>
+                            <th style="padding: 16px 12px;">Empleado</th>
+                            <th style="padding: 16px 12px;">Departamento</th>
+                            <th style="padding: 16px 12px;">Cargo</th>
+                            <th style="padding: 16px 12px;">Salario</th>
+                            <th style="padding: 16px 12px;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="align-middle">15/12/2024</td>
+                            <td class="align-middle fw-semibold">Laura Sánchez Mendoza</td>
+                            <td class="align-middle">Recursos Humanos</td>
+                            <td class="align-middle">Asistente RH</td>
+                            <td class="align-middle">$1,600,000</td>
+                            <td class="align-middle"><span class="badge rounded-pill" style="background: #28a745; color: white;">Activo</span></td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">10/12/2024</td>
+                            <td class="align-middle fw-semibold">Andrés Felipe Méndez</td>
+                            <td class="align-middle">Tecnología</td>
+                            <td class="align-middle">Aprendiz SST</td>
+                            <td class="align-middle">$1,200,000</td>
+                            <td class="align-middle"><span class="badge rounded-pill" style="background: #28a745; color: white;">Activo</span></td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">01/11/2024</td>
+                            <td class="align-middle fw-semibold">Luis Fernando Gómez</td>
+                            <td class="align-middle">Comercial</td>
+                            <td class="align-middle">Ejecutivo Comercial</td>
+                            <td class="align-middle">$2,500,000</td>
+                            <td class="align-middle"><span class="badge rounded-pill" style="background: #28a745; color: white;">Activo</span></td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">15/10/2024</td>
+                            <td class="align-middle fw-semibold">Patricia Rojas Díaz</td>
+                            <td class="align-middle">Financiero</td>
+                            <td class="align-middle">Coordinadora</td>
+                            <td class="align-middle">$3,500,000</td>
+                            <td class="align-middle"><span class="badge rounded-pill" style="background: #28a745; color: white;">Activo</span></td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">01/09/2024</td>
+                            <td class="align-middle fw-semibold">Jorge Ramírez Castro</td>
+                            <td class="align-middle">Operaciones</td>
+                            <td class="align-middle">Operador</td>
+                            <td class="align-middle">$1,800,000</td>
+                            <td class="align-middle"><span class="badge rounded-pill" style="background: #28a745; color: white;">Activo</span></td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">15/08/2024</td>
+                            <td class="align-middle fw-semibold">Ana Martínez Suárez</td>
+                            <td class="align-middle">SST</td>
+                            <td class="align-middle">Analista SST</td>
+                            <td class="align-middle">$2,200,000</td>
+                            <td class="align-middle"><span class="badge rounded-pill" style="background: #28a745; color: white;">Activo</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de retiros recientes -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-user-minus me-2"></i> Últimos Retiros
+                </h5>
+                <span class="badge bg-white text-dark rounded-pill px-3 py-2">{{ retiros|default(5) }} empleados</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead style="background: #f8f9fc;">
+                        <tr>
+                            <th style="padding: 16px 12px;">Fecha Retiro</th>
+                            <th style="padding: 16px 12px;">Empleado</th>
+                            <th style="padding: 16px 12px;">Departamento</th>
+                            <th style="padding: 16px 12px;">Cargo</th>
+                            <th style="padding: 16px 12px;">Tiempo en Empresa</th>
+                            <th style="padding: 16px 12px;">Causa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="align-middle">30/11/2024</td>
+                            <td class="align-middle fw-semibold">María González López</td>
+                            <td class="align-middle">Gerencia</td>
+                            <td class="align-middle">Gerente RH</td>
+                            <td class="align-middle">4 años, 8 meses</td>
+                            <td class="align-middle">Renuncia voluntaria</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">15/10/2024</td>
+                            <td class="align-middle fw-semibold">Carlos Rodríguez Pérez</td>
+                            <td class="align-middle">SST</td>
+                            <td class="align-middle">Coordinador SST</td>
+                            <td class="align-middle">3 años, 2 meses</td>
+                            <td class="align-middle">Mejor oferta laboral</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">30/09/2024</td>
+                            <td class="align-middle fw-semibold">Andrea Villamizar</td>
+                            <td class="align-middle">Comercial</td>
+                            <td class="align-middle">Asistente Comercial</td>
+                            <td class="align-middle">1 año, 3 meses</td>
+                            <td class="align-middle">Fin de contrato</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">15/08/2024</td>
+                            <td class="align-middle fw-semibold">Jorge Sánchez</td>
+                            <td class="align-middle">Operaciones</td>
+                            <td class="align-middle">Supervisor</td>
+                            <td class="align-middle">2 años, 6 meses</td>
+                            <td class="align-middle">Jubilación</td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">31/07/2024</td>
+                            <td class="align-middle fw-semibold">Lucía Pérez</td>
+                            <td class="align-middle">Tecnología</td>
+                            <td class="align-middle">Desarrollador</td>
+                            <td class="align-middle">1 año, 10 meses</td>
+                            <td class="align-middle">Terminación de contrato</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicadores clave -->
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-line me-2"></i> Métricas Clave
+                    </h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Rotación Voluntaria:</span>
+                        <span class="fw-bold" style="color: #28a745;">4.5%</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Rotación Involuntaria:</span>
+                        <span class="fw-bold" style="color: #C23538;">3.8%</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Índice de Retención:</span>
+                        <span class="fw-bold" style="color: #2658A5;">91.7%</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Promedio Rotación Sector:</span>
+                        <span class="fw-bold" style="color: #FFCC29;">12%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-simple me-2"></i> Costos de Rotación
+                    </h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Costo por reemplazo:</span>
+                        <span class="fw-bold" style="color: #C23538;">$4,500,000</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Costos de desvinculación:</span>
+                        <span class="fw-bold" style="color: #C23538;">$2,800,000</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Total costos rotación:</span>
+                        <span class="fw-bold" style="color: #FFCC29;">$36,800,000</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Ahorro potencial:</span>
+                        <span class="fw-bold" style="color: #28a745;">$15,000,000</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%);">
+                    <h6 class="mb-0 fw-semibold" style="color: #282F4B;">
+                        <i class="fas fa-lightbulb me-2"></i> Recomendaciones
+                    </h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex gap-2 mb-2">
+                        <i class="fas fa-check-circle text-success mt-1"></i>
+                        <span>Implementar plan de retención</span>
+                    </div>
+                    <div class="d-flex gap-2 mb-2">
+                        <i class="fas fa-check-circle text-success mt-1"></i>
+                        <span>Mejorar plan de carrera</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <i class="fas fa-chart-line text-primary mt-1"></i>
+                        <span>Monitorear rotación en tecnología</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Gráfico de rotación anual
+const ctxRotacion = document.getElementById('rotacionAnualChart')?.getContext('2d');
+if (ctxRotacion) {
+    new Chart(ctxRotacion, {
+        type: 'line',
+        data: {
+            labels: ['2020', '2021', '2022', '2023', '2024'],
+            datasets: [{
+                label: 'Rotación Anual (%)',
+                data: [10.5, 9.8, 9.2, 9.5, 8.3],
+                borderColor: '#C23538',
+                backgroundColor: 'rgba(194, 53, 56, 0.05)',
+                borderWidth: 3,
+                pointBackgroundColor: '#C23538',
+                pointBorderColor: '#fff',
+                pointRadius: 6,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.raw + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Gráfico de rotación por departamento
+const ctxRotacionDeptos = document.getElementById('rotacionDeptosChart')?.getContext('2d');
+if (ctxRotacionDeptos) {
+    new Chart(ctxRotacionDeptos, {
+        type: 'doughnut',
+        data: {
+            labels: ['Operaciones', 'Tecnología', 'Comercial', 'SST', 'RH', 'Financiero'],
+            datasets: [{
+                data: [15, 12, 8, 5, 4, 3],
+                backgroundColor: ['#C23538', '#2658A5', '#FFCC29', '#28a745', '#17a2b8', '#6c757d'],
+                borderWidth: 0,
+                cutout: '60%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+// Gráfico de ingresos vs retiros
+const ctxIngRet = document.getElementById('ingresosRetirosChart')?.getContext('2d');
+if (ctxIngRet) {
+    new Chart(ctxIngRet, {
+        type: 'bar',
+        data: {
+            labels: ['Q1 2024', 'Q2 2024', 'Q3 2024', 'Q4 2024'],
+            datasets: [
+                {
+                    label: 'Ingresos',
+                    data: [2, 3, 4, 3],
+                    backgroundColor: '#28a745',
+                    borderRadius: 8,
+                    barPercentage: 0.6
+                },
+                {
+                    label: 'Retiros',
+                    data: [1, 2, 3, 2],
+                    backgroundColor: '#C23538',
+                    borderRadius: 8,
+                    barPercentage: 0.6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true
+        }
+    });
+}
+
+// Gráfico de causas de retiro
+const ctxCausas = document.getElementById('causasRetiroChart')?.getContext('2d');
+if (ctxCausas) {
+    new Chart(ctxCausas, {
+        type: 'pie',
+        data: {
+            labels: ['Renuncia voluntaria', 'Mejor oferta', 'Fin de contrato', 'Jubilación', 'Terminación'],
+            datasets: [{
+                data: [30, 25, 20, 15, 10],
+                backgroundColor: ['#2658A5', '#28a745', '#FFCC29', '#C23538', '#6c757d'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+}
+
+function exportarReporte() {
+    alert('Exportando reporte de rotación...');
+}
+</script>
+
+<style>
+.hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+}
+</style>
+{% endblock %}
