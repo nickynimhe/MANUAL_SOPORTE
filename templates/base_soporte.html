@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="wrapper">
+    <!-- Sidebar específico de Soporte Técnico -->
+    <nav id="sidebar" class="bg-dark">
+        <div class="sidebar-header bg-gradient-soporte p-3">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-headset fa-2x text-white me-2"></i>
+                <div>
+                    <h5 class="text-white mb-0">Soporte Técnico</h5>
+                    <small class="text-white-50">Base de Conocimientos</small>
+                </div>
+            </div>
+        </div>
+
+        <ul class="list-unstyled components">
+            <!-- Dashboard / Inicio -->
+            <li class="{{ 'active' if request.endpoint == 'index' }}">
+                <a href="{{ url_for('index') }}" class="d-flex align-items-center">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+
+            <!-- Fichas Técnicas -->
+            <li class="{{ 'active' if request.endpoint in ['agregar_ficha', 'editar_ficha', 'ver_ficha'] }}">
+                <a href="#fichasSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="dropdown-toggle d-flex align-items-center">
+                    <i class="fas fa-file-alt me-2"></i>
+                    <span>Fichas Técnicas</span>
+                </a>
+                <ul class="collapse list-unstyled {{ 'show' if request.endpoint in ['agregar_ficha', 'editar_ficha', 'ver_ficha'] }}" id="fichasSubmenu">
+                    <li><a href="{{ url_for('index') }}"><i class="fas fa-list me-2"></i>Ver Todas</a></li>
+                    {% if current_user.puede('agregar_fichas') %}
+                    <li><a href="{{ url_for('agregar_ficha') }}"><i class="fas fa-plus-circle me-2"></i>Nueva Ficha</a></li>
+                    {% endif %}
+                </ul>
+            </li>
+
+            <!-- Búsqueda -->
+            <li class="{{ 'active' if request.endpoint == 'buscar' }}">
+                <a href="{{ url_for('buscar') }}" class="d-flex align-items-center">
+                    <i class="fas fa-search me-2"></i>
+                    <span>Búsqueda Avanzada</span>
+                </a>
+            </li>
+
+            <!-- Soluciones Visuales -->
+            <li class="{{ 'active' if request.endpoint == 'soluciones_visuales' }}">
+                <a href="{{ url_for('soluciones_visuales') }}" class="d-flex align-items-center">
+                    <i class="fas fa-chalkboard-user me-2"></i>
+                    <span>Soluciones Visuales</span>
+                </a>
+            </li>
+
+            <!-- Atención Telefónica -->
+            <li class="{{ 'active' if request.endpoint == 'atencion_telefonica' }}">
+                <a href="{{ url_for('atencion_telefonica') }}" class="d-flex align-items-center">
+                    <i class="fas fa-phone-alt me-2"></i>
+                    <span>Guión Telefónico</span>
+                </a>
+            </li>
+
+            <!-- Información General -->
+            <li class="{{ 'active' if request.endpoint == 'informacion_general' }}">
+                <a href="{{ url_for('informacion_general') }}" class="d-flex align-items-center">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <span>Información General</span>
+                </a>
+            </li>
+
+            <!-- Separador para Admin -->
+            {% if current_user.rol == 'admin' %}
+            <li class="mt-3">
+                <hr class="border-secondary mx-3">
+            </li>
+            <li class="text-muted small px-3 py-2">ADMINISTRACIÓN</li>
+            <li>
+                <a href="{{ url_for('dashboard_admin') }}" class="d-flex align-items-center">
+                    <i class="fas fa-crown me-2"></i>
+                    <span>Panel Admin</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('gestion_usuarios') }}" class="d-flex align-items-center">
+                    <i class="fas fa-users-gear me-2"></i>
+                    <span>Gestionar Usuarios</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+
+        <!-- Footer del sidebar -->
+        <div class="sidebar-footer p-3 border-top border-secondary">
+            <div class="d-flex align-items-center">
+                <div class="flex-shrink-0">
+                    <div class="rounded-circle bg-white d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                        <i class="fas fa-user-headset" style="color: #2658A5;"></i>
+                    </div>
+                </div>
+                <div class="flex-grow-1 ms-2">
+                    <small class="text-white-50 d-block">Módulo Soporte</small>
+                    <small class="text-white">{{ current_user.usuario }}</small>
+                    <small class="text-white-50 d-block">{{ obtener_rol_display() }}</small>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <div id="content">
+        <!-- Navbar superior -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm sticky-top">
+            <div class="container-fluid">
+                <button type="button" id="sidebarCollapse" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-bars"></i>
+                </button>
+                
+                <div class="ms-auto d-flex align-items-center gap-3">
+                    <!-- Selector de módulo -->
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-th me-1"></i> Módulo Soporte
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('index') }}">
+                                <i class="fas fa-headset me-2"></i> Soporte Técnico
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('sst_dashboard') }}">
+                                <i class="fas fa-hard-hat me-2"></i> SST
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('rh_dashboard') }}">
+                                <i class="fas fa-users me-2"></i> Recursos Humanos
+                            </a></li>
+                            {% if current_user.rol == 'admin' %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('dashboard_admin') }}">
+                                <i class="fas fa-crown me-2"></i> Admin Dashboard
+                            </a></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+
+                    <!-- Atajos rápidos -->
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-bolt"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('buscar') }}">
+                                <i class="fas fa-search me-2"></i> Buscar solución
+                            </a></li>
+                            {% if current_user.puede('agregar_fichas') %}
+                            <li><a class="dropdown-item" href="{{ url_for('agregar_ficha') }}">
+                                <i class="fas fa-plus me-2"></i> Nueva ficha
+                            </a></li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('soluciones_visuales') }}">
+                                <i class="fas fa-chalkboard-user me-2"></i> Soluciones visuales
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('atencion_telefonica') }}">
+                                <i class="fas fa-phone-alt me-2"></i> Guión telefónico
+                            </a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Notificaciones -->
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary position-relative" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-3" style="width: 300px;">
+                            <h6 class="dropdown-header">Notificaciones</h6>
+                            <div class="text-center text-muted py-3">
+                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                <small>No hay notificaciones nuevas</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Usuario -->
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> {{ current_user.usuario }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ url_for('cambiar_password') }}">
+                                <i class="fas fa-key me-2"></i> Cambiar Contraseña
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i> Cerrar Sesión
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Contenido específico de Soporte -->
+        <div class="p-3 p-md-4">
+            {% block soporte_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos específicos para el sidebar de Soporte */
+.bg-gradient-soporte {
+    background: linear-gradient(135deg, #2658A5 0%, #1a3f73 50%, #282F4B 100%) !important;
+}
+
+.wrapper {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+}
+
+#sidebar {
+    min-width: 280px;
+    max-width: 280px;
+    background: #1a1a2e;
+    color: #fff;
+    transition: all 0.3s;
+    min-height: 100vh;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+}
+
+#sidebar.active {
+    margin-left: -280px;
+}
+
+#sidebar .sidebar-header {
+    padding: 20px;
+    background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%);
+}
+
+#sidebar ul.components {
+    padding: 20px 0;
+    border-bottom: 1px solid #2d2d4a;
+}
+
+#sidebar ul li a {
+    padding: 12px 20px;
+    font-size: 0.95em;
+    display: flex;
+    align-items: center;
+    color: #e0e0e0;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+#sidebar ul li a i {
+    width: 24px;
+    font-size: 1.1rem;
+}
+
+#sidebar ul li a:hover {
+    color: #fff;
+    background: #2d2d4a;
+    padding-left: 25px;
+}
+
+#sidebar ul li.active > a {
+    background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%);
+    color: white;
+    border-left: 4px solid #FFCC29;
+}
+
+#sidebar ul ul li a {
+    padding-left: 48px;
+    font-size: 0.85em;
+}
+
+#sidebar ul ul li a:hover {
+    padding-left: 53px;
+}
+
+#sidebar ul ul {
+    background: #15152a;
+}
+
+#sidebar ul ul li.active a {
+    background: #2658A5;
+    color: white;
+}
+
+#sidebar .sidebar-footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: #15152a;
+}
+
+#content {
+    width: 100%;
+    min-height: 100vh;
+    transition: all 0.3s;
+    background: #f8f9fc;
+}
+
+/* Animación de entrada */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#content .p-3 {
+    animation: fadeInUp 0.4s ease;
+}
+
+/* Scrollbar personalizada */
+#sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+
+#sidebar::-webkit-scrollbar-track {
+    background: #2d2d4a;
+}
+
+#sidebar::-webkit-scrollbar-thumb {
+    background: #2658A5;
+    border-radius: 5px;
+}
+
+#sidebar::-webkit-scrollbar-thumb:hover {
+    background: #FFCC29;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #sidebar {
+        margin-left: -280px;
+    }
+    #sidebar.active {
+        margin-left: 0;
+    }
+    
+    .dropdown-menu-end {
+        right: 0;
+        left: auto !important;
+    }
+}
+
+/* Tooltip personalizado */
+.custom-tooltip {
+    --bs-tooltip-bg: #2658A5;
+}
+
+/* Badge de estado */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.status-badge i {
+    font-size: 0.65rem;
+}
+
+/* Hover effects para tarjetas */
+.hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.12) !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle sidebar
+    const sidebarCollapse = document.getElementById('sidebarCollapse');
+    if (sidebarCollapse) {
+        sidebarCollapse.addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('active');
+        });
+    }
+
+    // Guardar estado del sidebar en localStorage
+    const sidebar = document.getElementById('sidebar');
+    const sidebarState = localStorage.getItem('sidebarCollapsed');
+    if (sidebarState === 'true' && window.innerWidth > 768) {
+        sidebar.classList.add('active');
+    }
+
+    sidebarCollapse?.addEventListener('click', function() {
+        const isCollapsed = sidebar.classList.contains('active');
+        localStorage.setItem('sidebarCollapsed', isCollapsed);
+    });
+
+    // Activar tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Cerrar sidebar automáticamente en móvil al hacer clic en un enlace
+    if (window.innerWidth <= 768) {
+        const links = document.querySelectorAll('#sidebar a');
+        links.forEach(link => {
+            link.addEventListener('click', function() {
+                sidebar.classList.add('active');
+            });
+        });
+    }
+});
+</script>
+{% endblock %}
