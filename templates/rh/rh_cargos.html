@@ -1,0 +1,639 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Cargos y Salarios - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-briefcase fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">Cargos y Salarios</h4>
+                        <p class="text-white-80 mb-0 small">Estructura organizacional y compensación</p>
+                    </div>
+                </div>
+                <button class="btn btn-light btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoCargo">
+                    <i class="fas fa-plus me-1"></i> Nuevo Cargo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-filter me-2"></i> Filtros de Búsqueda
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;">
+                            <i class="fas fa-search" style="color: #2658A5;"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control border-start-0 rounded-3" 
+                               placeholder="Buscar por cargo o departamento..." 
+                               value="{{ request.args.get('q', '') }}"
+                               style="border-radius: 0 12px 12px 0;">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="departamento" class="form-select rounded-3">
+                        <option value="">Todos los departamentos</option>
+                        <option value="administrativo">Administrativo</option>
+                        <option value="operaciones">Operaciones</option>
+                        <option value="comercial">Comercial</option>
+                        <option value="tecnologia">Tecnología</option>
+                        <option value="sst">SST</option>
+                        <option value="rh">Recursos Humanos</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="nivel" class="form-select rounded-3">
+                        <option value="">Todos los niveles</option>
+                        <option value="operativo">🔧 Operativo</option>
+                        <option value="tecnico">📐 Técnico</option>
+                        <option value="profesional">🎓 Profesional</option>
+                        <option value="coordinador">📋 Coordinador</option>
+                        <option value="jefe">👔 Jefe</option>
+                        <option value="gerente">💼 Gerente</option>
+                        <option value="director">🎯 Director</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 rounded-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); border: none;">
+                        <i class="fas fa-search me-1"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(38,88,165,0.1);">
+                    <i class="fas fa-briefcase" style="color: #2658A5;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #2658A5;">{{ total_cargos|default(28) }}</h5>
+                <small class="text-muted">Total Cargos</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
+                    <i class="fas fa-users" style="color: #28a745;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #28a745;">{{ cargos_ocupados|default(22) }}</h5>
+                <small class="text-muted">Cargos Ocupados</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(255,204,41,0.15);">
+                    <i class="fas fa-chart-line" style="color: #FFCC29;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #FFCC29;">{{ salario_promedio|default("$3,200,000") }}</h5>
+                <small class="text-muted">Salario Promedio</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
+                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(194,53,56,0.1);">
+                    <i class="fas fa-chart-simple" style="color: #C23538;"></i>
+                </div>
+                <h5 class="fw-bold mb-0" style="color: #C23538;">8<span style="font-size: 14px;">%</span></h5>
+                <small class="text-muted">Brecha Salarial</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Listado de Cargos -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold text-white">
+                    <i class="fas fa-list me-2"></i> Estructura de Cargos
+                    <span class="badge bg-white text-dark rounded-pill ms-2 px-3">{{ cargos|default(15) }}</span>
+                </h5>
+                <div class="btn-group">
+                    <button class="btn btn-light btn-sm shadow-sm" onclick="exportarCargos()">
+                        <i class="fas fa-file-excel me-1"></i> Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead style="background: #f8f9fc;">
+                        <tr>
+                            <th style="padding: 16px 12px;">#</th>
+                            <th style="padding: 16px 12px;">Cargo</th>
+                            <th style="padding: 16px 12px;">Departamento</th>
+                            <th style="padding: 16px 12px;">Nivel</th>
+                            <th style="padding: 16px 12px;">Salario Base</th>
+                            <th style="padding: 16px 12px;">Rango Salarial</th>
+                            <th style="padding: 16px 12px;">Empleados</th>
+                            <th style="padding: 16px 12px;">Estado</th>
+                            <th style="padding: 16px 12px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Cargo 1 - Gerente RH -->
+                        <tr class="cargo-fila">
+                            <td class="align-middle">1</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-user-tie" style="color: #2658A5;"></i>
+                                    <span class="fw-semibold">Gerente de Recursos Humanos</span>
+                                </div>
+                            </td>
+                            <td class="align-middle">Recursos Humanos</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">
+                                    <i class="fas fa-star me-1"></i> Gerente
+                                </span>
+                            </td>
+                            <td class="align-middle">$ 4,500,000</td>
+                            <td class="align-middle">
+                                <small>$4,200,000 - $5,800,000</small>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">1</span>
+                            </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Activo
+                                </span>
+                            </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verCargo(1)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarCargo(1)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Cargo 2 - Coordinador SST -->
+                        <tr class="cargo-fila">
+                            <td class="align-middle">2</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-hard-hat" style="color: #28a745;"></i>
+                                    <span class="fw-semibold">Coordinador SST</span>
+                                </div>
+                             </td>
+                            <td class="align-middle">SST</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-clipboard me-1"></i> Coordinador
+                                </span>
+                             </td>
+                            <td class="align-middle">$ 3,200,000</td>
+                            <td class="align-middle">
+                                <small>$3,000,000 - $4,000,000</small>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">1</span>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Activo
+                                </span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verCargo(2)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarCargo(2)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                             </td>
+                        </tr>
+
+                        <!-- Cargo 3 - Analista SST -->
+                        <tr class="cargo-fila">
+                            <td class="align-middle">3</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-chart-line" style="color: #2658A5;"></i>
+                                    <span class="fw-semibold">Analista SST</span>
+                                </div>
+                             </td>
+                            <td class="align-middle">SST</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
+                                    <i class="fas fa-graduation-cap me-1"></i> Profesional
+                                </span>
+                             </td>
+                            <td class="align-middle">$ 2,200,000</td>
+                            <td class="align-middle">
+                                <small>$2,000,000 - $2,800,000</small>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">2</span>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Activo
+                                </span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verCargo(3)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarCargo(3)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                             </td>
+                        </tr>
+
+                        <!-- Cargo 4 - Operador de Maquinaria -->
+                        <tr class="cargo-fila">
+                            <td class="align-middle">4</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-cogs" style="color: #FFCC29;"></i>
+                                    <span class="fw-semibold">Operador de Maquinaria</span>
+                                </div>
+                             </td>
+                            <td class="align-middle">Operaciones</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-wrench me-1"></i> Operativo
+                                </span>
+                             </td>
+                            <td class="align-middle">$ 1,800,000</td>
+                            <td class="align-middle">
+                                <small>$1,600,000 - $2,200,000</small>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">4</span>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Activo
+                                </span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verCargo(4)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarCargo(4)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                             </td>
+                        </tr>
+
+                        <!-- Cargo 5 - Asistente Administrativo -->
+                        <tr class="cargo-fila">
+                            <td class="align-middle">5</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-file-alt" style="color: #2658A5;"></i>
+                                    <span class="fw-semibold">Asistente Administrativo</span>
+                                </div>
+                             </td>
+                            <td class="align-middle">Administrativo</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-arrow-up me-1"></i> Técnico
+                                </span>
+                             </td>
+                            <td class="align-middle">$ 1,600,000</td>
+                            <td class="align-middle">
+                                <small>$1,400,000 - $2,000,000</small>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">3</span>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Activo
+                                </span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verCargo(5)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarCargo(5)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                             </td>
+                        </tr>
+
+                        <!-- Cargo 6 - Aprendiz SST -->
+                        <tr class="cargo-fila">
+                            <td class="align-middle">6</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-graduation-cap" style="color: #28a745;"></i>
+                                    <span class="fw-semibold">Aprendiz SST</span>
+                                </div>
+                             </td>
+                            <td class="align-middle">SST</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                    <i class="fas fa-book me-1"></i> Aprendiz
+                                </span>
+                             </td>
+                            <td class="align-middle">$ 1,200,000</td>
+                            <td class="align-middle">
+                                <small>$1,100,000 - $1,400,000</small>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">2</span>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Activo
+                                </span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verCargo(6)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarCargo(6)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                             </td>
+                        </tr>
+
+                        <!-- Cargo 7 - Director de Operaciones -->
+                        <tr class="cargo-fila">
+                            <td class="align-middle">7</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-chart-line" style="color: #C23538;"></i>
+                                    <span class="fw-semibold">Director de Operaciones</span>
+                                </div>
+                             </td>
+                            <td class="align-middle">Operaciones</td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">
+                                    <i class="fas fa-bullseye me-1"></i> Director
+                                </span>
+                             </td>
+                            <td class="align-middle">$ 8,500,000</td>
+                            <td class="align-middle">
+                                <small>$7,500,000 - $10,000,000</small>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">1</span>
+                             </td>
+                            <td class="align-middle">
+                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                    <i class="fas fa-check-circle me-1"></i> Activo
+                                </span>
+                             </td>
+                            <td class="align-middle">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verCargo(7)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarCargo(7)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                             </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de distribución salarial -->
+    <div class="row mt-4 g-3">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-bar me-2"></i> Distribución Salarial por Nivel
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="salariosChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h6 class="mb-0 fw-semibold text-white">
+                        <i class="fas fa-chart-pie me-2"></i> Distribución por Departamento
+                    </h6>
+                </div>
+                <div class="card-body p-4">
+                    <canvas id="departamentosChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Cargo -->
+<div class="modal fade" id="modalNuevoCargo" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-plus-circle me-2"></i> Nuevo Cargo
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formNuevoCargo" method="POST" action="{{ url_for('rh_cargo_guardar') }}">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Nombre del Cargo *</label>
+                            <input type="text" name="nombre" class="form-control rounded-3" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Departamento *</label>
+                            <select name="departamento" class="form-select rounded-3" required>
+                                <option value="">Seleccionar departamento...</option>
+                                <option value="administrativo">Administrativo</option>
+                                <option value="operaciones">Operaciones</option>
+                                <option value="comercial">Comercial</option>
+                                <option value="tecnologia">Tecnología</option>
+                                <option value="sst">SST</option>
+                                <option value="rh">Recursos Humanos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nivel Jerárquico *</label>
+                            <select name="nivel" class="form-select rounded-3" required>
+                                <option value="">Seleccionar nivel...</option>
+                                <option value="operativo">🔧 Operativo</option>
+                                <option value="tecnico">📐 Técnico</option>
+                                <option value="profesional">🎓 Profesional</option>
+                                <option value="coordinador">📋 Coordinador</option>
+                                <option value="jefe">👔 Jefe</option>
+                                <option value="gerente">💼 Gerente</option>
+                                <option value="director">🎯 Director</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Salario Base *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="salario_base" class="form-control rounded-3" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Salario Mínimo del Rango</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="rango_min" class="form-control rounded-3" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Salario Máximo del Rango</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="rango_max" class="form-control rounded-3" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Descripción del Cargo</label>
+                            <textarea name="descripcion" class="form-control rounded-3" rows="3" 
+                                      placeholder="Funciones principales, responsabilidades y requisitos del cargo..."></textarea>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Requisitos</label>
+                            <textarea name="requisitos" class="form-control rounded-3" rows="2" 
+                                      placeholder="Formación académica, experiencia, competencias..."></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" form="formNuevoCargo" class="btn rounded-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                    <i class="fas fa-save me-2"></i> Guardar Cargo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function verCargo(id) {
+    window.location.href = "/rh/cargo/" + id;
+}
+
+function editarCargo(id) {
+    window.location.href = "/rh/cargo/" + id + "/editar";
+}
+
+function exportarCargos() {
+    alert('Exportando listado de cargos...');
+}
+
+// Gráfico de salarios por nivel
+const ctxSalarios = document.getElementById('salariosChart')?.getContext('2d');
+if (ctxSalarios) {
+    new Chart(ctxSalarios, {
+        type: 'bar',
+        data: {
+            labels: ['Operativo', 'Técnico', 'Profesional', 'Coordinador', 'Jefe', 'Gerente', 'Director'],
+            datasets: [{
+                label: 'Salario Promedio',
+                data: [1650000, 1900000, 2500000, 3600000, 4800000, 6500000, 9200000],
+                backgroundColor: '#2658A5',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Salario: $' + context.raw.toLocaleString();
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Gráfico de distribución por departamento
+const ctxDeptos = document.getElementById('departamentosChart')?.getContext('2d');
+if (ctxDeptos) {
+    new Chart(ctxDeptos, {
+        type: 'doughnut',
+        data: {
+            labels: ['SST', 'RH', 'Operaciones', 'Administrativo', 'Tecnología', 'Comercial'],
+            datasets: [{
+                data: [4, 3, 8, 5, 4, 4],
+                backgroundColor: ['#2658A5', '#28a745', '#FFCC29', '#C23538', '#17a2b8', '#fd7e14'],
+                borderWidth: 0,
+                cutout: '60%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+}
+</script>
+
+<style>
+.cargo-fila {
+    transition: all 0.2s ease;
+}
+.cargo-fila:hover {
+    background-color: #f8f9fc;
+}
+.hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+}
+</style>
+{% endblock %}
