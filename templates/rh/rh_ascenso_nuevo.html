@@ -1,0 +1,444 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Solicitar Ascenso - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container-fluid px-0 px-md-3 py-4">
+
+    <!-- Header -->
+    <div class="card border-0 shadow-sm overflow-hidden mb-4">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-arrow-up fa-2x" style="color: #2658A5;"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0 fw-semibold text-white">Solicitar Ascenso</h4>
+                        <p class="text-white-80 mb-0 small">Registrar nueva solicitud de ascenso</p>
+                    </div>
+                </div>
+                <button class="btn btn-outline-light btn-sm" onclick="window.location.href='{{ url_for('rh_ascensos') }}'">
+                    <i class="fas fa-arrow-left me-1"></i> Volver a Ascensos
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de Nueva Solicitud -->
+    <div class="card border-0 shadow-sm overflow-hidden">
+        <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-edit me-2"></i> Formulario de Solicitud
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <form method="POST" id="formNuevoAscenso" action="{{ url_for('rh_ascenso_guardar') }}">
+                
+                <!-- SECCIÓN 1: INFORMACIÓN DEL EMPLEADO -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #2658A5;">
+                        <i class="fas fa-user-circle me-2"></i> Información del Empleado
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Empleado *</label>
+                            <select name="empleado_id" id="empleado_id" class="form-select rounded-3" required onchange="cargarDatosEmpleado()">
+                                <option value="">Seleccionar empleado...</option>
+                                <option value="1" data-cargo="Analista RH" data-salario="2500000">María González López - CC 12345678</option>
+                                <option value="2" data-cargo="Técnico SST" data-salario="1800000">Carlos Rodríguez Pérez - CC 87654321</option>
+                                <option value="3" data-cargo="Asistente Administrativo" data-salario="1600000">Ana Martínez Suárez - CC 11223344</option>
+                                <option value="4" data-cargo="Operador" data-salario="1500000">Jorge Ramírez Castro - CC 55667788</option>
+                                <option value="5" data-cargo="Auxiliar RH" data-salario="1700000">Laura Sánchez Mendoza - CC 99887766</option>
+                                <option value="6" data-cargo="Aprendiz SST" data-salario="1200000">Andrés Felipe Méndez - CC 44332211</option>
+                            </select>
+                            <small class="text-muted">Seleccione el empleado que será ascendido</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Documento de Identidad</label>
+                            <input type="text" id="documento" class="form-control rounded-3" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Cargo Actual</label>
+                            <input type="text" id="cargo_actual" name="cargo_actual" class="form-control rounded-3" readonly required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Salario Actual</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="text" id="salario_actual" class="form-control rounded-3" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Antigüedad</label>
+                            <input type="text" id="antiguedad" class="form-control rounded-3" readonly>
+                            <small class="text-muted">Tiempo en el cargo actual</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 2: INFORMACIÓN DEL ASCENSO -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #FFCC29;">
+                        <i class="fas fa-chart-line me-2"></i> Información del Ascenso
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Cargo al que aspira *</label>
+                            <input type="text" name="cargo_nuevo" id="cargo_nuevo" class="form-control rounded-3" required 
+                                   placeholder="Ej: Coordinador SST, Analista Senior, etc.">
+                            <small class="text-muted">Cargo propuesto para el ascenso</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nivel Jerárquico *</label>
+                            <select name="nivel" id="nivel" class="form-select rounded-3" required onchange="calcularRangoSalarial()">
+                                <option value="">Seleccionar nivel...</option>
+                                <option value="operativo">🔧 Operativo</option>
+                                <option value="tecnico">📐 Técnico</option>
+                                <option value="profesional">🎓 Profesional</option>
+                                <option value="coordinador">📋 Coordinador</option>
+                                <option value="jefe">👔 Jefe</option>
+                                <option value="gerente">💼 Gerente</option>
+                                <option value="director">🎯 Director</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Salario Propuesto *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" name="salario_nuevo" id="salario_nuevo" class="form-control rounded-3" step="0.01" required oninput="calcularIncremento()">
+                            </div>
+                            <small class="text-muted">Nuevo salario mensual</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Incremento Salarial</label>
+                            <div class="input-group">
+                                <input type="text" id="incremento" class="form-control rounded-3" readonly>
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <div class="progress mt-2" style="height: 8px;">
+                                <div id="barra_incremento" class="progress-bar" role="progressbar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fecha Propuesta *</label>
+                            <input type="date" name="fecha_propuesta" id="fecha_propuesta" class="form-control rounded-3" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Fecha Efectiva</label>
+                            <input type="date" name="fecha_efectiva" id="fecha_efectiva" class="form-control rounded-3">
+                            <small class="text-muted">Cuando entraría en vigencia el ascenso</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 3: JUSTIFICACIÓN Y EVALUACIÓN -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #2658A5;">
+                        <i class="fas fa-clipboard-list me-2"></i> Justificación y Evaluación
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Justificación del Ascenso *</label>
+                            <textarea name="justificacion" id="justificacion" class="form-control rounded-3" rows="4" required
+                                      placeholder="Describa los motivos del ascenso: logros alcanzados, desempeño sobresaliente, tiempo de servicio, capacitaciones completadas, etc."></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Última Evaluación de Desempeño</label>
+                            <select name="evaluacion_desempeno" class="form-select rounded-3">
+                                <option value="">Seleccionar evaluación...</option>
+                                <option value="excelente">⭐ Excelente (90-100)</option>
+                                <option value="sobresaliente">👍 Sobresaliente (75-89)</option>
+                                <option value="basico">📋 Básico (60-74)</option>
+                                <option value="mejora">⚠️ Necesita mejorar (&lt;60)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Capacitaciones Relevantes</label>
+                            <input type="text" name="capacitaciones" class="form-control rounded-3" 
+                                   placeholder="Ej: Curso de Liderazgo, Diplomado en SST...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 4: APROBACIONES -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #C23538;">
+                        <i class="fas fa-signature me-2"></i> Aprobaciones
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Aprobado por Jefe Inmediato</label>
+                            <select name="aprobacion_jefe" class="form-select rounded-3">
+                                <option value="pendiente">⏳ Pendiente</option>
+                                <option value="aprobado">✅ Aprobado</option>
+                                <option value="rechazado">❌ Rechazado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Aprobado por RH</label>
+                            <select name="aprobacion_rh" class="form-select rounded-3">
+                                <option value="pendiente">⏳ Pendiente</option>
+                                <option value="aprobado">✅ Aprobado</option>
+                                <option value="rechazado">❌ Rechazado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Aprobado por Gerencia</label>
+                            <select name="aprobacion_gerencia" class="form-select rounded-3">
+                                <option value="pendiente">⏳ Pendiente</option>
+                                <option value="aprobado">✅ Aprobado</option>
+                                <option value="rechazado">❌ Rechazado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 5: DOCUMENTOS ADJUNTOS -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #28a745;">
+                        <i class="fas fa-paperclip me-2"></i> Documentos Adjuntos
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Acta de Ascenso</label>
+                            <input type="file" name="acta_ascenso" class="form-control rounded-3" accept=".pdf">
+                            <small class="text-muted">Documento PDF del acta de ascenso (opcional)</small>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Soporte de Evaluación</label>
+                            <input type="file" name="soporte_evaluacion" class="form-control rounded-3" accept=".pdf,.jpg,.png">
+                            <small class="text-muted">Evaluación de desempeño u otros soportes</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 6: OBSERVACIONES -->
+                <div class="form-section mb-4">
+                    <h6 class="fw-semibold mb-3" style="color: #FFCC29;">
+                        <i class="fas fa-comments me-2"></i> Observaciones Adicionales
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <textarea name="observaciones" class="form-control rounded-3" rows="3" 
+                                      placeholder="Notas adicionales, condiciones especiales, cláusulas del ascenso..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOTONES DE ACCIÓN -->
+                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                    <div>
+                        <a href="{{ url_for('rh_ascensos') }}" class="btn btn-outline-secondary rounded-3 px-4">
+                            <i class="fas fa-times me-1"></i> Cancelar
+                        </a>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="reset" class="btn rounded-3 px-4" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%); border: none; color: #282F4B;">
+                            <i class="fas fa-eraser me-1"></i> Limpiar Formulario
+                        </button>
+                        <button type="submit" class="btn rounded-3 px-4" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; color: white;">
+                            <i class="fas fa-save me-2"></i> Enviar Solicitud
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Cargar datos del empleado seleccionado
+function cargarDatosEmpleado() {
+    const select = document.getElementById('empleado_id');
+    const selectedOption = select.options[select.selectedIndex];
+    
+    if (selectedOption.value) {
+        const cargo = selectedOption.getAttribute('data-cargo');
+        const salario = selectedOption.getAttribute('data-salario');
+        const documento = selectedOption.text.split(' - ')[1] || '';
+        
+        document.getElementById('cargo_actual').value = cargo || '';
+        document.getElementById('salario_actual').value = formatNumber(parseInt(salario) || 0);
+        document.getElementById('documento').value = documento;
+        
+        // Calcular antigüedad simulada
+        const fechaIngreso = new Date(2020, 0, 15);
+        const hoy = new Date();
+        const años = hoy.getFullYear() - fechaIngreso.getFullYear();
+        document.getElementById('antiguedad').value = años + ' años, ' + (Math.floor(Math.random() * 11) + 1) + ' meses';
+        
+        // Limpiar campos de ascenso
+        document.getElementById('cargo_nuevo').value = '';
+        document.getElementById('salario_nuevo').value = '';
+        document.getElementById('incremento').value = '';
+        document.getElementById('barra_incremento').style.width = '0%';
+    } else {
+        document.getElementById('cargo_actual').value = '';
+        document.getElementById('salario_actual').value = '';
+        document.getElementById('documento').value = '';
+        document.getElementById('antiguedad').value = '';
+    }
+}
+
+// Calcular incremento salarial
+function calcularIncremento() {
+    const salarioActualStr = document.getElementById('salario_actual').value;
+    const salarioActual = parseInt(salarioActualStr.replace(/\./g, '')) || 0;
+    const salarioNuevo = parseInt(document.getElementById('salario_nuevo').value) || 0;
+    
+    if (salarioActual > 0 && salarioNuevo > 0) {
+        const incremento = ((salarioNuevo - salarioActual) / salarioActual * 100).toFixed(1);
+        document.getElementById('incremento').value = incremento;
+        
+        // Actualizar barra de progreso
+        let barraWidth = Math.min(incremento * 2, 100);
+        document.getElementById('barra_incremento').style.width = barraWidth + '%';
+        
+        // Cambiar color según incremento
+        const barra = document.getElementById('barra_incremento');
+        if (incremento >= 20) {
+            barra.style.background = '#28a745';
+        } else if (incremento >= 10) {
+            barra.style.background = '#FFCC29';
+        } else {
+            barra.style.background = '#C23538';
+        }
+        
+        // Mostrar advertencia si incremento es muy alto
+        if (incremento > 30) {
+            alert('⚠️ El incremento solicitado es superior al 30%. Debe incluir una justificación adicional en las observaciones.');
+        }
+    } else {
+        document.getElementById('incremento').value = '';
+        document.getElementById('barra_incremento').style.width = '0%';
+    }
+}
+
+// Calcular rango salarial según nivel
+function calcularRangoSalarial() {
+    const nivel = document.getElementById('nivel').value;
+    const salarioActual = parseInt(document.getElementById('salario_actual').value.replace(/\./g, '')) || 0;
+    let sugerencia = 0;
+    let min = 0, max = 0;
+    
+    switch(nivel) {
+        case 'operativo':
+            min = 1300000;
+            max = 1800000;
+            break;
+        case 'tecnico':
+            min = 1800000;
+            max = 2500000;
+            break;
+        case 'profesional':
+            min = 2500000;
+            max = 3500000;
+            break;
+        case 'coordinador':
+            min = 3500000;
+            max = 5000000;
+            break;
+        case 'jefe':
+            min = 4500000;
+            max = 7000000;
+            break;
+        case 'gerente':
+            min = 7000000;
+            max = 12000000;
+            break;
+        case 'director':
+            min = 10000000;
+            max = 20000000;
+            break;
+        default:
+            return;
+    }
+    
+    sugerencia = Math.max(min, salarioActual * 1.15);
+    sugerencia = Math.min(sugerencia, max);
+    
+    document.getElementById('salario_nuevo').placeholder = `Sugerido: $${formatNumber(Math.round(sugerencia))}`;
+}
+
+// Formatear número
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+// Validar formulario antes de enviar
+document.getElementById('formNuevoAscenso')?.addEventListener('submit', function(e) {
+    const empleado = document.getElementById('empleado_id')?.value;
+    const cargoNuevo = document.getElementById('cargo_nuevo')?.value.trim();
+    const salarioNuevo = document.getElementById('salario_nuevo')?.value;
+    const justificacion = document.getElementById('justificacion')?.value.trim();
+    const fechaPropuesta = document.getElementById('fecha_propuesta')?.value;
+    
+    let error = '';
+    
+    if (!empleado) error = 'Debe seleccionar un empleado';
+    else if (!cargoNuevo) error = 'Debe especificar el cargo al que aspira';
+    else if (!salarioNuevo || parseInt(salarioNuevo) <= 0) error = 'El salario propuesto debe ser mayor a 0';
+    else if (!justificacion) error = 'La justificación del ascenso es obligatoria';
+    else if (!fechaPropuesta) error = 'La fecha de la propuesta es obligatoria';
+    else {
+        const salarioActual = parseInt(document.getElementById('salario_actual').value.replace(/\./g, '')) || 0;
+        const salarioNuevoNum = parseInt(salarioNuevo);
+        
+        if (salarioNuevoNum <= salarioActual && salarioActual > 0) {
+            error = 'El salario propuesto debe ser mayor al salario actual';
+        }
+    }
+    
+    if (error) {
+        e.preventDefault();
+        alert('❌ ' + error);
+    }
+});
+
+// Establecer fecha actual por defecto
+document.addEventListener('DOMContentLoaded', function() {
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fecha_propuesta')?.setAttribute('value', hoy);
+    
+    // Agregar evento a los selects de aprobación para mostrar notificación
+    const aprobaciones = ['aprobacion_jefe', 'aprobacion_rh', 'aprobacion_gerencia'];
+    aprobaciones.forEach(id => {
+        const select = document.getElementById(id);
+        if (select) {
+            select.addEventListener('change', function() {
+                if (this.value === 'rechazado') {
+                    alert('⚠️ Esta solicitud será rechazada. El empleado será notificado.');
+                }
+            });
+        }
+    });
+});
+</script>
+
+<style>
+.form-section {
+    background: #f8f9fc;
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+.form-section:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.form-control, .form-select {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #2658A5;
+    box-shadow: 0 0 0 3px rgba(38,88,165,0.15);
+}
+.input-group-text {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+</style>
+{% endblock %}
