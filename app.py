@@ -42,6 +42,56 @@ def retry_on_ssl_error(max_retries=2, delay=3):
         return wrapper
     return decorator
 
+# ===== DECORADORES DE PERMISOS =====
+def admin_required(f):
+    """Decorador para rutas que solo pueden acceder administradores"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.rol != 'admin':
+            flash('Acceso denegado. Se requieren permisos de administrador.', 'error')
+            return redirect(url_for('dashboard_admin'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def soporte_required(f):
+    """Decorador para rutas que solo pueden acceder usuarios de soporte"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash('Por favor inicia sesión.', 'error')
+            return redirect(url_for('login'))
+        if current_user.rol not in ['admin', 'soporte']:
+            flash('No tienes permisos para acceder al módulo de Soporte.', 'error')
+            return redirect(url_for('dashboard_admin'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def sst_required(f):
+    """Decorador para rutas que solo pueden acceder usuarios de SST"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash('Por favor inicia sesión.', 'error')
+            return redirect(url_for('login'))
+        if current_user.rol not in ['admin', 'sst']:
+            flash('No tienes permisos para acceder al módulo de SST.', 'error')
+            return redirect(url_for('dashboard_admin'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def rh_required(f):
+    """Decorador para rutas que solo pueden acceder usuarios de RH"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash('Por favor inicia sesión.', 'error')
+            return redirect(url_for('login'))
+        if current_user.rol not in ['admin', 'rh']:
+            flash('No tienes permisos para acceder al módulo de Recursos Humanos.', 'error')
+            return redirect(url_for('dashboard_admin'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 # ===== CONFIGURACIÓN DE LA APLICACIÓN =====
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -97,6 +147,8 @@ def inject_permissions():
                 return True
             if modulo == 'soporte' and current_user.rol in ['admin', 'soporte']:
                 return True
+            if modulo == 'rh' and current_user.rol in ['admin', 'rh']:
+                return True
             if modulo == 'dashboard' and current_user.rol == 'admin':
                 return True
         return False
@@ -112,7 +164,8 @@ def inject_permissions():
             display_map = {
                 'admin': 'Administrador',
                 'sst': 'SST',
-                'soporte': 'Soporte Técnico'
+                'soporte': 'Soporte Técnico',
+                'rh': 'Recursos Humanos'
             }
             return display_map.get(rol, rol.capitalize())
         return ''
@@ -123,7 +176,6 @@ def inject_permissions():
         obtener_modulo_principal=obtener_modulo_principal,
         obtener_rol_display=obtener_rol_display
     )
-
 # ===== FILTROS TEMPLATE =====
 @app.template_filter('format_date')
 def format_date_filter(date_value, format='%d/%m/%Y'):
@@ -203,6 +255,8 @@ class User(UserMixin):
             return 'admin'
         elif rol_str in ['sst', 'seguridad', 'salud', 'salud y seguridad', 'seguridad y salud', 'seguridad laboral']:
             return 'sst'
+        elif rol_str in ['rh', 'recursos humanos', 'rrhh', 'talento humano']:
+            return 'rh'
         elif rol_str in ['soporte', 'tecnico', 'técnico', 'asistente', 'ayudante', 'operador', 'soporte técnico']:
             return 'soporte'
         else:
@@ -284,16 +338,12 @@ def redirect_a_modulo_principal():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
     logger.info(f"Redirigiendo usuario {current_user.usuario} (rol: {current_user.rol})")
-    if hasattr(current_user, 'redireccionar_sst') and current_user.redireccionar_sst:
-        return redirect(url_for('sst_dashboard'))
+    
     if current_user.rol == 'admin':
-        return redirect(url_for('index'))
+        return redirect(url_for('dashboard_admin'))
+    elif current_user.rol == 'rh':
+        return redirect(url_for('rh_dashboard'))
     elif current_user.rol == 'sst':
-        return redirect(url_for('sst_dashboard'))
-    elif current_user.rol == 'soporte':
-        return redirect(url_for('index'))
-    modulo = getattr(current_user, 'modulo_principal', 'soporte')
-    if modulo == 'sst':
         return redirect(url_for('sst_dashboard'))
     else:
         return redirect(url_for('index'))
@@ -329,9 +379,17 @@ def login():
                     login_user(user)
                     flash(f'¡Bienvenido {user.usuario}!', 'success')
                     logger.info(f"Login exitoso: {user.usuario}, rol: {user.rol}, módulo: {user.modulo_principal}")
-                    if user.redireccionar_sst and user.puede('acceder_sst'):
+
+                    if user.rol == 'admin':
+                        return redirect(url_for('dashboard_admin'))
+                    elif user.rol == 'rh':
+                        return redirect(url_for('rh_dashboard_main'))
+                    elif user.rol == 'sst':
+                        if user.redireccionar_sst and user.puede('acceder_sst'):
+                            return redirect(url_for('sst_dashboard'))
                         return redirect(url_for('sst_dashboard'))
-                    return redirect_a_modulo_principal()
+                    else:  # soporte o cualquier otro
+                        return redirect(url_for('index'))                    
                 else:
                     flash('Usuario o contraseña incorrectos', 'error')
             else:
@@ -385,11 +443,19 @@ def cambiar_password():
 @app.route('/')
 @login_required
 def index():
-    if current_user.rol == 'sst':
+    """Página principal de soporte técnico"""
+    # Admin puede ver soporte también
+    if current_user.rol == 'admin':
+        pass  # Admin puede pasar
+    elif current_user.rol == 'sst':
         return redirect(url_for('sst_dashboard'))
+    elif current_user.rol == 'rh':
+        return redirect(url_for('rh_dashboard_main'))
+    
     if not current_user.puede('acceder_soporte'):
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
         return redirect_a_modulo_principal()
+    
     fichas = []
     try:
         resultado = ejecutar_consulta(
@@ -405,15 +471,20 @@ def index():
         logger.error(f"Error en index: {e}")
     return render_template('index.html', fichas=fichas, user=current_user)
 
+
 @app.route('/agregar', methods=['GET', 'POST'])
 @login_required
 def agregar_ficha():
-    if not current_user.puede('acceder_soporte'):
+    """Agregar nueva ficha de soporte"""
+    # Admin también puede agregar
+    if current_user.rol not in ['admin', 'soporte']:
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
         return redirect_a_modulo_principal()
+    
     if not current_user.puede('agregar_fichas'):
         flash('No tienes permisos para realizar esta acción', 'error')
         return redirect(url_for('index'))
+    
     if request.method == 'POST':
         categoria = request.form.get('categoria', '')
         problema = request.form.get('problema', '')
@@ -421,11 +492,14 @@ def agregar_ficha():
         causas = request.form.get('causas', '')
         solucion = request.form.get('solucion', '')
         palabras_clave = request.form.get('palabras_clave', '')
+        
         campos_requeridos = {'categoria': categoria, 'problema': problema, 'causas': causas, 'solucion': solucion}
         campos_faltantes = [campo for campo, valor in campos_requeridos.items() if not valor]
+        
         if campos_faltantes:
             flash('Por favor, complete todos los campos requeridos', 'error')
             return render_template('agregar_ficha.html')
+        
         try:
             ejecutar_consulta(
                 'INSERT INTO fichas (categoria, problema, descripcion, causas, solucion, palabras_clave) VALUES (%s, %s, %s, %s, %s, %s)',
@@ -434,17 +508,22 @@ def agregar_ficha():
             return redirect(url_for('index'))
         except Exception as e:
             flash(f'Error al agregar la ficha: {str(e)}', 'error')
+    
     return render_template('agregar_ficha.html')
+
 
 @app.route('/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
 def editar_ficha(id):
-    if not current_user.puede('acceder_soporte'):
+    """Editar ficha existente"""
+    if current_user.rol not in ['admin', 'soporte']:
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
         return redirect_a_modulo_principal()
+    
     if not current_user.puede('editar_fichas'):
         flash('No tienes permisos para realizar esta acción', 'error')
         return redirect(url_for('index'))
+    
     ficha = None
     try:
         if request.method == 'POST':
@@ -454,13 +533,16 @@ def editar_ficha(id):
             causas = request.form['causas']
             solucion = request.form['solucion']
             palabras_clave = request.form['palabras_clave']
+            
             causas_items = [item.strip() for item in causas.split('\n') if item.strip()]
             causas_str = '|'.join(causas_items)
+            
             ejecutar_consulta(
                 'UPDATE fichas SET categoria=%s, problema=%s, descripcion=%s, causas=%s, solucion=%s, palabras_clave=%s WHERE id=%s',
                 (categoria, problema, descripcion, causas_str, solucion, palabras_clave, id), commit=True)
             flash('Ficha actualizada correctamente', 'success')
             return redirect(url_for('index'))
+        
         resultado = ejecutar_consulta("SELECT * FROM fichas WHERE id = %s", (id,), fetch=True)
         if resultado and resultado[0]:
             ficha_data = resultado[0]
@@ -474,40 +556,52 @@ def editar_ficha(id):
     except Exception as e:
         flash('Error al cargar/editar la ficha', 'error')
         logger.error(f"Error en editar_ficha: {e}")
+    
     if not ficha:
         flash('Ficha no encontrada', 'error')
         return redirect(url_for('index'))
+    
     return render_template('editar_ficha.html', ficha=ficha)
+
 
 @app.route('/eliminar/<int:id>')
 @login_required
 def eliminar_ficha(id):
-    if not current_user.puede('acceder_soporte'):
+    """Eliminar ficha"""
+    if current_user.rol not in ['admin', 'soporte']:
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
         return redirect_a_modulo_principal()
+    
     if not current_user.puede('eliminar_fichas'):
         flash('No tienes permisos para realizar esta acción', 'error')
         return redirect(url_for('index'))
+    
     try:
         ejecutar_consulta("DELETE FROM fichas WHERE id = %s", (id,), commit=True)
         flash('Ficha eliminada correctamente', 'success')
     except Exception as e:
         flash('Error al eliminar la ficha', 'error')
         logger.error(f"Error en eliminar_ficha: {e}")
+    
     return redirect(url_for('index'))
+
 
 @app.route('/buscar')
 @login_required
 def buscar():
-    if not current_user.puede('acceder_soporte'):
+    """Buscar fichas"""
+    if current_user.rol not in ['admin', 'soporte']:
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
         return redirect_a_modulo_principal()
+    
     if not current_user.puede('ver_fichas'):
         flash('No tienes permisos para ver las fichas', 'error')
         return redirect(url_for('index'))
+    
     query = request.args.get('q', '')
     categoria = request.args.get('categoria', '')
     fichas = []
+    
     try:
         if categoria and query:
             resultado = ejecutar_consulta(
@@ -521,6 +615,7 @@ def buscar():
                 (f'%{query}%', f'%{query}%'), fetch=True)
         else:
             resultado = ejecutar_consulta("SELECT * FROM fichas ORDER BY fecha_actualizacion DESC", fetch=True)
+        
         for ficha in resultado or []:
             fichas.append({
                 'id': ficha[0], 'categoria': ficha[1], 'problema': ficha[2],
@@ -530,17 +625,22 @@ def buscar():
     except Exception as e:
         flash('Error en la búsqueda', 'error')
         logger.error(f"Error en buscar: {e}")
+    
     return render_template('buscar.html', fichas=fichas, query=query, categoria=categoria)
+
 
 @app.route('/ficha/<int:id>')
 @login_required
 def ver_ficha(id):
-    if not current_user.puede('acceder_soporte'):
+    """Ver detalle de ficha"""
+    if current_user.rol not in ['admin', 'soporte']:
         flash('No tienes permisos para acceder al módulo de soporte', 'error')
         return redirect_a_modulo_principal()
+    
     if not current_user.puede('ver_fichas'):
         flash('No tienes permisos para ver las fichas', 'error')
         return redirect(url_for('index'))
+    
     ficha = None
     try:
         resultado = ejecutar_consulta("SELECT * FROM fichas WHERE id = %s", (id,), fetch=True)
@@ -554,9 +654,11 @@ def ver_ficha(id):
     except Exception as e:
         flash('Error al cargar la ficha', 'error')
         logger.error(f"Error en ver_ficha: {e}")
+    
     if not ficha:
         flash('Ficha no encontrada', 'error')
         return redirect(url_for('index'))
+    
     return render_template('ver_ficha.html', ficha=ficha)
 
 # ===== RUTAS DE GESTIÓN DE USUARIOS (Solo Admin) =====
@@ -1994,6 +2096,13 @@ def sst_eliminar_evidencia(id):
 # ==========================================
 
 # -------------------- DASHBOARD Y PRINCIPALES --------------------
+# ===== RUTA RH_DASHBOARD (alias para compatibilidad) =====
+@app.route('/rh_dashboard')
+@login_required
+def rh_dashboard_redirect():
+    """Redirección a /rh para compatibilidad"""
+    return redirect(url_for('rh_dashboard'))
+    
 @app.route('/rh')
 @login_required
 def rh_dashboard():
@@ -2717,6 +2826,84 @@ def rh_reporte_rotacion():
 # ==========================================
 # FIN MÓDULO DE RECURSOS HUMANOS
 # ==========================================
+
+# ===== DASHBOARD PRINCIPAL DEL ADMINISTRADOR =====
+@app.route('/dashboard_admin')
+@login_required
+@admin_required
+def dashboard_admin():
+    """Panel principal del administrador con acceso a todas las áreas"""
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Usar try/except para cada consulta por si hay problemas con el ENUM
+        try:
+            cursor.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = cursor.fetchone()[0]
+        except:
+            total_usuarios = 0
+        
+        try:
+            cursor.execute("SELECT COUNT(*) FROM usuarios WHERE rol = 'soporte' OR rol = 'usuario'")
+            usuarios_soporte = cursor.fetchone()[0]
+        except:
+            usuarios_soporte = 0
+        
+        try:
+            cursor.execute("SELECT COUNT(*) FROM usuarios WHERE rol = 'sst'")
+            usuarios_sst = cursor.fetchone()[0]
+        except:
+            usuarios_sst = 0
+        
+        try:
+            cursor.execute("SELECT COUNT(*) FROM usuarios WHERE rol = 'rh'")
+            usuarios_rh = cursor.fetchone()[0]
+        except:
+            usuarios_rh = 0
+        
+        try:
+            cursor.execute("SELECT COUNT(*) FROM fichas")
+            total_fichas = cursor.fetchone()[0]
+        except:
+            total_fichas = 0
+        
+        try:
+            cursor.execute("SELECT COUNT(*) FROM sst_contenido")
+            total_contenido_sst = cursor.fetchone()[0]
+        except:
+            total_contenido_sst = 0
+        
+        try:
+            cursor.execute("SELECT COUNT(*) FROM plan_anual_trabajo")
+            total_actividades_plan = cursor.fetchone()[0]
+        except:
+            total_actividades_plan = 0
+        
+        try:
+            cursor.execute("SELECT COUNT(*) FROM rh_empleados WHERE estado = 'activo'")
+            total_empleados_activos = cursor.fetchone()[0]
+        except:
+            total_empleados_activos = 0
+        
+        cursor.close()
+        conn.close()
+        
+        stats = {
+            'total_usuarios': total_usuarios,
+            'usuarios_soporte': usuarios_soporte,
+            'usuarios_sst': usuarios_sst,
+            'usuarios_rh': usuarios_rh,
+            'total_fichas': total_fichas,
+            'total_contenido_sst': total_contenido_sst,
+            'total_actividades_plan': total_actividades_plan,
+            'total_empleados_activos': total_empleados_activos,
+            'procesos_pendientes': 0
+        }
+        return render_template('dashboard_admin.html', stats=stats)
+    except Exception as e:
+        logger.error(f"Error en dashboard_admin: {e}")
+        return render_template('dashboard_admin.html', stats={})
 
 
 # ===== FUNCIONES AUXILIARES =====
