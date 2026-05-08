@@ -1,6 +1,6 @@
 {% extends "base_rh.html" %}
 
-{% block title %}Detalle del Contrato{% endblock %}
+{% block title %}Detalle del Proceso{% endblock %}
 
 {% block rh_content %}
 <div class="container py-4">
@@ -8,111 +8,99 @@
         <div class="card-header bg-white py-3 border-0">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
-                    <a href="{{ url_for('rh_contratos') }}" class="btn btn-sm btn-outline-secondary me-3">
+                    <a href="{{ url_for('rh_procesos') }}" class="btn btn-sm btn-outline-secondary me-3">
                         <i class="fas fa-arrow-left"></i>
                     </a>
                     <h5 class="mb-0 fw-semibold" style="color: #2658A5;">
-                        <i class="fas fa-file-signature me-2"></i>Detalle del Contrato
+                        <i class="fas fa-tasks me-2"></i>Detalle del Proceso
                     </h5>
                 </div>
-                <a href="{{ url_for('rh_contrato_nuevo') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus me-1"></i> Nuevo Contrato
+                <a href="{{ url_for('rh_proceso_editar', id=proceso[0]) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-edit me-1"></i> Editar
                 </a>
             </div>
         </div>
         <div class="card-body p-4">
-            {% if contrato %}
+            {% if proceso %}
             <div class="row">
                 <div class="col-md-6">
-                    <h6 class="text-muted mb-3">Información del Empleado</h6>
                     <table class="table table-sm table-borderless">
                         <tr>
-                            <td class="fw-semibold" style="width: 40%">Empleado:</td>
+                            <td class="fw-semibold" style="width: 35%">Nombre:</td>
+                            <td>{{ proceso[1] }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Tipo:</td>
+                            <td>{{ proceso[3]|title }}</td>
+                         </tr>
+                        <tr>
+                            <td class="fw-semibold">Prioridad:</td>
                             <td>
-                                {% if contrato[10] %}{{ contrato[10] }}{% endif %} 
-                                {% if contrato[11] %}{{ contrato[11] }}{% endif %}
+                                {% if proceso[4] == 'alta' %}
+                                    <span class="badge bg-danger">Alta</span>
+                                {% elif proceso[4] == 'baja' %}
+                                    <span class="badge bg-secondary">Baja</span>
+                                {% else %}
+                                    <span class="badge bg-success">Media</span>
+                                {% endif %}
                             </td>
-                        </tr>
-                        <tr>
-                            <td class="fw-semibold">Documento:</td>
-                            <td>{{ contrato[12] or 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-semibold">Cargo:</td>
-                            <td>{{ contrato[14] or 'No asignado' }}</td>
-                        </tr>
-                    </table>
-                </div>
-                <div class="col-md-6">
-                    <h6 class="text-muted mb-3">Información del Contrato</h6>
-                    <table class="table table-sm table-borderless">
-                        <tr>
-                            <td class="fw-semibold" style="width: 40%">Tipo de Contrato:</td>
-                            <td>
-                                {% set tipos = {
-                                    'termino_fijo': 'Término Fijo',
-                                    'indefinido': 'Término Indefinido',
-                                    'obra_labor': 'Obra o Labor',
-                                    'aprendizaje': 'Aprendizaje',
-                                    'prestacion_servicios': 'Prestación de Servicios'
-                                } %}
-                                {{ tipos.get(contrato[2], contrato[2]|replace('_', ' ')|title) }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="fw-semibold">Fecha Inicio:</td>
-                            <td>{{ contrato[3]|format_date if contrato[3] else 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-semibold">Fecha Fin:</td>
-                            <td>{{ contrato[4]|format_date if contrato[4] else 'Indefinido' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-semibold">Salario:</td>
-                            <td>$ {{ "{:,.0f}".format(contrato[5]|float).replace(',', '.') if contrato[5] else 'N/A' }}</td>
-                        </tr>
+                         </tr>
                         <tr>
                             <td class="fw-semibold">Estado:</td>
                             <td>
-                                {% if contrato[7] == 'activo' %}
-                                    <span class="badge bg-success">Activo</span>
-                                {% elif contrato[7] == 'finalizado' %}
-                                    <span class="badge bg-secondary">Finalizado</span>
-                                {% elif contrato[7] == 'suspendido' %}
-                                    <span class="badge bg-warning text-dark">Suspendido</span>
-                                {% elif contrato[7] == 'terminado' %}
-                                    <span class="badge bg-danger">Terminado</span>
+                                {% if proceso[5] == 'en_proceso' %}
+                                    <span class="badge bg-warning text-dark">En Proceso</span>
+                                {% elif proceso[5] == 'completado' %}
+                                    <span class="badge bg-success">Completado</span>
+                                {% elif proceso[5] == 'cancelado' %}
+                                    <span class="badge bg-danger">Cancelado</span>
                                 {% else %}
-                                    <span class="badge bg-info">{{ contrato[7] }}</span>
+                                    <span class="badge bg-info">Pendiente</span>
                                 {% endif %}
                             </td>
+                         </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td class="fw-semibold">Avance:</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height: 8px;">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ proceso[7]|default(0) }}%;"></div>
+                                    </div>
+                                    <span>{{ proceso[7]|default(0) }}%</span>
+                                </div>
+                            </td>
+                         </tr>
+                        <tr>
+                            <td class="fw-semibold">Fecha Límite:</td>
+                            <td>{{ proceso[6]|format_date if proceso[6] else 'Sin fecha' }}</td>
                         </tr>
                         <tr>
-                            <td class="fw-semibold">Fecha Creación:</td>
-                            <td>{{ contrato[8]|format_date if contrato[8] else 'N/A' }}</td>
+                            <td class="fw-semibold">Fecha Inicio:</td>
+                            <td>{{ proceso[8]|format_date if proceso[8] else 'No iniciado' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Fecha Completado:</td>
+                            <td>{{ proceso[9]|format_date if proceso[9] else 'No completado' }}</td>
                         </tr>
                     </table>
                 </div>
+                <div class="col-12 mt-3">
+                    <hr>
+                    <h6 class="fw-semibold">Descripción</h6>
+                    <p>{{ proceso[2] or 'Sin descripción' }}</p>
+                    
+                    {% if proceso[10] %}
+                    <h6 class="fw-semibold mt-3">Observaciones</h6>
+                    <p>{{ proceso[10] }}</p>
+                    {% endif %}
+                </div>
             </div>
-
-            <!-- Archivo PDF si existe -->
-            {% if contrato[6] %}
-            <div class="mt-4">
-                <h6 class="text-muted mb-3">Documento del Contrato</h6>
-                <a href="#" class="btn btn-outline-primary btn-sm">
-                    <i class="fas fa-file-pdf me-1"></i> Ver Contrato PDF
-                </a>
-            </div>
-            {% endif %}
-
             {% else %}
-            <div class="text-center py-5">
-                <i class="fas fa-file-signature fa-3x text-muted mb-3"></i>
-                <p class="text-muted">Contrato no encontrado</p>
-                <a href="{{ url_for('rh_contratos') }}" class="btn btn-primary btn-sm">
-                    Volver a Contratos
-                </a>
-            </div>
+            <p class="text-center">Proceso no encontrado</p>
             {% endif %}
         </div>
     </div>
