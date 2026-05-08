@@ -2294,7 +2294,7 @@ def rh_empleado_nuevo():
             departamento_id = request.form.get('departamento_id', '').strip()
             fecha_ingreso = request.form.get('fecha_ingreso', '').strip() or None
             salario = request.form.get('salario', '').strip() or None
-            tipo_contrato = request.form.get('tipo_contrato', '').strip() or None
+            # tipo_contrato NO va aquí - se maneja en rh_contratos
             estado = request.form.get('estado', 'activo')
             
             # Validar campos obligatorios
@@ -2328,25 +2328,35 @@ def rh_empleado_nuevo():
             departamento_id = int(departamento_id) if departamento_id and departamento_id.isdigit() else None
             salario = float(salario) if salario and salario.replace('.', '').isdigit() else None
             
-            # Insertar empleado
+            # Insertar empleado - SIN tipo_contrato
             cursor.execute("""
                 INSERT INTO rh_empleados (
                     tipo_documento, documento, primer_nombre, segundo_nombre,
                     primer_apellido, segundo_apellido, email, telefono, celular,
                     direccion, fecha_nacimiento, cargo_id, departamento_id,
-                    fecha_ingreso, salario, tipo_contrato, estado, created_at, updated_at
+                    fecha_ingreso, salario, estado, created_at, updated_at
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
                 ) RETURNING id
             """, (
                 tipo_documento, documento, primer_nombre, segundo_nombre,
                 primer_apellido, segundo_apellido, email, telefono, celular,
                 direccion, fecha_nacimiento, cargo_id, departamento_id,
-                fecha_ingreso, salario, tipo_contrato, estado
+                fecha_ingreso, salario, estado
             ))
             
             new_id = cursor.fetchone()[0]
             conn.commit()
+            
+            # Si se proporcionó tipo_contrato, crear contrato automáticamente
+            tipo_contrato_form = request.form.get('tipo_contrato', '').strip()
+            if tipo_contrato_form and fecha_ingreso:
+                cursor.execute("""
+                    INSERT INTO rh_contratos (empleado_id, tipo_contrato, fecha_inicio, salario_contratado, estado)
+                    VALUES (%s, %s, %s, %s, 'activo')
+                """, (new_id, tipo_contrato_form, fecha_ingreso, salario))
+                conn.commit()
+            
             cursor.close()
             conn.close()
             
