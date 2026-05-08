@@ -2099,34 +2099,62 @@ def rh_empleados():
         conn = crear_conexion()
         cursor = conn.cursor()
         busqueda = request.args.get('q', '')
-        departamento = request.args.get('departamento', '')
-        estado = request.args.get('estado', '')
+        departamento_filtro = request.args.get('departamento', '')
+        estado_filtro = request.args.get('estado', '')
+        
+        # Consulta corregida - usando cargo_id y departamento_id
         query = """
-            SELECT e.id, e.tipo_documento, e.documento, e.primer_nombre, e.segundo_nombre,
-                   e.primer_apellido, e.segundo_apellido, e.email, e.cargo, e.departamento,
-                   e.fecha_ingreso, e.estado, e.salario
-            FROM rh_empleados e WHERE 1=1
+            SELECT 
+                e.id, 
+                e.tipo_documento, 
+                e.documento, 
+                e.primer_nombre, 
+                e.segundo_nombre,
+                e.primer_apellido, 
+                e.segundo_apellido, 
+                e.email, 
+                e.telefono,
+                e.celular,
+                e.direccion,
+                e.fecha_nacimiento,
+                c.nombre as cargo,           -- JOIN con rh_cargos
+                d.nombre as departamento,    -- JOIN con rh_departamentos
+                e.fecha_ingreso, 
+                e.fecha_retiro,
+                e.estado, 
+                e.salario
+            FROM rh_empleados e
+            LEFT JOIN rh_cargos c ON e.cargo_id = c.id
+            LEFT JOIN rh_departamentos d ON e.departamento_id = d.id
+            WHERE 1=1
         """
         params = []
+        
         if busqueda:
             query += " AND (e.primer_nombre ILIKE %s OR e.primer_apellido ILIKE %s OR e.documento ILIKE %s)"
             params.extend([f'%{busqueda}%', f'%{busqueda}%', f'%{busqueda}%'])
-        if departamento:
-            query += " AND e.departamento = %s"
-            params.append(departamento)
-        if estado:
+        
+        if departamento_filtro:
+            query += " AND d.nombre = %s"
+            params.append(departamento_filtro)
+        
+        if estado_filtro:
             query += " AND e.estado = %s"
-            params.append(estado)
+            params.append(estado_filtro)
+        
         query += " ORDER BY e.primer_apellido, e.primer_nombre"
+        
         cursor.execute(query, params)
         empleados = cursor.fetchall()
         cursor.close()
         conn.close()
+        
         return render_template('rh/rh_empleados.html', empleados=empleados)
+        
     except Exception as e:
         logger.error(f"Error en rh_empleados: {e}")
         flash('Error al cargar los empleados', 'error')
-        return redirect(url_for('rh_dashboard'))
+        return render_template('rh/rh_empleados.html', empleados=[])
 
 @app.route('/rh/empleado/<int:id>')
 @login_required
@@ -2138,22 +2166,31 @@ def rh_empleado_detalle(id):
         conn = crear_conexion()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, tipo_documento, documento, primer_nombre, segundo_nombre,
-                   primer_apellido, segundo_apellido, email, telefono, celular,
-                   direccion, fecha_nacimiento, cargo, departamento, fecha_ingreso,
-                   fecha_retiro, estado, salario, tipo_contrato, jefe_inmediato,
-                   eps, arl, tipo_sangre
-            FROM rh_empleados WHERE id = %s
+            SELECT 
+                e.id, e.tipo_documento, e.documento, e.primer_nombre, e.segundo_nombre,
+                e.primer_apellido, e.segundo_apellido, e.email, e.telefono, e.celular,
+                e.direccion, e.fecha_nacimiento, 
+                c.nombre as cargo,
+                d.nombre as departamento,
+                e.fecha_ingreso, e.fecha_retiro, e.estado, e.salario,
+                e.tipo_contrato, e.jefe_inmediato, e.eps, e.arl, e.tipo_sangre
+            FROM rh_empleados e
+            LEFT JOIN rh_cargos c ON e.cargo_id = c.id
+            LEFT JOIN rh_departamentos d ON e.departamento_id = d.id
+            WHERE e.id = %s
         """, (id,))
         empleado = cursor.fetchone()
+        
         if not empleado:
             flash('Empleado no encontrado', 'error')
             return redirect(url_for('rh_empleados'))
+        
         cursor.execute("""
             SELECT id, tipo_contrato, fecha_inicio, fecha_fin, salario_contratado, estado
             FROM rh_contratos WHERE empleado_id = %s ORDER BY fecha_inicio DESC
         """, (id,))
         contratos = cursor.fetchall()
+        
         cursor.execute("""
             SELECT id, nombre, fecha_inicio, fecha_fin, asistio
             FROM rh_capacitacion_participantes cp
@@ -2161,8 +2198,10 @@ def rh_empleado_detalle(id):
             WHERE cp.empleado_id = %s ORDER BY c.fecha_inicio DESC
         """, (id,))
         capacitaciones = cursor.fetchall()
+        
         cursor.close()
         conn.close()
+        
         return render_template('rh/rh_empleado_detalle.html',
                              empleado=empleado, contratos=contratos, capacitaciones=capacitaciones)
     except Exception as e:
