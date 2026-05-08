@@ -2756,22 +2756,36 @@ def rh_sanciones():
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
+        
+        # Consulta CORREGIDA - usando las columnas correctas de tu BD
         cursor.execute("""
             SELECT 
-                s.*, 
-                e.primer_nombre, 
+                s.id,
+                s.empleado_id,
+                s.tipo,
+                s.fecha,
+                s.motivo,
+                s.descripcion,
+                s.duracion_dias,
+                s.documento,
+                s.estado,
+                s.created_at,
+                e.primer_nombre,
                 e.primer_apellido,
-                e.documento,
-                COALESCE(c.nombre, 'Sin cargo') as cargo_nombre
+                e.documento as documento_empleado,
+                COALESCE(c.nombre, 'Sin asignar') as cargo
             FROM rh_sanciones s 
             JOIN rh_empleados e ON s.empleado_id = e.id
             LEFT JOIN rh_cargos c ON e.cargo_id = c.id
             ORDER BY s.fecha DESC
         """)
+        
         sanciones = cursor.fetchall()
         cursor.close()
         conn.close()
+        
         return render_template('rh/rh_sanciones.html', sanciones=sanciones)
+        
     except Exception as e:
         logger.error(f"Error en rh_sanciones: {e}")
         flash('Error al cargar las sanciones', 'error')
