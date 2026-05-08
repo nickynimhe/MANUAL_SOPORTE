@@ -638,71 +638,8 @@
         <span class="nav-item-text">Nuevo Contrato</span>
       </a>
 
-      <!-- CAPACITACIONES con submenú -->
-      <div class="nav-label">Desarrollo Organizacional</div>
-
-      <button class="nav-item-sidebar" id="capacitacionesToggle"
-              aria-expanded="false" data-tooltip="Capacitaciones"
-              onclick="toggleSubmenu('capacitacionesMenu', this)">
-        <div class="nav-item-icon"><i class="fas fa-chalkboard-user"></i></div>
-        <span class="nav-item-text">Capacitaciones</span>
-        <i class="fas fa-chevron-down nav-item-chevron"></i>
-      </button>
-
-      <div class="submenu" id="capacitacionesMenu">
-        <a href="{{ url_for('rh_capacitaciones') }}" class="submenu-item {% if request.endpoint == 'rh_capacitaciones' %}active{% endif %}">
-          <i class="fas fa-list me-2"></i> Ver Capacitaciones
-        </a>
-        <a href="{{ url_for('rh_capacitacion_nueva') }}" class="submenu-item {% if request.endpoint == 'rh_capacitacion_nueva' %}active{% endif %}">
-          <i class="fas fa-plus me-2"></i> Nueva Capacitación
-        </a>
-      </div>
-
-      <!-- EVALUACIONES con submenú -->
-      <button class="nav-item-sidebar" id="evaluacionesToggle"
-              aria-expanded="false" data-tooltip="Evaluaciones"
-              onclick="toggleSubmenu('evaluacionesMenu', this)">
-        <div class="nav-item-icon"><i class="fas fa-star"></i></div>
-        <span class="nav-item-text">Evaluaciones</span>
-        <i class="fas fa-chevron-down nav-item-chevron"></i>
-      </button>
-
-      <div class="submenu" id="evaluacionesMenu">
-        <a href="{{ url_for('rh_evaluaciones') }}" class="submenu-item {% if request.endpoint == 'rh_evaluaciones' %}active{% endif %}">
-          <i class="fas fa-list me-2"></i> Ver Evaluaciones
-        </a>
-        <a href="{{ url_for('rh_evaluacion_nueva') }}" class="submenu-item {% if request.endpoint == 'rh_evaluacion_nueva' %}active{% endif %}">
-          <i class="fas fa-plus me-2"></i> Nueva Evaluación
-        </a>
-      </div>
-
-      <!-- ASCENSOS -->
-      <a class="nav-item-sidebar {% if request.endpoint == 'rh_ascensos' %}active{% endif %}"
-         href="{{ url_for('rh_ascensos') }}" data-tooltip="Ascensos">
-        <div class="nav-item-icon"><i class="fas fa-arrow-up"></i></div>
-        <span class="nav-item-text">Ascensos</span>
-      </a>
-
       <!-- ESTRUCTURA ORGANIZACIONAL -->
       <div class="nav-label">Estructura Organizacional</div>
-
-      <a class="nav-item-sidebar {% if request.endpoint == 'rh_cargos' %}active{% endif %}"
-         href="{{ url_for('rh_cargos') }}" data-tooltip="Cargos">
-        <div class="nav-item-icon"><i class="fas fa-briefcase"></i></div>
-        <span class="nav-item-text">Cargos</span>
-      </a>
-
-      <a class="nav-item-sidebar {% if request.endpoint == 'rh_departamentos' %}active{% endif %}"
-         href="{{ url_for('rh_departamentos') }}" data-tooltip="Departamentos">
-        <div class="nav-item-icon"><i class="fas fa-building"></i></div>
-        <span class="nav-item-text">Departamentos</span>
-      </a>
-
-      <a class="nav-item-sidebar {% if request.endpoint == 'rh_organigrama' %}active{% endif %}"
-         href="{{ url_for('rh_organigrama') }}" data-tooltip="Organigrama">
-        <div class="nav-item-icon"><i class="fas fa-sitemap"></i></div>
-        <span class="nav-item-text">Organigrama</span>
-      </a>
 
       <!-- PROCESOS -->
       <a class="nav-item-sidebar {% if request.endpoint == 'rh_procesos' %}active{% endif %}"
@@ -714,12 +651,6 @@
       <!-- ASPECTOS LEGALES -->
       <div class="nav-label">Aspectos Legales</div>
 
-      <a class="nav-item-sidebar {% if request.endpoint == 'rh_normativas' %}active{% endif %}"
-         href="{{ url_for('rh_normativas') }}" data-tooltip="Normativas">
-        <div class="nav-item-icon"><i class="fas fa-gavel"></i></div>
-        <span class="nav-item-text">Normativas</span>
-      </a>
-
       <a class="nav-item-sidebar {% if request.endpoint == 'rh_sanciones' %}active{% endif %}"
          href="{{ url_for('rh_sanciones') }}" data-tooltip="Sanciones">
         <div class="nav-item-icon"><i class="fas fa-exclamation-triangle"></i></div>
@@ -729,28 +660,6 @@
       <!-- REPORTES con submenú -->
       <div class="nav-label">Reportes</div>
 
-      <button class="nav-item-sidebar" id="reportesToggle"
-              aria-expanded="false" data-tooltip="Reportes"
-              onclick="toggleSubmenu('reportesMenu', this)">
-        <div class="nav-item-icon"><i class="fas fa-chart-bar"></i></div>
-        <span class="nav-item-text">Reportes</span>
-        <i class="fas fa-chevron-down nav-item-chevron"></i>
-      </button>
-
-      <div class="submenu" id="reportesMenu">
-        <a href="{{ url_for('rh_reportes') }}" class="submenu-item {% if request.endpoint == 'rh_reportes' %}active{% endif %}">
-          <i class="fas fa-chart-pie me-2"></i> Centro de Reportes
-        </a>
-        <a href="{{ url_for('rh_reporte_asistencia') }}" class="submenu-item {% if request.endpoint == 'rh_reporte_asistencia' %}active{% endif %}">
-          <i class="fas fa-calendar-check me-2"></i> Reporte Asistencia
-        </a>
-        <a href="{{ url_for('rh_reporte_nomina') }}" class="submenu-item {% if request.endpoint == 'rh_reporte_nomina' %}active{% endif %}">
-          <i class="fas fa-coins me-2"></i> Reporte Nómina
-        </a>
-        <a href="{{ url_for('rh_reporte_rotacion') }}" class="submenu-item {% if request.endpoint == 'rh_reporte_rotacion' %}active{% endif %}">
-          <i class="fas fa-user-clock me-2"></i> Reporte Rotación
-        </a>
-      </div>
 
       <!-- SEGURIDAD -->
       <div class="nav-label">Seguridad</div>
