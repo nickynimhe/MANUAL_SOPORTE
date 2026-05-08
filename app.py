@@ -2164,45 +2164,106 @@ def rh_empleado_detalle(id):
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
+        
+        # Consulta CORREGIDA - usando SOLO las columnas que existen en tu BD
         cursor.execute("""
             SELECT 
-                e.id, e.tipo_documento, e.documento, e.primer_nombre, e.segundo_nombre,
-                e.primer_apellido, e.segundo_apellido, e.email, e.telefono, e.celular,
-                e.direccion, e.fecha_nacimiento, 
-                c.nombre as cargo,
-                d.nombre as departamento,
-                e.fecha_ingreso, e.fecha_retiro, e.estado, e.salario,
-                e.tipo_contrato, e.jefe_inmediato, e.eps, e.arl, e.tipo_sangre
+                e.id, 
+                e.tipo_documento, 
+                e.documento, 
+                e.primer_nombre, 
+                e.segundo_nombre,
+                e.primer_apellido, 
+                e.segundo_apellido, 
+                e.email, 
+                e.telefono, 
+                e.celular,
+                e.direccion, 
+                e.fecha_nacimiento, 
+                COALESCE(c.nombre, 'No asignado') as cargo,
+                COALESCE(d.nombre, 'No asignado') as departamento,
+                e.fecha_ingreso, 
+                e.fecha_retiro, 
+                e.estado, 
+                e.salario
             FROM rh_empleados e
             LEFT JOIN rh_cargos c ON e.cargo_id = c.id
             LEFT JOIN rh_departamentos d ON e.departamento_id = d.id
             WHERE e.id = %s
         """, (id,))
+        
         empleado = cursor.fetchone()
         
         if not empleado:
             flash('Empleado no encontrado', 'error')
             return redirect(url_for('rh_empleados'))
         
+        # Obtener contratos del empleado
         cursor.execute("""
-            SELECT id, tipo_contrato, fecha_inicio, fecha_fin, salario_contratado, estado
-            FROM rh_contratos WHERE empleado_id = %s ORDER BY fecha_inicio DESC
+            SELECT 
+                id, 
+                tipo_contrato, 
+                fecha_inicio, 
+                fecha_fin, 
+                salario_contratado, 
+                estado,
+                archivo_pdf
+            FROM rh_contratos 
+            WHERE empleado_id = %s 
+            ORDER BY fecha_inicio DESC
         """, (id,))
         contratos = cursor.fetchall()
         
-        cursor.execute("""
-            SELECT id, nombre, fecha_inicio, fecha_fin, asistio
-            FROM rh_capacitacion_participantes cp
-            JOIN rh_capacitaciones c ON cp.capacitacion_id = c.id
-            WHERE cp.empleado_id = %s ORDER BY c.fecha_inicio DESC
-        """, (id,))
-        capacitaciones = cursor.fetchall()
+        # Obtener capacitaciones del empleado
+        try:
+            cursor.execute("""
+                SELECT 
+                    c.id, 
+                    c.titulo, 
+                    c.fecha_inicio, 
+                    c.fecha_fin, 
+                    cp.asistio,
+                    cp.nota,
+                    cp.certificado_generado
+                FROM rh_capacitacion_participantes cp
+                JOIN rh_capacitaciones c ON cp.capacitacion_id = c.id
+                WHERE cp.empleado_id = %s 
+                ORDER BY c.fecha_inicio DESC
+                LIMIT 5
+            """, (id,))
+            capacitaciones = cursor.fetchall()
+        except Exception as e:
+            logger.warning(f"No se pudieron cargar capacitaciones: {e}")
+            capacitaciones = []
+        
+        # Obtener evaluaciones del empleado
+        try:
+            cursor.execute("""
+                SELECT 
+                    id, 
+                    periodo, 
+                    fecha_evaluacion, 
+                    puntaje_total, 
+                    estado
+                FROM rh_evaluaciones 
+                WHERE empleado_id = %s 
+                ORDER BY fecha_evaluacion DESC
+                LIMIT 5
+            """, (id,))
+            evaluaciones = cursor.fetchall()
+        except Exception as e:
+            logger.warning(f"No se pudieron cargar evaluaciones: {e}")
+            evaluaciones = []
         
         cursor.close()
         conn.close()
         
         return render_template('rh/rh_empleado_detalle.html',
-                             empleado=empleado, contratos=contratos, capacitaciones=capacitaciones)
+                             empleado=empleado, 
+                             contratos=contratos, 
+                             capacitaciones=capacitaciones,
+                             evaluaciones=evaluaciones)
+                             
     except Exception as e:
         logger.error(f"Error en rh_empleado_detalle: {e}")
         flash('Error al cargar el detalle del empleado', 'error')
