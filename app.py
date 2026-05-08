@@ -2472,12 +2472,48 @@ def rh_dashboard():
         return render_template('rh/rh_dashboard.html',
                              total_empleados=0, ingresos_mes=0, retiros_mes=0, procesos_activos=[])
 
-@app.route('/rh/procesos')
+@app.route('/rh/procesos', methods=['GET', 'POST'])
 @login_required
 def rh_procesos():
     if not current_user.puede('ver_rh'):
         flash('No tienes permisos para acceder a Recursos Humanos', 'error')
         return redirect(url_for('index'))
+    
+    # Procesar POST (crear nuevo proceso)
+    if request.method == 'POST':
+        if not current_user.puede('gestionar_rh'):
+            flash('No tienes permisos para crear procesos', 'error')
+            return redirect(url_for('rh_procesos'))
+        
+        try:
+            nombre = request.form.get('nombre')
+            tipo = request.form.get('tipo')
+            prioridad = request.form.get('prioridad', 'media')
+            fecha_limite = request.form.get('fecha_limite')
+            descripcion = request.form.get('descripcion')
+            
+            if not nombre or not tipo:
+                flash('❌ Nombre y tipo son obligatorios', 'error')
+                return redirect(url_for('rh_procesos'))
+            
+            conn = crear_conexion()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO rh_procesos (nombre, descripcion, tipo, prioridad, fecha_limite, estado, avance)
+                VALUES (%s, %s, %s, %s, %s, 'pendiente', 0) RETURNING id
+            """, (nombre, descripcion, tipo, prioridad, fecha_limite))
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            flash('✅ Proceso creado correctamente', 'success')
+        except Exception as e:
+            logger.error(f"Error al crear proceso: {e}")
+            flash('Error al crear el proceso', 'error')
+        
+        return redirect(url_for('rh_procesos'))
+    
+    # GET - Mostrar lista de procesos
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
@@ -2491,11 +2527,19 @@ def rh_procesos():
                 p.estado,
                 p.fecha_limite,
                 p.avance,
+                p.fecha_inicio,
+                p.fecha_completado,
                 e.primer_nombre as responsable_nombre,
                 e.primer_apellido as responsable_apellido
             FROM rh_procesos p
             LEFT JOIN rh_empleados e ON p.responsable_id = e.id
-            ORDER BY p.fecha_limite ASC NULLS LAST
+            ORDER BY 
+                CASE p.estado 
+                    WHEN 'pendiente' THEN 1 
+                    WHEN 'en_proceso' THEN 2 
+                    ELSE 3 
+                END,
+                p.fecha_limite ASC NULLS LAST
         """)
         procesos = cursor.fetchall()
         cursor.close()
@@ -2509,22 +2553,29 @@ def rh_procesos():
 @login_required
 def rh_proceso_detalle(id):
     if not current_user.puede('ver_rh'):
-        flash('No tienes permisos para acceder a Recursos Humanos', 'error')
+        flash('No tienes permisos', 'error')
         return redirect(url_for('index'))
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM rh_procesos WHERE id = %s", (id,))
+        cursor.execute("""
+            SELECT p.*, e.primer_nombre, e.primer_apellido
+            FROM rh_procesos p
+            LEFT JOIN rh_empleados e ON p.responsable_id = e.id
+            WHERE p.id = %s
+        """, (id,))
         proceso = cursor.fetchone()
+        
         if not proceso:
             flash('Proceso no encontrado', 'error')
             return redirect(url_for('rh_procesos'))
+        
         cursor.close()
         conn.close()
         return render_template('rh/rh_proceso_detalle.html', proceso=proceso)
     except Exception as e:
         logger.error(f"Error en rh_proceso_detalle: {e}")
-        flash('Error al cargar el detalle del proceso', 'error')
+        flash('Error al cargar el proceso', 'error')
         return redirect(url_for('rh_procesos'))
 
 @app.route('/rh/capacitaciones')
