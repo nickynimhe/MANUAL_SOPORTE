@@ -1,0 +1,93 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Editar Proceso - Recursos Humanos{% endblock %}
+
+{% block rh_content %}
+<div class="container py-4">
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white py-3 border-0">
+            <div class="d-flex align-items-center">
+                <a href="{{ url_for('rh_proceso_detalle', id=proceso[0]) }}" class="btn btn-sm btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h5 class="mb-0 fw-semibold" style="color: #2658A5;">
+                    <i class="fas fa-edit me-2"></i>Editar Proceso
+                </h5>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            {% if proceso %}
+            <form method="POST">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Nombre del Proceso *</label>
+                        <input type="text" name="nombre" class="form-control rounded-3" value="{{ proceso[1] }}" required>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Descripción</label>
+                        <textarea name="descripcion" class="form-control rounded-3" rows="3">{{ proceso[2] or '' }}</textarea>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Tipo</label>
+                        <select name="tipo" class="form-select rounded-3" disabled>
+                            <option value="reclutamiento" {% if proceso[3] == 'reclutamiento' %}selected{% endif %}>Reclutamiento</option>
+                            <option value="capacitacion" {% if proceso[3] == 'capacitacion' %}selected{% endif %}>Capacitación</option>
+                            <option value="evaluacion" {% if proceso[3] == 'evaluacion' %}selected{% endif %}>Evaluación</option>
+                            <option value="ascenso" {% if proceso[3] == 'ascenso' %}selected{% endif %}>Ascenso</option>
+                            <option value="legal" {% if proceso[3] == 'legal' %}selected{% endif %}>Legal</option>
+                            <option value="nomina" {% if proceso[3] == 'nomina' %}selected{% endif %}>Nómina</option>
+                        </select>
+                        <small class="text-muted">El tipo no se puede modificar</small>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Prioridad</label>
+                        <select name="prioridad" class="form-select rounded-3">
+                            <option value="baja" {% if proceso[4] == 'baja' %}selected{% endif %}>Baja</option>
+                            <option value="media" {% if proceso[4] == 'media' %}selected{% endif %}>Media</option>
+                            <option value="alta" {% if proceso[4] == 'alta' %}selected{% endif %}>Alta</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Estado</label>
+                        <select name="estado" class="form-select rounded-3">
+                            <option value="pendiente" {% if proceso[5] == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                            <option value="en_proceso" {% if proceso[5] == 'en_proceso' %}selected{% endif %}>En Proceso</option>
+                            <option value="completado" {% if proceso[5] == 'completado' %}selected{% endif %}>Completado</option>
+                            <option value="cancelado" {% if proceso[5] == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Avance (%)</label>
+                        <input type="number" name="avance" class="form-control rounded-3" value="{{ proceso[7] or 0 }}" min="0" max="100">
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Fecha Límite</label>
+                        <input type="date" name="fecha_limite" class="form-control rounded-3" value="{{ proceso[6] if proceso[6] else '' }}">
+                    </div>
+                    
+                    <div class="col-12">
+                        <hr>
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('rh_proceso_detalle', id=proceso[0]) }}" class="btn btn-secondary rounded-3">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary rounded-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); border: none;">
+                                <i class="fas fa-save me-1"></i> Guardar Cambios
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            {% else %}
+            <p class="text-center">Proceso no encontrado</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
