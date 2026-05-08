@@ -15,6 +15,53 @@ import time
 import logging
 from functools import wraps
 
+# ===== RESETEAR CONTRASEÑA DE USUARIO SOPORTE =====
+def resetear_password_soporte():
+    """Resetea la contraseña del usuario SOPORTE a 'soporte123'"""
+    try:
+        from werkzeug.security import generate_password_hash
+        
+        # Buscar usuarios con rol soporte
+        resultado = ejecutar_consulta(
+            "SELECT id, usuario, rol FROM usuarios WHERE rol IN ('soporte', 'usuario')",
+            fetch=True
+        )
+        
+        if resultado:
+            print("=" * 50)
+            print("📋 USUARIOS DE SOPORTE ENCONTRADOS:")
+            for u in resultado:
+                print(f"   ID: {u[0]}, Usuario: {u[1]}, Rol: {u[2]}")
+            
+            # Resetear contraseña para cada usuario de soporte
+            nueva_password = generate_password_hash('soporte123')
+            for u in resultado:
+                ejecutar_consulta(
+                    "UPDATE usuarios SET password = %s WHERE id = %s",
+                    (nueva_password, u[0]),
+                    commit=True
+                )
+                print(f"✅ Contraseña reseteda para: {u[1]} → soporte123")
+            print("=" * 50)
+        else:
+            # Crear usuario de soporte por defecto
+            nueva_password = generate_password_hash('soporte123')
+            ejecutar_consulta("""
+                INSERT INTO usuarios (usuario, password, rol, modulo_principal, permisos) 
+                VALUES (%s, %s, %s, %s, %s)
+            """, ('soporte', nueva_password, 'soporte', 'soporte', '{"ver_fichas": true, "agregar_fichas": true, "editar_fichas": true}'), commit=True)
+            print("=" * 50)
+            print("✅ USUARIO SOPORTE CREADO")
+            print("👤 Usuario: soporte")
+            print("🔑 Contraseña: soporte123")
+            print("=" * 50)
+            
+    except Exception as e:
+        print(f"❌ Error al resetear contraseña de soporte: {e}")
+
+# Llama a la función al inicio (ponlo junto al otro reset)
+resetear_password_soporte()
+
 # ===== RESETEAR CONTRASEÑA DE USUARIO RH =====
 def resetear_password_rh():
     """Resetea la contraseña del usuario RH a 'rh123'"""
