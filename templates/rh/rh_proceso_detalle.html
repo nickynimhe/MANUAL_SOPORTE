@@ -1,0 +1,51 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Detalle del Proceso{% endblock %}
+
+{% block rh_content %}
+<div class="container py-4">
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white py-3 border-0">
+            <div class="d-flex align-items-center">
+                <a href="{{ url_for('rh_procesos') }}" class="btn btn-sm btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h5 class="mb-0 fw-semibold" style="color: #2658A5;">
+                    <i class="fas fa-clipboard-list me-2"></i>Detalle del Proceso
+                </h5>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if proceso %}
+            <div class="row">
+                <div class="col-md-8">
+                    <h4 class="mb-3">{{ proceso[1] }}</h4>
+                    <p><strong>Tipo:</strong> {{ proceso[3] }}</p>
+                    <p><strong>Prioridad:</strong> 
+                        <span class="badge bg-{{ 'danger' if proceso[4] == 'alta' else 'warning' if proceso[4] == 'media' else 'secondary' }}">
+                            {{ proceso[4] }}
+                        </span>
+                    </p>
+                    <p><strong>Estado:</strong> 
+                        <span class="badge bg-{{ 'warning' if proceso[5] == 'pendiente' else 'info' if proceso[5] == 'en_proceso' else 'success' }}">
+                            {{ proceso[5] }}
+                        </span>
+                    </p>
+                    <p><strong>Fecha límite:</strong> {{ proceso[6]|format_date if proceso[6] else 'Sin fecha' }}</p>
+                    <p><strong>Avance:</strong> 
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: {{ proceso[7] }}%;">
+                                {{ proceso[7] }}%
+                            </div>
+                        </div>
+                    </p>
+                    <p><strong>Descripción:</strong> {{ proceso[2] or 'Sin descripción' }}</p>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-center">Proceso no encontrado</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
