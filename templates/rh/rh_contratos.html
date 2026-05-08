@@ -4,17 +4,19 @@
 
 {% block rh_content %}
 <div class="container-fluid px-0 px-md-3 py-4">
+
+    <div class="d-flex justify-content-end mb-3">
+        <a href="{{ url_for('rh_contrato_nuevo') }}" class="btn btn-primary rounded-3">
+            <i class="fas fa-plus me-1"></i> Nuevo Contrato
+        </a>
+    </div>
+
     <div class="card border-0 shadow-sm">
         <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-semibold text-white">
-                    <i class="fas fa-file-signature me-2"></i> Gestión de Contratos
-                    <span class="badge bg-white text-dark rounded-pill ms-2">{{ contratos|length }}</span>
-                </h5>
-                <a href="{{ url_for('rh_contrato_nuevo') }}" class="btn btn-light btn-sm">
-                    <i class="fas fa-plus me-1"></i> Nuevo Contrato
-                </a>
-            </div>
+            <h5 class="mb-0 fw-semibold text-white">
+                <i class="fas fa-file-signature me-2"></i> Listado de Contratos
+                <span class="badge bg-white text-dark rounded-pill ms-2">{{ contratos|length }}</span>
+            </h5>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -36,8 +38,17 @@
                             {% for con in contratos %}
                             <tr>
                                 <td>{{ con[0] }}</td>
-                                <td>{{ con[1] }} {{ con[2] }}</td>  <!-- nombre empleado -->
-                                <td>{{ con[4] }}</td>  <!-- tipo_contrato -->
+                                <td>{{ con[1] }} {{ con[2] }}<br><small class="text-muted">{{ con[3] }}</small></td>
+                                <td>
+                                    {% set tipos = {
+                                        'termino_fijo': 'Término Fijo',
+                                        'indefinido': 'Indefinido',
+                                        'obra_labor': 'Obra Labor',
+                                        'aprendizaje': 'Aprendizaje',
+                                        'prestacion_servicios': 'Prestación Servicios'
+                                    } %}
+                                    {{ tipos.get(con[4], con[4]|replace('_', ' ')|title) }}
+                                </td>
                                 <td>{{ con[5]|format_date if con[5] else 'N/A' }}</td>
                                 <td>{{ con[6]|format_date if con[6] else 'Indefinido' }}</td>
                                 <td>$ {{ "{:,.0f}".format(con[7]|float).replace(',', '.') if con[7] else 'N/A' }}</td>
@@ -59,9 +70,9 @@
                         {% else %}
                             <tr>
                                 <td colspan="8" class="text-center py-4">
-                                    <i class="fas fa-file-contract fa-2x text-muted mb-2 d-block"></i>
+                                    <i class="fas fa-file-signature fa-2x text-muted mb-2 d-block"></i>
                                     No hay contratos registrados
-                                    <a href="{{ url_for('rh_contrato_nuevo') }}" class="btn btn-sm btn-primary mt-2 d-block">Crear primer contrato</a>
+                                    <a href="{{ url_for('rh_contrato_nuevo') }}" class="btn btn-sm btn-primary mt-2">Crear primer contrato</a>
                                 </td>
                             </tr>
                         {% endif %}
@@ -71,41 +82,4 @@
         </div>
     </div>
 </div>
-
-<script>
-function verContrato(id) {
-    window.location.href = "/rh/contrato/" + id;
-}
-
-function editarContrato(id) {
-    window.location.href = "/rh/contrato/" + id + "/editar";
-}
-
-function renovarContrato(id) {
-    if (confirm('¿Deseas renovar este contrato?')) {
-        window.location.href = "/rh/contrato/" + id + "/renovar";
-    }
-}
-
-function exportarContratos() {
-    alert('Exportando listado de contratos...');
-    // Aquí iría la lógica de exportación
-}
-</script>
-
-<style>
-.contrato-fila {
-    transition: all 0.2s ease;
-}
-.contrato-fila:hover {
-    background-color: #f8f9fc;
-}
-.hover-lift {
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-.hover-lift:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
-}
-</style>
 {% endblock %}
