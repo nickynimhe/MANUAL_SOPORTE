@@ -1,0 +1,65 @@
+{% extends "base_rh.html" %}
+
+{% block title %}Editar Proceso{% endblock %}
+
+{% block rh_content %}
+<div class="container py-4">
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white py-3 border-0">
+            <div class="d-flex align-items-center">
+                <a href="{{ url_for('rh_procesos') }}" class="btn btn-sm btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h5 class="mb-0 fw-semibold" style="color: #2658A5;">
+                    <i class="fas fa-edit me-2"></i>Editar Proceso
+                </h5>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <form method="POST">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Nombre del Proceso *</label>
+                        <input type="text" name="nombre" class="form-control rounded-3" 
+                               value="{{ proceso[1] if proceso else '' }}" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Descripción</label>
+                        <textarea name="descripcion" class="form-control rounded-3" rows="3">{{ proceso[2] if proceso else '' }}</textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Estado</label>
+                        <select name="estado" class="form-select rounded-3">
+                            <option value="pendiente" {% if proceso and proceso[5] == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                            <option value="en_proceso" {% if proceso and proceso[5] == 'en_proceso' %}selected{% endif %}>En Proceso</option>
+                            <option value="completado" {% if proceso and proceso[5] == 'completado' %}selected{% endif %}>Completado</option>
+                            <option value="cancelado" {% if proceso and proceso[5] == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Avance (%)</label>
+                        <input type="number" name="avance" class="form-control rounded-3" 
+                               value="{{ proceso[7] if proceso else 0 }}" min="0" max="100">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Fecha Límite</label>
+                        <input type="date" name="fecha_limite" class="form-control rounded-3" 
+                               value="{{ proceso[6] if proceso and proceso[6] else '' }}">
+                    </div>
+                    <div class="col-12">
+                        <hr>
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('rh_procesos') }}" class="btn btn-secondary rounded-3">
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary rounded-3">
+                                <i class="fas fa-save me-1"></i> Guardar Cambios
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
