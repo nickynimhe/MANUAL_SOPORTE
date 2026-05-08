@@ -2531,14 +2531,13 @@ def rh_proceso_detalle(id):
 @login_required
 def rh_capacitaciones():
     if not current_user.puede('ver_rh'):
-        flash('No tienes permisos para acceder a Recursos Humanos', 'error')
+        flash('No tienes permisos', 'error')
         return redirect(url_for('index'))
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, nombre, descripcion, tipo, instructor, fecha_inicio,
-                   fecha_fin, duracion_horas, costo, estado
+            SELECT id, titulo, tipo, fecha_inicio, fecha_fin, duracion_horas, instructor, estado
             FROM rh_capacitaciones ORDER BY fecha_inicio DESC
         """)
         capacitaciones = cursor.fetchall()
@@ -2548,7 +2547,6 @@ def rh_capacitaciones():
     except Exception as e:
         logger.error(f"Error en rh_capacitaciones: {e}")
         return render_template('rh/rh_capacitaciones.html', capacitaciones=[])
-
 @app.route('/rh/capacitacion/<int:id>')
 @login_required
 def rh_capacitacion_detalle(id):
