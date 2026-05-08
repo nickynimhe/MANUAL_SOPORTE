@@ -15,6 +15,51 @@ import time
 import logging
 from functools import wraps
 
+# ===== RESETEAR CONTRASEÑA DE USUARIO RH =====
+def resetear_password_rh():
+    """Resetea la contraseña del usuario RH a 'rh123'"""
+    try:
+        from werkzeug.security import generate_password_hash
+        
+        # Verificar si existe el usuario
+        resultado = ejecutar_consulta(
+            "SELECT id, usuario FROM usuarios WHERE usuario = %s",
+            ('rh',),
+            fetch=True
+        )
+        
+        if resultado:
+            # Actualizar contraseña
+            nueva_password = generate_password_hash('rh123')
+            ejecutar_consulta(
+                "UPDATE usuarios SET password = %s WHERE usuario = %s",
+                (nueva_password, 'rh'),
+                commit=True
+            )
+            print("=" * 50)
+            print("✅ CONTRASEÑA DE USUARIO RH RESETEADA")
+            print("👤 Usuario: rh")
+            print("🔑 Nueva contraseña: rh123")
+            print("=" * 50)
+        else:
+            # Crear usuario si no existe
+            nueva_password = generate_password_hash('rh123')
+            ejecutar_consulta("""
+                INSERT INTO usuarios (usuario, password, rol, modulo_principal, permisos) 
+                VALUES (%s, %s, %s, %s, %s)
+            """, ('rh', nueva_password, 'rh', 'rh', '{"ver_rh": true, "gestionar_rh": true}'), commit=True)
+            print("=" * 50)
+            print("✅ USUARIO RH CREADO")
+            print("👤 Usuario: rh")
+            print("🔑 Contraseña: rh123")
+            print("=" * 50)
+            
+    except Exception as e:
+        print(f"❌ Error al resetear contraseña: {e}")
+
+# Llama a la función al inicio
+resetear_password_rh()
+
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
