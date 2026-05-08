@@ -2275,46 +2275,135 @@ def rh_empleado_editar(id):
     if not current_user.puede('gestionar_rh'):
         flash('No tienes permisos para editar empleados', 'error')
         return redirect(url_for('rh_empleados'))
+    
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
+        
+        # Obtener cargos y departamentos para los selects
+        cursor.execute("SELECT id, nombre FROM rh_cargos WHERE activo = TRUE ORDER BY nombre")
+        cargos = cursor.fetchall()
+        
+        cursor.execute("SELECT id, nombre FROM rh_departamentos WHERE activo = TRUE ORDER BY nombre")
+        departamentos = cursor.fetchall()
+        
         if request.method == 'POST':
-            campos = [
-                'tipo_documento', 'documento', 'primer_nombre', 'segundo_nombre',
-                'primer_apellido', 'segundo_apellido', 'email', 'telefono', 'celular',
-                'direccion', 'fecha_nacimiento', 'cargo', 'departamento', 'fecha_ingreso',
-                'fecha_retiro', 'estado', 'salario', 'tipo_contrato', 'jefe_inmediato',
-                'eps', 'arl', 'tipo_sangre'
-            ]
-            valores = []
-            for campo in campos:
-                valor = request.form.get(campo, '')
-                valores.append(valor if valor else None)
-            valores.append(id)
-            query = f"""
-                UPDATE rh_empleados
-                SET {', '.join([f"{c} = %s" for c in campos])}, updated_at = CURRENT_TIMESTAMP
+            # Obtener datos del formulario - SOLO columnas que existen
+            tipo_documento = request.form.get('tipo_documento', 'CC')
+            documento = request.form.get('documento', '').strip()
+            primer_nombre = request.form.get('primer_nombre', '').strip()
+            segundo_nombre = request.form.get('segundo_nombre', '').strip() or None
+            primer_apellido = request.form.get('primer_apellido', '').strip()
+            segundo_apellido = request.form.get('segundo_apellido', '').strip() or None
+            email = request.form.get('email', '').strip() or None
+            telefono = request.form.get('telefono', '').strip() or None
+            celular = request.form.get('celular', '').strip() or None
+            direccion = request.form.get('direccion', '').strip() or None
+            fecha_nacimiento = request.form.get('fecha_nacimiento', '').strip() or None
+            cargo_id = request.form.get('cargo_id', '').strip()
+            departamento_id = request.form.get('departamento_id', '').strip()
+            fecha_ingreso = request.form.get('fecha_ingreso', '').strip() or None
+            fecha_retiro = request.form.get('fecha_retiro', '').strip() or None
+            salario = request.form.get('salario', '').strip() or None
+            estado = request.form.get('estado', 'activo')
+            
+            # Validar campos obligatorios
+            if not documento:
+                flash('❌ El número de documento es obligatorio', 'error')
+                return render_template('rh/rh_empleado_editar.html', 
+                                     empleado=None, cargos=cargos, departamentos=departamentos)
+            
+            if not primer_nombre:
+                flash('❌ El primer nombre es obligatorio', 'error')
+                return render_template('rh/rh_empleado_editar.html', 
+                                     empleado=None, cargos=cargos, departamentos=departamentos)
+            
+            if not primer_apellido:
+                flash('❌ El primer apellido es obligatorio', 'error')
+                return render_template('rh/rh_empleado_editar.html', 
+                                     empleado=None, cargos=cargos, departamentos=departamentos)
+            
+            # Validar que el documento no exista en otro empleado
+            cursor.execute("SELECT id FROM rh_empleados WHERE documento = %s AND id != %s", (documento, id))
+            if cursor.fetchone():
+                flash(f'❌ Ya existe otro empleado con el documento {documento}', 'error')
+                return render_template('rh/rh_empleado_editar.html', 
+                                     empleado=None, cargos=cargos, departamentos=departamentos)
+            
+            # Validar email único
+            if email:
+                cursor.execute("SELECT id FROM rh_empleados WHERE email = %s AND id != %s", (email, id))
+                if cursor.fetchone():
+                    flash(f'❌ Ya existe otro empleado con el email {email}', 'error')
+                    return render_template('rh/rh_empleado_editar.html', 
+                                         empleado=None, cargos=cargos, departamentos=departamentos)
+            
+            # Convertir valores
+            cargo_id = int(cargo_id) if cargo_id and cargo_id.isdigit() else None
+            departamento_id = int(departamento_id) if departamento_id and departamento_id.isdigit() else None
+            salario = float(salario) if salario and salario.replace('.', '').isdigit() else None
+            
+            # Actualizar empleado - SOLO columnas que existen
+            cursor.execute("""
+                UPDATE rh_empleados SET
+                    tipo_documento = %s,
+                    documento = %s,
+                    primer_nombre = %s,
+                    segundo_nombre = %s,
+                    primer_apellido = %s,
+                    segundo_apellido = %s,
+                    email = %s,
+                    telefono = %s,
+                    celular = %s,
+                    direccion = %s,
+                    fecha_nacimiento = %s,
+                    cargo_id = %s,
+                    departamento_id = %s,
+                    fecha_ingreso = %s,
+                    fecha_retiro = %s,
+                    salario = %s,
+                    estado = %s,
+                    updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
-            """
-            cursor.execute(query, valores)
+            """, (
+                tipo_documento, documento, primer_nombre, segundo_nombre,
+                primer_apellido, segundo_apellido, email, telefono, celular,
+                direccion, fecha_nacimiento, cargo_id, departamento_id,
+                fecha_ingreso, fecha_retiro, salario, estado, id
+            ))
+            
             conn.commit()
-            flash('Empleado actualizado correctamente', 'success')
+            cursor.close()
+            conn.close()
+            
+            flash('✅ Empleado actualizado correctamente', 'success')
             return redirect(url_for('rh_empleado_detalle', id=id))
+        
+        # GET - Obtener datos del empleado
         cursor.execute("""
-            SELECT id, tipo_documento, documento, primer_nombre, segundo_nombre,
-                   primer_apellido, segundo_apellido, email, telefono, celular,
-                   direccion, fecha_nacimiento, cargo, departamento, fecha_ingreso,
-                   fecha_retiro, estado, salario, tipo_contrato, jefe_inmediato,
-                   eps, arl, tipo_sangre
-            FROM rh_empleados WHERE id = %s
+            SELECT 
+                e.id, e.tipo_documento, e.documento, e.primer_nombre, e.segundo_nombre,
+                e.primer_apellido, e.segundo_apellido, e.email, e.telefono, e.celular,
+                e.direccion, e.fecha_nacimiento, e.cargo_id, e.departamento_id,
+                e.fecha_ingreso, e.fecha_retiro, e.estado, e.salario
+            FROM rh_empleados e
+            WHERE e.id = %s
         """, (id,))
+        
         empleado = cursor.fetchone()
+        
         if not empleado:
             flash('Empleado no encontrado', 'error')
             return redirect(url_for('rh_empleados'))
+        
         cursor.close()
         conn.close()
-        return render_template('rh/rh_empleado_editar.html', empleado=empleado)
+        
+        return render_template('rh/rh_empleado_editar.html', 
+                             empleado=empleado, 
+                             cargos=cargos, 
+                             departamentos=departamentos)
+                             
     except Exception as e:
         logger.error(f"Error en rh_empleado_editar: {e}")
         flash('Error al editar el empleado', 'error')
