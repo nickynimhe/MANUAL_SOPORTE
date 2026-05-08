@@ -2354,26 +2354,81 @@ def rh_contrato_nuevo():
     if not current_user.puede('gestionar_rh'):
         flash('No tienes permisos para crear contratos', 'error')
         return redirect(url_for('rh_contratos'))
+    
     try:
+        # Obtener lista de empleados para el select
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, documento, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido
+            FROM rh_empleados WHERE estado = 'activo'
+        """)
+        empleados = cursor.fetchall()
+        
         if request.method == 'POST':
-            conn = crear_conexion()
-            cursor = conn.cursor()
-            campos = ['empleado_id', 'tipo_contrato', 'fecha_inicio', 'fecha_fin', 'salario_contratado', 'observaciones']
-            valores = [request.form.get(campo, '') for campo in campos]
-            placeholders = ', '.join(['%s'] * len(campos))
-            cursor.execute(f"INSERT INTO rh_contratos ({', '.join(campos)}) VALUES ({placeholders}) RETURNING id", valores)
+            empleado_id = request.form.get('empleado_id')
+            tipo_contrato = request.form.get('tipo_contrato')
+            fecha_inicio = request.form.get('fecha_inicio')
+            fecha_fin = request.form.get('fecha_fin') or None
+            salario_contratado = request.form.get('salario_contratado')
+            estado = request.form.get('estado', 'activo')
+            
+            # Validaciones básicas
+            if not empleado_id or not tipo_contrato or not fecha_inicio or not salario_contratado:
+                flash('❌ Todos los campos obligatorios deben ser diligenciados', 'error')
+                return render_template('rh/rh_contrato_nuevo.html', empleados=empleados)
+            
+            # Manejo de archivo PDF
+            archivo_pdf = request.files.get('archivo_pdf')
+            archivo_data = None
+            
+            if archivo_pdf and archivo_pdf.filename != '':
+                if archivo_pdf.filename.endswith('.pdf'):
+                    archivo_data = archivo_pdf.read()
+                else:
+                    flash('❌ El archivo debe ser PDF', 'error')
+                    return render_template('rh/rh_contrato_nuevo.html', empleados=empleados)
+            
+            # Insertar contrato
+            if archivo_data:
+                cursor.execute("""
+                    INSERT INTO rh_contratos (empleado_id, tipo_contrato, fecha_inicio, fecha_fin, 
+                                             salario_contratado, archivo_pdf, estado)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
+                """, (empleado_id, tipo_contrato, fecha_inicio, fecha_fin, salario_contratado, 
+                      psycopg2.Binary(archivo_data), estado))
+            else:
+                cursor.execute("""
+                    INSERT INTO rh_contratos (empleado_id, tipo_contrato, fecha_inicio, fecha_fin, 
+                                             salario_contratado, estado)
+                    VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
+                """, (empleado_id, tipo_contrato, fecha_inicio, fecha_fin, salario_contratado, estado))
+            
             new_id = cursor.fetchone()[0]
             conn.commit()
+            
+            # Actualizar el empleado con la información del contrato actual
+            cursor.execute("""
+                UPDATE rh_empleados 
+                SET tipo_contrato = %s, salario = %s, fecha_ingreso = %s
+                WHERE id = %s
+            """, (tipo_contrato, salario_contratado, fecha_inicio, empleado_id))
+            conn.commit()
+            
             cursor.close()
             conn.close()
-            flash('Contrato creado correctamente', 'success')
+            
+            flash('✅ Contrato creado correctamente', 'success')
             return redirect(url_for('rh_contrato_detalle', id=new_id))
-        return render_template('rh/rh_contrato_nuevo.html')
+        
+        cursor.close()
+        conn.close()
+        return render_template('rh/rh_contrato_nuevo.html', empleados=empleados)
+        
     except Exception as e:
         logger.error(f"Error en rh_contrato_nuevo: {e}")
         flash('Error al crear el contrato', 'error')
         return redirect(url_for('rh_contratos'))
-
 @app.route('/rh')
 @login_required
 def rh_dashboard():
