@@ -2102,7 +2102,7 @@ def rh_empleados():
         departamento_filtro = request.args.get('departamento', '')
         estado_filtro = request.args.get('estado', '')
         
-        # Consulta corregida - usando cargo_id y departamento_id
+        # Consulta CORREGIDA con JOINs
         query = """
             SELECT 
                 e.id, 
@@ -2117,8 +2117,8 @@ def rh_empleados():
                 e.celular,
                 e.direccion,
                 e.fecha_nacimiento,
-                c.nombre as cargo,           -- JOIN con rh_cargos
-                d.nombre as departamento,    -- JOIN con rh_departamentos
+                COALESCE(c.nombre, 'Sin asignar') as cargo,
+                COALESCE(d.nombre, 'Sin asignar') as departamento,
                 e.fecha_ingreso, 
                 e.fecha_retiro,
                 e.estado, 
@@ -2135,8 +2135,8 @@ def rh_empleados():
             params.extend([f'%{busqueda}%', f'%{busqueda}%', f'%{busqueda}%'])
         
         if departamento_filtro:
-            query += " AND d.nombre = %s"
-            params.append(departamento_filtro)
+            query += " AND d.nombre ILIKE %s"
+            params.append(f'%{departamento_filtro}%')
         
         if estado_filtro:
             query += " AND e.estado = %s"
@@ -2150,7 +2150,6 @@ def rh_empleados():
         conn.close()
         
         return render_template('rh/rh_empleados.html', empleados=empleados)
-        
     except Exception as e:
         logger.error(f"Error en rh_empleados: {e}")
         flash('Error al cargar los empleados', 'error')
@@ -2308,8 +2307,17 @@ def rh_contratos():
         conn = crear_conexion()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT c.id, e.primer_nombre, e.primer_apellido, e.documento,
-                   c.tipo_contrato, c.fecha_inicio, c.fecha_fin, c.salario_contratado, c.estado
+            SELECT 
+                c.id, 
+                e.primer_nombre, 
+                e.primer_apellido, 
+                e.documento,
+                c.tipo_contrato, 
+                c.fecha_inicio, 
+                c.fecha_fin, 
+                c.salario_contratado, 
+                c.estado,
+                c.archivo_pdf
             FROM rh_contratos c
             JOIN rh_empleados e ON c.empleado_id = e.id
             ORDER BY c.fecha_inicio DESC
@@ -2429,6 +2437,7 @@ def rh_contrato_nuevo():
         logger.error(f"Error en rh_contrato_nuevo: {e}")
         flash('Error al crear el contrato', 'error')
         return redirect(url_for('rh_contratos'))
+        
 @app.route('/rh')
 @login_required
 def rh_dashboard():
@@ -2473,9 +2482,20 @@ def rh_procesos():
         conn = crear_conexion()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, nombre, responsable_id, estado, avance, fecha_limite
-            FROM rh_procesos
-            ORDER BY fecha_limite ASC
+            SELECT 
+                p.id, 
+                p.nombre, 
+                p.descripcion,
+                p.tipo,
+                p.prioridad,
+                p.estado,
+                p.fecha_limite,
+                p.avance,
+                e.primer_nombre as responsable_nombre,
+                e.primer_apellido as responsable_apellido
+            FROM rh_procesos p
+            LEFT JOIN rh_empleados e ON p.responsable_id = e.id
+            ORDER BY p.fecha_limite ASC NULLS LAST
         """)
         procesos = cursor.fetchall()
         cursor.close()
@@ -2483,8 +2503,7 @@ def rh_procesos():
         return render_template('rh/rh_procesos.html', procesos=procesos)
     except Exception as e:
         logger.error(f"Error en rh_procesos: {e}")
-        flash('Error al cargar los procesos', 'error')
-        return redirect(url_for('rh_dashboard'))
+        return render_template('rh/rh_procesos.html', procesos=[])
 
 @app.route('/rh/proceso/<int:id>')
 @login_required
@@ -2738,8 +2757,15 @@ def rh_sanciones():
         conn = crear_conexion()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT s.*, e.primer_nombre, e.primer_apellido, e.cargo
-            FROM rh_sanciones s JOIN rh_empleados e ON s.empleado_id = e.id
+            SELECT 
+                s.*, 
+                e.primer_nombre, 
+                e.primer_apellido,
+                e.documento,
+                COALESCE(c.nombre, 'Sin cargo') as cargo_nombre
+            FROM rh_sanciones s 
+            JOIN rh_empleados e ON s.empleado_id = e.id
+            LEFT JOIN rh_cargos c ON e.cargo_id = c.id
             ORDER BY s.fecha DESC
         """)
         sanciones = cursor.fetchall()
@@ -2748,6 +2774,7 @@ def rh_sanciones():
         return render_template('rh/rh_sanciones.html', sanciones=sanciones)
     except Exception as e:
         logger.error(f"Error en rh_sanciones: {e}")
+        flash('Error al cargar las sanciones', 'error')
         return render_template('rh/rh_sanciones.html', sanciones=[])
 
 @app.route('/rh/sancion/nueva', methods=['GET', 'POST'])
@@ -2757,24 +2784,47 @@ def rh_sancion_nueva():
         flash('No tienes permisos para registrar sanciones', 'error')
         return redirect(url_for('rh_sanciones'))
     try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Obtener empleados activos para el select
+        cursor.execute("""
+            SELECT e.id, e.primer_nombre, e.primer_apellido, e.documento, c.nombre as cargo
+            FROM rh_empleados e
+            LEFT JOIN rh_cargos c ON e.cargo_id = c.id
+            WHERE e.estado = 'activo'
+            ORDER BY e.primer_apellido
+        """)
+        empleados = cursor.fetchall()
+        
         if request.method == 'POST':
-            conn = crear_conexion()
-            cursor = conn.cursor()
-            campos = ['empleado_id', 'tipo', 'fecha', 'motivo', 'duracion', 'observaciones', 'estado']
-            valores = [
-                request.form.get('empleado_id'), request.form.get('tipo'),
-                request.form.get('fecha'), request.form.get('motivo'),
-                request.form.get('duracion'), request.form.get('observaciones'), 'vigente'
-            ]
-            placeholders = ', '.join(['%s'] * len(campos))
-            cursor.execute(f"INSERT INTO rh_sanciones ({', '.join(campos)}) VALUES ({placeholders}) RETURNING id", valores)
+            empleado_id = request.form.get('empleado_id')
+            tipo = request.form.get('tipo')
+            fecha = request.form.get('fecha')
+            motivo = request.form.get('motivo')
+            duracion_dias = request.form.get('duracion_dias') or None
+            descripcion = request.form.get('descripcion')
+            
+            if not empleado_id or not tipo or not fecha or not motivo:
+                flash('❌ Todos los campos obligatorios deben ser diligenciados', 'error')
+                return render_template('rh/rh_sancion_nueva.html', empleados=empleados)
+            
+            cursor.execute("""
+                INSERT INTO rh_sanciones (empleado_id, tipo, fecha, motivo, descripcion, duracion_dias, estado)
+                VALUES (%s, %s, %s, %s, %s, %s, 'vigente') RETURNING id
+            """, (empleado_id, tipo, fecha, motivo, descripcion, duracion_dias))
+            
             new_id = cursor.fetchone()[0]
             conn.commit()
             cursor.close()
             conn.close()
-            flash('Sanción registrada correctamente', 'success')
+            
+            flash('✅ Sanción registrada correctamente', 'success')
             return redirect(url_for('rh_sanciones'))
-        return render_template('rh/rh_sancion_nueva.html')
+        
+        cursor.close()
+        conn.close()
+        return render_template('rh/rh_sancion_nueva.html', empleados=empleados)
     except Exception as e:
         logger.error(f"Error en rh_sancion_nueva: {e}")
         flash('Error al registrar la sanción', 'error')
