@@ -3556,6 +3556,45 @@ def inicializar_plan_anual():
         import traceback
         traceback.print_exc()
 
+# ===== CREAR USUARIO RH AUTOMÁTICAMENTE AL INICIAR =====
+def crear_usuario_rh_si_no_existe():
+    """Crea el usuario RH automáticamente si no existe"""
+    try:
+        from werkzeug.security import generate_password_hash
+        
+        # Verificar si existe
+        resultado = ejecutar_consulta(
+            "SELECT id FROM usuarios WHERE usuario = %s",
+            ('rh',),
+            fetch=True
+        )
+        
+        if not resultado:
+            # Crear usuario RH
+            password_hash = generate_password_hash('rh123')
+            ejecutar_consulta("""
+                INSERT INTO usuarios (usuario, password, rol, modulo_principal, permisos) 
+                VALUES (%s, %s, %s, %s, %s)
+            """, (
+                'rh', 
+                password_hash, 
+                'rh', 
+                'rh',
+                '{"ver_rh": true, "gestionar_rh": true, "cambiar_password": true}'
+            ), commit=True)
+            print("=" * 50)
+            print("✅ Usuario RH creado automáticamente")
+            print("👤 Usuario: rh")
+            print("🔑 Contraseña: rh123")
+            print("=" * 50)
+        else:
+            print("✅ Usuario RH ya existe")
+    except Exception as e:
+        print(f"⚠️ No se pudo crear usuario RH: {e}")
+
+# Llamar a la función
+crear_usuario_rh_si_no_existe()
+
 
 # ===== INICIALIZACIÓN =====
 if __name__ == '__main__':
