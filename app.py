@@ -2850,24 +2850,95 @@ def rh_proceso_detalle(id):
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
+        
         cursor.execute("""
-            SELECT p.*, e.primer_nombre, e.primer_apellido
+            SELECT 
+                p.id, 
+                p.nombre, 
+                p.descripcion,
+                p.tipo,
+                p.prioridad,
+                p.estado,
+                p.fecha_limite,
+                p.avance,
+                p.fecha_inicio,
+                p.fecha_completado,
+                p.observaciones
             FROM rh_procesos p
-            LEFT JOIN rh_empleados e ON p.responsable_id = e.id
             WHERE p.id = %s
         """, (id,))
+        
         proceso = cursor.fetchone()
         
         if not proceso:
             flash('Proceso no encontrado', 'error')
+            cursor.close()
+            conn.close()
             return redirect(url_for('rh_procesos'))
         
         cursor.close()
         conn.close()
+        
         return render_template('rh/rh_proceso_detalle.html', proceso=proceso)
     except Exception as e:
         logger.error(f"Error en rh_proceso_detalle: {e}")
         flash('Error al cargar el proceso', 'error')
+        return redirect(url_for('rh_procesos'))
+
+@app.route('/rh/proceso/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def rh_proceso_editar(id):
+    if not current_user.puede('gestionar_rh'):
+        flash('No tienes permisos para editar procesos', 'error')
+        return redirect(url_for('rh_procesos'))
+    
+    try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        if request.method == 'POST':
+            nombre = request.form.get('nombre')
+            descripcion = request.form.get('descripcion')
+            estado = request.form.get('estado')
+            prioridad = request.form.get('prioridad')
+            avance = request.form.get('avance', 0)
+            fecha_limite = request.form.get('fecha_limite') or None
+            
+            cursor.execute("""
+                UPDATE rh_procesos 
+                SET nombre = %s, 
+                    descripcion = %s, 
+                    estado = %s, 
+                    prioridad = %s, 
+                    avance = %s, 
+                    fecha_limite = %s,
+                    fecha_completado = CASE WHEN %s = 'completado' AND estado != 'completado' THEN CURRENT_DATE ELSE fecha_completado END
+                WHERE id = %s
+            """, (nombre, descripcion, estado, prioridad, avance, fecha_limite, estado, id))
+            
+            conn.commit()
+            flash('Proceso actualizado correctamente', 'success')
+            cursor.close()
+            conn.close()
+            return redirect(url_for('rh_proceso_detalle', id=id))
+        
+        cursor.execute("SELECT * FROM rh_procesos WHERE id = %s", (id,))
+        proceso = cursor.fetchone()
+        
+        if not proceso:
+            flash('Proceso no encontrado', 'error')
+            cursor.close()
+            conn.close()
+            return redirect(url_for('rh_procesos'))
+        
+        cursor.close()
+        conn.close()
+        
+        return render_template('rh/rh_proceso_editar.html', proceso=proceso)
+        
+    except Exception as e:
+        logger.error(f"Error en rh_proceso_editar: {e}")
+        flash('Error al editar el proceso', 'error')
         return redirect(url_for('rh_procesos'))
 
 @app.route('/rh/capacitaciones')
