@@ -2265,36 +2265,101 @@ def rh_empleado_nuevo():
     if not current_user.puede('gestionar_rh'):
         flash('No tienes permisos para crear empleados', 'error')
         return redirect(url_for('rh_empleados'))
+    
     try:
+        conn = crear_conexion()
+        cursor = conn.cursor()
+        
+        # Obtener cargos y departamentos para los selects
+        cursor.execute("SELECT id, nombre FROM rh_cargos WHERE activo = TRUE ORDER BY nombre")
+        cargos = cursor.fetchall()
+        
+        cursor.execute("SELECT id, nombre FROM rh_departamentos WHERE activo = TRUE ORDER BY nombre")
+        departamentos = cursor.fetchall()
+        
         if request.method == 'POST':
-            conn = crear_conexion()
-            cursor = conn.cursor()
-            campos = [
-                'tipo_documento', 'documento', 'primer_nombre', 'segundo_nombre',
-                'primer_apellido', 'segundo_apellido', 'email', 'telefono', 'celular',
-                'direccion', 'fecha_nacimiento', 'cargo', 'departamento', 'fecha_ingreso',
-                'estado', 'salario', 'tipo_contrato', 'jefe_inmediato', 'eps', 'arl', 'tipo_sangre'
-            ]
-            valores = []
-            for campo in campos:
-                valor = request.form.get(campo, '')
-                valores.append(valor if valor else None)
-            placeholders = ', '.join(['%s'] * len(campos))
-            query = f"""
-                INSERT INTO rh_empleados ({', '.join(campos)})
-                VALUES ({placeholders}) RETURNING id
-            """
-            cursor.execute(query, valores)
+            # Obtener datos del formulario
+            tipo_documento = request.form.get('tipo_documento', 'CC')
+            documento = request.form.get('documento', '').strip()
+            primer_nombre = request.form.get('primer_nombre', '').strip()
+            segundo_nombre = request.form.get('segundo_nombre', '').strip() or None
+            primer_apellido = request.form.get('primer_apellido', '').strip()
+            segundo_apellido = request.form.get('segundo_apellido', '').strip() or None
+            email = request.form.get('email', '').strip() or None
+            telefono = request.form.get('telefono', '').strip() or None
+            celular = request.form.get('celular', '').strip() or None
+            direccion = request.form.get('direccion', '').strip() or None
+            fecha_nacimiento = request.form.get('fecha_nacimiento', '').strip() or None
+            cargo_id = request.form.get('cargo_id', '').strip()
+            departamento_id = request.form.get('departamento_id', '').strip()
+            fecha_ingreso = request.form.get('fecha_ingreso', '').strip() or None
+            salario = request.form.get('salario', '').strip() or None
+            tipo_contrato = request.form.get('tipo_contrato', '').strip() or None
+            estado = request.form.get('estado', 'activo')
+            
+            # Validar campos obligatorios
+            if not documento:
+                flash('❌ El número de documento es obligatorio', 'error')
+                return render_template('rh/rh_empleado_nuevo.html', cargos=cargos, departamentos=departamentos)
+            
+            if not primer_nombre:
+                flash('❌ El primer nombre es obligatorio', 'error')
+                return render_template('rh/rh_empleado_nuevo.html', cargos=cargos, departamentos=departamentos)
+            
+            if not primer_apellido:
+                flash('❌ El primer apellido es obligatorio', 'error')
+                return render_template('rh/rh_empleado_nuevo.html', cargos=cargos, departamentos=departamentos)
+            
+            # Validar que el documento no exista
+            cursor.execute("SELECT id FROM rh_empleados WHERE documento = %s", (documento,))
+            if cursor.fetchone():
+                flash(f'❌ Ya existe un empleado con el documento {documento}', 'error')
+                return render_template('rh/rh_empleado_nuevo.html', cargos=cargos, departamentos=departamentos)
+            
+            # Validar email único si se proporcionó
+            if email:
+                cursor.execute("SELECT id FROM rh_empleados WHERE email = %s", (email,))
+                if cursor.fetchone():
+                    flash(f'❌ Ya existe un empleado con el email {email}', 'error')
+                    return render_template('rh/rh_empleado_nuevo.html', cargos=cargos, departamentos=departamentos)
+            
+            # Convertir valores vacíos a None
+            cargo_id = int(cargo_id) if cargo_id and cargo_id.isdigit() else None
+            departamento_id = int(departamento_id) if departamento_id and departamento_id.isdigit() else None
+            salario = float(salario) if salario and salario.replace('.', '').isdigit() else None
+            
+            # Insertar empleado
+            cursor.execute("""
+                INSERT INTO rh_empleados (
+                    tipo_documento, documento, primer_nombre, segundo_nombre,
+                    primer_apellido, segundo_apellido, email, telefono, celular,
+                    direccion, fecha_nacimiento, cargo_id, departamento_id,
+                    fecha_ingreso, salario, tipo_contrato, estado, created_at, updated_at
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                ) RETURNING id
+            """, (
+                tipo_documento, documento, primer_nombre, segundo_nombre,
+                primer_apellido, segundo_apellido, email, telefono, celular,
+                direccion, fecha_nacimiento, cargo_id, departamento_id,
+                fecha_ingreso, salario, tipo_contrato, estado
+            ))
+            
             new_id = cursor.fetchone()[0]
             conn.commit()
             cursor.close()
             conn.close()
-            flash('Empleado creado correctamente', 'success')
+            
+            flash('✅ Empleado creado correctamente', 'success')
             return redirect(url_for('rh_empleado_detalle', id=new_id))
-        return render_template('rh/rh_empleado_nuevo.html')
+        
+        cursor.close()
+        conn.close()
+        return render_template('rh/rh_empleado_nuevo.html', cargos=cargos, departamentos=departamentos)
+        
     except Exception as e:
         logger.error(f"Error en rh_empleado_nuevo: {e}")
-        flash('Error al crear el empleado', 'error')
+        flash(f'Error al crear el empleado: {str(e)}', 'error')
         return redirect(url_for('rh_empleados'))
 
 @app.route('/rh/contratos')
