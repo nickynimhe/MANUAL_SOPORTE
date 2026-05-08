@@ -213,144 +213,140 @@
     </div>
 </div>
 
-<script>
-// Mostrar/ocultar campos según tipo de contenido
+// Reemplaza la función validarYMostrarCarga con esta versión mejorada
+function validarYMostrarCarga() {
+    const tipo = document.getElementById('tipoContenido').value;
+    
+    if (!tipo) {
+        mostrarMensaje('error', '❌ Debes seleccionar un tipo de contenido');
+        return false;
+    }
+    
+    // Verificar según el tipo
+    if (tipo === 'documento') {
+        const archivo = document.getElementById('archivoDocumento');
+        const urlInput = document.querySelector('input[name="archivo_url"]');
+        
+        if ((!archivo.files || archivo.files.length === 0) && (!urlInput.value || urlInput.value.trim() === '')) {
+            mostrarMensaje('error', '❌ Debes seleccionar un archivo o proporcionar una URL para el documento');
+            return false;
+        }
+        
+        if (archivo.files && archivo.files.length > 0) {
+            console.log('✅ Documento seleccionado:', archivo.files[0].name, archivo.files[0].size);
+            mostrarMensaje('info', `📄 Subiendo documento: ${archivo.files[0].name}...`);
+        }
+        
+    } else if (tipo === 'video') {
+        const archivo = document.getElementById('archivoVideo');
+        const urlInput = document.querySelector('input[name="video_url"]');
+        
+        if ((!archivo.files || archivo.files.length === 0) && (!urlInput.value || urlInput.value.trim() === '')) {
+            mostrarMensaje('error', '❌ Debes seleccionar un archivo de video o proporcionar una URL');
+            return false;
+        }
+        
+        if (archivo.files && archivo.files.length > 0) {
+            const file = archivo.files[0];
+            const sizeMB = file.size / (1024 * 1024);
+            console.log('✅ Video seleccionado:', file.name, sizeMB.toFixed(2), 'MB');
+            mostrarMensaje('info', `🎬 Subiendo video: ${file.name} (${sizeMB.toFixed(2)} MB)...`);
+        }
+        
+    } else if (tipo === 'imagen') {
+        const archivo = document.getElementById('archivoImagen');
+        
+        if (!archivo.files || archivo.files.length === 0) {
+            mostrarMensaje('error', '❌ Debes seleccionar una imagen');
+            return false;
+        }
+        
+        console.log('✅ Imagen seleccionada:', archivo.files[0].name);
+        mostrarMensaje('info', `🖼️ Subiendo imagen: ${archivo.files[0].name}...`);
+        
+    } else if (tipo === 'enlace') {
+        const urlInput = document.querySelector('input[name="archivo_url"]');
+        
+        if (!urlInput.value || urlInput.value.trim() === '') {
+            mostrarMensaje('error', '❌ Debes proporcionar una URL para el enlace');
+            return false;
+        }
+    }
+    
+    // Mostrar loading
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    
+    // Actualizar barra de progreso
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 10;
+        if (progress >= 95) {
+            clearInterval(interval);
+        } else {
+            document.getElementById('progressBar').style.width = Math.min(progress, 90) + '%';
+        }
+    }, 500);
+    
+    window.progressInterval = interval;
+    
+    return true;
+}
+
+// También mejora la función toggleCampos para limpiar los campos al cambiar
 function toggleCampos() {
     const tipo = document.getElementById('tipoContenido').value;
     
-    document.getElementById('seccionVideo').style.display = tipo === 'video' ? 'block' : 'none';
-    document.getElementById('seccionDocumento').style.display = tipo === 'documento' ? 'block' : 'none';
-    document.getElementById('seccionImagen').style.display = tipo === 'imagen' ? 'block' : 'none';
-    document.getElementById('seccionEnlace').style.display = tipo === 'enlace' ? 'block' : 'none';
-}
-
-// Validar tamaño de archivo ANTES de subir
-function validarTamanoArchivo(input) {
-    if (!input.files || !input.files[0]) return true;
+    // Ocultar todas las secciones
+    document.getElementById('seccionVideo').style.display = 'none';
+    document.getElementById('seccionDocumento').style.display = 'none';
+    document.getElementById('seccionImagen').style.display = 'none';
+    document.getElementById('seccionEnlace').style.display = 'none';
     
-    const file = input.files[0];
-    const sizeMB = file.size / (1024 * 1024);
-    const tipo = document.getElementById('tipoContenido').value;
-    
-    let maxSize = 100;
-    let mensajeTipo = '';
-    
-    if (tipo === 'documento') {
-        maxSize = 20;
-        mensajeTipo = 'documento';
+    // Mostrar la sección correspondiente
+    if (tipo === 'video') {
+        document.getElementById('seccionVideo').style.display = 'block';
+        // Limpiar otros campos
+        document.getElementById('archivoDocumento').value = '';
+        document.getElementById('archivoImagen').value = '';
+        document.querySelector('input[name="archivo_url"]').value = '';
+    } else if (tipo === 'documento') {
+        document.getElementById('seccionDocumento').style.display = 'block';
+        document.getElementById('archivoVideo').value = '';
+        document.getElementById('archivoImagen').value = '';
+        document.querySelector('input[name="video_url"]').value = '';
     } else if (tipo === 'imagen') {
-        maxSize = 5;
-        mensajeTipo = 'imagen';
-    } else if (tipo === 'video') {
-        maxSize = 100;
-        mensajeTipo = 'video';
+        document.getElementById('seccionImagen').style.display = 'block';
+        document.getElementById('archivoVideo').value = '';
+        document.getElementById('archivoDocumento').value = '';
+        document.querySelector('input[name="archivo_url"]').value = '';
+        document.querySelector('input[name="video_url"]').value = '';
+    } else if (tipo === 'enlace') {
+        document.getElementById('seccionEnlace').style.display = 'block';
+        document.getElementById('archivoVideo').value = '';
+        document.getElementById('archivoDocumento').value = '';
+        document.getElementById('archivoImagen').value = '';
+        document.querySelector('input[name="video_url"]').value = '';
     }
-    
-    if (sizeMB > maxSize) {
-        mostrarMensaje('error', `❌ El archivo es muy grande (${sizeMB.toFixed(2)} MB).\n\nMáximo permitido: ${maxSize} MB ${mensajeTipo ? 'para ' + mensajeTipo : ''}`);
-        input.value = '';
-        return false;
-    }
-    
-    if (sizeMB > 50) {
-        mostrarMensaje('warning', `⚠️ Archivo grande detectado (${sizeMB.toFixed(2)} MB).\n\nLa subida puede tardar varios minutos. No cierres la página.`);
-    }
-    
-    return true;
 }
 
-// Validar formulario y mostrar loading
-function validarYMostrarCarga() {
-    const tipo = document.getElementById('tipoContenido').value;
-    const archivoVideo = document.getElementById('archivoVideo');
-    const archivoDocumento = document.getElementById('archivoDocumento');
-    const archivoImagen = document.getElementById('archivoImagen');
-    const archivoUrl = document.querySelector('input[name="archivo_url"]');
-    const videoUrl = document.querySelector('input[name="video_url"]');
-    
-    // Para enlace externo, verificar URL
-    if (tipo === 'enlace' && archivoUrl && archivoUrl.value.trim() === '') {
-        mostrarMensaje('error', '❌ Para contenido de tipo enlace, debes proporcionar una URL');
-        return false;
-    }
-    
-    // Verificar si hay un archivo siendo subido
-    let tieneArchivo = false;
-    let tamanoMB = 0;
-    let tipoArchivo = '';
-    
-    if (tipo === 'video' && archivoVideo.files && archivoVideo.files[0]) {
-        tieneArchivo = true;
-        tamanoMB = archivoVideo.files[0].size / (1024 * 1024);
-        tipoArchivo = 'video';
-    } else if (tipo === 'documento' && archivoDocumento.files && archivoDocumento.files[0]) {
-        tieneArchivo = true;
-        tamanoMB = archivoDocumento.files[0].size / (1024 * 1024);
-        tipoArchivo = 'documento';
-    } else if (tipo === 'imagen' && archivoImagen.files && archivoImagen.files[0]) {
-        tieneArchivo = true;
-        tamanoMB = archivoImagen.files[0].size / (1024 * 1024);
-        tipoArchivo = 'imagen';
-    }
-    
-    // Si hay archivo, mostrar overlay de carga
-    if (tieneArchivo) {
-        document.getElementById('loadingOverlay').style.display = 'flex';
-        document.getElementById('uploadProgress').textContent = 
-            `Subiendo ${tipoArchivo} de ${tamanoMB.toFixed(2)} MB. Esto puede tardar hasta 5 minutos...`;
-        
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += Math.random() * 5;
-            if (progress >= 90) {
-                clearInterval(interval);
-                document.getElementById('progressBar').style.width = '90%';
-            } else {
-                document.getElementById('progressBar').style.width = progress + '%';
-            }
-        }, 800);
-        
-        window.progressInterval = interval;
-    }
-    
-    return true;
-}
-
-// Función para mostrar mensajes
-function mostrarMensaje(tipo, mensaje) {
-    const container = document.getElementById('flashMessages');
-    if (!container) return;
-    
-    const colores = { success: '#28a745', error: '#C23538', warning: '#FFCC29', info: '#2658A5' };
-    const iconos = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
-    
-    const alert = document.createElement('div');
-    alert.className = 'alert alert-custom fade-in';
-    alert.style.cssText = `border-left: 4px solid ${colores[tipo]}; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 16px; padding: 12px 16px;`;
-    alert.innerHTML = `<div class="d-flex align-items-center">
-        <i class="fas ${iconos[tipo]} me-2" style="color: ${colores[tipo]}; font-size: 1.2rem;"></i>
-        <strong style="color: ${colores[tipo]};">${mensaje}</strong>
-        <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
-    </div>`;
-    container.appendChild(alert);
-    
-    setTimeout(() => {
-        if (alert && alert.parentElement) {
-            alert.style.opacity = '0';
-            alert.style.transition = 'opacity 0.3s';
-            setTimeout(() => alert.remove(), 300);
+// Agrega validación al archivo input
+document.addEventListener('DOMContentLoaded', function() {
+    // Mostrar info cuando se selecciona un archivo
+    const archivos = ['archivoVideo', 'archivoDocumento', 'archivoImagen'];
+    archivos.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('change', function(e) {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    const sizeMB = file.size / (1024 * 1024);
+                    console.log(`Archivo seleccionado: ${file.name} (${sizeMB.toFixed(2)} MB)`);
+                    mostrarMensaje('success', `✅ Archivo seleccionado: ${file.name} (${sizeMB.toFixed(2)} MB)`);
+                }
+            });
         }
-    }, 8000);
-}
-
-// Forzar limpieza del intervalo si la página se descarga
-window.addEventListener('beforeunload', function() {
-    if (window.progressInterval) {
-        clearInterval(window.progressInterval);
-    }
+    });
 });
-</script>
-
 <style>
 /* Efecto shimmer para el header */
 .bg-gradient-corporate {
