@@ -2564,23 +2564,37 @@ def rh_contrato_detalle(id):
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
+        
         cursor.execute("""
-            SELECT c.*, e.primer_nombre, e.primer_apellido, e.documento, e.cargo
-            FROM rh_contratos c JOIN rh_empleados e ON c.empleado_id = e.id
+            SELECT 
+                c.*,
+                e.primer_nombre, 
+                e.primer_apellido, 
+                e.documento, 
+                e.cargo_id,
+                COALESCE(carg.nombre, 'Sin cargo') as cargo_nombre
+            FROM rh_contratos c 
+            JOIN rh_empleados e ON c.empleado_id = e.id
+            LEFT JOIN rh_cargos carg ON e.cargo_id = carg.id
             WHERE c.id = %s
         """, (id,))
+        
         contrato = cursor.fetchone()
+        
         if not contrato:
             flash('Contrato no encontrado', 'error')
             return redirect(url_for('rh_contratos'))
+        
         cursor.close()
         conn.close()
+        
         return render_template('rh/rh_contrato_detalle.html', contrato=contrato)
+        
     except Exception as e:
         logger.error(f"Error en rh_contrato_detalle: {e}")
         flash('Error al cargar el detalle del contrato', 'error')
         return redirect(url_for('rh_contratos'))
-
+        
 @app.route('/rh/contrato/nuevo', methods=['GET', 'POST'])
 @login_required
 def rh_contrato_nuevo():
