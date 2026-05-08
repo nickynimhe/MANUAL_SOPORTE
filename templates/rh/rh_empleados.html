@@ -28,20 +28,21 @@
                 <div class="col-md-3">
                     <select name="departamento" class="form-select rounded-3">
                         <option value="">Todos los departamentos</option>
-                        <option value="Administrativo">Administrativo</option>
-                        <option value="Operaciones">Operaciones</option>
-                        <option value="Comercial">Comercial</option>
-                        <option value="Tecnología">Tecnología</option>
-                        <option value="SST">SST</option>
+                        <option value="Administrativo" {% if request.args.get('departamento') == 'Administrativo' %}selected{% endif %}>Administrativo</option>
+                        <option value="Operaciones" {% if request.args.get('departamento') == 'Operaciones' %}selected{% endif %}>Operaciones</option>
+                        <option value="Comercial" {% if request.args.get('departamento') == 'Comercial' %}selected{% endif %}>Comercial</option>
+                        <option value="Tecnología" {% if request.args.get('departamento') == 'Tecnología' %}selected{% endif %}>Tecnología</option>
+                        <option value="SST" {% if request.args.get('departamento') == 'SST' %}selected{% endif %}>SST</option>
+                        <option value="Desarrollo" {% if request.args.get('departamento') == 'Desarrollo' %}selected{% endif %}>Desarrollo</option>
                     </select>
                 </div>
                 <div class="col-md-3">
                     <select name="estado" class="form-select rounded-3">
                         <option value="">Todos los estados</option>
-                        <option value="activo">✅ Activo</option>
-                        <option value="inactivo">⏸️ Inactivo</option>
-                        <option value="vacaciones">🏖️ Vacaciones</option>
-                        <option value="incapacidad">🏥 Incapacidad</option>
+                        <option value="activo" {% if request.args.get('estado') == 'activo' %}selected{% endif %}>✅ Activo</option>
+                        <option value="inactivo" {% if request.args.get('estado') == 'inactivo' %}selected{% endif %}>⏸️ Inactivo</option>
+                        <option value="vacaciones" {% if request.args.get('estado') == 'vacaciones' %}selected{% endif %}>🏖️ Vacaciones</option>
+                        <option value="incapacidad" {% if request.args.get('estado') == 'incapacidad' %}selected{% endif %}>🏥 Incapacidad</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -59,11 +60,11 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h5 class="mb-0 fw-semibold text-white">
                     <i class="fas fa-address-card me-2"></i> Listado de Empleados
-                    <span class="badge bg-white text-dark rounded-pill ms-2 px-3">{{ empleados|default(48) }}</span>
+                    <span class="badge bg-white text-dark rounded-pill ms-2 px-3">{{ empleados|length }}</span>
                 </h5>
-                <button class="btn btn-light btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoEmpleado">
+                <a href="{{ url_for('rh_empleado_nuevo') }}" class="btn btn-light btn-sm shadow-sm">
                     <i class="fas fa-plus me-1"></i> Nuevo Empleado
-                </button>
+                </a>
             </div>
         </div>
         <div class="card-body p-0">
@@ -83,136 +84,79 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr class="empleado-fila">
-                            <td class="align-middle">1</td>
-                            <td class="align-middle">CC 12345678</td>
-                            <td class="align-middle">
-                                <span class="fw-semibold">María González López</span>
-                            </td>
-                            <td class="align-middle">Gerente RH</td>
-                            <td class="align-middle">Administrativo</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
-                                    <i class="fas fa-check-circle me-1"></i> Activo
-                                </span>
-                            </td>
-                            <td class="align-middle small">15/03/2020</td>
-                            <td class="align-middle">$ 4,500,000</td>
-                            <td class="align-middle">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verEmpleado(1)">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3" style="background: #FFCC29; color: #282F4B;" onclick="editarEmpleado(1)">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr class="empleado-fila">
-                            <td class="align-middle">2</td>
-                            <td class="align-middle">CC 87654321</td>
-                            <td class="align-middle">
-                                <span class="fw-semibold">Carlos Rodríguez Pérez</span>
-                            </td>
-                            <td class="align-middle">Coordinador SST</td>
-                            <td class="align-middle">SST</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
-                                    <i class="fas fa-check-circle me-1"></i> Activo
-                                </span>
-                            </td>
-                            <td class="align-middle small">10/06/2021</td>
-                            <td class="align-middle">$ 3,200,000</td>
-                            <td class="align-middle">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verEmpleado(2)">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3" style="background: #FFCC29; color: #282F4B;" onclick="editarEmpleado(2)">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr class="empleado-fila">
-                            <td class="align-middle">3</td>
-                            <td class="align-middle">CC 11223344</td>
-                            <td class="align-middle">
-                                <span class="fw-semibold">Ana Martínez Suárez</span>
-                            </td>
-                            <td class="align-middle">Analista de Capacitación</td>
-                            <td class="align-middle">Desarrollo</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
-                                    <i class="fas fa-umbrella-beach me-1"></i> Vacaciones
-                                </span>
-                            </td>
-                            <td class="align-middle small">05/01/2022</td>
-                            <td class="align-middle">$ 2,800,000</td>
-                            <td class="align-middle">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verEmpleado(3)">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3" style="background: #FFCC29; color: #282F4B;" onclick="editarEmpleado(3)">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr class="empleado-fila">
-                            <td class="align-middle">4</td>
-                            <td class="align-middle">CC 55667788</td>
-                            <td class="align-middle">
-                                <span class="fw-semibold">Jorge Ramírez Castro</span>
-                            </td>
-                            <td class="align-middle">Operador de Maquinaria</td>
-                            <td class="align-middle">Operaciones</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
-                                    <i class="fas fa-check-circle me-1"></i> Activo
-                                </span>
-                            </td>
-                            <td class="align-middle small">20/08/2023</td>
-                            <td class="align-middle">$ 1,800,000</td>
-                            <td class="align-middle">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verEmpleado(4)">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3" style="background: #FFCC29; color: #282F4B;" onclick="editarEmpleado(4)">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr class="empleado-fila">
-                            <td class="align-middle">5</td>
-                            <td class="align-middle">CC 99887766</td>
-                            <td class="align-middle">
-                                <span class="fw-semibold">Laura Sánchez Mendoza</span>
-                            </td>
-                            <td class="align-middle">Asistente Administrativa</td>
-                            <td class="align-middle">Administrativo</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">
-                                    <i class="fas fa-heartbeat me-1"></i> Incapacidad
-                                </span>
-                            </td>
-                            <td class="align-middle small">12/09/2019</td>
-                            <td class="align-middle">$ 2,200,000</td>
-                            <td class="align-middle">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verEmpleado(5)">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3" style="background: #FFCC29; color: #282F4B;" onclick="editarEmpleado(5)">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+                        {% if empleados and empleados|length > 0 %}
+                            {% for emp in empleados %}
+                            <tr class="empleado-fila">
+                                <td class="align-middle">{{ loop.index }}</td>
+                                <td class="align-middle">
+                                    {% if emp[1] %}{{ emp[1] }}{% else %}{{ emp[2] }}{% endif %}
+                                    {{ emp[2] if emp[1] else '' }}
+                                </td>
+                                <td class="align-middle">
+                                    <span class="fw-semibold">
+                                        {% if emp[3] %}{{ emp[3] }}{% endif %}
+                                        {% if emp[4] %} {{ emp[4] }}{% endif %}
+                                        {% if emp[5] %} {{ emp[5] }}{% endif %}
+                                        {% if emp[6] %} {{ emp[6] }}{% endif %}
+                                    </span>
+                                </td>
+                                <td class="align-middle">{{ emp[9] or 'N/A' }}</td>
+                                <td class="align-middle">{{ emp[10] or 'N/A' }}</td>
+                                <td class="align-middle">
+                                    {% set estado = emp[12]|default('inactivo') %}
+                                    {% if estado == 'activo' %}
+                                        <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
+                                            <i class="fas fa-check-circle me-1"></i> Activo
+                                        </span>
+                                    {% elif estado == 'vacaciones' %}
+                                        <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
+                                            <i class="fas fa-umbrella-beach me-1"></i> Vacaciones
+                                        </span>
+                                    {% elif estado == 'incapacidad' %}
+                                        <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">
+                                            <i class="fas fa-heartbeat me-1"></i> Incapacidad
+                                        </span>
+                                    {% else %}
+                                        <span class="badge rounded-pill px-3 py-2" style="background: #6c757d; color: white;">
+                                            <i class="fas fa-pause me-1"></i> Inactivo
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle small">{{ emp[11]|format_date if emp[11] else 'N/A' }}</td>
+                                <td class="align-middle">
+                                    {% if emp[13] %}
+                                        $ {{ "{:,.0f}".format(emp[13]|float).replace(',', '.') }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td class="align-middle">
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('rh_empleado_detalle', id=emp[0]) }}" 
+                                           class="btn btn-sm rounded-3 me-1" 
+                                           style="background: #2658A5; color: white;">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('rh_empleado_editar', id=emp[0]) }}" 
+                                           class="btn btn-sm rounded-3" 
+                                           style="background: #FFCC29; color: #282F4B;">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="9" class="text-center py-5">
+                                    <i class="fas fa-users fa-3x text-muted mb-3 d-block"></i>
+                                    <p class="text-muted mb-0">No hay empleados registrados</p>
+                                    <a href="{{ url_for('rh_empleado_nuevo') }}" class="btn btn-primary btn-sm mt-3">
+                                        <i class="fas fa-plus me-1"></i> Agregar primer empleado
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endif %}
                     </tbody>
                 </table>
             </div>
@@ -220,46 +164,19 @@
     </div>
 </div>
 
-<!-- Modal Nuevo Empleado -->
-<div class="modal fade" id="modalNuevoEmpleado" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-user-plus me-2"></i> Nuevo Empleado
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <form id="formNuevoEmpleado" method="POST" action="#">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Tipo Documento</label>
-                            <select name="tipo_documento" class="form-select rounded-3" required>
-                                <option value="CC">Cédula de Ciudadanía</option>
-                                <option value="CE">Cédula de Extranjería</option>
-                                <option value="PEP">Pasaporte</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Número Documento *</label>
-                            <input type="text" name="documento" class="form-control rounded-3" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Primer Nombre *</label>
-                            <input type="text" name="primer_nombre" class="form-control rounded-3" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Primer Apellido *</label>
-                            <input type="text" name="primer_apellido" class="form-control rounded-3" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Segundo Nombre</label>
-                            <input type="text" name="segundo_nombre" class="form-control rounded-3">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Segundo Apellido</label>
-                            <input type="text" name="segundo_apellido" class="form-control rounded-3">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Cargo *
+<style>
+.empleado-fila {
+    transition: all 0.2s ease;
+}
+.empleado-fila:hover {
+    background: #f8f9fc;
+    transform: scale(1.01);
+}
+.btn-group .btn {
+    transition: all 0.2s ease;
+}
+.btn-group .btn:hover {
+    transform: translateY(-2px);
+}
+</style>
+{% endblock %}
