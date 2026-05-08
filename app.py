@@ -2589,12 +2589,15 @@ def rh_contrato_nuevo():
         return redirect(url_for('rh_contratos'))
     
     try:
-        # Obtener lista de empleados para el select
         conn = crear_conexion()
         cursor = conn.cursor()
+        
+        # Obtener lista de empleados activos para el select
         cursor.execute("""
-            SELECT id, documento, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido
-            FROM rh_empleados WHERE estado = 'activo'
+            SELECT id, primer_nombre, primer_apellido, documento 
+            FROM rh_empleados 
+            WHERE estado = 'activo'
+            ORDER BY primer_apellido, primer_nombre
         """)
         empleados = cursor.fetchall()
         
@@ -2606,48 +2609,54 @@ def rh_contrato_nuevo():
             salario_contratado = request.form.get('salario_contratado')
             estado = request.form.get('estado', 'activo')
             
-            # Validaciones básicas
-            if not empleado_id or not tipo_contrato or not fecha_inicio or not salario_contratado:
-                flash('❌ Todos los campos obligatorios deben ser diligenciados', 'error')
+            # Validaciones
+            if not empleado_id:
+                flash('❌ Debe seleccionar un empleado', 'error')
                 return render_template('rh/rh_contrato_nuevo.html', empleados=empleados)
             
-            # Manejo de archivo PDF
-            archivo_pdf = request.files.get('archivo_pdf')
-            archivo_data = None
+            if not tipo_contrato:
+                flash('❌ Debe seleccionar un tipo de contrato', 'error')
+                return render_template('rh/rh_contrato_nuevo.html', empleados=empleados)
             
-            if archivo_pdf and archivo_pdf.filename != '':
-                if archivo_pdf.filename.endswith('.pdf'):
-                    archivo_data = archivo_pdf.read()
-                else:
-                    flash('❌ El archivo debe ser PDF', 'error')
-                    return render_template('rh/rh_contrato_nuevo.html', empleados=empleados)
+            if not fecha_inicio:
+                flash('❌ La fecha de inicio es obligatoria', 'error')
+                return render_template('rh/rh_contrato_nuevo.html', empleados=empleados)
             
-            # Insertar contrato
-            if archivo_data:
-                cursor.execute("""
-                    INSERT INTO rh_contratos (empleado_id, tipo_contrato, fecha_inicio, fecha_fin, 
-                                             salario_contratado, archivo_pdf, estado)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
-                """, (empleado_id, tipo_contrato, fecha_inicio, fecha_fin, salario_contratado, 
-                      psycopg2.Binary(archivo_data), estado))
-            else:
-                cursor.execute("""
-                    INSERT INTO rh_contratos (empleado_id, tipo_contrato, fecha_inicio, fecha_fin, 
-                                             salario_contratado, estado)
-                    VALUES (%s, %s, %s, %s, %s, %s) RETURNING id
-                """, (empleado_id, tipo_contrato, fecha_inicio, fecha_fin, salario_contratado, estado))
+            if not salario_contratado:
+                flash('❌ El salario contratado es obligatorio', 'error')
+                return render_template('rh/rh_contrato_nuevo.html', empleados=empleados)
+            
+            # Convertir salario a número
+            try:
+                salario_contratado = float(salario_contratado.replace(',', '.'))
+            except:
+                salario_contratado = float(salario_contratado) if salario_contratado else None
+            
+            # Insertar contrato - SOLO columnas que existen en tu BD
+            cursor.execute("""
+                INSERT INTO rh_contratos (
+                    empleado_id, 
+                    tipo_contrato, 
+                    fecha_inicio, 
+                    fecha_fin, 
+                    salario_contratado, 
+                    estado,
+                    created_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP) RETURNING id
+            """, (empleado_id, tipo_contrato, fecha_inicio, fecha_fin, salario_contratado, estado))
             
             new_id = cursor.fetchone()[0]
-            conn.commit()
             
-            # Actualizar el empleado con la información del contrato actual
+            # Actualizar también los datos del empleado (fecha_ingreso, salario, tipo_contrato)
             cursor.execute("""
                 UPDATE rh_empleados 
-                SET tipo_contrato = %s, salario = %s, fecha_ingreso = %s
+                SET fecha_ingreso = COALESCE(fecha_ingreso, %s),
+                    salario = %s,
+                    updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
-            """, (tipo_contrato, salario_contratado, fecha_inicio, empleado_id))
-            conn.commit()
+            """, (fecha_inicio, salario_contratado, empleado_id))
             
+            conn.commit()
             cursor.close()
             conn.close()
             
@@ -2660,7 +2669,7 @@ def rh_contrato_nuevo():
         
     except Exception as e:
         logger.error(f"Error en rh_contrato_nuevo: {e}")
-        flash('Error al crear el contrato', 'error')
+        flash(f'Error al crear el contrato: {str(e)}', 'error')
         return redirect(url_for('rh_contratos'))
         
 @app.route('/rh')
@@ -2823,6 +2832,7 @@ def rh_capacitaciones():
     except Exception as e:
         logger.error(f"Error en rh_capacitaciones: {e}")
         return render_template('rh/rh_capacitaciones.html', capacitaciones=[])
+        
 @app.route('/rh/capacitacion/<int:id>')
 @login_required
 def rh_capacitacion_detalle(id):
