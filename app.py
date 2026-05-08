@@ -2734,6 +2734,9 @@ def rh_procesos():
             return redirect(url_for('rh_procesos'))
         
         try:
+            conn = crear_conexion()
+            cursor = conn.cursor()
+            
             nombre = request.form.get('nombre')
             descripcion = request.form.get('descripcion')
             tipo = request.form.get('tipo')
@@ -2742,10 +2745,10 @@ def rh_procesos():
             
             if not nombre or not tipo:
                 flash('Nombre y tipo son obligatorios', 'error')
+                cursor.close()
+                conn.close()
                 return redirect(url_for('rh_procesos'))
             
-            conn = crear_conexion()
-            cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO rh_procesos (nombre, descripcion, tipo, prioridad, fecha_limite, estado, avance)
                 VALUES (%s, %s, %s, %s, %s, 'pendiente', 0) RETURNING id
@@ -2758,7 +2761,7 @@ def rh_procesos():
             flash('Proceso creado correctamente', 'success')
         except Exception as e:
             logger.error(f"Error al crear proceso: {e}")
-            flash('Error al crear el proceso', 'error')
+            flash(f'Error al crear el proceso: {str(e)}', 'error')
         
         return redirect(url_for('rh_procesos'))
     
@@ -2772,7 +2775,7 @@ def rh_procesos():
         tipo_filtro = request.args.get('tipo', '')
         estado_filtro = request.args.get('estado', '')
         
-        # Construir consulta
+        # Consulta simplificada - sin JOIN con empleados por ahora
         query = """
             SELECT 
                 p.id, 
@@ -2784,11 +2787,8 @@ def rh_procesos():
                 p.fecha_limite,
                 p.avance,
                 p.fecha_inicio,
-                p.fecha_completado,
-                e.primer_nombre as responsable_nombre,
-                e.primer_apellido as responsable_apellido
+                p.fecha_completado
             FROM rh_procesos p
-            LEFT JOIN rh_empleados e ON p.responsable_id = e.id
             WHERE 1=1
         """
         params = []
@@ -2805,15 +2805,7 @@ def rh_procesos():
             query += " AND p.estado = %s"
             params.append(estado_filtro)
         
-        query += """
-            ORDER BY 
-                CASE p.estado 
-                    WHEN 'pendiente' THEN 1 
-                    WHEN 'en_proceso' THEN 2 
-                    ELSE 3 
-                END,
-                p.fecha_limite ASC NULLS LAST
-        """
+        query += " ORDER BY p.id DESC"
         
         cursor.execute(query, params)
         procesos = cursor.fetchall()
@@ -2822,18 +2814,18 @@ def rh_procesos():
         try:
             cursor.execute("""
                 SELECT 
-                    COUNT(*) FILTER (WHERE estado = 'pendiente') as pendientes,
-                    COUNT(*) FILTER (WHERE estado = 'en_proceso') as en_proceso,
-                    COUNT(*) FILTER (WHERE estado = 'completado') as completados,
-                    COUNT(*) FILTER (WHERE estado = 'cancelado') as cancelados
+                    SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as pendientes,
+                    SUM(CASE WHEN estado = 'en_proceso' THEN 1 ELSE 0 END) as en_proceso,
+                    SUM(CASE WHEN estado = 'completado' THEN 1 ELSE 0 END) as completados,
+                    SUM(CASE WHEN estado = 'cancelado' THEN 1 ELSE 0 END) as cancelados
                 FROM rh_procesos
             """)
             stats_row = cursor.fetchone()
             stats = {
-                'pendientes': stats_row[0] if stats_row else 0,
-                'en_proceso': stats_row[1] if stats_row else 0,
-                'completados': stats_row[2] if stats_row else 0,
-                'cancelados': stats_row[3] if stats_row else 0
+                'pendientes': stats_row[0] if stats_row and stats_row[0] else 0,
+                'en_proceso': stats_row[1] if stats_row and stats_row[1] else 0,
+                'completados': stats_row[2] if stats_row and stats_row[2] else 0,
+                'cancelados': stats_row[3] if stats_row and stats_row[3] else 0
             }
         except Exception as e:
             logger.warning(f"Error al calcular estadísticas: {e}")
@@ -2846,7 +2838,7 @@ def rh_procesos():
         
     except Exception as e:
         logger.error(f"Error en rh_procesos: {e}")
-        flash('Error al cargar los procesos', 'error')
+        flash(f'Error al cargar los procesos: {str(e)}', 'error')
         return render_template('rh/rh_procesos.html', procesos=[], stats={'pendientes': 0, 'en_proceso': 0, 'completados': 0, 'cancelados': 0})
 
 @app.route('/rh/proceso/<int:id>')
