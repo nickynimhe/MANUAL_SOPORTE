@@ -2735,13 +2735,13 @@ def rh_procesos():
         
         try:
             nombre = request.form.get('nombre')
+            descripcion = request.form.get('descripcion')
             tipo = request.form.get('tipo')
             prioridad = request.form.get('prioridad', 'media')
-            fecha_limite = request.form.get('fecha_limite')
-            descripcion = request.form.get('descripcion')
+            fecha_limite = request.form.get('fecha_limite') or None
             
             if not nombre or not tipo:
-                flash('❌ Nombre y tipo son obligatorios', 'error')
+                flash('Nombre y tipo son obligatorios', 'error')
                 return redirect(url_for('rh_procesos'))
             
             conn = crear_conexion()
@@ -2750,11 +2750,12 @@ def rh_procesos():
                 INSERT INTO rh_procesos (nombre, descripcion, tipo, prioridad, fecha_limite, estado, avance)
                 VALUES (%s, %s, %s, %s, %s, 'pendiente', 0) RETURNING id
             """, (nombre, descripcion, tipo, prioridad, fecha_limite))
+            
             conn.commit()
             cursor.close()
             conn.close()
             
-            flash('✅ Proceso creado correctamente', 'success')
+            flash('Proceso creado correctamente', 'success')
         except Exception as e:
             logger.error(f"Error al crear proceso: {e}")
             flash('Error al crear el proceso', 'error')
@@ -2765,7 +2766,14 @@ def rh_procesos():
     try:
         conn = crear_conexion()
         cursor = conn.cursor()
-        cursor.execute("""
+        
+        # Obtener filtros
+        busqueda = request.args.get('q', '')
+        tipo_filtro = request.args.get('tipo', '')
+        estado_filtro = request.args.get('estado', '')
+        
+        # Construir consulta
+        query = """
             SELECT 
                 p.id, 
                 p.nombre, 
@@ -2781,6 +2789,23 @@ def rh_procesos():
                 e.primer_apellido as responsable_apellido
             FROM rh_procesos p
             LEFT JOIN rh_empleados e ON p.responsable_id = e.id
+            WHERE 1=1
+        """
+        params = []
+        
+        if busqueda:
+            query += " AND (p.nombre ILIKE %s OR p.descripcion ILIKE %s)"
+            params.extend([f'%{busqueda}%', f'%{busqueda}%'])
+        
+        if tipo_filtro:
+            query += " AND p.tipo = %s"
+            params.append(tipo_filtro)
+        
+        if estado_filtro:
+            query += " AND p.estado = %s"
+            params.append(estado_filtro)
+        
+        query += """
             ORDER BY 
                 CASE p.estado 
                     WHEN 'pendiente' THEN 1 
@@ -2788,14 +2813,41 @@ def rh_procesos():
                     ELSE 3 
                 END,
                 p.fecha_limite ASC NULLS LAST
-        """)
+        """
+        
+        cursor.execute(query, params)
         procesos = cursor.fetchall()
+        
+        # Calcular estadísticas
+        try:
+            cursor.execute("""
+                SELECT 
+                    COUNT(*) FILTER (WHERE estado = 'pendiente') as pendientes,
+                    COUNT(*) FILTER (WHERE estado = 'en_proceso') as en_proceso,
+                    COUNT(*) FILTER (WHERE estado = 'completado') as completados,
+                    COUNT(*) FILTER (WHERE estado = 'cancelado') as cancelados
+                FROM rh_procesos
+            """)
+            stats_row = cursor.fetchone()
+            stats = {
+                'pendientes': stats_row[0] if stats_row else 0,
+                'en_proceso': stats_row[1] if stats_row else 0,
+                'completados': stats_row[2] if stats_row else 0,
+                'cancelados': stats_row[3] if stats_row else 0
+            }
+        except Exception as e:
+            logger.warning(f"Error al calcular estadísticas: {e}")
+            stats = {'pendientes': 0, 'en_proceso': 0, 'completados': 0, 'cancelados': 0}
+        
         cursor.close()
         conn.close()
-        return render_template('rh/rh_procesos.html', procesos=procesos)
+        
+        return render_template('rh/rh_procesos.html', procesos=procesos, stats=stats)
+        
     except Exception as e:
         logger.error(f"Error en rh_procesos: {e}")
-        return render_template('rh/rh_procesos.html', procesos=[])
+        flash('Error al cargar los procesos', 'error')
+        return render_template('rh/rh_procesos.html', procesos=[], stats={'pendientes': 0, 'en_proceso': 0, 'completados': 0, 'cancelados': 0})
 
 @app.route('/rh/proceso/<int:id>')
 @login_required
