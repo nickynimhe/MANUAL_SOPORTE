@@ -2801,11 +2801,10 @@ def rh_sancion_nueva():
         conn = crear_conexion()
         cursor = conn.cursor()
         
-        # Obtener empleados activos para el select
+        # Obtener empleados para el select
         cursor.execute("""
-            SELECT e.id, e.primer_nombre, e.primer_apellido, e.documento, c.nombre as cargo
+            SELECT e.id, e.primer_nombre, e.primer_apellido, e.documento
             FROM rh_empleados e
-            LEFT JOIN rh_cargos c ON e.cargo_id = c.id
             WHERE e.estado = 'activo'
             ORDER BY e.primer_apellido
         """)
@@ -2839,6 +2838,7 @@ def rh_sancion_nueva():
         cursor.close()
         conn.close()
         return render_template('rh/rh_sancion_nueva.html', empleados=empleados)
+        
     except Exception as e:
         logger.error(f"Error en rh_sancion_nueva: {e}")
         flash('Error al registrar la sanción', 'error')
