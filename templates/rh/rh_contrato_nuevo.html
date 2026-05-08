@@ -16,55 +16,56 @@
             </div>
         </div>
         <div class="card-body p-4">
-            <form method="POST" action="{{ url_for('rh_contrato_nuevo') }}" enctype="multipart/form-data">
+            <form method="POST">
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Empleado *</label>
                         <select name="empleado_id" class="form-select rounded-3" required>
                             <option value="">Seleccione un empleado</option>
                             {% for emp in empleados %}
-                            <option value="{{ emp[0] }}">{{ emp[3] }} {{ emp[4] }} {{ emp[5] }} {{ emp[6] }} - {{ emp[2] }}</option>
+                            <option value="{{ emp[0] }}">{{ emp[1] }} {{ emp[2] }} - {{ emp[3] }}</option>
                             {% endfor %}
                         </select>
                     </div>
+                    
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Tipo de Contrato *</label>
                         <select name="tipo_contrato" class="form-select rounded-3" required>
-                            <option value="Término Indefinido">Término Indefinido</option>
-                            <option value="Término Fijo">Término Fijo</option>
-                            <option value="Prestación de Servicios">Prestación de Servicios</option>
-                            <option value="Obra Labor">Obra Labor</option>
-                            <option value="Aprendizaje">Aprendizaje</option>
-                            <option value="Prácticas">Prácticas</option>
+                            <option value="">Seleccione un tipo</option>
+                            <option value="termino_fijo">Término Fijo</option>
+                            <option value="indefinido">Término Indefinido</option>
+                            <option value="obra_labor">Obra o Labor</option>
+                            <option value="aprendizaje">Aprendizaje</option>
+                            <option value="prestacion_servicios">Prestación de Servicios</option>
                         </select>
                     </div>
+                    
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Fecha Inicio *</label>
                         <input type="date" name="fecha_inicio" class="form-control rounded-3" required>
                     </div>
+                    
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Fecha Fin</label>
                         <input type="date" name="fecha_fin" class="form-control rounded-3">
                         <small class="text-muted">Dejar vacío si es indefinido</small>
                     </div>
+                    
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Salario Contratado *</label>
-                        <input type="number" step="0.01" name="salario_contratado" class="form-control rounded-3" required>
+                        <input type="number" step="0.01" name="salario_contratado" class="form-control rounded-3" placeholder="0.00" required>
                     </div>
+                    
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Estado</label>
                         <select name="estado" class="form-select rounded-3">
                             <option value="activo">Activo</option>
-                            <option value="inactivo">Inactivo</option>
                             <option value="finalizado">Finalizado</option>
                             <option value="suspendido">Suspendido</option>
+                            <option value="terminado">Terminado</option>
                         </select>
                     </div>
-                    <div class="col-12">
-                        <label class="form-label fw-semibold">Archivo PDF (Opcional)</label>
-                        <input type="file" name="archivo_pdf" class="form-control rounded-3" accept=".pdf">
-                        <small class="text-muted">Puede subir el contrato en formato PDF</small>
-                    </div>
+                    
                     <div class="col-12">
                         <hr>
                         <div class="d-flex justify-content-end gap-2">
@@ -81,134 +82,4 @@
         </div>
     </div>
 </div>
-
-<script>
-// Mostrar/ocultar campo de fecha fin según tipo de contrato
-function toggleFechaFin() {
-    const tipo = document.getElementById('tipo_contrato').value;
-    const campoFechaFin = document.getElementById('campo_fecha_fin');
-    const campoDuracion = document.getElementById('campo_duracion');
-    const fechaFinInput = document.getElementById('fecha_fin');
-    const msgFechaFin = document.getElementById('msg_fecha_fin');
-    
-    if (tipo === 'termino_indefinido') {
-        campoFechaFin.style.display = 'none';
-        campoDuracion.style.display = 'none';
-        fechaFinInput.removeAttribute('required');
-        fechaFinInput.value = '';
-    } else if (tipo === 'termino_fijo') {
-        campoFechaFin.style.display = 'block';
-        campoDuracion.style.display = 'block';
-        fechaFinInput.required = true;
-        msgFechaFin.textContent = 'Obligatorio para contratos a término fijo';
-    } else if (tipo === 'obra_labor') {
-        campoFechaFin.style.display = 'block';
-        campoDuracion.style.display = 'none';
-        fechaFinInput.required = true;
-        msgFechaFin.textContent = 'Fecha estimada de finalización de la obra';
-    } else if (tipo === 'aprendizaje' || tipo === 'prestacion_servicios') {
-        campoFechaFin.style.display = 'block';
-        campoDuracion.style.display = 'none';
-        fechaFinInput.required = true;
-        msgFechaFin.textContent = 'Fecha de finalización del contrato';
-    }
-}
-
-// Calcular fecha fin basada en duración
-function calcularFechaFin() {
-    const fechaInicio = document.getElementById('fecha_inicio').value;
-    const duracionMeses = document.getElementById('duracion_meses').value;
-    const tipo = document.getElementById('tipo_contrato').value;
-    
-    if (fechaInicio && duracionMeses && tipo === 'termino_fijo') {
-        const inicio = new Date(fechaInicio);
-        const fin = new Date(inicio);
-        fin.setMonth(fin.getMonth() + parseInt(duracionMeses));
-        
-        // Formatear fecha YYYY-MM-DD
-        const year = fin.getFullYear();
-        const month = String(fin.getMonth() + 1).padStart(2, '0');
-        const day = String(fin.getDate()).padStart(2, '0');
-        document.getElementById('fecha_fin').value = `${year}-${month}-${day}`;
-    }
-}
-
-// Calcular salario total
-function calcularSalarioTotal() {
-    const salario = parseFloat(document.getElementById('salario').value) || 0;
-    const auxilio = parseFloat(document.getElementById('auxilio_transporte').value) || 0;
-    const total = salario + auxilio;
-    
-    document.getElementById('salario_total').textContent = '$' + total.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
-}
-
-// Event listeners
-document.getElementById('salario').addEventListener('input', calcularSalarioTotal);
-document.getElementById('auxilio_transporte').addEventListener('input', calcularSalarioTotal);
-document.getElementById('duracion_meses').addEventListener('input', calcularFechaFin);
-
-// Validación del formulario
-document.getElementById('formNuevoContrato').addEventListener('submit', function(e) {
-    const empleado = document.getElementById('empleado_id').value;
-    const tipo = document.getElementById('tipo_contrato').value;
-    const fechaInicio = document.getElementById('fecha_inicio').value;
-    const fechaFin = document.getElementById('fecha_fin').value;
-    const salario = document.getElementById('salario').value;
-    const archivo = document.getElementById('archivo').files[0];
-    
-    let error = '';
-    
-    if (!empleado) error = 'Debes seleccionar un empleado';
-    else if (!tipo) error = 'Debes seleccionar un tipo de contrato';
-    else if (!fechaInicio) error = 'La fecha de inicio es obligatoria';
-    else if (tipo !== 'termino_indefinido' && !fechaFin) error = 'La fecha de fin es obligatoria para este tipo de contrato';
-    else if (!salario || salario <= 0) error = 'El salario debe ser mayor a 0';
-    else if (!archivo) error = 'Debes subir el archivo del contrato';
-    else if (archivo.type !== 'application/pdf') error = 'El archivo debe ser un PDF';
-    else if (archivo.size > 5 * 1024 * 1024) error = 'El archivo no debe superar los 5MB';
-    
-    if (error) {
-        e.preventDefault();
-        alert('❌ ' + error);
-    }
-});
-
-// Cargar datos del empleado automáticamente (opcional)
-document.getElementById('empleado_id').addEventListener('change', function() {
-    // Aquí se podría cargar el cargo y salario base del empleado
-    console.log('Empleado seleccionado:', this.value);
-});
-
-// Inicializar al cargar
-document.addEventListener('DOMContentLoaded', function() {
-    toggleFechaFin();
-    calcularSalarioTotal();
-});
-</script>
-
-<style>
-.form-section {
-    background: #f8f9fc;
-    border-radius: 16px;
-    padding: 20px;
-    transition: all 0.3s ease;
-}
-.form-section:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-.form-control, .form-select {
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    transition: all 0.2s ease;
-}
-.form-control:focus, .form-select:focus {
-    border-color: #2658A5;
-    box-shadow: 0 0 0 3px rgba(38,88,165,0.15);
-}
-.input-group-text {
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-}
-</style>
 {% endblock %}
