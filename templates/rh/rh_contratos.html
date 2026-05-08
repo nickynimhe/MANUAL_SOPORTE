@@ -4,448 +4,69 @@
 
 {% block rh_content %}
 <div class="container-fluid px-0 px-md-3 py-4">
-
-    <!-- Header -->
-    <div class="card border-0 shadow-sm overflow-hidden mb-4">
-        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-white p-2" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-file-contract fa-xl" style="color: #2658A5;"></i>
-                    </div>
-                    <div>
-                        <h4 class="mb-0 fw-semibold text-white">Gestión de Contratos</h4>
-                        <p class="text-white-80 mb-0 small">Administración de contratos laborales</p>
-                    </div>
-                </div>
-                <button class="btn btn-light btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoContrato">
-                    <i class="fas fa-plus me-1"></i> Nuevo Contrato
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Filtros y búsqueda -->
-    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
-        <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-            <h5 class="mb-0 fw-semibold text-white">
-                <i class="fas fa-filter me-2"></i> Filtros de Búsqueda
-            </h5>
-        </div>
-        <div class="card-body p-4">
-            <form method="GET" class="row g-3">
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;">
-                            <i class="fas fa-search" style="color: #2658A5;"></i>
-                        </span>
-                        <input type="text" name="q" class="form-control border-start-0 rounded-3" 
-                               placeholder="Buscar por empleado o tipo de contrato..." 
-                               value="{{ request.args.get('q', '') }}"
-                               style="border-radius: 0 12px 12px 0;">
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <select name="tipo" class="form-select rounded-3">
-                        <option value="">Todos los tipos</option>
-                        <option value="termino_fijo">📄 Término Fijo</option>
-                        <option value="indefinido">♾️ Término Indefinido</option>
-                        <option value="obra_labor">🏗️ Obra o Labor</option>
-                        <option value="aprendizaje">🎓 Aprendizaje</option>
-                        <option value="prestacion_servicios">📋 Prestación de Servicios</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select name="estado" class="form-select rounded-3">
-                        <option value="">Todos los estados</option>
-                        <option value="activo">✅ Activo</option>
-                        <option value="finalizado">📌 Finalizado</option>
-                        <option value="suspendido">⏸️ Suspendido</option>
-                        <option value="terminado">❌ Terminado</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100 rounded-3" style="background: linear-gradient(135deg, #2658A5 0%, #1a3f73 100%); border: none;">
-                        <i class="fas fa-search me-1"></i> Filtrar
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Listado de Contratos -->
-    <div class="card border-0 shadow-sm overflow-hidden">
+    <div class="card border-0 shadow-sm">
         <div class="card-header py-3" style="background: linear-gradient(135deg, #282F4B 0%, #1a1f33 100%);">
             <div class="d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-semibold text-white">
-                    <i class="fas fa-list me-2"></i> Listado de Contratos
-                    <span class="badge bg-white text-dark rounded-pill ms-2 px-3">{{ contratos|default(8) }}</span>
+                    <i class="fas fa-file-signature me-2"></i> Gestión de Contratos
+                    <span class="badge bg-white text-dark rounded-pill ms-2">{{ contratos|length }}</span>
                 </h5>
-                <div class="btn-group">
-                    <button class="btn btn-light btn-sm shadow-sm" onclick="exportarContratos()">
-                        <i class="fas fa-file-excel me-1"></i> Exportar
-                    </button>
-                </div>
+                <a href="{{ url_for('rh_contrato_nuevo') }}" class="btn btn-light btn-sm">
+                    <i class="fas fa-plus me-1"></i> Nuevo Contrato
+                </a>
             </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
-                    <thead style="background: #f8f9fc;">
+                    <thead class="table-light">
                         <tr>
-                            <th style="padding: 16px 12px;">#</th>
-                            <th style="padding: 16px 12px;">Empleado</th>
-                            <th style="padding: 16px 12px;">Documento</th>
-                            <th style="padding: 16px 12px;">Tipo de Contrato</th>
-                            <th style="padding: 16px 12px;">Fecha Inicio</th>
-                            <th style="padding: 16px 12px;">Fecha Fin</th>
-                            <th style="padding: 16px 12px;">Salario</th>
-                            <th style="padding: 16px 12px;">Estado</th>
-                            <th style="padding: 16px 12px;">Acciones</th>
+                            <th>ID</th>
+                            <th>Empleado</th>
+                            <th>Tipo Contrato</th>
+                            <th>Fecha Inicio</th>
+                            <th>Fecha Fin</th>
+                            <th>Salario</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Contrato 1 -->
-                        <tr class="contrato-fila">
-                            <td class="align-middle">1</td>
-                            <td class="align-middle fw-semibold">María González López</td>
-                            <td class="align-middle">CC 12345678</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
-                                    <i class="fas fa-infinity me-1"></i> Término Indefinido
-                                </span>
-                            </td>
-                            <td class="align-middle">15/03/2020</td>
-                            <td class="align-middle">-</td>
-                            <td class="align-middle">$ 4,500,000</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
-                                    <i class="fas fa-check-circle me-1"></i> Activo
-                                </span>
-                            </td>
-                            <td class="align-middle">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verContrato(1)">
+                        {% if contratos %}
+                            {% for con in contratos %}
+                            <tr>
+                                <td>{{ con[0] }}</td>
+                                <td>{{ con[1] }} {{ con[2] }}</td>  <!-- nombre empleado -->
+                                <td>{{ con[4] }}</td>  <!-- tipo_contrato -->
+                                <td>{{ con[5]|format_date if con[5] else 'N/A' }}</td>
+                                <td>{{ con[6]|format_date if con[6] else 'Indefinido' }}</td>
+                                <td>$ {{ "{:,.0f}".format(con[7]|float).replace(',', '.') if con[7] else 'N/A' }}</td>
+                                <td>
+                                    {% if con[8] == 'activo' %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ con[8] }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('rh_contrato_detalle', id=con[0]) }}" 
+                                       class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarContrato(1)">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="renovarContrato(1)">
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <!-- Contrato 2 -->
-                        <tr class="contrato-fila">
-                            <td class="align-middle">2</td>
-                            <td class="align-middle fw-semibold">Carlos Rodríguez Pérez</td>
-                            <td class="align-middle">CC 87654321</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
-                                    <i class="fas fa-calendar-alt me-1"></i> Término Fijo
-                                </span>
-                            </td>
-                            <td class="align-middle">10/06/2021</td>
-                            <td class="align-middle">10/06/2024</td>
-                            <td class="align-middle">$ 3,200,000</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
-                                    <i class="fas fa-hourglass-half me-1"></i> Próximo a vencer
-                                </span>
-                            </td>
-                            <td class="align-middle">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verContrato(2)">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarContrato(2)">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="renovarContrato(2)">
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <!-- Contrato 3 -->
-                        <tr class="contrato-fila">
-                            <td class="align-middle">3</td>
-                            <td class="align-middle fw-semibold">Ana Martínez Suárez</td>
-                            <td class="align-middle">CC 11223344</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
-                                    <i class="fas fa-infinity me-1"></i> Término Indefinido
-                                </span>
-                            </td>
-                            <td class="align-middle">05/01/2022</td>
-                            <td class="align-middle">-</td>
-                            <td class="align-middle">$ 2,800,000</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
-                                    <i class="fas fa-check-circle me-1"></i> Activo
-                                </span>
-                            </td>
-                            <td class="align-middle">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verContrato(3)">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarContrato(3)">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3" style="background: #6c757d; color: white;" disabled>
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <!-- Contrato 4 -->
-                        <tr class="contrato-fila">
-                            <td class="align-middle">4</td>
-                            <td class="align-middle fw-semibold">Jorge Ramírez Castro</td>
-                            <td class="align-middle">CC 55667788</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">
-                                    <i class="fas fa-hard-hat me-1"></i> Obra o Labor
-                                </span>
-                            </td>
-                            <td class="align-middle">20/08/2023</td>
-                            <td class="align-middle">20/12/2024</td>
-                            <td class="align-middle">$ 1,800,000</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
-                                    <i class="fas fa-hourglass-half me-1"></i> Próximo a vencer
-                                </span>
-                            </td>
-                            <td class="align-middle">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verContrato(4)">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarContrato(4)">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3" style="background: #28a745; color: white;" onclick="renovarContrato(4)">
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <!-- Contrato 5 -->
-                        <tr class="contrato-fila">
-                            <td class="align-middle">5</td>
-                            <td class="align-middle fw-semibold">Laura Sánchez Mendoza</td>
-                            <td class="align-middle">CC 99887766</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
-                                    <i class="fas fa-infinity me-1"></i> Término Indefinido
-                                </span>
-                            </td>
-                            <td class="align-middle">12/09/2019</td>
-                            <td class="align-middle">-</td>
-                            <td class="align-middle">$ 2,200,000</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
-                                    <i class="fas fa-check-circle me-1"></i> Activo
-                                </span>
-                            </td>
-                            <td class="align-middle">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verContrato(5)">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarContrato(5)">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3" style="background: #6c757d; color: white;" disabled>
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <!-- Contrato 6 -->
-                        <tr class="contrato-fila">
-                            <td class="align-middle">6</td>
-                            <td class="align-middle fw-semibold">Andrés Felipe Méndez</td>
-                            <td class="align-middle">CC 44332211</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
-                                    <i class="fas fa-chalkboard-user me-1"></i> Aprendizaje
-                                </span>
-                            </td>
-                            <td class="align-middle">01/02/2024</td>
-                            <td class="align-middle">31/01/2025</td>
-                            <td class="align-middle">$ 1,200,000</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
-                                    <i class="fas fa-check-circle me-1"></i> Activo
-                                </span>
-                            </td>
-                            <td class="align-middle">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verContrato(6)">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarContrato(6)">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3" style="background: #6c757d; color: white;" disabled>
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-
-                        <!-- Contrato 7 (Finalizado) -->
-                        <tr class="contrato-fila">
-                            <td class="align-middle">7</td>
-                            <td class="align-middle fw-semibold">Patricia Rojas Díaz</td>
-                            <td class="align-middle">CC 66778899</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #2658A5; color: white;">
-                                    <i class="fas fa-calendar-alt me-1"></i> Término Fijo
-                                </span>
-                            </td>
-                            <td class="align-middle">10/01/2022</td>
-                            <td class="align-middle">10/01/2024</td>
-                            <td class="align-middle">$ 3,500,000</td>
-                            <td class="align-middle">
-                                <span class="badge rounded-pill px-3 py-2" style="background: #6c757d; color: white;">
-                                    <i class="fas fa-check-circle me-1"></i> Finalizado
-                                </span>
-                            </td>
-                            <td class="align-middle">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #2658A5; color: white;" onclick="verContrato(7)">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3 me-1" style="background: #FFCC29; color: #282F4B;" onclick="editarContrato(7)">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm rounded-3" style="background: #6c757d; color: white;" disabled>
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="fas fa-file-contract fa-2x text-muted mb-2 d-block"></i>
+                                    No hay contratos registrados
+                                    <a href="{{ url_for('rh_contrato_nuevo') }}" class="btn btn-sm btn-primary mt-2 d-block">Crear primer contrato</a>
+                                </td>
+                            </tr>
+                        {% endif %}
                     </tbody>
                 </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Resumen de contratos -->
-    <div class="row mt-4 g-3">
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
-                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(38,88,165,0.1);">
-                    <i class="fas fa-file-contract" style="color: #2658A5;"></i>
-                </div>
-                <h5 class="fw-bold mb-0" style="color: #2658A5;">8</h5>
-                <small class="text-muted">Total Contratos</small>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
-                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(40,167,69,0.1);">
-                    <i class="fas fa-check-circle" style="color: #28a745;"></i>
-                </div>
-                <h5 class="fw-bold mb-0" style="color: #28a745;">5</h5>
-                <small class="text-muted">Activos</small>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
-                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(255,204,41,0.15);">
-                    <i class="fas fa-hourglass-half" style="color: #FFCC29;"></i>
-                </div>
-                <h5 class="fw-bold mb-0" style="color: #FFCC29;">2</h5>
-                <small class="text-muted">Próximos a vencer</small>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm text-center p-3 hover-lift">
-                <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; background: rgba(194,53,56,0.1);">
-                    <i class="fas fa-calendar-times" style="color: #C23538;"></i>
-                </div>
-                <h5 class="fw-bold mb-0" style="color: #C23538;">3</h5>
-                <small class="text-muted">Finalizados</small>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Nuevo Contrato -->
-<div class="modal fade" id="modalNuevoContrato" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-plus-circle me-2"></i> Nuevo Contrato
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <form id="formNuevoContrato" method="POST" action="#">
-                    <div class="row g-3">
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Empleado *</label>
-                            <select name="empleado_id" class="form-select rounded-3" required>
-                                <option value="">Seleccionar empleado...</option>
-                                <option value="1">María González López - CC 12345678</option>
-                                <option value="2">Carlos Rodríguez Pérez - CC 87654321</option>
-                                <option value="3">Ana Martínez Suárez - CC 11223344</option>
-                                <option value="4">Jorge Ramírez Castro - CC 55667788</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Tipo de Contrato *</label>
-                            <select name="tipo_contrato" class="form-select rounded-3" required>
-                                <option value="">Seleccionar tipo...</option>
-                                <option value="termino_fijo">📄 Término Fijo</option>
-                                <option value="indefinido">♾️ Término Indefinido</option>
-                                <option value="obra_labor">🏗️ Obra o Labor</option>
-                                <option value="aprendizaje">🎓 Aprendizaje</option>
-                                <option value="prestacion_servicios">📋 Prestación de Servicios</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Fecha de Inicio *</label>
-                            <input type="date" name="fecha_inicio" class="form-control rounded-3" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Fecha de Fin</label>
-                            <input type="date" name="fecha_fin" class="form-control rounded-3">
-                            <small class="text-muted">Obligatorio para término fijo</small>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Salario Contratado *</label>
-                            <input type="number" name="salario" class="form-control rounded-3" step="0.01" required>
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Documento (PDF) *</label>
-                            <input type="file" name="archivo" class="form-control rounded-3" accept=".pdf" required>
-                            <small class="text-muted">Subir el contrato en formato PDF</small>
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Observaciones</label>
-                            <textarea name="observaciones" class="form-control rounded-3" rows="3"></textarea>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer border-0 pt-0 pb-4 px-4">
-                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" form="formNuevoContrato" class="btn rounded-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
-                    <i class="fas fa-save me-2"></i> Crear Contrato
-                </button>
             </div>
         </div>
     </div>
