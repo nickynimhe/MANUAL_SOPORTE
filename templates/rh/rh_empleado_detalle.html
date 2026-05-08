@@ -1,486 +1,135 @@
 {% extends "base_rh.html" %}
 
-{% block title %}Detalle de Empleado - Recursos Humanos{% endblock %}
+{% block title %}Detalle del Empleado{% endblock %}
 
 {% block rh_content %}
-<div class="container-fluid px-0 px-md-3 py-4">
-
-    <!-- Header con información del empleado -->
-    <div class="card border-0 shadow-sm overflow-hidden mb-4">
-        <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-white p-2" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-user-tie fa-2x" style="color: #2658A5;"></i>
-                    </div>
-                    <div>
-                        <h4 class="mb-0 fw-semibold text-white">{{ empleado.primer_nombre }} {{ empleado.primer_apellido }}</h4>
-                        <p class="text-white-80 mb-0 small">
-                            <i class="fas fa-id-card me-1"></i> {{ empleado.tipo_documento }} {{ empleado.documento }}
-                        </p>
-                    </div>
+<div class="container py-4">
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white py-3 border-0">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <a href="{{ url_for('rh_empleados') }}" class="btn btn-sm btn-outline-secondary me-3">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <h5 class="mb-0 fw-semibold" style="color: #2658A5;">
+                        <i class="fas fa-user me-2"></i>Detalle del Empleado
+                    </h5>
                 </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-light btn-sm shadow-sm" onclick="editarEmpleado({{ empleado.id }})">
-                        <i class="fas fa-edit me-1"></i> Editar
-                    </button>
-                    <button class="btn btn-outline-light btn-sm" onclick="window.location.href='{{ url_for('rh_empleados') }}'">
-                        <i class="fas fa-arrow-left me-1"></i> Volver
-                    </button>
-                </div>
+                <a href="{{ url_for('rh_empleado_editar', id=empleado[0]) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-edit me-1"></i> Editar
+                </a>
             </div>
         </div>
-    </div>
-
-    <div class="row g-4">
-        <!-- COLUMNA IZQUIERDA - Información Personal -->
-        <div class="col-lg-4">
-            <!-- Foto / Avatar -->
-            <div class="card border-0 shadow-sm overflow-hidden mb-4">
-                <div class="card-body p-4 text-center">
-                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 120px; height: 120px; background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
-                        <i class="fas fa-user fa-4x text-white"></i>
-                    </div>
-                    <h5 class="fw-bold mb-1">{{ empleado.primer_nombre }} {{ empleado.primer_apellido }}</h5>
-                    <p class="text-muted small">{{ empleado.cargo }}</p>
-                    <div class="d-flex justify-content-center gap-2 mt-2">
-                        {% if empleado.estado == 'activo' %}
-                        <span class="badge rounded-pill px-3 py-2" style="background: #28a745; color: white;">
-                            <i class="fas fa-check-circle me-1"></i> Activo
-                        </span>
-                        {% elif empleado.estado == 'vacaciones' %}
-                        <span class="badge rounded-pill px-3 py-2" style="background: #FFCC29; color: #282F4B;">
-                            <i class="fas fa-umbrella-beach me-1"></i> Vacaciones
-                        </span>
-                        {% elif empleado.estado == 'incapacidad' %}
-                        <span class="badge rounded-pill px-3 py-2" style="background: #C23538; color: white;">
-                            <i class="fas fa-heartbeat me-1"></i> Incapacidad
-                        </span>
-                        {% else %}
-                        <span class="badge rounded-pill px-3 py-2" style="background: #6c757d; color: white;">
-                            <i class="fas fa-clock me-1"></i> Inactivo
-                        </span>
-                        {% endif %}
-                    </div>
+        <div class="card-body p-4">
+            {% if empleado %}
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-3">Información Personal</h6>
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td class="fw-semibold" style="width: 40%">Documento:</td>
+                            <td>{{ empleado[1] }} {{ empleado[2] }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Nombres:</td>
+                            <td>{{ empleado[3] }} {{ empleado[4] or '' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Apellidos:</td>
+                            <td>{{ empleado[5] }} {{ empleado[6] or '' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Email:</td>
+                            <td>{{ empleado[7] or 'No registrado' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Teléfono:</td>
+                            <td>{{ empleado[8] or 'No registrado' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Celular:</td>
+                            <td>{{ empleado[9] or 'No registrado' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Dirección:</td>
+                            <td>{{ empleado[10] or 'No registrada' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Fecha Nacimiento:</td>
+                            <td>{{ empleado[11]|format_date if empleado[11] else 'No registrada' }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted mb-3">Información Laboral</h6>
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td class="fw-semibold" style="width: 40%">Cargo:</td>
+                            <td>{{ empleado[12] }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Departamento:</td>
+                            <td>{{ empleado[13] }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Fecha Ingreso:</td>
+                            <td>{{ empleado[14]|format_date if empleado[14] else 'No registrada' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Fecha Retiro:</td>
+                            <td>{{ empleado[15]|format_date if empleado[15] else 'Activo' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Estado:</td>
+                            <td>
+                                {% if empleado[16] == 'activo' %}
+                                    <span class="badge bg-success">Activo</span>
+                                {% elif empleado[16] == 'vacaciones' %}
+                                    <span class="badge bg-warning text-dark">Vacaciones</span>
+                                {% elif empleado[16] == 'incapacidad' %}
+                                    <span class="badge bg-danger">Incapacidad</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ empleado[16] }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-semibold">Salario:</td>
+                            <td>$ {{ "{:,.0f}".format(empleado[17]|float).replace(',', '.') if empleado[17] else 'No registrado' }}</td>
+                        </tr>
+                    </table>
                 </div>
             </div>
 
-            <!-- Información de Contacto -->
-            <div class="card border-0 shadow-sm overflow-hidden mb-4">
-                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-                    <h6 class="mb-0 fw-semibold text-white">
-                        <i class="fas fa-address-card me-2"></i> Información de Contacto
-                    </h6>
-                </div>
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-start gap-3 mb-3 pb-2 border-bottom">
-                        <i class="fas fa-envelope mt-1" style="color: #2658A5;"></i>
-                        <div>
-                            <small class="text-muted d-block">Correo Electrónico</small>
-                            <span class="fw-semibold">{{ empleado.email }}</span>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-start gap-3 mb-3 pb-2 border-bottom">
-                        <i class="fas fa-phone mt-1" style="color: #28a745;"></i>
-                        <div>
-                            <small class="text-muted d-block">Teléfono</small>
-                            <span class="fw-semibold">{{ empleado.telefono or 'No registrado' }}</span>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-start gap-3 mb-3 pb-2 border-bottom">
-                        <i class="fas fa-mobile-alt mt-1" style="color: #FFCC29;"></i>
-                        <div>
-                            <small class="text-muted d-block">Celular</small>
-                            <span class="fw-semibold">{{ empleado.celular or 'No registrado' }}</span>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-start gap-3">
-                        <i class="fas fa-map-marker-alt mt-1" style="color: #C23538;"></i>
-                        <div>
-                            <small class="text-muted d-block">Dirección</small>
-                            <span class="fw-semibold">{{ empleado.direccion or 'No registrada' }}</span>
-                        </div>
-                    </div>
+            <!-- Contratos -->
+            {% if contratos %}
+            <div class="mt-4">
+                <h6 class="text-muted mb-3">Historial de Contratos</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr><th>Tipo</th><th>Fecha Inicio</th><th>Fecha Fin</th><th>Salario</th><th>Estado</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for con in contratos %}
+                            <tr>
+                                <td>{{ con[1]|replace('_', ' ')|title }}</td>
+                                <td>{{ con[2]|format_date }}</td>
+                                <td>{{ con[3]|format_date if con[3] else 'Indefinido' }}</td>
+                                <td>$ {{ "{:,.0f}".format(con[4]|float).replace(',', '.') if con[4] else 'N/A' }}</td>
+                                <td><span class="badge bg-{{ 'success' if con[5] == 'activo' else 'secondary' }}">{{ con[5] }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
+            {% endif %}
 
-            <!-- Información Personal Adicional -->
-            <div class="card border-0 shadow-sm overflow-hidden">
-                <div class="card-header py-3" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%);">
-                    <h6 class="mb-0 fw-semibold" style="color: #282F4B;">
-                        <i class="fas fa-user-circle me-2"></i> Datos Personales
-                    </h6>
-                </div>
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between py-2 border-bottom">
-                        <span class="text-muted">Fecha de Nacimiento</span>
-                        <span class="fw-semibold">{{ empleado.fecha_nacimiento or 'No registrada' }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between py-2 border-bottom">
-                        <span class="text-muted">Edad</span>
-                        <span class="fw-semibold">{{ empleado.edad or 'N/A' }} años</span>
-                    </div>
-                    <div class="d-flex justify-content-between py-2 border-bottom">
-                        <span class="text-muted">Tipo de Sangre</span>
-                        <span class="fw-semibold">{{ empleado.tipo_sangre or 'N/A' }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between py-2">
-                        <span class="text-muted">EPS</span>
-                        <span class="fw-semibold">{{ empleado.eps or 'No registrada' }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between py-2">
-                        <span class="text-muted">ARL</span>
-                        <span class="fw-semibold">{{ empleado.arl or 'No registrada' }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- COLUMNA DERECHA - Información Laboral y más -->
-        <div class="col-lg-8">
-            <!-- Información Laboral -->
-            <div class="card border-0 shadow-sm overflow-hidden mb-4">
-                <div class="card-header py-3" style="background: linear-gradient(135deg, #2658A5 0%, #282F4B 100%);">
-                    <h6 class="mb-0 fw-semibold text-white">
-                        <i class="fas fa-briefcase me-2"></i> Información Laboral
-                    </h6>
-                </div>
-                <div class="card-body p-4">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start gap-3 py-2">
-                                <i class="fas fa-user-tag mt-1" style="color: #2658A5;"></i>
-                                <div>
-                                    <small class="text-muted d-block">Cargo</small>
-                                    <span class="fw-semibold">{{ empleado.cargo }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start gap-3 py-2">
-                                <i class="fas fa-building mt-1" style="color: #28a745;"></i>
-                                <div>
-                                    <small class="text-muted d-block">Departamento</small>
-                                    <span class="fw-semibold">{{ empleado.departamento }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start gap-3 py-2">
-                                <i class="fas fa-calendar-alt mt-1" style="color: #FFCC29;"></i>
-                                <div>
-                                    <small class="text-muted d-block">Fecha de Ingreso</small>
-                                    <span class="fw-semibold">{{ empleado.fecha_ingreso }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start gap-3 py-2">
-                                <i class="fas fa-clock mt-1" style="color: #C23538;"></i>
-                                <div>
-                                    <small class="text-muted d-block">Antigüedad</small>
-                                    <span class="fw-semibold">{{ empleado.antiguedad or 'N/A' }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start gap-3 py-2">
-                                <i class="fas fa-money-bill-wave mt-1" style="color: #28a745;"></i>
-                                <div>
-                                    <small class="text-muted d-block">Salario Base</small>
-                                    <span class="fw-semibold">{{ empleado.salario|format_currency }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start gap-3 py-2">
-                                <i class="fas fa-chart-line mt-1" style="color: #FFCC29;"></i>
-                                <div>
-                                    <small class="text-muted d-block">Tipo de Contrato</small>
-                                    <span class="fw-semibold">{{ empleado.tipo_contrato or 'N/A' }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12">
-                            <div class="d-flex align-items-start gap-3 py-2">
-                                <i class="fas fa-user-check mt-1" style="color: #2658A5;"></i>
-                                <div>
-                                    <small class="text-muted d-block">Jefe Inmediato</small>
-                                    <span class="fw-semibold">{{ empleado.jefe_inmediato or 'No asignado' }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Contratos Activos -->
-            <div class="card border-0 shadow-sm overflow-hidden mb-4">
-                <div class="card-header py-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0 fw-semibold text-white">
-                            <i class="fas fa-file-contract me-2"></i> Contratos
-                        </h6>
-                        <button class="btn btn-light btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoContrato">
-                            <i class="fas fa-plus me-1"></i> Nuevo Contrato
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead style="background: #f8f9fc;">
-                                <tr>
-                                    <th style="padding: 12px;">Tipo</th>
-                                    <th style="padding: 12px;">Fecha Inicio</th>
-                                    <th style="padding: 12px;">Fecha Fin</th>
-                                    <th style="padding: 12px;">Salario</th>
-                                    <th style="padding: 12px;">Estado</th>
-                                    <th style="padding: 12px;">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="align-middle">Término Indefinido</td>
-                                    <td class="align-middle">15/03/2020</td>
-                                    <td class="align-middle">-</td>
-                                    <td class="align-middle">$ 4,500,000</td>
-                                    <td class="align-middle">
-                                        <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">Activo</span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="verContrato(1)">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="align-middle">Término Fijo</td>
-                                    <td class="align-middle">01/06/2023</td>
-                                    <td class="align-middle">31/05/2024</td>
-                                    <td class="align-middle">$ 4,500,000</td>
-                                    <td class="align-middle">
-                                        <span class="badge rounded-pill px-2 py-1" style="background: #FFCC29; color: #282F4B;">Próximo a vencer</span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="verContrato(2)">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Capacitaciones Realizadas -->
-            <div class="card border-0 shadow-sm overflow-hidden mb-4">
-                <div class="card-header py-3" style="background: linear-gradient(135deg, #FFCC29 0%, #FFA500 100%);">
-                    <h6 class="mb-0 fw-semibold" style="color: #282F4B;">
-                        <i class="fas fa-graduation-cap me-2"></i> Capacitaciones Realizadas
-                    </h6>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead style="background: #f8f9fc;">
-                                <tr>
-                                    <th style="padding: 12px;">Capacitación</th>
-                                    <th style="padding: 12px;">Fecha</th>
-                                    <th style="padding: 12px;">Duración</th>
-                                    <th style="padding: 12px;">Estado</th>
-                                    <th style="padding: 12px;">Certificado</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="align-middle">Seguridad Vial - Nivel Básico</td>
-                                    <td class="align-middle">15/02/2024</td>
-                                    <td class="align-middle">8 horas</td>
-                                    <td class="align-middle">
-                                        <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">Completada</span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;">
-                                            <i class="fas fa-download"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="align-middle">Liderazgo y Trabajo en Equipo</td>
-                                    <td class="align-middle">10/01/2024</td>
-                                    <td class="align-middle">16 horas</td>
-                                    <td class="align-middle">
-                                        <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">Completada</span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;">
-                                            <i class="fas fa-download"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="align-middle">Primeros Auxilios</td>
-                                    <td class="align-middle">Programada: 10/06/2024</td>
-                                    <td class="align-middle">4 horas</td>
-                                    <td class="align-middle">
-                                        <span class="badge rounded-pill px-2 py-1" style="background: #FFCC29; color: #282F4B;">Pendiente</span>
-                                    </td>
-                                    <td class="align-middle">
-                                        <span class="text-muted">-</span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Evaluaciones de Desempeño -->
-            <div class="card border-0 shadow-sm overflow-hidden">
-                <div class="card-header py-3" style="background: linear-gradient(135deg, #C23538 0%, #A73335 100%);">
-                    <h6 class="mb-0 fw-semibold text-white">
-                        <i class="fas fa-star me-2"></i> Evaluaciones de Desempeño
-                    </h6>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead style="background: #f8f9fc;">
-                                <tr>
-                                    <th style="padding: 12px;">Periodo</th>
-                                    <th style="padding: 12px;">Evaluador</th>
-                                    <th style="padding: 12px;">Puntaje</th>
-                                    <th style="padding: 12px;">Calificación</th>
-                                    <th style="padding: 12px;">Fecha</th>
-                                    <th style="padding: 12px;">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="align-middle">Ene-Jun 2023</td>
-                                    <td class="align-middle">María González</td>
-                                    <td class="align-middle">92/100</td>
-                                    <td class="align-middle">
-                                        <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">Excelente</span>
-                                    </td>
-                                    <td class="align-middle">30/06/2023</td>
-                                    <td class="align-middle">
-                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="verEvaluacion(1)">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="align-middle">Jul-Dic 2023</td>
-                                    <td class="align-middle">María González</td>
-                                    <td class="align-middle">88/100</td>
-                                    <td class="align-middle">
-                                        <span class="badge rounded-pill px-2 py-1" style="background: #28a745; color: white;">Sobresaliente</span>
-                                    </td>
-                                    <td class="align-middle">30/12/2023</td>
-                                    <td class="align-middle">
-                                        <button class="btn btn-sm rounded-3" style="background: #2658A5; color: white;" onclick="verEvaluacion(2)">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="align-middle">Ene-Jun 2024</td>
-                                    <td class="align-middle">Pendiente</td>
-                                    <td class="align-middle">-</td>
-                                    <td class="align-middle">
-                                        <span class="badge rounded-pill px-2 py-1" style="background: #FFCC29; color: #282F4B;">Pendiente</span>
-                                    </td>
-                                    <td class="align-middle">-</td>
-                                    <td class="align-middle">
-                                        <span class="text-muted">-</span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            {% else %}
+            <p class="text-center">Empleado no encontrado</p>
+            {% endif %}
         </div>
     </div>
 </div>
-
-<!-- Modal Nuevo Contrato -->
-<div class="modal fade" id="modalNuevoContrato" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-file-contract me-2"></i> Nuevo Contrato
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <form id="formNuevoContrato" method="POST" action="#">
-                    <div class="row g-3">
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Tipo de Contrato *</label>
-                            <select name="tipo_contrato" class="form-select rounded-3" required>
-                                <option value="">Seleccionar tipo...</option>
-                                <option value="termino_fijo">Término Fijo</option>
-                                <option value="indefinido">Término Indefinido</option>
-                                <option value="obra_labor">Obra o Labor</option>
-                                <option value="aprendizaje">Aprendizaje</option>
-                                <option value="prestacion_servicios">Prestación de Servicios</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Fecha de Inicio *</label>
-                            <input type="date" name="fecha_inicio" class="form-control rounded-3" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Fecha de Fin</label>
-                            <input type="date" name="fecha_fin" class="form-control rounded-3">
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Salario Contratado *</label>
-                            <input type="number" name="salario" class="form-control rounded-3" step="0.01" required>
-                        </div>
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold">Documento (PDF)</label>
-                            <input type="file" name="archivo" class="form-control rounded-3" accept=".pdf">
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer border-0 pt-0 pb-4 px-4">
-                <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" form="formNuevoContrato" class="btn rounded-3" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
-                    <i class="fas fa-save me-2"></i> Guardar Contrato
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-function editarEmpleado(id) {
-    window.location.href = "/rh/empleado/" + id + "/editar";
-}
-
-function verContrato(id) {
-    window.location.href = "/rh/contrato/" + id;
-}
-
-function verEvaluacion(id) {
-    window.location.href = "/rh/evaluacion/" + id;
-}
-</script>
-
-<style>
-.hover-lift {
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-.hover-lift:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
-}
-</style>
 {% endblock %}
