@@ -23,7 +23,7 @@ def resetear_password_soporte():
         
         # Buscar usuarios con rol soporte
         resultado = ejecutar_consulta(
-            "SELECT id, usuario, rol FROM usuarios WHERE rol IN ('soporte', 'usuario')",
+            "SELECT id, usuario, rol FROM usuarios WHERE rol IN ('asesor', 'usuario')",
             fetch=True
         )
         
@@ -49,10 +49,10 @@ def resetear_password_soporte():
             ejecutar_consulta("""
                 INSERT INTO usuarios (usuario, password, rol, modulo_principal, permisos) 
                 VALUES (%s, %s, %s, %s, %s)
-            """, ('soporte', nueva_password, 'soporte', 'soporte', '{"ver_fichas": true, "agregar_fichas": true, "editar_fichas": true}'), commit=True)
+            """, ('asesor', nueva_password, 'soporte', 'soporte', '{"ver_fichas": true, "agregar_fichas": true, "editar_fichas": true}'), commit=True)
             print("=" * 50)
             print("✅ USUARIO SOPORTE CREADO")
-            print("👤 Usuario: soporte")
+            print("👤 Usuario: asesor")
             print("🔑 Contraseña: soporte123")
             print("=" * 50)
             
