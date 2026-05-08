@@ -31,8 +31,18 @@
                         </tr>
                         <tr>
                             <td class="fw-semibold">Tipo:</td>
-                            <td>{{ proceso[3]|title }}</td>
-                         </tr>
+                            <td>
+                                {% set tipos = {
+                                    'reclutamiento': 'Reclutamiento',
+                                    'capacitacion': 'Capacitación',
+                                    'evaluacion': 'Evaluación',
+                                    'ascenso': 'Ascenso',
+                                    'legal': 'Legal',
+                                    'nomina': 'Nómina'
+                                } %}
+                                {{ tipos.get(proceso[3], proceso[3]) }}
+                            </td>
+                        </tr>
                         <tr>
                             <td class="fw-semibold">Prioridad:</td>
                             <td>
@@ -44,7 +54,7 @@
                                     <span class="badge bg-success">Media</span>
                                 {% endif %}
                             </td>
-                         </tr>
+                        </tr>
                         <tr>
                             <td class="fw-semibold">Estado:</td>
                             <td>
@@ -58,7 +68,7 @@
                                     <span class="badge bg-info">Pendiente</span>
                                 {% endif %}
                             </td>
-                         </tr>
+                        </tr>
                     </table>
                 </div>
                 <div class="col-md-6">
@@ -73,7 +83,7 @@
                                     <span>{{ proceso[7]|default(0) }}%</span>
                                 </div>
                             </td>
-                         </tr>
+                        </tr>
                         <tr>
                             <td class="fw-semibold">Fecha Límite:</td>
                             <td>{{ proceso[6]|format_date if proceso[6] else 'Sin fecha' }}</td>
